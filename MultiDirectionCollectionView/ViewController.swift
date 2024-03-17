@@ -1605,11 +1605,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.scrollToNextItem()
         
         //get FileTitle
-        //let test = ReadWriteJSON()
-        //let temp = test.titleJsonFile()
-        //localFileName = temp.reversed()
+        let test = ReadWriteJSON()
+        let temp = test.titleJsonFile()
+        localFileName = temp.reversed()
         FileCollectionView.reloadData()
-        loadUserAll()
         
         
         
@@ -1622,19 +1621,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if appd.viewconSelectedName == "Initial"{
             selectedSheet = 0
-            //let test = ReadWriteJSON()
-            //test.readJsonFIle(title: localFileName[selectedSheet])
+            let test = ReadWriteJSON()
+            test.readJsonFIle(title: localFileName[selectedSheet])
             
             FileCollectionView.reloadData()
             
-            //noInternet(sheetIdx: 0)
+            noInternet(sheetIdx: 0)
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
-            appd.diff_start_index = [String]()
-            appd.diff_end_index = [String]()
-            appd.cellIndex = IndexPath()
+            
 //            if localFileName.count > 0 {
             if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
                 appd.viewconSelectedName = localFileName[selectedSheet]
@@ -4320,22 +4315,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             datainputview.stringbox.text = datainputview.stringbox.text + ":"
         }
-    }
-    
-    func loadUserAll() {
-        let location1 = UserDefaults.standard
-        location = location1.stringArray(forKey: "NEWTMLOCATION") ?? []
-        
-        let content1 = UserDefaults.standard
-        content = content1.stringArray(forKey: "NEWTMCONTENT") ?? []
-        
-        let appHeight = UserDefaults.standard
-        COLUMNSIZE = appHeight.integer(forKey: "NEWCsize")
-    
-        let appHeight2 = UserDefaults.standard
-        ROWSIZE = appHeight2.integer(forKey: "NEWRsize")
-        
-        
     }
 }
 

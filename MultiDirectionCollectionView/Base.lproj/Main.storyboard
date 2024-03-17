@@ -498,8 +498,8 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Loading..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Ot-mS-JYa">
-                                <rect key="frame" x="142" y="343" width="150" height="50"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Loading..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Ot-mS-JYa">
+                                <rect key="frame" x="169.66666666666666" y="358" width="74.666666666666657" height="20.333333333333314"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
@@ -513,13 +513,25 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                     <segue destination="lYo-SA-o9a" kind="presentation" id="jcu-SY-fH4"/>
                                 </connections>
                             </button>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="qq7-wA-JHa">
+                                <rect key="frame" x="197" y="398.33333333333331" width="20" height="20"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="20" id="DlK-Ug-Izc"/>
+                                    <constraint firstAttribute="height" constant="20" id="YAS-q2-HCQ"/>
+                                </constraints>
+                            </activityIndicatorView>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="qq7-wA-JHa" firstAttribute="top" secondItem="5Ot-mS-JYa" secondAttribute="bottom" constant="20" id="Ozk-nw-DCg"/>
                             <constraint firstItem="5Ot-mS-JYa" firstAttribute="centerY" secondItem="LSE-1N-bdW" secondAttribute="centerY" id="RAm-Wz-yrH"/>
                             <constraint firstItem="5Ot-mS-JYa" firstAttribute="centerX" secondItem="LSE-1N-bdW" secondAttribute="centerX" id="ap4-9X-hLs"/>
+                            <constraint firstItem="qq7-wA-JHa" firstAttribute="centerX" secondItem="LSE-1N-bdW" secondAttribute="centerX" id="j5x-31-VM9"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="uai" destination="qq7-wA-JHa" id="tnj-ct-c3V"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="n4H-ve-sGA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -580,7 +592,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
         </designable>
     </designables>
     <inferredMetricsTieBreakers>
-        <segue reference="QFe-iC-dgK"/>
+        <segue reference="jcu-SY-fH4"/>
     </inferredMetricsTieBreakers>
     <resources>
         <systemColor name="darkTextColor">

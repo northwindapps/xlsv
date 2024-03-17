@@ -228,30 +228,28 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                        }
                  
                        
-//                       let dict : [String:Any] = ["filename": "sheet1",
-//                                                  "date": date,
-//                                                  "content": contents,
-//                                                  "location": location,
-//                                                  "fontsize": fontSize,
-//                                                  "fontcolor": fontColor,
-//                                                  "bgcolor": bgColor,
-//                                                  "rowsize": rowcount,
-//                                                  "columnsize": columncount,
-//                                                  "customcellWidth":[String](),
-//                                                  "customcellHeight": [String](),
-//                                                  "ccwLocation": [String](),
-//                                                  "cchLocation": [String](),
-//                                                  "formulaResult":[String](),
-//                                                  "inputOrder":[String]()]
-//
+                       let dict : [String:Any] = ["filename": "sheet1",
+                                                  "date": date,
+                                                  "content": contents,
+                                                  "location": location,
+                                                  "fontsize": fontSize,
+                                                  "fontcolor": fontColor,
+                                                  "bgcolor": bgColor,
+                                                  "rowsize": rowcount,
+                                                  "columnsize": columncount,
+                                                  "customcellWidth":[String](),
+                                                  "customcellHeight": [String](),
+                                                  "ccwLocation": [String](),
+                                                  "cchLocation": [String](),
+                                                  "formulaResult":[String](),
+                                                  "inputOrder":[String]()]
+
                        
                
-                            //let test = ReadWriteJSON() //i want to delete it.
-                            saveuserAll(location: location, content: contents, columnsize: columncount, rowsize: rowcount)
-            
+                            let test = ReadWriteJSON()
                             print("savingImportJSON CSV")
-                            //test.saveuserAll()
-                             //test.saveJsonFile(source: dict, title: "sheet1")
+                            test.saveuserAll()
+                            test.saveJsonFile(source: dict, title: "sheet1")
             
         
                  //OK move to next sheet shall we?
@@ -633,29 +631,27 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                     }
                     
                     
-//                    let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
-//                                               "date": date,
-//                                               "content": valueContent+stringContent,
-//                                               "location": finalL_value + finalL_string,
-//                                               "fontsize": fontSize,
-//                                               "fontcolor": fontColor,
-//                                               "bgcolor": bgColor,
-//                                               "rowsize": rowsize,
-//                                               "columnsize": columnsize,
-//                                               "customcellWidth":[String](),
-//                                               "customcellHeight": [String](),
-//                                               "ccwLocation": [String](),
-//                                               "cchLocation": [String](),
-//                                               "formulaResult":[String](),
-//                                               "inputOrder":[String]()]
+                    let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
+                                               "date": date,
+                                               "content": valueContent+stringContent,
+                                               "location": finalL_value + finalL_string,
+                                               "fontsize": fontSize,
+                                               "fontcolor": fontColor,
+                                               "bgcolor": bgColor,
+                                               "rowsize": rowsize,
+                                               "columnsize": columnsize,
+                                               "customcellWidth":[String](),
+                                               "customcellHeight": [String](),
+                                               "ccwLocation": [String](),
+                                               "cchLocation": [String](),
+                                               "formulaResult":[String](),
+                                               "inputOrder":[String]()]
                     
                     
-                    //i want to delete it.
-                    //let test = ReadWriteJSON()
+                    let test = ReadWriteJSON()
                     print("EXCEL savingImportJSON")
-                    //test.saveuserAll()
-                    //test.saveJsonFile(source: dict, title: "sheet"+String(counter+1))
-                    saveuserAll(location: finalL_value + finalL_string, content: valueContent+stringContent, columnsize: columnsize, rowsize: rowsize)
+                    test.saveuserAll()
+                    test.saveJsonFile(source: dict, title: "sheet"+String(counter+1))
                     
                     counter += 1
                     //OK move to next sheet shall we?
@@ -881,27 +877,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let okayChars = Set("1234567890")
         return text.filter {okayChars.contains($0) }
     }
-    
-    func saveuserAll(location:[String],content:[String],columnsize:Int,rowsize:Int) {
-        let location1 = UserDefaults.standard
-        location1.set(location, forKey: "NEWTMLOCATION")
-        location1.synchronize()
-        
-        let content1 = UserDefaults.standard
-        content1.set(content, forKey: "NEWTMCONTENT")
-        content1.synchronize()
-        
-        let appheight = UserDefaults.standard
-        appheight.set(columnsize, forKey: "NEWCsize")
-        appheight.synchronize()
-        
-        let appheight2 = UserDefaults.standard
-        appheight2.set(rowsize, forKey: "NEWRsize")
-        appheight2.synchronize()
-       
-        
-        print("saved on userdefault")
-    }
+ 
 }
 
 
