@@ -341,333 +341,276 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
      }
      */
     
-    func readExcel(path:String){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+    func readExcel(path:String, wsIndex:Int = 0){
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.ws_total_pages = 0
+            appd.ws_path = path
             let file = XLSXFile(filepath: path)
             var counter = 0
             var sheetsNumber = -1
-            var styles = try? file!.parseStyles()
-            let cellStyleXfs = styles?.cellFormats?.items
-            // Retrieve borders information from styles .compactMap filter nil values
-//            let borders_left_style = styles!.borders?.items.map { $0.left?.style}
-//            let borders_right_style = styles!.borders?.items.map { $0.right?.style}
-//            let borders_top_style = styles!.borders?.items.map { $0.top?.style}
-//            let borders_bottom_style = styles!.borders?.items.map { $0.bottom?.style}
-//            let borders_left_color = styles!.borders?.items.map { $0.left?.color?.rgb}
-//            let borders_right_color = styles!.borders?.items.map { $0.right?.color?.rgb}
-//            let borders_top_color = styles!.borders?.items.map { $0.top?.color?.rgb}
-//            let borders_bottom_color = styles!.borders?.items.map { $0.bottom?.color?.rgb}
-//
-//            for item in cellStyleXfs!{
-//                appd.border_ids.append(Int(item.borderId!))
-//            }
-//
-//            for item in borders_top_color!{
-//                appd.borders_top_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_bottom_color!{
-//                appd.borders_bottom_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_right_color!{
-//                appd.borders_right_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_left_color!{
-//                appd.borders_left_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_top_style!{
-//                appd.borders_top_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_bottom_style!{
-//                appd.borders_bottom_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_right_style!{
-//                appd.borders_right_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_left_style!{
-//                appd.borders_left_style.append("\(String(describing: item))")
-//            }
-            
-            
             sheetsNumber = try file!.parseWorksheetPaths().count-1
-            let path = try file!.parseWorksheetPaths().first
+            appd.ws_total_pages = sheetsNumber
+            //only show first page.
+            //for path in try file!.parseWorksheetPaths() {
+            let path = try file!.parseWorksheetPaths()[wsIndex]
                 print("counter",counter)
-                    //Cleaning instances on table data
-                    columnName = []
-                    stringLocation = []
-                    stringContent = []
-                    valueLocation = []
-                    valueContent = []
-                    
-                    let container = try file!.parseWorksheetPaths()
-                        .compactMap { try file!.parseWorksheet(at: $0) }
-                        .flatMap { $0.data?.rows ?? [] }
-                        .flatMap { $0.cells }
-                    
-                    columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW
+                //Cleaning instances on table data
+                columnName = []
+                stringLocation = []
+                stringContent = []
+                valueLocation = []
+                valueContent = []
                 
+                let container = try file!.parseWorksheetPaths()
+                    .compactMap { try file!.parseWorksheet(at: $0) }
+                    .flatMap { $0.data?.rows ?? [] }
+                    .flatMap { $0.cells }
+                
+                // Above code fetches all cells rendered in the sheet
+                // Need to know the size of sheet...
+                columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW
+            
+                
+                //mergedcells initialization
+                appd.diff_start_index.removeAll()
+                appd.diff_end_index.removeAll()
+                let mergedCells = try file!.parseWorksheetPaths()
+                   .compactMap { try file!.parseWorksheet(at: $0) }
+                   .compactMap { $0.mergeCells}
+                if mergedCells.count > 0 {
+                   let mergedCellFirstReferences = mergedCells[0].items.map { $0.reference }
+                   var tmpDictionary = [String: String]()
+                   for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
+                       tmpDictionary[String(key)] = mergedCell.description
+                       let references = mergedCell.description.components(separatedBy: ":")
+                       let start_index = references[0]//AB
+                       let end_index = references[1]
+                       appd.diff_start_index.append(start_index)
+                       appd.diff_end_index.append(end_index)
+                   }
+                }
+                
+                let sharedStrings = try file!.parseSharedStrings()
+                let ws = try file!.parseWorksheet(at: path)
+                appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
+                appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
+                
+                //Getting strings
+                for i in 0..<columnName.count {
+                    let k = String(columnName[i])
+                    if k.count != 0 {
+                    let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                        // in format internals "s" stands for "shared"
+                            .filter { $0.type?.rawValue ?? nil == "s" }
+                        .filter { $0.value != nil }
                     
-                    //reset
-                    appd.diff_start_index.removeAll()
-                    appd.diff_end_index.removeAll()
-                    let mergedCells = try file!.parseWorksheetPaths()
-                        .compactMap { try file!.parseWorksheet(at: $0) }
-                        .compactMap { $0.mergeCells}
-                    if mergedCells.count > 0 {
-                        let mergedCellFirstReferences = mergedCells[0].items.map { $0.reference }
-                        var tmpDictionary = [String: String]()
-                        for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
-                            tmpDictionary[String(key)] = mergedCell.description
-                            let references = mergedCell.description.components(separatedBy: ":")
-                            let start_index = references[0]//AB
-                            let end_index = references[1]
-                            appd.diff_start_index.append(start_index)
-                            appd.diff_end_index.append(end_index)
+                        // Rich Text
+                        let temp = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].richText }
+                        
+                        // Normal Text
+                        var temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
+                        
+                      
+                        
+                        // RitchTextArray
+                        var keyValues = [Int: String]()
+                        for i in 0..<temp.count{
+                            var strapi = ""
+                            for j in 0..<temp[i].count{
+                                if String(describing: temp[i][j].text).count > 0{
+
+                                    strapi.append("\(String(describing: temp[i][j].text))")
+                                    // seems working now..
+                                }
+                            }
+                            if strapi != "" {
+                                keyValues[i] = strapi
+                            }
                         }
-                    }
-                    
-                    let sharedStrings = try file!.parseSharedStrings()
-                    let ws = try file?.parseWorksheet(at: path!)
-                    appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws?.formatProperties?.defaultRowHeight ?? "-1")!
-                    appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws?.formatProperties?.defaultRowHeight ?? "-1")!
-                    
-//                    var tmpDictionary2 = [String: String]()
-//                    let currentSheetsDataRows = ws.data.rows
-//                    if let rows = currentSheetsDataRows, !rows.isEmpty {
-//                        _ = rows.flatMap { row in
-//                            row.cells.enumerated().map { (col, cell) in
-//                                let row = cell.reference.row
-//                                let key = String(col) + "," + String(row)
-//                                let value = cell.styleIndex
-//                                tmpDictionary2[key] = value.map { String($0) } ?? "nil"
-//                            }
-//                        }
-//                    }
-//
-//                    appd.index_border_id = tmpDictionary2
-                    
-                    //Getting strings
-                    for i in 0..<columnName.count {
-                        let k = String(columnName[i])
-                        if k.count != 0 {
-                            let columnCStrings = ws?.cells(atColumns: [ColumnReference(k)!])
-                            // in format internals "s" stands for "shared"
-                                .filter { $0.type?.rawValue ?? nil == "s" }
-                                .filter { $0.value != nil }
-                            
-                            // Rich Text
-                            let temp = columnCStrings?.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].richText }
-                            
-                            // Normal Text
-                            var temp2 = columnCStrings?.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
-                            
-                            
-                            
-                            // RitchTextArray
-                            var keyValues = [Int: String]()
-                            for i in 0..<(temp?.count ?? 0){
-                                var strapi = ""
-                                for j in 0..<(temp?[i].count ?? 0){
-                                    if String(describing: temp?[i][j].text).count > 0{
-                                        
-                                        strapi.append("\(String(describing: temp?[i][j].text))")
-                                        // seems working now..
-                                    }
-                                }
-                                if strapi != "" {
-                                    keyValues[i] = strapi
-                                }
-                            }
-                            
-                            
-                            var aPlusbArray = [String](repeating: "", count:(temp2?.count ?? 0) + keyValues.count)
-                            for (k,value) in keyValues {
-                                aPlusbArray[k] = String(value)
-                            }
-                            
-                            for l in 0..<aPlusbArray.count{
-                                if aPlusbArray[l] == "" {
-                                    aPlusbArray[l] = (temp2?.first!)!
-                                    temp2?.remove(at: 0)
-                                }
-                            }
-                            stringContent.append(contentsOf: aPlusbArray)
-                            
-                            
-                            stringLocation.append(contentsOf: (columnCStrings?.compactMap { $0.reference.description })!)//A2
+                        
+                       
+                        var aPlusbArray = [String](repeating: "", count:temp2.count + keyValues.count)
+                        for (k,value) in keyValues {
+                            aPlusbArray[k] = String(value)
                         }
-                    }
-                    
-                    
-                    //For some reason mergedcells go first
-                    //           //https://stackoverflow.com/questions/42081141/how-to-parse-array-of-json-to-array-in-swift
-                    
-                    var LARGIST_ROW_IN_MERGEDCELLS = 0
-                    
-                    
-                    
-                    //Getting values
-                    //if let formula = cell.formula?.value { returnString = formula } }
-                    for i in 0..<columnName.count {
-                        let k = String(columnName[i])
-                        if k.count != 0 {
-                            let columnCStrings = ws?.cells(atColumns: [ColumnReference(k)!])
-                                .filter { $0.type?.rawValue ?? nil != "s"  }
-                                .filter { $0.value != nil }
-                            
-                            var formulaCheck = [String]()
-                            for i in 0..<(columnCStrings?.count ?? 0) {
-                                let formulaContent = columnCStrings?[i].formula?.value
-                                let valueContent = columnCStrings?[i].value
-                                
-                                if formulaContent == nil {
-                                    formulaCheck.append(valueContent!)
-                                }else{
-                                    formulaCheck.append("=" + formulaContent!)
-                                }
-                                
+                        
+                        for l in 0..<aPlusbArray.count{
+                            if aPlusbArray[l] == "" {
+                                aPlusbArray[l] = temp2.first!
+                                temp2.remove(at: 0)
                             }
-                            valueContent.append(contentsOf: formulaCheck)//$0.value
-                            valueLocation.append(contentsOf: (columnCStrings?.compactMap { $0.reference.description })!)
+                        }
+                        stringContent.append(contentsOf: aPlusbArray)
+                        
+               
+                        stringLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })//A2
+                    }
+                }
+                
+                
+                var LARGIST_ROW_IN_MERGEDCELLS = 0
+
+                
+                
+                //Getting values
+                //if let formula = cell.formula?.value { returnString = formula } }
+                for i in 0..<columnName.count {
+                    let k = String(columnName[i])
+                    if k.count != 0 {
+                    let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                            .filter { $0.type?.rawValue ?? nil != "s"  }
+                        .filter { $0.value != nil }
+                        
+                        var formulaCheck = [String]()
+                        for i in 0..<columnCStrings.count {
+                            let formulaContent = columnCStrings[i].formula?.value
+                            let valueContent = columnCStrings[i].value
+                            
+                            if formulaContent == nil {
+                                formulaCheck.append(valueContent!)
+                            }else{
+                                formulaCheck.append("=" + formulaContent!)
+                            }
                             
                         }
+                        valueContent.append(contentsOf: formulaCheck)//$0.value
+                        valueLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })
+                     
                     }
+                }
+                
+                
+                let content1 = UserDefaults.standard
+                if counter == 0 {
+//                    content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
+                    content1.synchronize()
+                }
+                
+                print("content",valueContent+stringContent)
+                
+                var finalL_value = [String]()
+                var finalL_string = [String]()
+                // Needed for LocationData (3,2) (3,4) (1,3)
+                let columnvalue = SortColumnName(srcAry: columnName) //AA,AB,AC
+                let key = Index4ColumnName(columnNameAry: columnvalue) //1,2,3
+                var columnsize = columnvalue.count
+                if columnvalue.count < appd.DEFAULT_COLUMN_NUMBER {
+                    columnsize = appd.DEFAULT_COLUMN_NUMBER
+                }
+                
+                if counter == 0 {
+//                    content1.set(columnsize, forKey: "NEWCsize")//why +2 ? donkow
+                    content1.synchronize()
+                }
+                
+                
+                
+                for i in 0..<valueLocation.count {
+                    let columnL_value = valueLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
                     
+                    let idx = columnvalue.index(of: columnL_value)
                     
-                    let content1 = UserDefaults.standard
-                    if counter == 0 {
-                        //                    content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
-                        content1.synchronize()
-                    }
+                    let columnL = key[idx!]
+                    let rowL = valueLocation[i].filter("0123456789.".contains)
+    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
+                   //column A -> 0+1
+                    finalL_value.append(String(columnL+1) + "," + rowL)
+                }
+                
+                for i in 0..<stringLocation.count {
+                    let columnL_value = stringLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
                     
-                    //                print("content",valueContent+stringContent)
+                    let idx = columnvalue.index(of: columnL_value)
                     
-                    var finalL_value = [String]()
-                    var finalL_string = [String]()
-                    // Needed for LocationData (3,2) (3,4) (1,3)
-                    let columnvalue = SortColumnName(srcAry: columnName) //AA,AB,AC
-                    let key = Index4ColumnName(columnNameAry: columnvalue) //1,2,3
-                    var columnsize = columnvalue.count
-                    if columnvalue.count < appd.DEFAULT_COLUMN_NUMBER {
-                        columnsize = appd.DEFAULT_COLUMN_NUMBER
-                    }
-                    
-                    if counter == 0 {
-                        //                    content1.set(columnsize, forKey: "NEWCsize")//why +2 ? donkow
-                        content1.synchronize()
-                    }
-                    
-                    
-                    
-                    for i in 0..<valueLocation.count {
-                        let columnL_value = valueLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
-                        
-                        let idx = columnvalue.index(of: columnL_value)
-                        
-                        let columnL = key[idx!]
-                        let rowL = valueLocation[i].filter("0123456789.".contains)
-                        //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
-                        //column A -> 0+1
-                        finalL_value.append(String(columnL+1) + "," + rowL)
-                    }
-                    
-                    for i in 0..<stringLocation.count {
-                        let columnL_value = stringLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
-                        
-                        let idx = columnvalue.index(of: columnL_value)
-                        
-                        let columnL = key[idx!]
-                        let rowL = stringLocation[i].filter("0123456789.".contains)
-                        //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
-                        //column A -> 0+1
-                        finalL_string.append(String(columnL+1) + "," + rowL)
-                    }
-                    
-                    
-                    if finalL_string.count != stringContent.count{
-                        appd.wentWrong = true
-                        
-                        
-                        
-                    }else if finalL_string.count == stringContent.count {
-                        appd.wentWrong = false
-                    }
-                    
-                    
-                    //print("location",finalL_value + finalL_string)
+                    let columnL = key[idx!]
+                    let rowL = stringLocation[i].filter("0123456789.".contains)
+                    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
+                  //column A -> 0+1
+                    finalL_string.append(String(columnL+1) + "," + rowL)
+                }
+                
+              
+                if finalL_string.count != stringContent.count{
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    appd.wentWrong = true
                     
                     
                     
-                    var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: LARGIST_ROW_IN_MERGEDCELLS)
-                    
-                    if rowsize < appd.DEFAULT_ROW_NUMBER{
-                        rowsize = appd.DEFAULT_ROW_NUMBER
-                    }
-                    
-                    
-                    
-                    
-                    let today: Date = Date()
-                    let dateFormatter: DateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                    let date = dateFormatter.string(from: today)
-                    
-                    
-                    var fontSize = [String]()
-                    var fontColor = [String]()
-                    var bgColor = [String]()
-                    for i in 0..<finalL_value.count+finalL_string.count{
-                        fontSize.append(String(13))
-                        bgColor.append("white")
-                        fontColor.append("black")
-                    }
-                    
-                    
-                    let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
-                                               "date": date,
-                                               "content": valueContent+stringContent,
-                                               "location": finalL_value + finalL_string,
-                                               "fontsize": fontSize,
-                                               "fontcolor": fontColor,
-                                               "bgcolor": bgColor,
-                                               "rowsize": rowsize,
-                                               "columnsize": columnsize,
-                                               "customcellWidth":[String](),
-                                               "customcellHeight": [String](),
-                                               "ccwLocation": [String](),
-                                               "cchLocation": [String](),
-                                               "formulaResult":[String](),
-                                               "inputOrder":[String]()]
-                    
-                    
-                    let test = ReadWriteJSON()
-                    print("EXCEL savingImportJSON")
-                    test.saveuserAll()
-                    test.saveJsonFile(source: dict, title: "sheet"+String(counter+1))
-                    
-                    counter += 1
-                    //OK move to next sheet shall we?
-                    
-                    appd.customSizedHeight.removeAll()
-                    appd.customSizedWidth.removeAll()
-                    appd.cshLocation.removeAll()
-                    appd.cswLocation.removeAll()
-                    appd.numberofRow = rowsize
-                    appd.numberofColumn = columnsize
+                }else if finalL_string.count == stringContent.count {
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    appd.wentWrong = false
+                }
              
-            //}// outer for end
+              
+                print("location",finalL_value + finalL_string)
+                
+                
+                
+                var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: LARGIST_ROW_IN_MERGEDCELLS)
+              
+                if rowsize < appd.DEFAULT_ROW_NUMBER{
+                    rowsize = appd.DEFAULT_ROW_NUMBER
+                }
+                
+  
+         
+
+                      let today: Date = Date()
+                      let dateFormatter: DateFormatter = DateFormatter()
+                      dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                      let date = dateFormatter.string(from: today)
+                      
+                        
+                      var fontSize = [String]()
+                      var fontColor = [String]()
+                      var bgColor = [String]()
+                      for i in 0..<finalL_value.count+finalL_string.count{
+                          fontSize.append(String(13))
+                          bgColor.append("white")
+                          fontColor.append("black")
+                      }
+                
+                      
+                      let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
+                                                 "date": date,
+                                                 "content": valueContent+stringContent,
+                                                 "location": finalL_value + finalL_string,
+                                                 "fontsize": fontSize,
+                                                 "fontcolor": fontColor,
+                                                 "bgcolor": bgColor,
+                                                 "rowsize": rowsize,
+                                                 "columnsize": columnsize,
+                                                 "customcellWidth":[String](),
+                                                 "customcellHeight": [String](),
+                                                 "ccwLocation": [String](),
+                                                 "cchLocation": [String](),
+                                                 "formulaResult":[String](),
+                                                 "inputOrder":[String]()]
+                      
+                      
+              
+                              let test = ReadWriteJSON()
+                    print("savingImportJSON")
+                            test.saveJsonFile(source: dict, title: "sheet"+String(counter+1))
+           
+                     
+                counter += 1
+                //OK move to next sheet shall we?
+                
+                appd.customSizedHeight.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.cswLocation.removeAll()
+                appd.numberofRow = rowsize
+                appd.numberofColumn = columnsize
+                
         } catch {
             print("sorry pal cant copy it.")
         }
     }
+    
     //Making the array with unique values
     func uniquing(src:[String]) -> [String]{
         var unique = [String]()

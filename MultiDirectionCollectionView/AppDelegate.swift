@@ -46,6 +46,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var diff_start_index = [String]()
     var diff_end_index = [String]()
     var cellIndex = IndexPath()
+    var ws_total_pages = 0
+    var ws_path = ""
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0
