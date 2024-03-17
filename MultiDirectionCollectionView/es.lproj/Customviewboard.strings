@@ -1,0 +1,45 @@
+
+/* Class = "UILabel"; text = "Tamaño de pantalla"; ObjectID = "3Wz-Wk-DNN"; */
+"3Wz-Wk-DNN.text" = "Tamaño de pantalla";
+
+/* Class = "UILabel"; text = "Eliminar celdas"; ObjectID = "3tU-fF-g4l"; */
+"3tU-fF-g4l.text" = "Eliminar celdas";
+
+/* Class = "UILabel"; text = "Comenzar tutoriales ?"; ObjectID = "3yp-Ci-wge"; */
+"3yp-Ci-wge.text" = "Comenzar tutoriales ?";
+
+/* Class = "UIButton"; normalTitle = "Search & Replace"; ObjectID = "GLB-md-z31"; */
+"GLB-md-z31.normalTitle" = "Búsqueda y reemplazo";
+
+/* Class = "UILabel"; text = "Función"; ObjectID = "KZX-sg-XN2"; */
+"KZX-sg-XN2.text" = "Función";
+
+/* Class = "UIButton"; normalTitle = "MIN"; ObjectID = "Mqb-cx-LcY"; */
+"Mqb-cx-LcY.normalTitle" = "MIN";
+
+/* Class = "UILabel"; text = "Restaurar datos ?"; ObjectID = "OmS-c4-p3H"; */
+"OmS-c4-p3H.text" = "Restaurar datos ?";
+
+/* Class = "UIButton"; normalTitle = "Sí"; ObjectID = "PcP-cd-bqd"; */
+"PcP-cd-bqd.normalTitle" = "Sí";
+
+/* Class = "UIButton"; normalTitle = "Regreso"; ObjectID = "RwQ-8h-zI6"; */
+"RwQ-8h-zI6.normalTitle" = "Regreso";
+
+/* Class = "UIButton"; normalTitle = "Derechos de autor"; ObjectID = "dhq-sl-C2V"; */
+"dhq-sl-C2V.normalTitle" = "Derechos de autor";
+
+/* Class = "UIButton"; normalTitle = "MAX"; ObjectID = "dpU-0G-QCE"; */
+"dpU-0G-QCE.normalTitle" = "MAX";
+
+/* Class = "UIButton"; normalTitle = "MEDIA"; ObjectID = "nph-Vp-bL8"; */
+"nph-Vp-bL8.normalTitle" = "MEDIA";
+
+/* Class = "UIButton"; normalTitle = "SUMA"; ObjectID = "uTH-bt-OwA"; */
+"uTH-bt-OwA.normalTitle" = "SUMA";
+
+/* Class = "UIButton"; normalTitle = "Recargar"; ObjectID = "xhx-IV-Xdo"; */
+"xhx-IV-Xdo.normalTitle" = "Recargar";
+
+/* Class = "UIButton"; normalTitle = "Sí"; ObjectID = "yly-vJ-oQ1"; */
+"yly-vJ-oQ1.normalTitle" = "Sí";

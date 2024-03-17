@@ -1,0 +1,12 @@
+/* 
+  InfoPlist.strings
+  MultiDirectionCollectionView
+
+  Created by 矢野悠人 on 2016/12/27.
+  Copyright © 2016年 Credera. All rights reserved.
+*/
+//http://qiita.com/hiroo0529/items/da9909f6787f2dce75e3
+//http://stackoverflow.com/questions/3421868/localization-of-default-png-is-not-working
+
+UILaunchStoryboardName = "LaunchScreen";
+CFBundleDisplayName = "XLSV";

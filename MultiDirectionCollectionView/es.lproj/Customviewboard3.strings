@@ -1,0 +1,21 @@
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "14y-Ww-Rhj"; */
+"14y-Ww-Rhj.normalTitle" = "Salvar";
+
+/* Class = "UIButton"; normalTitle = "replace"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "reemplazar";
+
+/* Class = "UIButton"; normalTitle = "×"; ObjectID = "GEp-YV-JCq"; */
+"GEp-YV-JCq.normalTitle" = "×";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "HQP-z1-6vm"; */
+"HQP-z1-6vm.normalTitle" = "espalda";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "Matchs"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "Partido";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "Contains"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "Contiene";
+
+/* Class = "UIButton"; normalTitle = "search"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "Buscar";

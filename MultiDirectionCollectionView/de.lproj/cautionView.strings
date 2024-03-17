@@ -1,0 +1,9 @@
+
+/* Class = "UIButton"; normalTitle = "Disagree"; ObjectID = "6Z7-LO-RsM"; */
+"6Z7-LO-RsM.normalTitle" = "nicht zustimmen";
+
+/* Class = "UIButton"; normalTitle = "Agree"; ObjectID = "Fr7-SB-TIE"; */
+"Fr7-SB-TIE.normalTitle" = "zustimmen";
+
+/* Class = "UILabel"; text = "Privacy Policy\n\nThis app uses date data, your text data . When you enter tedxt data, it'll be sent to the database. And the data is shared with other users. If you want to delete your data from the database, please contact to the developer(northwindapps@gmail.com)."; ObjectID = "dGA-nV-m7R"; */
+"dGA-nV-m7R.text" = "Datenschutz-Bestimmungen\n\nDiese App verwendet Datumsdaten, Ihre Textdaten. Wenn Sie Textdaten in die Tabelle eingeben, werden diese an die Datenbank gesendet. Und die Daten werden mit anderen Benutzern geteilt.";

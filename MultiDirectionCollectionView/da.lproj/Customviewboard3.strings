@@ -1,0 +1,15 @@
+
+/* Class = "UIButton"; normalTitle = "replace"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "erstatte";
+
+/* Class = "UIButton"; normalTitle = "×"; ObjectID = "GEp-YV-JCq"; */
+"GEp-YV-JCq.normalTitle" = "×";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "Matchs"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "lige";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "Contains"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "indeholde";
+
+/* Class = "UIButton"; normalTitle = "search"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "Søg";

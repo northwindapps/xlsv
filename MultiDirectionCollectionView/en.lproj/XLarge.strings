@@ -1,0 +1,57 @@
+
+/* Class = "UIButton"; normalTitle = "CSV"; ObjectID = "13T-p0-9wZ"; */
+"13T-p0-9wZ.normalTitle" = "CSV";
+
+/* Class = "UIButton"; normalTitle = "CREDIT"; ObjectID = "GmU-I5-gGO"; */
+"GmU-I5-gGO.normalTitle" = "CREDIT";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "HaG-05-ZSB"; */
+"HaG-05-ZSB.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Menu"; ObjectID = "IP7-wr-pXh"; */
+"IP7-wr-pXh.normalTitle" = "Menu";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "KZl-ev-tOV"; */
+"KZl-ev-tOV.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "AC"; ObjectID = "MX4-iZ-Gin"; */
+"MX4-iZ-Gin.normalTitle" = "AC";
+
+/* Class = "UIButton"; normalTitle = "AC"; ObjectID = "OrP-g2-M1q"; */
+"OrP-g2-M1q.normalTitle" = "AC";
+
+/* Class = "UIButton"; normalTitle = "LB"; ObjectID = "T5Z-hY-exd"; */
+"T5Z-hY-exd.normalTitle" = "LB";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "bCB-Np-P6M"; */
+"bCB-Np-P6M.normalTitle" = "Back";
+
+/* Class = "UITextView"; text = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda."; ObjectID = "dQu-dY-zF3"; */
+"dQu-dY-zF3.text" = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.";
+
+/* Class = "UISegmentedControl"; h65-eL-fjb.segmentTitles[0] = "Entry"; ObjectID = "h65-eL-fjb"; */
+"h65-eL-fjb.segmentTitles[0]" = "Entry";
+
+/* Class = "UISegmentedControl"; h65-eL-fjb.segmentTitles[1] = "Copy"; ObjectID = "h65-eL-fjb"; */
+"h65-eL-fjb.segmentTitles[1]" = "Copy";
+
+/* Class = "UISegmentedControl"; h65-eL-fjb.segmentTitles[2] = "+1"; ObjectID = "h65-eL-fjb"; */
+"h65-eL-fjb.segmentTitles[2]" = "+1";
+
+/* Class = "UISegmentedControl"; h65-eL-fjb.segmentTitles[3] = "-1"; ObjectID = "h65-eL-fjb"; */
+"h65-eL-fjb.segmentTitles[3]" = "-1";
+
+/* Class = "UISegmentedControl"; lnq-En-1CT.segmentTitles[0] = "Entry"; ObjectID = "lnq-En-1CT"; */
+"lnq-En-1CT.segmentTitles[0]" = "Entry";
+
+/* Class = "UISegmentedControl"; lnq-En-1CT.segmentTitles[1] = "Copy"; ObjectID = "lnq-En-1CT"; */
+"lnq-En-1CT.segmentTitles[1]" = "Copy";
+
+/* Class = "UISegmentedControl"; lnq-En-1CT.segmentTitles[2] = "Fx"; ObjectID = "lnq-En-1CT"; */
+"lnq-En-1CT.segmentTitles[2]" = "Fx";
+
+/* Class = "UIButton"; normalTitle = "CSV"; ObjectID = "rhG-sk-p0v"; */
+"rhG-sk-p0v.normalTitle" = "CSV";
+
+/* Class = "UIButton"; normalTitle = "Menu"; ObjectID = "w4u-id-j2J"; */
+"w4u-id-j2J.normalTitle" = "Menu";

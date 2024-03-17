@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="landscape">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CautionView" customModule="MultiDirectionCollectionView" customModuleProvider="target">
+            <connections>
+                <outlet property="back" destination="Fr7-SB-TIE" id="g5g-wc-E5V"/>
+                <outlet property="policyText" destination="dGA-nV-m7R" id="Vok-rQ-pW0"/>
+                <outlet property="terminate" destination="6Z7-LO-RsM" id="9xo-VH-2RN"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="479"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6Z7-LO-RsM">
+                    <rect key="frame" x="20" y="240" width="335" height="30"/>
+                    <state key="normal" title="Disagree"/>
+                </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dGA-nV-m7R">
+                    <rect key="frame" x="16" y="0.0" width="343" height="230"/>
+                    <string key="text">Privacy Policy 
+
+This app uses date data, your text data. When you enter text data on the table, it'll be sent to the database. And the data is shared with other users.</string>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Fr7-SB-TIE">
+                    <rect key="frame" x="20" y="300" width="335" height="30"/>
+                    <state key="normal" title="Agree"/>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="dGA-nV-m7R" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" constant="16" id="R9k-KU-1rD"/>
+                <constraint firstItem="dGA-nV-m7R" firstAttribute="trailing" secondItem="vUN-kp-3ea" secondAttribute="trailing" constant="-16" id="a2D-A7-S9T"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="6Z7-LO-RsM" secondAttribute="trailing" constant="20" id="cd1-Vd-2vf"/>
+                <constraint firstItem="6Z7-LO-RsM" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" constant="20" id="hPP-UZ-c7r"/>
+                <constraint firstItem="6Z7-LO-RsM" firstAttribute="top" secondItem="dGA-nV-m7R" secondAttribute="bottom" constant="10" id="ldP-q6-FcW"/>
+                <constraint firstItem="6Z7-LO-RsM" firstAttribute="centerX" secondItem="vUN-kp-3ea" secondAttribute="centerX" id="tuL-s7-HtG"/>
+                <constraint firstItem="Fr7-SB-TIE" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" constant="20" id="wuZ-sQ-eRn"/>
+                <constraint firstItem="Fr7-SB-TIE" firstAttribute="centerX" secondItem="vUN-kp-3ea" secondAttribute="centerX" id="xGm-qJ-eYH"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="Fr7-SB-TIE" secondAttribute="trailing" constant="20" id="yBZ-Nm-Xxn"/>
+                <constraint firstItem="dGA-nV-m7R" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" id="yTI-dj-dhO"/>
+                <constraint firstItem="Fr7-SB-TIE" firstAttribute="top" secondItem="6Z7-LO-RsM" secondAttribute="bottom" constant="30" id="z4U-Lg-Bsf"/>
+                <constraint firstItem="dGA-nV-m7R" firstAttribute="height" secondItem="iN0-l3-epB" secondAttribute="height" multiplier="0.5" constant="-9.5" id="zvf-fJ-2ey"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <point key="canvasLocation" x="-179" y="-442"/>
+        </view>
+    </objects>
+</document>

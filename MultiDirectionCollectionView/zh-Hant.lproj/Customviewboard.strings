@@ -1,0 +1,45 @@
+
+/* Class = "UILabel"; text = "屏幕尺寸"; ObjectID = "3Wz-Wk-DNN"; */
+"3Wz-Wk-DNN.text" = "屏幕尺寸";
+
+/* Class = "UILabel"; text = "刪除單元格"; ObjectID = "3tU-fF-g4l"; */
+"3tU-fF-g4l.text" = "刪除單元格";
+
+/* Class = "UILabel"; text = "開始教程 ?"; ObjectID = "3yp-Ci-wge"; */
+"3yp-Ci-wge.text" = "開始教程 ?";
+
+/* Class = "UIButton"; normalTitle = "Search & Replace"; ObjectID = "GLB-md-z31"; */
+"GLB-md-z31.normalTitle" = "搜索和替換";
+
+/* Class = "UILabel"; text = "函数"; ObjectID = "KZX-sg-XN2"; */
+"KZX-sg-XN2.text" = "函数";
+
+/* Class = "UIButton"; normalTitle = "最小値"; ObjectID = "Mqb-cx-LcY"; */
+"Mqb-cx-LcY.normalTitle" = "最小値";
+
+/* Class = "UILabel"; text = "恢復以前的數據 ?"; ObjectID = "OmS-c4-p3H"; */
+"OmS-c4-p3H.text" = "恢復以前的數據 ?";
+
+/* Class = "UIButton"; normalTitle = "是"; ObjectID = "PcP-cd-bqd"; */
+"PcP-cd-bqd.normalTitle" = "是";
+
+/* Class = "UIButton"; normalTitle = "返回"; ObjectID = "RwQ-8h-zI6"; */
+"RwQ-8h-zI6.normalTitle" = "返回";
+
+/* Class = "UIButton"; normalTitle = "著作權"; ObjectID = "dhq-sl-C2V"; */
+"dhq-sl-C2V.normalTitle" = "著作權";
+
+/* Class = "UIButton"; normalTitle = "最大値"; ObjectID = "dpU-0G-QCE"; */
+"dpU-0G-QCE.normalTitle" = "最大値";
+
+/* Class = "UIButton"; normalTitle = "平均値"; ObjectID = "nph-Vp-bL8"; */
+"nph-Vp-bL8.normalTitle" = "平均値";
+
+/* Class = "UIButton"; normalTitle = "總和"; ObjectID = "uTH-bt-OwA"; */
+"uTH-bt-OwA.normalTitle" = "總和";
+
+/* Class = "UIButton"; normalTitle = "刷新"; ObjectID = "xhx-IV-Xdo"; */
+"xhx-IV-Xdo.normalTitle" = "刷新";
+
+/* Class = "UIButton"; normalTitle = "是"; ObjectID = "yly-vJ-oQ1"; */
+"yly-vJ-oQ1.normalTitle" = "是";

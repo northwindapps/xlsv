@@ -1,0 +1,12 @@
+
+/* Class = "UISegmentedControl"; KuD-1L-R88.segmentTitles[0] = "Text"; ObjectID = "KuD-1L-R88"; */
+"KuD-1L-R88.segmentTitles[0]" = "テキスト";
+
+/* Class = "UISegmentedControl"; KuD-1L-R88.segmentTitles[1] = "Background"; ObjectID = "KuD-1L-R88"; */
+"KuD-1L-R88.segmentTitles[1]" = "背景";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "hwH-DL-sqT"; */
+"hwH-DL-sqT.normalTitle" = "↩︎";
+
+/* Class = "UILabel"; text = "size"; ObjectID = "oKX-B1-GhW"; */
+"oKX-B1-GhW.text" = "大きさ";

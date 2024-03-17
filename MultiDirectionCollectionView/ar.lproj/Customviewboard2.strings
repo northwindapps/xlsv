@@ -1,0 +1,21 @@
+
+/* Class = "UIButton"; normalTitle = "Calc"; ObjectID = "AkM-DE-7L6"; */
+"AkM-DE-7L6.normalTitle" = "احسب";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "Eit-4b-Vlp"; */
+"Eit-4b-Vlp.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "Reset"; ObjectID = "MuS-sR-VDI"; */
+"MuS-sR-VDI.normalTitle" = "إعادة تعيين";
+
+/* Class = "UIButton"; normalTitle = "Credits"; ObjectID = "lCK-kP-XA0"; */
+"lCK-kP-XA0.normalTitle" = "Credits";
+
+/* Class = "UIButton"; normalTitle = "Search"; ObjectID = "okp-xm-cxi"; */
+"okp-xm-cxi.normalTitle" = "بحث";
+
+/* Class = "UIButton"; normalTitle = "New data"; ObjectID = "pcP-NY-tUo"; */
+"pcP-NY-tUo.normalTitle" = "بيانات جديدة";
+
+/* Class = "UIButton"; normalTitle = "Import"; ObjectID = "x2D-Hd-mUz"; */
+"x2D-Hd-mUz.normalTitle" = "استيراد";

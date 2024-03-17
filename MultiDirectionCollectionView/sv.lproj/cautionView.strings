@@ -1,0 +1,9 @@
+
+/* Class = "UIButton"; normalTitle = "Disagree"; ObjectID = "6Z7-LO-RsM"; */
+"6Z7-LO-RsM.normalTitle" = "Instämmer inte alls";
+
+/* Class = "UIButton"; normalTitle = "Agree"; ObjectID = "Fr7-SB-TIE"; */
+"Fr7-SB-TIE.normalTitle" = "Hålla med";
+
+/* Class = "UILabel"; text = "Privacy Policy \n\nThis app uses date data, your text data. When you enter text data on the table, it'll be sent to the database. And the data is shared with other users."; ObjectID = "dGA-nV-m7R"; */
+"dGA-nV-m7R.text" = "Sekretesspolicy \ in \ Denna app använder datumdata, din textdata. När du anger textdata på bordet skickas den till databasen. Och data delas med andra användare.";

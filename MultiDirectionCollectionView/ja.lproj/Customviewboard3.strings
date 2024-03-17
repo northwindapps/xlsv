@@ -1,0 +1,24 @@
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "14y-Ww-Rhj"; */
+"14y-Ww-Rhj.normalTitle" = "保存";
+
+/* Class = "UILabel"; text = "検索"; ObjectID = "4NR-6P-bjV"; */
+"4NR-6P-bjV.text" = "検索";
+
+/* Class = "UIButton"; normalTitle = "置換"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "置換";
+
+/* Class = "UIButton"; normalTitle = "戻る"; ObjectID = "HQP-z1-6vm"; */
+"HQP-z1-6vm.normalTitle" = "戻る";
+
+/* Class = "UILabel"; text = "全て置き換え"; ObjectID = "TMu-gn-wNR"; */
+"TMu-gn-wNR.text" = "全て置き換え";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "一致"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "一致";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "部分的"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "部分的";
+
+/* Class = "UIButton"; normalTitle = "検索"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "検索";

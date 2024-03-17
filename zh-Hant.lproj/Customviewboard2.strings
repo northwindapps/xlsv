@@ -1,0 +1,24 @@
+
+/* Class = "UILabel"; text = "CSV file"; ObjectID = "4H8-Pq-vS3"; */
+"4H8-Pq-vS3.text" = "CSV file";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "Eit-4b-Vlp"; */
+"Eit-4b-Vlp.normalTitle" = "Back";
+
+/* Class = "UIButton"; normalTitle = "Import"; ObjectID = "fw1-u2-Np8"; */
+"fw1-u2-Np8.normalTitle" = "Import";
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "lCK-kP-XA0"; */
+"lCK-kP-XA0.normalTitle" = "Save";
+
+/* Class = "UIButton"; normalTitle = "Reset"; ObjectID = "pcP-NY-tUo"; */
+"pcP-NY-tUo.normalTitle" = "Reset";
+
+/* Class = "UILabel"; text = "Local file"; ObjectID = "q41-ZZ-TPG"; */
+"q41-ZZ-TPG.text" = "Local file";
+
+/* Class = "UIButton"; normalTitle = "Export"; ObjectID = "sYP-cW-uA7"; */
+"sYP-cW-uA7.normalTitle" = "Export";
+
+/* Class = "UIButton"; normalTitle = "Load"; ObjectID = "x2D-Hd-mUz"; */
+"x2D-Hd-mUz.normalTitle" = "Load";

@@ -1,0 +1,27 @@
+
+/* Class = "UILabel"; text = "Dropbox"; ObjectID = "4H8-Pq-vS3"; */
+"4H8-Pq-vS3.text" = "Dropbox";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "Eit-4b-Vlp"; */
+"Eit-4b-Vlp.normalTitle" = "返回";
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "lCK-kP-XA0"; */
+"lCK-kP-XA0.normalTitle" = "存檔";
+
+/* Class = "UIButton"; normalTitle = "New sheet"; ObjectID = "pcP-NY-tUo"; */
+"pcP-NY-tUo.normalTitle" = "新文件";
+
+/* Class = "UILabel"; text = "Local Data"; ObjectID = "q41-ZZ-TPG"; */
+"q41-ZZ-TPG.text" = "本地文件";
+
+/* Class = "UIButton"; normalTitle = "Upload"; ObjectID = "s7J-NP-d8c"; */
+"s7J-NP-d8c.normalTitle" = "導出文件";
+
+/* Class = "UIButton"; normalTitle = "Email"; ObjectID = "sYP-cW-uA7"; */
+"sYP-cW-uA7.normalTitle" = "電子郵件";
+
+/* Class = "UIButton"; normalTitle = "Import"; ObjectID = "wAd-Sd-YU3"; */
+"wAd-Sd-YU3.normalTitle" = "導入文件";
+
+/* Class = "UIButton"; normalTitle = "Load"; ObjectID = "x2D-Hd-mUz"; */
+"x2D-Hd-mUz.normalTitle" = "加載";

@@ -1,0 +1,21 @@
+
+/* Class = "UIButton"; normalTitle = "Copy"; ObjectID = "AyC-Jm-mgZ"; */
+"AyC-Jm-mgZ.normalTitle" = "Kopi";
+
+/* Class = "UIButton"; normalTitle = "Delete"; ObjectID = "B8u-M8-nH2"; */
+"B8u-M8-nH2.normalTitle" = "Slet";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "Ukn-d7-F6h"; */
+"Ukn-d7-F6h.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "SUM"; ObjectID = "cAp-qj-6ro"; */
+"cAp-qj-6ro.normalTitle" = "SUM";
+
+/* Class = "UIButton"; normalTitle = "×"; ObjectID = "dUM-py-8cr"; */
+"dUM-py-8cr.normalTitle" = "×";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "kEx-2u-uRC"; */
+"kEx-2u-uRC.normalTitle" = "Button";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "xGs-h6-3Yi"; */
+"xGs-h6-3Yi.normalTitle" = "Button";

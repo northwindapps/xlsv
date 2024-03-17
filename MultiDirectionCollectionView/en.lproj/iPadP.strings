@@ -1,0 +1,114 @@
+
+/* Class = "UIButton"; normalTitle = "M"; ObjectID = "2lp-ej-Skf"; */
+"2lp-ej-Skf.normalTitle" = "M";
+
+/* Class = "UILabel"; text = "Row:"; ObjectID = "2td-Mt-C4b"; */
+"2td-Mt-C4b.text" = "Row:";
+
+/* Class = "UIButton"; normalTitle = "Set values"; ObjectID = "3l0-4z-abs"; */
+"3l0-4z-abs.normalTitle" = "Set values";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "4Vc-Zg-osX"; */
+"4Vc-Zg-osX.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "7SI-aK-sb9"; */
+"7SI-aK-sb9.normalTitle" = "Back";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "Aad-Ee-0NB"; */
+"Aad-Ee-0NB.normalTitle" = "Back";
+
+/* Class = "UILabel"; text = "Column:"; ObjectID = "BBS-Cg-UFr"; */
+"BBS-Cg-UFr.text" = "Column:";
+
+/* Class = "UITextView"; text = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda."; ObjectID = "BOO-pb-mF8"; */
+"BOO-pb-mF8.text" = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.";
+
+/* Class = "UIButton"; normalTitle = "Calculation"; ObjectID = "C1z-nh-VPp"; */
+"C1z-nh-VPp.normalTitle" = "Calculation";
+
+/* Class = "UIButton"; normalTitle = "F"; ObjectID = "C2o-4L-4CT"; */
+"C2o-4L-4CT.normalTitle" = "F";
+
+/* Class = "UIButton"; normalTitle = "N"; ObjectID = "Cmu-5b-re0"; */
+"Cmu-5b-re0.normalTitle" = "N";
+
+/* Class = "UIButton"; normalTitle = "Reverse values"; ObjectID = "HWy-Me-sAA"; */
+"HWy-Me-sAA.normalTitle" = "Reverse values";
+
+/* Class = "UIButton"; normalTitle = "F"; ObjectID = "JpE-BY-xok"; */
+"JpE-BY-xok.normalTitle" = "F";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "K5c-CO-CsA"; */
+"K5c-CO-CsA.normalTitle" = "Back";
+
+/* Class = "UIButton"; normalTitle = "STEP2"; ObjectID = "RmC-lm-Yle"; */
+"RmC-lm-Yle.normalTitle" = "STEP2";
+
+/* Class = "UIButton"; normalTitle = "OK"; ObjectID = "YxI-7h-Run"; */
+"YxI-7h-Run.normalTitle" = "OK";
+
+/* Class = "UIButton"; normalTitle = "STEP1"; ObjectID = "b6z-Nj-6NM"; */
+"b6z-Nj-6NM.normalTitle" = "STEP1";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "bfV-tj-uNV"; */
+"bfV-tj-uNV.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "bqZ-yi-NMs"; */
+"bqZ-yi-NMs.normalTitle" = "";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "iS3-cS-KSa"; */
+"iS3-cS-KSa.text" = "Sec 0 / Item 1";
+
+/* Class = "UITextField"; placeholder = "e.g: 123.csv"; ObjectID = "lDy-fD-l1P"; */
+"lDy-fD-l1P.placeholder" = "e.g: 123.csv";
+
+/* Class = "UIButton"; normalTitle = "C"; ObjectID = "m1h-wj-7uq"; */
+"m1h-wj-7uq.normalTitle" = "C";
+
+/* Class = "UIButton"; normalTitle = "AC"; ObjectID = "mk4-ne-ifb"; */
+"mk4-ne-ifb.normalTitle" = "AC";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "nWj-qi-eX8"; */
+"nWj-qi-eX8.normalTitle" = "Back";
+
+/* Class = "UIButton"; normalTitle = "Functions"; ObjectID = "sG0-xR-lYB"; */
+"sG0-xR-lYB.normalTitle" = "Summation";
+
+/* Class = "UIButton"; normalTitle = "STEP3"; ObjectID = "sQd-8D-Pec"; */
+"sQd-8D-Pec.normalTitle" = "STEP3";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "siy-Zr-kOb"; */
+"siy-Zr-kOb.normalTitle" = "";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "sq8-jJ-vtL"; */
+"sq8-jJ-vtL.text" = "Sec 0 / Item 1";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[0] = "Entry"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[0]" = "Entry";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[1] = "Copy"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[1]" = "Copy";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[2] = "+1"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[2]" = "+1";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[3] = "-1"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[3]" = "-1";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[4] = "Calc"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[4]" = "Calc";
+
+/* Class = "UISegmentedControl"; tUv-A9-U0z.segmentTitles[5] = "Style"; ObjectID = "tUv-A9-U0z"; */
+"tUv-A9-U0z.segmentTitles[5]" = "Style";
+
+/* Class = "UIButton"; normalTitle = "trueBack"; ObjectID = "wkS-7A-6ci"; */
+"wkS-7A-6ci.normalTitle" = "trueBack";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "xLD-xM-Oy7"; */
+"xLD-xM-Oy7.normalTitle" = "Back";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "xhm-2F-Cag"; */
+"xhm-2F-Cag.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "Font Style"; ObjectID = "ypn-z4-cDZ"; */
+"ypn-z4-cDZ.normalTitle" = "Font Style";

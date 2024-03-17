@@ -1,0 +1,18 @@
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "14y-Ww-Rhj"; */
+"14y-Ww-Rhj.normalTitle" = "спасти";
+
+/* Class = "UIButton"; normalTitle = "replace"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "замещать";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "HQP-z1-6vm"; */
+"HQP-z1-6vm.normalTitle" = "↩︎";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "Matchs"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "матч";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "Contains"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "включают";
+
+/* Class = "UIButton"; normalTitle = "search"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "поиск";

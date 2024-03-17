@@ -1,0 +1,45 @@
+
+/* Class = "UILabel"; text = "размер этикетки"; ObjectID = "3Wz-Wk-DNN"; */
+"3Wz-Wk-DNN.text" = "размер этикетки";
+
+/* Class = "UILabel"; text = "удалить ячейки"; ObjectID = "3tU-fF-g4l"; */
+"3tU-fF-g4l.text" = "удалить ячейки";
+
+/* Class = "UILabel"; text = "смотреть ресурсы?"; ObjectID = "3yp-Ci-wge"; */
+"3yp-Ci-wge.text" = "смотреть ресурсы?";
+
+/* Class = "UIButton"; normalTitle = "Search & Replace"; ObjectID = "GLB-md-z31"; */
+"GLB-md-z31.normalTitle" = "Поиск и замена";
+
+/* Class = "UILabel"; text = "Функция"; ObjectID = "KZX-sg-XN2"; */
+"KZX-sg-XN2.text" = "Функция";
+
+/* Class = "UIButton"; normalTitle = "мини"; ObjectID = "Mqb-cx-LcY"; */
+"Mqb-cx-LcY.normalTitle" = "мини";
+
+/* Class = "UILabel"; text = "отменить изменения ?"; ObjectID = "OmS-c4-p3H"; */
+"OmS-c4-p3H.text" = "отменить изменения ?";
+
+/* Class = "UIButton"; normalTitle = "да"; ObjectID = "PcP-cd-bqd"; */
+"PcP-cd-bqd.normalTitle" = "да";
+
+/* Class = "UIButton"; normalTitle = "вернуть"; ObjectID = "RwQ-8h-zI6"; */
+"RwQ-8h-zI6.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "dhq-sl-C2V"; */
+"dhq-sl-C2V.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "макси"; ObjectID = "dpU-0G-QCE"; */
+"dpU-0G-QCE.normalTitle" = "макси";
+
+/* Class = "UIButton"; normalTitle = "среднее"; ObjectID = "nph-Vp-bL8"; */
+"nph-Vp-bL8.normalTitle" = "среднее";
+
+/* Class = "UIButton"; normalTitle = "сумма"; ObjectID = "uTH-bt-OwA"; */
+"uTH-bt-OwA.normalTitle" = "сумма";
+
+/* Class = "UIButton"; normalTitle = "oбновить"; ObjectID = "xhx-IV-Xdo"; */
+"xhx-IV-Xdo.normalTitle" = "oбновить";
+
+/* Class = "UIButton"; normalTitle = "да"; ObjectID = "yly-vJ-oQ1"; */
+"yly-vJ-oQ1.normalTitle" = "да";

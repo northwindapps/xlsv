@@ -1,0 +1,62 @@
+
+/* Class = "UILabel"; text = "
+Загрузка данных..."; ObjectID = "5Vx-xP-huO"; */
+"5Vx-xP-huO.text" = "Загрузка данных...";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "6Vi-ro-rAr"; */
+"6Vi-ro-rAr.normalTitle" = "Button";
+
+/* Class = "UITextView"; text = "Blueframe\nCopyright 2019 Yujin Yano . All rights reserved."; ObjectID = "8Mf-Pc-arl"; */
+"8Mf-Pc-arl.text" = "Blueframe\nCopyright 2019 Yujin Yano . All rights reserved.";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "9DX-df-4sq"; */
+"9DX-df-4sq.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Return"; ObjectID = "HLh-08-3NR"; */
+"HLh-08-3NR.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "IoM-iB-QHX"; */
+"IoM-iB-QHX.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "Kke-sL-igr"; */
+"Kke-sL-igr.normalTitle" = "Button";
+
+/* Class = "UIButton"; normalTitle = "Search"; ObjectID = "KrH-N0-LEu"; */
+"KrH-N0-LEu.normalTitle" = "Поиск";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "PGU-jP-QPm"; */
+"PGU-jP-QPm.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "
+почта"; ObjectID = "Shp-tt-LYE"; */
+"Shp-tt-LYE.normalTitle" = "почта";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "U3o-dG-k8U"; */
+"U3o-dG-k8U.text" = "Sec 0 / Item 1";
+
+/* Class = "UILabel"; text = "
+Загрузка данных..."; ObjectID = "XbD-EX-986"; */
+"XbD-EX-986.text" = "Загрузка данных...";
+
+/* Class = "UIButton"; normalTitle = "
+почта"; ObjectID = "bgq-Yq-sBG"; */
+"bgq-Yq-sBG.normalTitle" = "почта";
+
+/* Class = "UIButton"; normalTitle = "MENU"; ObjectID = "cqv-S1-EKd"; */
+"cqv-S1-EKd.normalTitle" = "Меню";
+
+/* Class = "UILabel"; text = "
+Загрузка данных..."; ObjectID = "mfT-fV-4vC"; */
+"mfT-fV-4vC.text" = "Загрузка данных...";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "pNP-7K-cFP"; */
+"pNP-7K-cFP.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Calculator"; ObjectID = "pkt-gw-rFT"; */
+"pkt-gw-rFT.normalTitle" = "Калькулятор";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "tTy-nI-X26"; */
+"tTy-nI-X26.normalTitle" = "↩︎";
+
+/* Class = "UILabel"; text = "Credits"; ObjectID = "wmb-rR-fu7"; */
+"wmb-rR-fu7.text" = "Tutorial & Credits";

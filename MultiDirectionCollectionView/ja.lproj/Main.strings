@@ -1,0 +1,57 @@
+
+/* Class = "UILabel"; text = "読み込み中"; ObjectID = "5Vx-xP-huO"; */
+"5Vx-xP-huO.text" = "読み込み中";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "6Vi-ro-rAr"; */
+"6Vi-ro-rAr.normalTitle" = "Button";
+
+/* Class = "UITextView"; text = "Blueframe\nCopyright 2019 Yujin Yano . All rights reserved."; ObjectID = "8Mf-Pc-arl"; */
+"8Mf-Pc-arl.text" = "Blueframe\nCopyright 2019 Yujin Yano . All rights reserved.";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "9DX-df-4sq"; */
+"9DX-df-4sq.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Return"; ObjectID = "HLh-08-3NR"; */
+"HLh-08-3NR.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "IoM-iB-QHX"; */
+"IoM-iB-QHX.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "Kke-sL-igr"; */
+"Kke-sL-igr.normalTitle" = "Button";
+
+/* Class = "UIButton"; normalTitle = "Search"; ObjectID = "KrH-N0-LEu"; */
+"KrH-N0-LEu.normalTitle" = "探索";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "PGU-jP-QPm"; */
+"PGU-jP-QPm.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "メール"; ObjectID = "Shp-tt-LYE"; */
+"Shp-tt-LYE.normalTitle" = "メール";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "U3o-dG-k8U"; */
+"U3o-dG-k8U.text" = "Sec 0 / Item 1";
+
+/* Class = "UILabel"; text = "読み込み中"; ObjectID = "XbD-EX-986"; */
+"XbD-EX-986.text" = "読み込み中";
+
+/* Class = "UIButton"; normalTitle = "メール"; ObjectID = "bgq-Yq-sBG"; */
+"bgq-Yq-sBG.normalTitle" = "メール";
+
+/* Class = "UIButton"; normalTitle = "MENU"; ObjectID = "cqv-S1-EKd"; */
+"cqv-S1-EKd.normalTitle" = "メニュー";
+
+/* Class = "UILabel"; text = "読み込み中"; ObjectID = "mfT-fV-4vC"; */
+"mfT-fV-4vC.text" = "読み込み中";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "pNP-7K-cFP"; */
+"pNP-7K-cFP.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Calculator"; ObjectID = "pkt-gw-rFT"; */
+"pkt-gw-rFT.normalTitle" = "計算機";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "tTy-nI-X26"; */
+"tTy-nI-X26.normalTitle" = "↩︎";
+
+/* Class = "UILabel"; text = "Credits"; ObjectID = "wmb-rR-fu7"; */
+"wmb-rR-fu7.text" = "Tutorial & Credits";

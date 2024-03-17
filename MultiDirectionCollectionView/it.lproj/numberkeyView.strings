@@ -1,0 +1,18 @@
+
+/* Class = "UIButton"; normalTitle = "+1"; ObjectID = "2Dh-68-8Tu"; */
+"2Dh-68-8Tu.normalTitle" = "+1";
+
+/* Class = "UISegmentedControl"; UMA-ne-6YX.segmentTitles[0] = "width"; ObjectID = "UMA-ne-6YX"; */
+"UMA-ne-6YX.segmentTitles[0]" = "larghezza";
+
+/* Class = "UISegmentedControl"; UMA-ne-6YX.segmentTitles[1] = "height"; ObjectID = "UMA-ne-6YX"; */
+"UMA-ne-6YX.segmentTitles[1]" = "altezza";
+
+/* Class = "UIButton"; normalTitle = "-1 "; ObjectID = "XVt-BL-rnu"; */
+"XVt-BL-rnu.normalTitle" = "-1 ";
+
+/* Class = "UITextField"; placeholder = "100.0"; ObjectID = "hRf-Sx-nC3"; */
+"hRf-Sx-nC3.placeholder" = "100.0";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "zTt-1Z-T9i"; */
+"zTt-1Z-T9i.normalTitle" = "↩︎";

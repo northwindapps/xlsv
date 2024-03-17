@@ -1,0 +1,63 @@
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "1Rx-jZ-kJi"; */
+"1Rx-jZ-kJi.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "STEP3"; ObjectID = "9zG-GI-vzp"; */
+"9zG-GI-vzp.normalTitle" = "STEP3";
+
+/* Class = "UIButton"; normalTitle = "STEP1"; ObjectID = "Eor-LW-wet"; */
+"Eor-LW-wet.normalTitle" = "STEP1";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "Fna-ax-TWz"; */
+"Fna-ax-TWz.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "M"; ObjectID = "MYJ-CH-5kw"; */
+"MYJ-CH-5kw.normalTitle" = "M";
+
+/* Class = "UIButton"; normalTitle = "F"; ObjectID = "Nc0-Kx-BBl"; */
+"Nc0-Kx-BBl.normalTitle" = "F";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "Nz2-WT-Z9M"; */
+"Nz2-WT-Z9M.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "RR8-88-gfY"; */
+"RR8-88-gfY.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "AC"; ObjectID = "Wrv-Sr-PC5"; */
+"Wrv-Sr-PC5.normalTitle" = "УB";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "Xvp-sT-9Cz"; */
+"Xvp-sT-9Cz.normalTitle" = "";
+
+/* Class = "UITextField"; placeholder = "e.g: 123.csv"; ObjectID = "dS9-J6-k6a"; */
+"dS9-J6-k6a.placeholder" = "e.g: 123.csv";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "fwJ-gn-QQj"; */
+"fwJ-gn-QQj.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "icd-F7-kX9"; */
+"icd-F7-kX9.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "STEP2"; ObjectID = "m6G-A5-4qj"; */
+"m6G-A5-4qj.normalTitle" = "STEP2";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "nRd-PN-QMi"; */
+"nRd-PN-QMi.normalTitle" = "";
+
+/* Class = "UITextView"; text = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda."; ObjectID = "qvV-d4-Bgx"; */
+"qvV-d4-Bgx.text" = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.";
+
+/* Class = "UISegmentedControl"; rTM-DF-BU2.segmentTitles[0] = "Entry"; ObjectID = "rTM-DF-BU2"; */
+"rTM-DF-BU2.segmentTitles[0]" = "запись";
+
+/* Class = "UISegmentedControl"; rTM-DF-BU2.segmentTitles[1] = "Copy"; ObjectID = "rTM-DF-BU2"; */
+"rTM-DF-BU2.segmentTitles[1]" = "копия";
+
+/* Class = "UISegmentedControl"; rTM-DF-BU2.segmentTitles[2] = "+1"; ObjectID = "rTM-DF-BU2"; */
+"rTM-DF-BU2.segmentTitles[2]" = "+1";
+
+/* Class = "UISegmentedControl"; rTM-DF-BU2.segmentTitles[3] = "-1"; ObjectID = "rTM-DF-BU2"; */
+"rTM-DF-BU2.segmentTitles[3]" = "-1";
+
+/* Class = "UIButton"; normalTitle = "C"; ObjectID = "vXc-iW-KCL"; */
+"vXc-iW-KCL.normalTitle" = "C";

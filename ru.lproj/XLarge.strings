@@ -1,0 +1,63 @@
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "5VO-vB-egq"; */
+"5VO-vB-egq.normalTitle" = "";
+
+/* Class = "UITextField"; placeholder = "e.g: 123.csv"; ObjectID = "6Hz-qf-4Hv"; */
+"6Hz-qf-4Hv.placeholder" = "e.g: 123.csv";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "8zP-Jg-1K3"; */
+"8zP-Jg-1K3.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "STEP1"; ObjectID = "9F9-Sk-w4c"; */
+"9F9-Sk-w4c.normalTitle" = "STEP1";
+
+/* Class = "UIButton"; normalTitle = "AC"; ObjectID = "EAg-ci-Uhq"; */
+"EAg-ci-Uhq.normalTitle" = "УB";
+
+/* Class = "UIButton"; normalTitle = "M"; ObjectID = "PqR-OY-NF6"; */
+"PqR-OY-NF6.normalTitle" = "M";
+
+/* Class = "UIButton"; normalTitle = "F"; ObjectID = "Uco-MS-gwv"; */
+"Uco-MS-gwv.normalTitle" = "F";
+
+/* Class = "UISegmentedControl"; Ur0-Xk-X2j.segmentTitles[0] = "Entry"; ObjectID = "Ur0-Xk-X2j"; */
+"Ur0-Xk-X2j.segmentTitles[0]" = "запись";
+
+/* Class = "UISegmentedControl"; Ur0-Xk-X2j.segmentTitles[1] = "Copy"; ObjectID = "Ur0-Xk-X2j"; */
+"Ur0-Xk-X2j.segmentTitles[1]" = "копия";
+
+/* Class = "UISegmentedControl"; Ur0-Xk-X2j.segmentTitles[2] = "+1"; ObjectID = "Ur0-Xk-X2j"; */
+"Ur0-Xk-X2j.segmentTitles[2]" = "+1";
+
+/* Class = "UISegmentedControl"; Ur0-Xk-X2j.segmentTitles[3] = "-1"; ObjectID = "Ur0-Xk-X2j"; */
+"Ur0-Xk-X2j.segmentTitles[3]" = "-1";
+
+/* Class = "UILabel"; text = "Sec 0 / Item 1"; ObjectID = "ZXf-zS-CqJ"; */
+"ZXf-zS-CqJ.text" = "Sec 0 / Item 1";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "Zsg-BZ-O6T"; */
+"Zsg-BZ-O6T.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "j91-nf-pX9"; */
+"j91-nf-pX9.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "STEP3"; ObjectID = "jyY-Xa-wJs"; */
+"jyY-Xa-wJs.normalTitle" = "STEP3";
+
+/* Class = "UITextView"; text = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda."; ObjectID = "ovm-fB-MfJ"; */
+"ovm-fB-MfJ.text" = "Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "vZM-gM-uYh"; */
+"vZM-gM-uYh.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "wGS-w6-rtM"; */
+"wGS-w6-rtM.normalTitle" = "вернуть";
+
+/* Class = "UIButton"; normalTitle = ""; ObjectID = "xZX-fD-unC"; */
+"xZX-fD-unC.normalTitle" = "";
+
+/* Class = "UIButton"; normalTitle = "C"; ObjectID = "yGK-I4-eaf"; */
+"yGK-I4-eaf.normalTitle" = "C";
+
+/* Class = "UIButton"; normalTitle = "STEP2"; ObjectID = "yq4-j8-Vbs"; */
+"yq4-j8-Vbs.normalTitle" = "STEP2";

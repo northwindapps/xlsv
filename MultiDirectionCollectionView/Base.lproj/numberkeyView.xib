@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_0" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="numberkey" customModule="MultiDirectionCollectionView" customModuleProvider="target">
+            <connections>
+                <outlet property="back" destination="zTt-1Z-T9i" id="zuj-wO-WBz"/>
+                <outlet property="inputfield" destination="hRf-Sx-nC3" id="a4Y-1c-qd8"/>
+                <outlet property="minusOne" destination="XVt-BL-rnu" id="Ar3-4U-tDx"/>
+                <outlet property="plusOne" destination="2Dh-68-8Tu" id="amO-Rw-2Kv"/>
+                <outlet property="width_height_selector" destination="UMA-ne-6YX" id="GsO-uY-dRI"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="210" height="145"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zTt-1Z-T9i">
+                    <rect key="frame" x="5" y="110" width="35" height="35"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <state key="normal" title="↩︎">
+                        <color key="titleColor" red="1" green="0.079880669279999997" blue="0.1779334145" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                </button>
+                <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="100.0" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="hRf-Sx-nC3">
+                    <rect key="frame" x="76" y="110" width="97" height="30"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <nil key="textColor"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <textInputTraits key="textInputTraits"/>
+                </textField>
+                <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="UMA-ne-6YX">
+                    <rect key="frame" x="11" y="68" width="195" height="29"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <segments>
+                        <segment title="width"/>
+                        <segment title="height"/>
+                    </segments>
+                </segmentedControl>
+                <button opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="2Dh-68-8Tu">
+                    <rect key="frame" x="45" y="11" width="60" height="40"/>
+                    <color key="backgroundColor" red="0.016804177310000001" green="0.19835099580000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="LSU-Jc-i0B"/>
+                        <constraint firstAttribute="width" relation="lessThanOrEqual" constant="90" id="foT-tI-KGy"/>
+                        <constraint firstAttribute="width" constant="60" id="hfn-Lo-XIm"/>
+                    </constraints>
+                    <color key="tintColor" red="0.016804177310000001" green="0.19835099580000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <state key="normal" title="+1" image="insert">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                </button>
+                <button opaque="NO" contentMode="scaleAspectFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="XVt-BL-rnu">
+                    <rect key="frame" x="113" y="11" width="60" height="40"/>
+                    <color key="backgroundColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="lessThanOrEqual" constant="90" id="L12-Gu-iWp"/>
+                        <constraint firstAttribute="height" constant="40" id="eaN-Ve-gjv"/>
+                        <constraint firstAttribute="width" constant="60" id="tkD-BJ-axQ"/>
+                    </constraints>
+                    <state key="normal" title="-1 " image="delete">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="XVt-BL-rnu" secondAttribute="trailing" constant="37" id="3Xd-A2-JRK"/>
+                <constraint firstItem="XVt-BL-rnu" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="11" id="N1O-1p-bfD"/>
+                <constraint firstItem="2Dh-68-8Tu" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="45" id="h9X-k3-DDu"/>
+                <constraint firstAttribute="trailing" secondItem="XVt-BL-rnu" secondAttribute="trailing" constant="37" id="kKv-Mh-Cle"/>
+                <constraint firstItem="2Dh-68-8Tu" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="11" id="yVP-Th-ala"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="-39.375" y="-134.68309859154931"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="delete" width="500" height="500"/>
+        <image name="insert" width="500" height="500"/>
+    </resources>
+</document>

@@ -1,0 +1,18 @@
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "14y-Ww-Rhj"; */
+"14y-Ww-Rhj.normalTitle" = "存檔";
+
+/* Class = "UIButton"; normalTitle = "replace"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "更換";
+
+/* Class = "UIButton"; normalTitle = "Back"; ObjectID = "HQP-z1-6vm"; */
+"HQP-z1-6vm.normalTitle" = "返回";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "Matchs"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "击中";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "Contains"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "部分地";
+
+/* Class = "UIButton"; normalTitle = "search"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "搜索";

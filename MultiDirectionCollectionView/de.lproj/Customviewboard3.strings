@@ -1,0 +1,18 @@
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "14y-Ww-Rhj"; */
+"14y-Ww-Rhj.normalTitle" = "Sparen";
+
+/* Class = "UIButton"; normalTitle = "Ersetzen"; ObjectID = "8KN-c5-9fr"; */
+"8KN-c5-9fr.normalTitle" = "Ersetzen";
+
+/* Class = "UIButton"; normalTitle = "Rückkehr"; ObjectID = "HQP-z1-6vm"; */
+"HQP-z1-6vm.normalTitle" = "Rückkehr";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[0] = "Hit"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[0]" = "Hit";
+
+/* Class = "UISegmentedControl"; X1B-BD-uSw.segmentTitles[1] = "Teilweise"; ObjectID = "X1B-BD-uSw"; */
+"X1B-BD-uSw.segmentTitles[1]" = "Teilweise";
+
+/* Class = "UIButton"; normalTitle = "Suche"; ObjectID = "wIp-dO-Z2X"; */
+"wIp-dO-Z2X.normalTitle" = "Suche";
