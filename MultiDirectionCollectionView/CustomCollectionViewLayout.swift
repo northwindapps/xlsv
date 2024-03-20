@@ -352,7 +352,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                                 if(cellAttrsDictionary[cellIndex] == nil){
                                     cellAttrsDictionary[cellIndex] = cellAttributes
                                 }else{
-                                    print("attribute exists") //well. what should i do in this case
+                                    //print("attribute exists") //well. what should i do in this case
                                 }
                             }
                             

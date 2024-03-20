@@ -121,29 +121,20 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let fnameArry = url.absoluteString.split(separator: "/")
         let fnameA = fnameArry.last!.split(separator: ".")
         excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-        
-           
-    
         let mydata = try! Data(contentsOf: url)
         let str = swiftDataToString(someData: mydata)
-       
-        
         var elementArray = str?.components(separatedBy: "\n")
             var rowcount:Int = elementArray!.count
         
         for i in 0..<rowcount {
             
             if (elementArray![i].contains("\r")){
-                
-                
-                
                 elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
                 elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
             }
             
         }
 
-            
         //
         location.removeAll()
         contents.removeAll()
@@ -163,7 +154,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             }
             else
             {
-                
                 for c in 0..<columncount
                 {
                     if wordsArray[c] == "" || wordsArray[c] == " "
@@ -172,41 +162,28 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                     }
                     else
                     {
-                        
                         let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
                         
                         location.append(targetlocation)
                         contents.append(wordsArray[c])
                     }
-                    
-                    
                 }
-                
             }
-            
         }
             
-            if columncount < appd.DEFAULT_COLUMN_NUMBER {
-                columncount = appd.DEFAULT_COLUMN_NUMBER
-            }
-            
-            if rowcount < appd.DEFAULT_ROW_NUMBER {
-                rowcount = appd.DEFAULT_ROW_NUMBER
-            }
+        if columncount < appd.DEFAULT_COLUMN_NUMBER {
+            columncount = appd.DEFAULT_COLUMN_NUMBER
+        }
+        
+        if rowcount < appd.DEFAULT_ROW_NUMBER {
+            rowcount = appd.DEFAULT_ROW_NUMBER
+        }
 
         
         let csvData = UserDefaults.standard
         csvData.set(location, forKey: "NEWTMLOCATION")
-   
-        
         csvData.set(contents, forKey: "NEWTMCONTENT")
-     
-        
-      
         csvData.set(rowcount, forKey: "NEWRsize")
-        
-        
-        
         csvData.set(columncount, forKey: "NEWCsize")
         csvData.synchronize()
             
@@ -260,7 +237,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd.customSizedWidth.removeAll()
         appd.cshLocation.removeAll()
         appd.cswLocation.removeAll()
-            
         appd.numberofRow = rowcount+1
         appd.numberofColumn = columncount+1
         // End of csv.file reading
@@ -296,7 +272,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let filename = String(fnameArry.last!)
             let fp = url2.appendingPathComponent(filename).path
             print("yourExcelfile",fp)
+            appd.imported_xlsx_file_path=fp
             readExcel(path: fp)
+            
             
         }else{
             
