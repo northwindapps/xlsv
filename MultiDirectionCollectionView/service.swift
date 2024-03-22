@@ -95,7 +95,6 @@ class Service{
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
                 let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
-                
                 //
                 if FileManager.default.fileExists(atPath: fp) {
                             // The specified path exists, continue with your code
@@ -111,44 +110,73 @@ class Service{
                             } else {
                                 // Subdirectory already exists
                                 print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                                let files = try FileManager.default.contentsOfDirectory(at:
+                                                                                            subdirectoryURL, includingPropertiesForKeys: nil)
+                                for fileURL in files {
+                                           do {
+                                               try FileManager.default.removeItem(at: fileURL)
+                                               print("Deleted file:", fileURL.lastPathComponent)
+                                           } catch {
+                                               print("Error deleting file:", error)
+                                           }
+                                       }
                             }
                     
                     // Construct the URL for the destination file
                     let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
-                           //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
-                           
-                           // Check if the file already exists at the destination
-                           if FileManager.default.fileExists(atPath: destinationURL.path) {
-                               print("File already exists at the destination.")
-                               
-                               do {
-                                   //unzip
-                                   let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
-                                   
-                                       print("File unzipped successfully.")
-                                   } catch {
-                                       print("Error unzipping file: \(error)")
-                                   }
-                           } else {
-                               // Move the file to the subdirectory
-                               try FileManager.default.moveItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
-                               print("File moved successfully to: \(destinationURL.path)")
-                           }
+                    //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+                   
+                    // Check if the file already exists at the destination
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        print("File already exists at the destination.")
+                    } else {
+                        // Move the file to the subdirectory
+                        try FileManager.default.moveItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                        print("File moved successfully to: \(destinationURL.path)")
+                    }
+                    
+                    do {
+                        //unzip
+                        let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                        print("File unzipped successfully.")
+                    } catch {
+                        print("Error unzipping file: \(error)")
+                    }
+                    
+                    
+                    
+                    do {
+                        //delete imported2.zip or imported2.xlsx
+                        try FileManager.default.removeItem(at: destinationURL)
+                        print("Deleted zip file:", destinationURL)
+                    } catch {
+                        print("Error deleting file:", error)
+                    }
                     
                     
                     
                     
                     
-                    let files = try FileManager.default.contentsOfDirectory(at:
+                    var files = try FileManager.default.contentsOfDirectory(at:
                                                                                 subdirectoryURL, includingPropertiesForKeys: nil)
-                    print("this is excel dir",files)
                     
                     
                     
-                        } else {
-                            // Handle the case where the specified path doesn't exist
-                            print("File or directory does not exist at path: \(fp)")
-                        }
+                    
+                   
+                    //ready to zip
+                    let productURL = subdirectoryURL.appendingPathComponent("imported2.xlsx")
+                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Done: ", files)
+
+                    
+                } else {
+                    // Handle the case where the specified path doesn't exist
+                    print("File or directory does not exist at path: \(fp)")
+                }
                 
                 // Check if the directory exists
                 let fp_or_default_variable = fp.isEmpty ? driveURL.path : fp
