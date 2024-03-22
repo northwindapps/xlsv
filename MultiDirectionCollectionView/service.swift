@@ -90,7 +90,7 @@ class Service{
         
     }
     
-    func tesstSandBox(fp: String = "", url: URL? = nil) {
+    func tesstSandBox(fp: String = "", url: URL? = nil) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -129,9 +129,14 @@ class Service{
                     // Check if the file already exists at the destination
                     if FileManager.default.fileExists(atPath: destinationURL.path) {
                         print("File already exists at the destination.")
+                        // Remove destination file if it already exists
+                        if FileManager.default.fileExists(atPath: destinationURL.path) {
+                            try FileManager.default.removeItem(at: destinationURL)
+                        }
+                        
                     } else {
                         // Move the file to the subdirectory
-                        try FileManager.default.moveItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                        try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
                         print("File moved successfully to: \(destinationURL.path)")
                     }
                     
@@ -156,6 +161,7 @@ class Service{
                     
                     
                     
+
                     
                     var files = try FileManager.default.contentsOfDirectory(at:
                                                                                 subdirectoryURL, includingPropertiesForKeys: nil)
@@ -171,6 +177,8 @@ class Service{
                     
                     files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     print("Done: ", files)
+                    
+                    return productURL
 
                     
                 } else {
@@ -178,35 +186,39 @@ class Service{
                     print("File or directory does not exist at path: \(fp)")
                 }
                 
-                // Check if the directory exists
-                let fp_or_default_variable = fp.isEmpty ? driveURL.path : fp
-                if FileManager.default.fileExists(atPath: fp_or_default_variable) {
-                    // Get a list of files in the directory
-                    let files = try FileManager.default.contentsOfDirectory(at:
-                                                                                URL.init(fileURLWithPath: fp_or_default_variable), includingPropertiesForKeys: nil)
-                    print("fp",fp)
-                    print("here is the files list",files)
-                    
-                    // Zip the files (assuming you have a Zip library)
-                    //let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-                    
-                    //try Zip.quickUnzipFile(zipFilePath)
-                        
+//                // Check if the directory exists
+//                let fp_or_default_variable = fp.isEmpty ? driveURL.path : fp
+//                if FileManager.default.fileExists(atPath: fp_or_default_variable) {
+//                    // Get a list of files in the directory
+//                    let files = try FileManager.default.contentsOfDirectory(at:
+//                                                                                URL.init(fileURLWithPath: fp_or_default_variable), includingPropertiesForKeys: nil)
+//                    print("fp",fp)
+//                    print("here is the files list",files)
 //
-//                    if FileManager.default.fileExists(atPath: zipFilePath.path) {
-//                        // Copy the zip file to the specified path
-//                        try FileManager.default.copyItem(at: zipFilePath, to: path.appendingPathComponent(fileName))
-//                        print("Done: ", path.appendingPathComponent(fileName).path)
-//                    }
-                } else {
-                    print("Directory does not exist.")
-                }
+//                    // Zip the files (assuming you have a Zip library)
+//                    //let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+//
+//                    //try Zip.quickUnzipFile(zipFilePath)
+//
+////
+////                    if FileManager.default.fileExists(atPath: zipFilePath.path) {
+////                        // Copy the zip file to the specified path
+////                        try FileManager.default.copyItem(at: zipFilePath, to: path.appendingPathComponent(fileName))
+////                        print("Done: ", path.appendingPathComponent(fileName).path)
+////                    }
+//                } else {
+//                    print("Directory does not exist.")
+//                }
             } else {
                 print("Document directory not found.")
             }
+            
+            
         } catch {
             print("Error: \(error)")
         }
+        
+        return nil
     }
     
     func writeXlsxSandBox(path: URL, fileName: String) {
