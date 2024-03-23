@@ -329,6 +329,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             var counter = 0
             var sheetsNumber = -1
             sheetsNumber = try file!.parseWorksheetPaths().count-1
+            
+            
             appd.ws_total_pages = sheetsNumber
             //only show first page.
             //for path in try file!.parseWorksheetPaths() {

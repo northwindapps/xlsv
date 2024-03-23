@@ -9,7 +9,36 @@
 import Foundation
 import Zip
 
-class Service{
+
+// Define a class to act as the delegate for the XMLParser
+class XMLParserHelper: NSObject, XMLParserDelegate {
+    var siElementCount: Int = -1
+    var currentElement: String = ""
+    var currentText: String = ""
+
+    // Called when the parser finds the start of an element
+    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
+        currentElement = elementName
+        if elementName == "si" {
+            siElementCount += 1
+        }
+    }
+
+    // Called when the parser finds the characters inside an element
+    func parser(_ parser: XMLParser, foundCharacters string: String) {
+        currentText += string
+    }
+
+    // Called when the parser finds the end of an element
+    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if elementName == "t" {
+            //print("Content of <t> element:", currentText)
+            currentText = ""
+        }
+    }
+}
+
+class Service {
     var sheetNumber:Int
     var stringContents:[String]
     
@@ -21,6 +50,8 @@ class Service{
     
     var formulaContens:[String]
     
+    var siElementCount: Int = 0
+
     init(imp_sheetNumber:Int,imp_stringContents:[String],imp_locations:[String],imp_idx:[Int],imp_fileName:String,imp_formula:[String]) {
         
         sheetNumber = imp_sheetNumber
@@ -90,10 +121,134 @@ class Service{
         
     }
     
+    
+    // Called when the parser finds the start of an element
+    func _parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
+        if elementName == "si" {
+            siElementCount += 1
+        }
+    }
+    
+    
+
+    func testXml(url:URL? = nil){
+        var new_count : Int?
+        var new_count2 : Int?
+        if let url2 = url{
+            var xmlString = try? String(contentsOf: url2)
+            
+            // Find the position to insert the new <si> element
+            if let range = xmlString!.range(of: "</sst>") {
+                // Construct the new <si> element
+                let newSIElement = "<si><t>def</t></si>"
+                
+                // Insert the new <si> element at the end of <sst>
+                xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
+                
+                let xmlData = try? Data(contentsOf: url2)
+                    
+                    // Create an XML parser and set its delegate
+                let parser = XMLParser(data: xmlData!)
+                let delegate = XMLParserHelper()
+                parser.delegate = delegate
+                // Parse the XML data
+                if parser.parse() {
+                    print("Number of <si> elements:", delegate.siElementCount)
+                    new_count = delegate.siElementCount
+                } else {
+                    print("Failed to parse XML data.")
+                }
+                
+                // Write the modified XML data back to the file
+                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+                
+                print("New <si> element inserted successfully.")
+            } else {
+                print("Failed to find </sst> in the XML data.")
+            }
+            
+            //
+            // Regular expression pattern to match the count attribute
+            let pattern = #"\bcount\s*=\s*"(\d+)""#
+
+            // Regular expression options
+            let options: NSRegularExpression.Options = [.caseInsensitive]
+
+            // Create a regular expression object
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {
+                fatalError("Invalid regular expression pattern")
+            }
+            
+            //
+            // Find the first match of the count attribute
+            if let match = regex.firstMatch(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!)) {
+                // Extract the count value from the match
+                if let range = Range(match.range(at: 1), in: xmlString!),
+                   let count = Int(xmlString![range]) {
+                    print("Count attribute value:", count)
+                    new_count = count + 1
+                } else {
+                    print("Failed to extract count attribute value")
+                }
+            } else {
+                print("Count attribute not found")
+            }
+
+            
+            // New value for the attribute
+            if (new_count != nil){
+                // Replace the count and uniqueCount attributes with new values
+                // Replace the count attribute with the new value
+                let modifiedString = regex.stringByReplacingMatches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!), withTemplate: "count=\"\(new_count!)\"")
+                xmlString = modifiedString
+                
+                // Write the modified XML data back to the file
+                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+            }
+            
+            // Regular expression pattern to match the count and uniqueCount attributes
+            let pattern2 = #"\buniqueCount\s*=\s*"(\d+)""#
+
+            // Regular expression options
+            let options2: NSRegularExpression.Options = [.caseInsensitive]
+
+            // Create a regular expression object
+            guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: options2) else {
+                fatalError("Invalid regular expression pattern")
+            }
+
+            // Find matches for count and uniqueCount attributes
+            let matches2 = regex2.matches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!))
+
+            // Iterate through the matches and extract the attribute values
+            for match in matches2 {
+                for i in 1..<match.numberOfRanges {
+                    if let range = Range(match.range(at: i), in: xmlString!),
+                       let value = Int(xmlString![range]) {
+                        let attributeName = (xmlString! as NSString).substring(with: match.range(at: 0))
+                        print("\(attributeName) attribute value:", value)
+                        new_count2 = value + 1
+                    }
+                }
+            }
+            
+            // New value for the attribute
+            if (new_count2 != nil){
+                // Replace the count and uniqueCount attributes with new values
+                // Replace the count attribute with the new value
+                let modifiedString = regex2.stringByReplacingMatches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!), withTemplate: "uniqueCount=\"\(new_count2!)\"")
+                xmlString = modifiedString
+                
+                // Write the modified XML data back to the file
+                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+            }
+        }
+    }
+    
     func tesstSandBox(fp: String = "", url: URL? = nil) -> URL? {
         do {
-            // Get the sandbox directory for documents
-            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+                // Get the sandbox directory for documents
+                if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
                 let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
                 //
                 if FileManager.default.fileExists(atPath: fp) {
@@ -158,18 +313,14 @@ class Service{
                         print("Error deleting file:", error)
                     }
                     
+                    //
+                    let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                     
-                    
-                    
-
+                    testXml(url: shardStringXMLURL)
                     
                     var files = try FileManager.default.contentsOfDirectory(at:
                                                                                 subdirectoryURL, includingPropertiesForKeys: nil)
                     
-                    
-                    
-                    
-                   
                     //ready to zip
                     let productURL = subdirectoryURL.appendingPathComponent("imported2.xlsx")
                     let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
@@ -177,6 +328,8 @@ class Service{
                     
                     files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     print("Done: ", files)
+                    
+                    
                     
                     return productURL
 
@@ -186,29 +339,6 @@ class Service{
                     print("File or directory does not exist at path: \(fp)")
                 }
                 
-//                // Check if the directory exists
-//                let fp_or_default_variable = fp.isEmpty ? driveURL.path : fp
-//                if FileManager.default.fileExists(atPath: fp_or_default_variable) {
-//                    // Get a list of files in the directory
-//                    let files = try FileManager.default.contentsOfDirectory(at:
-//                                                                                URL.init(fileURLWithPath: fp_or_default_variable), includingPropertiesForKeys: nil)
-//                    print("fp",fp)
-//                    print("here is the files list",files)
-//
-//                    // Zip the files (assuming you have a Zip library)
-//                    //let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-//
-//                    //try Zip.quickUnzipFile(zipFilePath)
-//
-////
-////                    if FileManager.default.fileExists(atPath: zipFilePath.path) {
-////                        // Copy the zip file to the specified path
-////                        try FileManager.default.copyItem(at: zipFilePath, to: path.appendingPathComponent(fileName))
-////                        print("Done: ", path.appendingPathComponent(fileName).path)
-////                    }
-//                } else {
-//                    print("Directory does not exist.")
-//                }
             } else {
                 print("Document directory not found.")
             }
