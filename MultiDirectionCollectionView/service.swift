@@ -10,11 +10,13 @@ import Foundation
 import Zip
 
 
+
+
 // Define a class to act as the delegate for the XMLParser
 class XMLParserHelper: NSObject, XMLParserDelegate {
     var siElementCount: Int = -1
-    var currentElement: String = ""
-    var currentText: String = ""
+    var currentElement: String?
+    var currentText: String?
 
     // Called when the parser finds the start of an element
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
@@ -26,7 +28,7 @@ class XMLParserHelper: NSObject, XMLParserDelegate {
 
     // Called when the parser finds the characters inside an element
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText += string
+        currentText = (currentText ?? "") + string
     }
 
     // Called when the parser finds the end of an element
@@ -34,6 +36,37 @@ class XMLParserHelper: NSObject, XMLParserDelegate {
         if elementName == "t" {
             //print("Content of <t> element:", currentText)
             currentText = ""
+        }
+    }
+}
+
+class CustomXMLParserDelegate: XMLParserHelper {
+    var foundTargetElement = false
+    var extractedPart: String?
+
+    override func parser(_ parser: XMLParser, foundCharacters string: String) {
+        if foundTargetElement {
+            extractedPart = (extractedPart ?? "") + string
+        }
+    }
+
+    override func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
+        if elementName == "c" && attributeDict["r"] == "B1" {
+            foundTargetElement = true
+            // Start building the extracted part string
+            extractedPart = "<\(elementName)"
+            for (key, value) in attributeDict {
+                extractedPart! += " \(key)=\"\(value)\""
+            }
+            extractedPart! += ">"
+        }
+    }
+
+    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if foundTargetElement && elementName == "c" {
+            foundTargetElement = false
+            // Close the extracted part string
+            extractedPart! += "</\(elementName)>"
         }
     }
 }
@@ -121,15 +154,74 @@ class Service {
         
     }
     
-    
-    // Called when the parser finds the start of an element
-    func _parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
-        if elementName == "si" {
-            siElementCount += 1
+    func testUpdateValue(url:URL? = nil, newValue:Float?) -> String?{
+        if let url2 = url{
+            let xmlData = try? Data(contentsOf: url2)
+            let parser = XMLParser(data: xmlData!)
+            // Set XMLParserDelegate
+            let delegate = CustomXMLParserDelegate()
+            parser.delegate = delegate
+            
+            var patternFound = false
+            // Start parsing
+            if parser.parse() {
+                // Retrieve the extracted part
+                let extractedPart = delegate.extractedPart
+                //print(extractedPart)
+            }
+            
+            //regular expression
+            var xmlString = try? String(contentsOf: url2)
+            
+            // Define the regular expression pattern
+            let pattern = "<c r=\"B2\".*?>(.*?)</c>"//#"<c\s+r="B1".*?</c>"#
+            
+            // Create the regular expression object
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                fatalError("Failed to create regular expression")
+            }
+            
+            // Find matches in the XML string
+            let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+            let matches = regex.matches(in: xmlString!, range: range)
+            
+            // Extract matching substrings
+            let match = matches.first
+            if let matchRange = Range(match!.range, in: xmlString!) {
+                let matchingSubstring = xmlString![matchRange]
+                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                var items = modified.components(separatedBy: "!")
+                //first is always ""
+                let item = items[1] ?? ""
+                print("item", item)
+                //string
+                if(item.contains("<v>") && item.contains("t=")){
+                    var startCpart = item.components(separatedBy:"<v>").first
+                    print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
+                    startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "/")
+                    let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                }
+                
+                //value
+                if(item.contains("<v>") && (newValue) != nil){
+                    let startCpart = item.components(separatedBy:"<v>").first
+                    let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                }
+                
+                //empty <c r="B2" s="4"/>
+                if((newValue) != nil){
+                    let replacing = item.replacingOccurrences(of: "/>", with: ">") + "<v>" + String(newValue!) + "</v></c>"
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                }
+            }
         }
+        return nil
     }
-    
-    
 
     func testXml(url:URL? = nil){
         var new_count : Int?
@@ -147,7 +239,7 @@ class Service {
                 
                 let xmlData = try? Data(contentsOf: url2)
                     
-                    // Create an XML parser and set its delegate
+                // Create an XML parser and set its delegate
                 let parser = XMLParser(data: xmlData!)
                 let delegate = XMLParserHelper()
                 parser.delegate = delegate
@@ -330,7 +422,10 @@ class Service {
                     print("Done: ", files)
                     
                     
+                    //
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
+                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: 33.3)
                     return productURL
 
                     
