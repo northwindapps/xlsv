@@ -198,18 +198,29 @@ class Service {
                 if(item.contains("<v>") && item.contains("t=")){
                     var startCpart = item.components(separatedBy:"<v>").first
                     print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
-                    startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "/")
-                    let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                    startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
+                    if((newValue) != nil){
+                        let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                    }
+                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                     let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                     return replaced
                 }
                 
                 //value
-                if(item.contains("<v>") && (newValue) != nil){
+                if(item.contains("<v>")){
                     let startCpart = item.components(separatedBy:"<v>").first
-                    let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                    if((newValue) != nil){
+                        let replacing = startCpart! + "<v>" + String(newValue!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                    }
+                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                     let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                     return replaced
+                    
                 }
                 
                 //empty <c r="B2" s="4"/>
@@ -218,6 +229,7 @@ class Service {
                     let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                     return replaced
                 }
+                return item
             }
         }
         return nil
