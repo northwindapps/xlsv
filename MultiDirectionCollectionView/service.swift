@@ -174,7 +174,7 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             
             // Define the regular expression pattern
-            let pattern = "<c r=\"B2\".*?>(.*?)</c>"//#"<c\s+r="B1".*?</c>"#
+            let pattern = "<c r=\"D2\".*?>(.*?)</c>"//#"<c\s+r="B1".*?</c>"#
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -428,7 +428,7 @@ class Service {
                     //value update test
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
-                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -13.3)
+                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30)
                     
                     // Write the modified XML data back to the file
                     try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
