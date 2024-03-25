@@ -405,13 +405,22 @@ class Service {
                         print("Error deleting file:", error)
                     }
                     
-                    //
+                    //shardString update test
                     let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                     
                     testXml(url: shardStringXMLURL)
                     
                     var files = try FileManager.default.contentsOfDirectory(at:
                                                                                 subdirectoryURL, includingPropertiesForKeys: nil)
+                    
+                    //value update test
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
+                    
+                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -13.3)
+                    
+                    // Write the modified XML data back to the file
+                    try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                    
                     
                     //ready to zip
                     let productURL = subdirectoryURL.appendingPathComponent("imported2.xlsx")
@@ -421,11 +430,6 @@ class Service {
                     files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     print("Done: ", files)
                     
-                    
-                    //
-                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
-                    
-                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: 33.3)
                     return productURL
 
                     
