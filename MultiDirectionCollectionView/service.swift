@@ -192,6 +192,89 @@ class Service {
         
     }
     
+    //making now
+    func testUpdateString(url:URL? = nil, vIndex:String?, index:String?) -> String?{
+        if let url2 = url{
+            let xmlData = try? Data(contentsOf: url2)
+            let parser = XMLParser(data: xmlData!)
+            // Set XMLParserDelegate
+            let delegate = CustomXMLParserDelegate()
+            parser.delegate = delegate
+            
+            var patternFound = false
+            // Start parsing
+            if parser.parse() {
+                // Retrieve the extracted part
+                let extractedPart = delegate.extractedPart
+                //print(extractedPart)
+            }
+            
+            //regular expression
+            var xmlString = try? String(contentsOf: url2)
+            
+            // Define the regular expression pattern D3
+            let pattern = "<c r=\"\(String(describing: index))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+            
+            // Create the regular expression object
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                fatalError("Failed to create regular expression")
+            }
+            
+            // Find matches in the XML string
+            let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+            let matches = regex.matches(in: xmlString!, range: range)
+            
+            // Extract matching substrings
+            let match = matches.first
+            if let matchRange = Range(match!.range, in: xmlString!) {
+                let matchingSubstring = xmlString![matchRange]
+                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                var items = modified.components(separatedBy: "!")
+                //first is always ""
+                let item = items[1] ?? ""
+                print("item", item)
+                //string
+                if(item.contains("<v>") && item.contains("t=")){
+                    var startCpart = item.components(separatedBy:"<v>").first
+                    print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
+                    //startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
+                    if((vIndex) != nil){
+                        let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                    }
+                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                }
+                
+                //value
+                if(item.contains("<v>")){
+                    var startCpart = item.components(separatedBy:"<v>").first
+                    startCpart = startCpart!.replacingOccurrences(of: ">", with: " t=\"s\">")
+                    if((vIndex) != nil){
+                        let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                    }
+                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                    
+                }
+                
+                //empty <c r="B2" s="4"/>
+                if((vIndex) != nil){
+                    let replacing = item.replacingOccurrences(of: "/>", with: "t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
+                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                    return replaced
+                }
+                return item
+            }
+        }
+        return nil
+    }
+    
     func testUpdateValue(url:URL? = nil, newValue:Float?) -> String?{
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
