@@ -234,7 +234,7 @@ class Service {
                 let item = items[1] ?? ""
                 print("item", item)
                 //string
-                if(item.contains("<v>") && item.contains("t=")){
+                if(item.contains("<v>") && item.contains("t=\"s\"")){
                     var startCpart = item.components(separatedBy:"<v>").first
                     print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
                     //startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
@@ -265,7 +265,7 @@ class Service {
                 
                 //empty <c r="B2" s="4"/>
                 if((vIndex) != nil){
-                    let replacing = item.replacingOccurrences(of: "/>", with: "t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
+                    let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
                     let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                     return replaced
                 }
@@ -447,7 +447,7 @@ class Service {
                     try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
                     
                     print("New <si> element inserted successfully.")
-                    return SSlist.count + INDEX_1_DIFF_ADJUST
+                    return SSlist.count 
                 } else {
                     print("Failed to find </sst> in the XML data.")
                 }
@@ -527,16 +527,25 @@ class Service {
                     //shardString update test
                     let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                     
+                    //value and string update test
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
+                    
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                     
                     let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
+                    
+                    
+                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
+                        // Write the modified XML data back to the file
+                    if(idx != nil && replacedWithNewString != nil){
+                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                    }
                     
                     let newAry = testStringUniqueAry(url: shardStringXMLURL)
                     
                     let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
                     
-                    //value update test
-                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
+                    
                     
                     //update Values
                     let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
