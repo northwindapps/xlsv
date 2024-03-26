@@ -213,7 +213,7 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             
             // Define the regular expression pattern D3
-            let pattern = "<c r=\"\(String(describing: index))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+            let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -275,7 +275,7 @@ class Service {
         return nil
     }
     
-    func testUpdateValue(url:URL? = nil, newValue:Float?) -> String?{
+    func testUpdateValue(url:URL? = nil, newValue:Float?, index:String?) -> String?{
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
@@ -295,7 +295,8 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             
             // Define the regular expression pattern
-            let pattern = "<c r=\"D2\".*?>(.*?)</c>"//#"<c\s+r="B1".*?</c>"#
+            //let pattern = "<c r=\"D2\".*?>(.*?)</c>"//#"<c\s+r="B1".*?</c>"#
+            let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>"
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -538,7 +539,7 @@ class Service {
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
                     //update Values
-                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30)
+                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
                     
                     // Write the modified XML data back to the file
                     try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
