@@ -71,6 +71,44 @@ class CustomXMLParserDelegate: XMLParserHelper {
     }
 }
 
+// Define a class to act as XMLParser delegate
+class SharedStringsUniqueCountParserDelegate: XMLParserHelper {
+    // Define countValue as a class variable
+    var countValue: String?
+
+    override func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
+        // Extract count attribute value when encountering the start of the element
+        if let count = attributeDict["count"] {
+            countValue = count
+        }
+    }
+}
+
+//update countSize
+
+
+// Create XMLParserDelegate
+class SharedStringsParserDelegate: XMLParserHelper {
+    // Class variables
+    var currentText2: String?
+    var texts: [String] = []
+    var sis: [String] = []
+
+    override func parser(_ parser: XMLParser, foundCharacters string: String) {
+        currentText2 = string
+    }
+    
+    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if elementName == "t", let text = currentText2 {
+            texts.append(text)
+        }
+        //uniquecount
+        if elementName == "si", let text = currentText2 {
+            sis.append(text)
+        }
+    }
+}
+
 class Service {
     var sheetNumber:Int
     var stringContents:[String]
@@ -234,119 +272,104 @@ class Service {
         }
         return nil
     }
-
-    func testXml(url:URL? = nil){
-        var new_count : Int?
-        var new_count2 : Int?
+    
+    func testStringUniqueAry(url:URL? = nil)->[String]?{
         if let url2 = url{
-            var xmlString = try? String(contentsOf: url2)
+            let xmlData = try? Data(contentsOf: url2)
+            let parser = XMLParser(data: xmlData!)
+            // Set XMLParserDelegate
+            let delegate = SharedStringsParserDelegate()
+            parser.delegate = delegate
             
-            // Find the position to insert the new <si> element
-            if let range = xmlString!.range(of: "</sst>") {
-                // Construct the new <si> element
-                let newSIElement = "<si><t>def</t></si>"
+            if parser.parse() {
+                // Print the extracted texts
+//                print("t",delegate.texts)
+//                print("t count", delegate.texts.count)
+                print("si",delegate.sis)
+                print("si count", delegate.sis.count)
+                //var xmlString = try? String(contentsOf: url2)
                 
-                // Insert the new <si> element at the end of <sst>
-                xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
-                
-                let xmlData = try? Data(contentsOf: url2)
-                    
-                // Create an XML parser and set its delegate
-                let parser = XMLParser(data: xmlData!)
-                let delegate = XMLParserHelper()
-                parser.delegate = delegate
-                // Parse the XML data
-                if parser.parse() {
-                    print("Number of <si> elements:", delegate.siElementCount)
-                    new_count = delegate.siElementCount
-                } else {
-                    print("Failed to parse XML data.")
-                }
-                
-                // Write the modified XML data back to the file
-                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
-                
-                print("New <si> element inserted successfully.")
-            } else {
-                print("Failed to find </sst> in the XML data.")
-            }
-            
-            //
-            // Regular expression pattern to match the count attribute
-            let pattern = #"\bcount\s*=\s*"(\d+)""#
-
-            // Regular expression options
-            let options: NSRegularExpression.Options = [.caseInsensitive]
-
-            // Create a regular expression object
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {
-                fatalError("Invalid regular expression pattern")
-            }
-            
-            //
-            // Find the first match of the count attribute
-            if let match = regex.firstMatch(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!)) {
-                // Extract the count value from the match
-                if let range = Range(match.range(at: 1), in: xmlString!),
-                   let count = Int(xmlString![range]) {
-                    print("Count attribute value:", count)
-                    new_count = count + 1
-                } else {
-                    print("Failed to extract count attribute value")
-                }
-            } else {
-                print("Count attribute not found")
-            }
-
-            
-            // New value for the attribute
-            if (new_count != nil){
-                // Replace the count and uniqueCount attributes with new values
-                // Replace the count attribute with the new value
-                let modifiedString = regex.stringByReplacingMatches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!), withTemplate: "count=\"\(new_count!)\"")
-                xmlString = modifiedString
-                
-                // Write the modified XML data back to the file
-                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
-            }
-            
-            // Regular expression pattern to match the count and uniqueCount attributes
-            let pattern2 = #"\buniqueCount\s*=\s*"(\d+)""#
-
-            // Regular expression options
-            let options2: NSRegularExpression.Options = [.caseInsensitive]
-
-            // Create a regular expression object
-            guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: options2) else {
-                fatalError("Invalid regular expression pattern")
-            }
-
-            // Find matches for count and uniqueCount attributes
-            let matches2 = regex2.matches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!))
-
-            // Iterate through the matches and extract the attribute values
-            for match in matches2 {
-                for i in 1..<match.numberOfRanges {
-                    if let range = Range(match.range(at: i), in: xmlString!),
-                       let value = Int(xmlString![range]) {
-                        let attributeName = (xmlString! as NSString).substring(with: match.range(at: 0))
-                        print("\(attributeName) attribute value:", value)
-                        new_count2 = value + 1
-                    }
-                }
-            }
-            
-            // New value for the attribute
-            if (new_count2 != nil){
-                // Replace the count and uniqueCount attributes with new values
-                // Replace the count attribute with the new value
-                let modifiedString = regex2.stringByReplacingMatches(in: xmlString!, options: [], range: NSRange(xmlString!.startIndex..., in: xmlString!), withTemplate: "uniqueCount=\"\(new_count2!)\"")
-                xmlString = modifiedString
-                
-                // Write the modified XML data back to the file
-                try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+                //try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+                return delegate.sis
             }
         }
+        return []
+    }
+    
+    func testStringOldUniqueCount(url:URL? = nil){
+        if let url2 = url{
+            var xmlString = try? String(contentsOf: url2)
+            let pattern = "uniqueCount=\"([^\"]+)\"" //"count=\"([^\"]+)\""
+            
+            // Create a regular expression object
+            guard let regex = try? NSRegularExpression(pattern: pattern) else {
+                fatalError("Invalid regular expression pattern")
+            }
+            
+            // Search for matches in the XML string
+            if let match = regex.firstMatch(in: xmlString!, range: NSRange(xmlString!.startIndex..., in: xmlString!)) {
+                // Extract the matched substring
+                let countPartRange = Range(match.range(at: 1), in: xmlString!)!
+                let countPart = String(xmlString![countPartRange])
+                
+                print("Extracted count part:", countPart)
+            } else {
+                print("No match found")
+            }
+        }
+    }
+
+    func checkSharedStringsIndex(url:URL? = nil, SSlist:[String] = [], word:String)->Int?{
+        var new_count : Int?
+        var new_count2 : Int?
+        
+        if word == ""{
+            return nil
+        }
+        
+        if let url2 = url{
+            var xmlString = try? String(contentsOf: url2)
+            let INDEX_1_DIFF_ADJUST = 1
+            
+            //
+            if let idx = SSlist.firstIndex(of:word) {
+                print("String exists at", idx + INDEX_1_DIFF_ADJUST)
+                return idx + INDEX_1_DIFF_ADJUST
+            } else {
+                print("String not exists.")
+                // Find the position to insert the new <si> element
+                if let range = xmlString!.range(of: "</sst>") {
+                    // Construct the new <si> element
+                    let newSIElement = "<si><t>" + word + "</t></si>"
+                    
+                    // Insert the new <si> element at the end of <sst>
+                    xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
+                    
+                    let xmlData = try? Data(contentsOf: url2)
+                        
+                    // Create an XML parser and set its delegate
+                    let parser = XMLParser(data: xmlData!)
+                    let delegate = XMLParserHelper()
+                    parser.delegate = delegate
+                    // Parse the XML data
+                    if parser.parse() {
+                        print("Number of <si> elements:", delegate.siElementCount)
+                        new_count = delegate.siElementCount
+                    } else {
+                        print("Failed to parse XML data.")
+                    }
+                    
+                    // Write the modified XML data back to the file
+                    try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+                    
+                    print("New <si> element inserted successfully.")
+                    return SSlist.count + INDEX_1_DIFF_ADJUST
+                } else {
+                    print("Failed to find </sst> in the XML data.")
+                }
+            }
+        }
+        return nil
     }
     
     func tesstSandBox(fp: String = "", url: URL? = nil) -> URL? {
@@ -420,21 +443,29 @@ class Service {
                     //shardString update test
                     let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                     
-                    testXml(url: shardStringXMLURL)
+                    let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                     
-                    var files = try FileManager.default.contentsOfDirectory(at:
-                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
+                    
+                    let newAry = testStringUniqueAry(url: shardStringXMLURL)
+                    
+                    let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
                     
                     //value update test
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
+                    //update Values
                     let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30)
                     
                     // Write the modified XML data back to the file
                     try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     
                     
+                    
+                    
+                    
                     //ready to zip
+                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     let productURL = subdirectoryURL.appendingPathComponent("imported2.xlsx")
                     let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
                     let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
