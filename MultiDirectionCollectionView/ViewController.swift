@@ -592,27 +592,35 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             stringboxText = ""
             
             
-            let rlt = noInternet(sheetIdx: selectedSheet)
-            if rlt{
-                //
-                FileCollectionView.reloadData()
-                fileTitle.text = localFileNames[selectedSheet]
-                //
-                
-                calcPrep()
-                calculatormode_update_main()
-                
-//                DispatchQueue.main.async() {
-//                    appd.collectionViewCellSizeChanged = 1
-//                    self.myCollectionView.collectionViewLayout.invalidateLayout()
-//                    self.myCollectionView.reloadData()
-//                }
-            }else{
-                print("go to load view")
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
+//            let rlt = noInternet(sheetIdx: selectedSheet)
+//            if rlt{
+//                //
+//                FileCollectionView.reloadData()
+//                fileTitle.text = localFileNames[selectedSheet]
+//                //
+//
+//                calcPrep()
+//                calculatormode_update_main()
+//
+////                DispatchQueue.main.async() {
+////                    appd.collectionViewCellSizeChanged = 1
+////                    self.myCollectionView.collectionViewLayout.invalidateLayout()
+////                    self.myCollectionView.reloadData()
+////                }
+//                print("go to file view")
+//                print("selectedSheet",selectedSheet)
+//                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+//                targetViewController.idx = 1
+//                targetViewController.modalPresentationStyle = .fullScreen
+//                self.present( targetViewController, animated: true, completion: nil)
+//            }else{
+                print("go to file view")
+                print("selectedSheet",selectedSheet)
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+                targetViewController.idx = selectedSheet
                 targetViewController.modalPresentationStyle = .fullScreen
                 self.present( targetViewController, animated: true, completion: nil)
-            }
+//            }
         }
     }
     
@@ -3843,7 +3851,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }else{
              //go to load view
                 print("go to load view")
-                appd.wsIndex = sheetIdx//sheetIdx
+                appd.wsIndex = selectedSheet//sheetIdx
 //                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
 //                targetViewController.modalPresentationStyle = .fullScreen
 //                self.present( targetViewController, animated: true, completion: nil)

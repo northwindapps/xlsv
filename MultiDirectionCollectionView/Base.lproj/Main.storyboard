@@ -504,9 +504,12 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="12l-Bi-tLv">
-                                <rect key="frame" x="200" y="663" width="35" height="35"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="12l-Bi-tLv">
+                                <rect key="frame" x="189.66666666666666" y="663" width="35" height="35"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="35" id="KRx-5j-SFf"/>
+                                    <constraint firstAttribute="width" constant="35" id="kGP-gJ-p5t"/>
+                                </constraints>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="↩︎"/>
                                 <connections>
@@ -523,10 +526,12 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="12l-Bi-tLv" firstAttribute="centerX" secondItem="LSE-1N-bdW" secondAttribute="centerX" id="OAz-Cn-WMe"/>
                             <constraint firstItem="qq7-wA-JHa" firstAttribute="top" secondItem="5Ot-mS-JYa" secondAttribute="bottom" constant="20" id="Ozk-nw-DCg"/>
                             <constraint firstItem="5Ot-mS-JYa" firstAttribute="centerY" secondItem="LSE-1N-bdW" secondAttribute="centerY" id="RAm-Wz-yrH"/>
                             <constraint firstItem="5Ot-mS-JYa" firstAttribute="centerX" secondItem="LSE-1N-bdW" secondAttribute="centerX" id="ap4-9X-hLs"/>
                             <constraint firstItem="qq7-wA-JHa" firstAttribute="centerX" secondItem="LSE-1N-bdW" secondAttribute="centerX" id="j5x-31-VM9"/>
+                            <constraint firstItem="bEf-8D-mvD" firstAttribute="top" secondItem="12l-Bi-tLv" secondAttribute="bottom" constant="38" id="tGW-cw-AD3"/>
                         </constraints>
                     </view>
                     <connections>
@@ -603,9 +608,12 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vQj-mD-MrP">
-                                <rect key="frame" x="200" y="663" width="35" height="35"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vQj-mD-MrP">
+                                <rect key="frame" x="189.66666666666666" y="663" width="35" height="35"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="35" id="Hrl-cv-4XH"/>
+                                    <constraint firstAttribute="width" constant="35" id="Jw7-wg-lEA"/>
+                                </constraints>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="↩︎"/>
                                 <connections>
@@ -624,6 +632,8 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <constraints>
                             <constraint firstItem="cml-Uw-eFu" firstAttribute="centerX" secondItem="YFN-EN-oBs" secondAttribute="centerX" id="DGA-0n-7J0"/>
                             <constraint firstItem="cml-Uw-eFu" firstAttribute="centerY" secondItem="YFN-EN-oBs" secondAttribute="centerY" id="cCw-Hr-oel"/>
+                            <constraint firstItem="MjK-mC-P4v" firstAttribute="top" secondItem="vQj-mD-MrP" secondAttribute="bottom" constant="38" id="edv-zx-T46"/>
+                            <constraint firstItem="vQj-mD-MrP" firstAttribute="centerX" secondItem="YFN-EN-oBs" secondAttribute="centerX" id="mRU-3A-7wd"/>
                             <constraint firstItem="HhD-mY-Vc9" firstAttribute="top" secondItem="cml-Uw-eFu" secondAttribute="bottom" constant="20" id="ra7-ny-7Rv"/>
                             <constraint firstItem="HhD-mY-Vc9" firstAttribute="centerX" secondItem="YFN-EN-oBs" secondAttribute="centerX" id="yJZ-Mb-fVH"/>
                         </constraints>
@@ -643,7 +653,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
         </designable>
     </designables>
     <inferredMetricsTieBreakers>
-        <segue reference="79h-GP-i6y"/>
+        <segue reference="jcu-SY-fH4"/>
     </inferredMetricsTieBreakers>
     <resources>
         <systemColor name="darkTextColor">

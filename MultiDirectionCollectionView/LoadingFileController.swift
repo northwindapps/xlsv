@@ -12,6 +12,9 @@ import UIKit
 class LoadingFileController: UIViewController,UITextFieldDelegate {
     
     @IBOutlet weak var uai: UIActivityIndicatorView!
+    
+    var idx:Int?
+    
     override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -24,7 +27,7 @@ class LoadingFileController: UIViewController,UITextFieldDelegate {
     let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
     print("yourExcelfile",appd.ws_path)
     let ehp = ExcelHelper()
-    ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsIndex)
+        ehp.readExcel2(path: appd.ws_path, wsIndex: idx ?? 1)
     // Do any additional setup after loading the view.
     print("end LoadingFileController")
     
