@@ -592,19 +592,26 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             stringboxText = ""
             
             
-            noInternet(sheetIdx: selectedSheet)
-            //
-            FileCollectionView.reloadData()
-            fileTitle.text = localFileNames[selectedSheet]
-            //
-            
-            calcPrep()
-            calculatormode_update_main()
-            
-            DispatchQueue.main.async() {
-                appd.collectionViewCellSizeChanged = 1
-                self.myCollectionView.collectionViewLayout.invalidateLayout()
-                self.myCollectionView.reloadData()
+            let rlt = noInternet(sheetIdx: selectedSheet)
+            if rlt{
+                //
+                FileCollectionView.reloadData()
+                fileTitle.text = localFileNames[selectedSheet]
+                //
+                
+                calcPrep()
+                calculatormode_update_main()
+                
+//                DispatchQueue.main.async() {
+//                    appd.collectionViewCellSizeChanged = 1
+//                    self.myCollectionView.collectionViewLayout.invalidateLayout()
+//                    self.myCollectionView.reloadData()
+//                }
+            }else{
+                print("go to load view")
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
+                targetViewController.modalPresentationStyle = .fullScreen
+                self.present( targetViewController, animated: true, completion: nil)
             }
         }
     }
@@ -3821,7 +3828,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         localFileNames = temp//.reversed()
         
         if localFileNames.count > 0{
-            if(sheet1Json.readJsonFIle(title: localFileNames[sheetIdx])){
+            if(sheet1Json.readJsonFIle(title: localFileNames[appd.wsIndex-1])){
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize
@@ -3837,10 +3844,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
              //go to load view
                 print("go to load view")
                 appd.wsIndex = sheetIdx//sheetIdx
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
-                targetViewController.modalPresentationStyle = .fullScreen
-                self.present( targetViewController, animated: true, completion: nil)
-                return true
+//                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
+//                targetViewController.modalPresentationStyle = .fullScreen
+//                self.present( targetViewController, animated: true, completion: nil)
+                return false
             }
         }
         
@@ -4079,11 +4086,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             calcPrep()
             calculatormode_update_main()
             
-            DispatchQueue.main.async() {
-                appd.collectionViewCellSizeChanged = 1
-                self.myCollectionView.collectionViewLayout.invalidateLayout()
-                self.myCollectionView.reloadData()
-            }
+//            DispatchQueue.main.async() {
+//                appd.collectionViewCellSizeChanged = 1
+//                self.myCollectionView.collectionViewLayout.invalidateLayout()
+//                self.myCollectionView.reloadData()
+//            }
         }
     }
     

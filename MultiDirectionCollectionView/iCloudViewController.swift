@@ -320,7 +320,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             //for path in try file!.parseWorksheetPaths() {
             let paths = try file!.parseWorksheetPaths()
             // Filter files with "sheet1.xml" in their file name
-            let sheet1Files = paths.filter { $0.hasSuffix("sheet1.xml") }
+            let sheet1Files = paths.filter { $0.hasSuffix("sheet2.xml") }
             if let path = try sheet1Files.first {
                 print("path",path)
                 //Cleaning instances on table data
@@ -341,11 +341,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 //mergedcells initialization
                 appd.diff_start_index.removeAll()
                 appd.diff_end_index.removeAll()
-                let mergedCells = try file!.parseWorksheetPaths()
-                    .compactMap { try file!.parseWorksheet(at: $0) }
-                    .compactMap { $0.mergeCells}
-                if mergedCells.count > 0 {
-                    let mergedCellFirstReferences = mergedCells[0].items.map { $0.reference }
+//                let mergedCells = try file!.parseWorksheetPaths()
+//                    .compactMap { try file!.parseWorksheet(at: $0) }
+//                    .compactMap { $0.mergeCells}
+                let mergedCells = try file?.parseWorksheet(at: path).mergeCells
+                if mergedCells?.items.first != nil {
+                    let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }
                     var tmpDictionary = [String: String]()
                     for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
                         tmpDictionary[String(key)] = mergedCell.description
@@ -459,7 +460,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                     columnsize = appd.DEFAULT_COLUMN_NUMBER
                 }
                 var columnsInAlphabet = [String]()
-                for index in 0..<columnsize {
+                for index in 0...columnsize {
                     columnsInAlphabet.append(getExcelColumnName(columnNumber: index))
                 }
                 
@@ -526,7 +527,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 }
                 
                 
-                let dict : [String:Any] = ["filename": "sheet1",
+                let dict : [String:Any] = ["filename": "sheet2",
                                            "date": date,
                                            "content": valueContent+stringContent,
                                            "location": finalL_value + finalL_string,
@@ -546,7 +547,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 let test = ReadWriteJSON()
                 print("savingImportJSON")
-                test.saveJsonFile(source: dict, title: "sheet1")
+                test.saveJsonFile(source: dict, title: "sheet2")
                 //this library is too slow, abound it in the next version
                 
                 
