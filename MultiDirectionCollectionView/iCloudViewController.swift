@@ -179,60 +179,49 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             rowcount = appd.DEFAULT_ROW_NUMBER
         }
 
-        
         let csvData = UserDefaults.standard
         csvData.set(location, forKey: "NEWTMLOCATION")
         csvData.set(contents, forKey: "NEWTMCONTENT")
         csvData.set(rowcount, forKey: "NEWRsize")
         csvData.set(columncount, forKey: "NEWCsize")
         csvData.synchronize()
-            
-            
 
-                       let today: Date = Date()
-                       let dateFormatter: DateFormatter = DateFormatter()
-                       dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                       let date = dateFormatter.string(from: today)
-                       
-                         
-                       var fontSize = [String]()
-                       var fontColor = [String]()
-                       var bgColor = [String]()
-                       for i in 0..<location.count{
-                           fontSize.append(String(13))
-                           bgColor.append("white")
-                           fontColor.append("black")
-                       }
-                 
-                       
-                       let dict : [String:Any] = ["filename": "sheet1",
-                                                  "date": date,
-                                                  "content": contents,
-                                                  "location": location,
-                                                  "fontsize": fontSize,
-                                                  "fontcolor": fontColor,
-                                                  "bgcolor": bgColor,
-                                                  "rowsize": rowcount,
-                                                  "columnsize": columncount,
-                                                  "customcellWidth":[String](),
-                                                  "customcellHeight": [String](),
-                                                  "ccwLocation": [String](),
-                                                  "cchLocation": [String](),
-                                                  "formulaResult":[String](),
-                                                  "inputOrder":[String]()]
+       let today: Date = Date()
+       let dateFormatter: DateFormatter = DateFormatter()
+       dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+       let date = dateFormatter.string(from: today)
+       var fontSize = [String]()
+       var fontColor = [String]()
+       var bgColor = [String]()
+       for i in 0..<location.count{
+           fontSize.append(String(13))
+           bgColor.append("white")
+           fontColor.append("black")
+       }
+ 
+       let dict : [String:Any] = ["filename": "sheet1",
+                                  "date": date,
+                                  "content": contents,
+                                  "location": location,
+                                  "fontsize": fontSize,
+                                  "fontcolor": fontColor,
+                                  "bgcolor": bgColor,
+                                  "rowsize": rowcount,
+                                  "columnsize": columncount,
+                                  "customcellWidth":[String](),
+                                  "customcellHeight": [String](),
+                                  "ccwLocation": [String](),
+                                  "cchLocation": [String](),
+                                  "formulaResult":[String](),
+                                  "inputOrder":[String]()]
 
-                       
-               
-                            let test = ReadWriteJSON()
-                            print("savingImportJSON CSV")
-                            test.saveuserAll()
-                            test.saveJsonFile(source: dict, title: "sheet1")
-            
-        
-                 //OK move to next sheet shall we?
-                 
-        
-        
+       
+
+        let test = ReadWriteJSON()
+        print("savingImportJSON CSV")
+        test.saveuserAll()
+        test.saveJsonFile(source: dict, title: "sheet1")
+
         appd.customSizedHeight.removeAll()
         appd.customSizedWidth.removeAll()
         appd.cshLocation.removeAll()
@@ -326,10 +315,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.ws_total_pages = 0
             appd.ws_path = path
             let file = XLSXFile(filepath: path)
-            var counter = 0
-            //var sheetsNumber = -1
-            //sheetsNumber = try file!.parseWorksheetPaths().count-1
-            
             
             //appd.ws_total_pages = sheetsNumber
             //only show first page.
@@ -347,12 +332,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 valueContent = []
                 
                 let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
-//                let container = try file!.parseWorksheetPaths()
+//                let container = try file!.parseWorksheetPaths() too slow...
 //                    .compactMap { try file!.parseWorksheet(at: $0) }
 //                    .flatMap { $0.data?.rows ?? [] }
 //                    .flatMap { $0.cells }
-                // Above code fetches all cells rendered in the sheet
-                // Need to know the size of sheet...
                 columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
                 
                 
@@ -463,10 +446,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 
                 let content1 = UserDefaults.standard
-                if counter == 0 {
-                    //                    content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
-                    content1.synchronize()
-                }
+                //content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
+                content1.synchronize()
                 
                 print("content",valueContent+stringContent)
                 
@@ -546,7 +527,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 }
                 
                 
-                let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
+                let dict : [String:Any] = ["filename": "sheet1",
                                            "date": date,
                                            "content": valueContent+stringContent,
                                            "location": finalL_value + finalL_string,
