@@ -48,7 +48,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //mergedcells
     var nousecells = [[Int]]()
     var columnNames = [String]()
-    var localFileName = [String]()
+    var localFileNames = [String]()
     var sum_str = ""
     
     //Font location
@@ -216,7 +216,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }else{
             
-            return localFileName.count
+            return localFileNames.count
         }
     }
     
@@ -429,8 +429,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             return cell
             
         }else{
+            //sheet cell
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! FileCollectionViewCell
-            let title = localFileName[indexPath.item]
+            let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
             if indexPath.item == selectedSheet {
@@ -470,9 +471,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             saveuserD()
             
 //            if selectedSheet >= 0{
-            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
+            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
                 print("saved")
-                saveAsLocalJson(filename: localFileName[selectedSheet])
+                saveAsLocalJson(filename: localFileNames[selectedSheet])
             }
             
             
@@ -564,12 +565,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }else{
             //FileNameCollectionview Change Page
+            //sheet cell get touched
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-                appd.viewconSelectedName = localFileName[selectedSheet]
+            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+                appd.viewconSelectedName = localFileNames[selectedSheet]
             }else{
                 selectedSheet = 0
-                appd.viewconSelectedName = localFileName[selectedSheet]
+                appd.viewconSelectedName = localFileNames[selectedSheet]
             }
             
             appd.collectionViewCellSizeChanged = 1
@@ -593,7 +595,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             noInternet(sheetIdx: selectedSheet)
             //
             FileCollectionView.reloadData()
-            fileTitle.text = localFileName[selectedSheet]
+            fileTitle.text = localFileNames[selectedSheet]
             //
             
             calcPrep()
@@ -988,7 +990,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 self.deleteLocalJson(filename:name)
                 
-                self.localFileName.removeAll()
+                self.localFileNames.removeAll()
                 
                 self.FileCollectionView.reloadData()
                 
@@ -1106,8 +1108,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
             appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             
-            if self.selectedSheet >= 0 && self.localFileName.count > 0{
-                self.saveAsLocalJson(filename: self.localFileName[self.selectedSheet])
+            if self.selectedSheet >= 0 && self.localFileNames.count > 0{
+                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
             }
             
             DispatchQueue.main.async() {
@@ -1257,7 +1259,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             r4.synchronize()
             
             if self.selectedSheet >= 0{
-                self.saveAsLocalJson(filename: self.localFileName[self.selectedSheet])
+                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
             }
             
             DispatchQueue.main.async() {
@@ -1351,8 +1353,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
         alert.addTextField()
         
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            alert.textFields![0].text = localFileName[selectedSheet]
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            alert.textFields![0].text = localFileNames[selectedSheet]
         }
         
         let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
@@ -1365,7 +1367,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let test = ReadWriteJSON()
             let temp = test.titleJsonFile()
             
-            self.localFileName = temp.reversed()
+            self.localFileNames = temp.reversed()
             
             self.FileCollectionView.reloadData()
             
@@ -1456,9 +1458,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         alert.addTextField()
         
         
-//        if  selectedSheet >= 0 && localFileName.count > 0 {
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            alert.textFields![0].text = localFileName[selectedSheet]
+//        if  selectedSheet >= 0 && localFileNames.count > 0 {
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            alert.textFields![0].text = localFileNames[selectedSheet]
         }
         
         let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
@@ -1469,7 +1471,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let test = ReadWriteJSON()
             let temp = test.titleJsonFile()
             
-            self.localFileName = temp.reversed()
+            self.localFileNames = temp.reversed()
             
             self.FileCollectionView.reloadData()
             
@@ -1606,8 +1608,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //get FileTitle
         let test = ReadWriteJSON()
-        let temp = test.titleJsonFile()
-        localFileName = temp.reversed()
+        var temp = test.titleJsonFile()
+        //test
+        temp.append("sheet2")
+        temp.append("sheet3")
+        localFileNames = temp//.reversed()//sheet1,sheet2
         FileCollectionView.reloadData()
         
         
@@ -1622,7 +1627,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if appd.viewconSelectedName == "Initial"{
             selectedSheet = 0
             let test = ReadWriteJSON()
-            test.readJsonFIle(title: localFileName[selectedSheet])
+            test.readJsonFIle(title: localFileNames[selectedSheet])
             
             FileCollectionView.reloadData()
             
@@ -1630,10 +1635,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             
-//            if localFileName.count > 0 {
-            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-                appd.viewconSelectedName = localFileName[selectedSheet]
-                fileTitle.text = localFileName[selectedSheet]
+//            if localFileNames.count > 0 {
+            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+                appd.viewconSelectedName = localFileNames[selectedSheet]
+                fileTitle.text = localFileNames[selectedSheet]
             }
             //
             calculatormode_update_main()
@@ -2238,8 +2243,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //
         
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex {
-            saveAsLocalJson(filename: localFileName[selectedSheet])
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex {
+            saveAsLocalJson(filename: localFileNames[selectedSheet])
         }
         
         Fview.removeFromSuperview()
@@ -2541,8 +2546,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            saveAsLocalJson(filename: localFileName[selectedSheet])
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: localFileNames[selectedSheet])
         }
         
         
@@ -2628,8 +2633,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         horrible.synchronize()
         
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            saveAsLocalJson(filename: localFileName[selectedSheet])
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: localFileNames[selectedSheet])
         }
         
         
@@ -2722,8 +2727,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            saveAsLocalJson(filename: localFileName[selectedSheet])
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: localFileNames[selectedSheet])
         }
         
         
@@ -3805,27 +3810,38 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    func noInternet(sheetIdx:Int){
+    func noInternet(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
         let sheet1Json = ReadWriteJSON()
-        let temp = sheet1Json.titleJsonFile()
-        localFileName = temp.reversed()
+        var temp = sheet1Json.titleJsonFile()
+        //append rest sheet2, sheet3 from appd.variable
+        temp.append("sheet2")
+        temp.append("sheet3")
+        localFileNames = temp//.reversed()
         
-        if localFileName.count > 0{
-            sheet1Json.readJsonFIle(title: localFileName[sheetIdx])
-            content = sheet1Json.content
-            location = sheet1Json.location
-            textsize = sheet1Json.fontsize
-            bgcolor = sheet1Json.bgcolor
-            tcolor = sheet1Json.fontcolor
-            COLUMNSIZE = sheet1Json.columnsize
-            ROWSIZE = sheet1Json.rowsize
-            appd.customSizedWidth = sheet1Json.customcellWidth
-            appd.customSizedHeight = sheet1Json.customcellHeight
-            appd.cswLocation = sheet1Json.ccwLocation
-            appd.cshLocation = sheet1Json.cchLocation
-            
+        if localFileNames.count > 0{
+            if(sheet1Json.readJsonFIle(title: localFileNames[sheetIdx])){
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+            }else{
+             //go to load view
+                print("go to load view")
+                appd.wsIndex = sheetIdx//sheetIdx
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
+                targetViewController.modalPresentationStyle = .fullScreen
+                self.present( targetViewController, animated: true, completion: nil)
+                return true
+            }
         }
         
         //EXCEL FORMULA TRANSFORMATION STARTS
@@ -3906,13 +3922,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         
-        if localFileName.count == 0 {
+        if localFileNames.count == 0 {
             let newfile = "sheet1"
             
             
             saveAsLocalJson(filename: newfile)
         }
         
+        return true
     }
     
     //=EXP(A1) -> e^(A1), COMPLEX(x,y)
@@ -3964,8 +3981,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func close(){
         changeaffected.removeAll()
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            saveAsLocalJson(filename: localFileName[selectedSheet])
+        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: localFileNames[selectedSheet])
         }
         self.customview3.removeFromSuperview()
     }
@@ -4030,11 +4047,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     func readAllJsonFiles(){
         
-        for i in 0..<localFileName.count {
+        for i in 0..<localFileNames.count {
             
             //FileNameCollectionview Change Page
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.viewconSelectedName = localFileName[selectedSheet]
+            appd.viewconSelectedName = localFileNames[selectedSheet]
             appd.collectionViewCellSizeChanged = 1
             appd.cswLocation.removeAll()
             appd.customSizedWidth.removeAll()
@@ -4056,7 +4073,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             noInternet(sheetIdx: selectedSheet)
             //
             FileCollectionView.reloadData()
-            fileTitle.text = localFileName[selectedSheet]
+            fileTitle.text = localFileNames[selectedSheet]
             //
             
             calcPrep()

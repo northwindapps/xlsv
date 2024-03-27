@@ -31,7 +31,7 @@ class ExcelHelper{
     
     
 
-    func readExcel(path:String, wsIndex:Int = 1){
+    func readExcel2(path:String, wsIndex:Int){
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate

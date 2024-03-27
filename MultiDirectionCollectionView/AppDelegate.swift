@@ -48,6 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cellIndex = IndexPath()
     var ws_total_pages = 0
     var ws_path = ""
+    var wsIndex = 1
     var imported_xlsx_file_path=""
     //
     var CELL_HEIGHT_INIT = 40.0

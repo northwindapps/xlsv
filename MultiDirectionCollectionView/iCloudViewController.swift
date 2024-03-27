@@ -306,12 +306,13 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
      }
      */
     
-    func readExcel(path:String, wsIndex:Int = 0){
+    func readExcel(path:String, wsIndex:Int = 1){
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             appd.ws_total_pages = 0
             appd.ws_path = path
+            appd.wsIndex = wsIndex
             let file = XLSXFile(filepath: path)
             
             //appd.ws_total_pages = sheetsNumber

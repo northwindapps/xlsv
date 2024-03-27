@@ -296,11 +296,11 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <viewControllerLayoutGuide type="bottom" id="FaW-A5-hoz"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="UlV-pG-fMV">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="716"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" delaysContentTouches="NO" bouncesZoom="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="CsX-PN-Uzh">
-                                <rect key="frame" x="0.0" y="50" width="414" height="581"/>
+                                <rect key="frame" x="0.0" y="50" width="414" height="601"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <collectionViewLayout key="collectionViewLayout" id="ezH-y6-BUk" customClass="CustomCollectionViewLayout" customModule="XLSV" customModuleProvider="target"/>
                                 <cells>
@@ -379,7 +379,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="G1f-VI-PIW" customClass="GADBannerView">
-                                <rect key="frame" x="0.0" y="666" width="320" height="50"/>
+                                <rect key="frame" x="0.0" y="686" width="320" height="50"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="PVM-uo-mUs"/>
@@ -387,7 +387,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 </constraints>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Shp-tt-LYE">
-                                <rect key="frame" x="320" y="666" width="94" height="50"/>
+                                <rect key="frame" x="320" y="686" width="94" height="50"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="15"/>
                                 <state key="normal" title="mail">
                                     <color key="titleColor" red="0.0" green="0.0" blue="1" alpha="1" colorSpace="calibratedRGB"/>
@@ -397,7 +397,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 </connections>
                             </button>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="tiV-cz-if5">
-                                <rect key="frame" x="0.0" y="631" width="414" height="35"/>
+                                <rect key="frame" x="0.0" y="651" width="414" height="35"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="u7M-u0-IKW"/>
@@ -510,7 +510,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="↩︎"/>
                                 <connections>
-                                    <segue destination="lYo-SA-o9a" kind="presentation" id="jcu-SY-fH4"/>
+                                    <segue destination="lYo-SA-o9a" kind="presentation" modalPresentationStyle="fullScreen" id="jcu-SY-fH4"/>
                                 </connections>
                             </button>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="qq7-wA-JHa">
@@ -535,7 +535,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="n4H-ve-sGA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1345" y="-6664"/>
+            <point key="canvasLocation" x="-1380" y="-6683"/>
         </scene>
         <!--Settings View Controller-->
         <scene sceneID="5Na-Q6-sWO">
@@ -585,6 +585,57 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
             </objects>
             <point key="canvasLocation" x="-1242" y="-7410"/>
         </scene>
+        <!--Loading File Controller-->
+        <scene sceneID="Tgy-GH-5gY">
+            <objects>
+                <viewController storyboardIdentifier="LoadingFileController" id="msi-4K-swS" customClass="LoadingFileController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Gdh-Ie-Bro"/>
+                        <viewControllerLayoutGuide type="bottom" id="MjK-mC-P4v"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="YFN-EN-oBs">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Loading..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cml-Uw-eFu">
+                                <rect key="frame" x="169.66666666666666" y="358" width="74.666666666666657" height="20.333333333333314"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vQj-mD-MrP">
+                                <rect key="frame" x="200" y="663" width="35" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="↩︎"/>
+                                <connections>
+                                    <segue destination="lYo-SA-o9a" kind="presentation" modalPresentationStyle="fullScreen" id="79h-GP-i6y"/>
+                                </connections>
+                            </button>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="HhD-mY-Vc9">
+                                <rect key="frame" x="197" y="398.33333333333331" width="20" height="20"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="20" id="IZv-ik-hme"/>
+                                    <constraint firstAttribute="height" constant="20" id="pjI-So-1uP"/>
+                                </constraints>
+                            </activityIndicatorView>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="cml-Uw-eFu" firstAttribute="centerX" secondItem="YFN-EN-oBs" secondAttribute="centerX" id="DGA-0n-7J0"/>
+                            <constraint firstItem="cml-Uw-eFu" firstAttribute="centerY" secondItem="YFN-EN-oBs" secondAttribute="centerY" id="cCw-Hr-oel"/>
+                            <constraint firstItem="HhD-mY-Vc9" firstAttribute="top" secondItem="cml-Uw-eFu" secondAttribute="bottom" constant="20" id="ra7-ny-7Rv"/>
+                            <constraint firstItem="HhD-mY-Vc9" firstAttribute="centerX" secondItem="YFN-EN-oBs" secondAttribute="centerX" id="yJZ-Mb-fVH"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="uai" destination="HhD-mY-Vc9" id="xpj-eD-d2a"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="rhb-lg-Ikq" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-671" y="-6719"/>
+        </scene>
     </scenes>
     <designables>
         <designable name="feP-nA-Ggb">
@@ -592,7 +643,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
         </designable>
     </designables>
     <inferredMetricsTieBreakers>
-        <segue reference="jcu-SY-fH4"/>
+        <segue reference="79h-GP-i6y"/>
     </inferredMetricsTieBreakers>
     <resources>
         <systemColor name="darkTextColor">

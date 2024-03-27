@@ -88,7 +88,7 @@ class ReadWriteJSON {
     // https://stackoverflow.com/questions/28768015/how-to-save-an-array-as-a-json-file-in-swift
     // https://stackoverflow.com/questions/26386093/array-from-dictionary-keys-in-swift
     //func readJsonFIle()-> ([String],[String]) {
-    func readJsonFIle(title:String) {
+    func readJsonFIle(title:String)->Bool {
         let pathDirectory = getDocumentsDirectory()
         let filePath = pathDirectory.appendingPathComponent("/" + title)
         let fileManager = FileManager.default
@@ -141,11 +141,13 @@ class ReadWriteJSON {
                     }
                 }
                 saveuserAll()
+                return true
                 
             } catch {
                 print(error)
             }
         }
+        return false
         
     }
     
