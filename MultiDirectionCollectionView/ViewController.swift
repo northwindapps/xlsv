@@ -29,8 +29,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
     
-    @IBOutlet weak var mailbutton: UIButton!
-    
     @IBOutlet weak var FileCollectionView: UICollectionView!
     var KEYBOARDLOCATION = CGFloat()
     @objc var List: Array<AnyObject> = []
@@ -591,36 +589,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             selectedSheet = indexPath.item
             stringboxText = ""
             
-            
-//            let rlt = noInternet(sheetIdx: selectedSheet)
-//            if rlt{
-//                //
-//                FileCollectionView.reloadData()
-//                fileTitle.text = localFileNames[selectedSheet]
-//                //
-//
-//                calcPrep()
-//                calculatormode_update_main()
-//
-////                DispatchQueue.main.async() {
-////                    appd.collectionViewCellSizeChanged = 1
-////                    self.myCollectionView.collectionViewLayout.invalidateLayout()
-////                    self.myCollectionView.reloadData()
-////                }
-//                print("go to file view")
-//                print("selectedSheet",selectedSheet)
-//                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-//                targetViewController.idx = 1
-//                targetViewController.modalPresentationStyle = .fullScreen
-//                self.present( targetViewController, animated: true, completion: nil)
-//            }else{
-                print("go to file view")
-                print("selectedSheet",selectedSheet)
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-                targetViewController.idx = selectedSheet
-                targetViewController.modalPresentationStyle = .fullScreen
-                self.present( targetViewController, animated: true, completion: nil)
-//            }
+        
+            print("go to file view")
+            print("selectedSheet",selectedSheet)
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+            targetViewController.idx = selectedSheet
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present( targetViewController, animated: true, completion: nil)
         }
     }
     
@@ -1513,45 +1488,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         hiddenTextField.becomeFirstResponder()
         menuButton.layer.borderWidth = 1.0
-        mailbutton.layer.borderWidth = 0.5
-        
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
         
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
-        if locationstr.contains("ja"){
-            
-            mailbutton.setTitle("Eメール", for: .normal)
-        }else if locationstr.contains("fr"){
-            
-            mailbutton.setTitle("email" , for: .normal)
-        }else if locationstr.contains("zh"){
-            
-            mailbutton.setTitle("邮件", for: .normal)
-        }else if locationstr.contains("de"){
-            
-            mailbutton.setTitle("email" , for: .normal)
-        }else if locationstr.contains("it"){
-            
-            mailbutton.setTitle("email", for: .normal)
-        }else if locationstr.contains("da"){
-            
-            mailbutton.setTitle("email", for: .normal)
-        }else if locationstr.contains("ru"){
-            
-            mailbutton.setTitle("почта", for: .normal)
-        }else if locationstr.contains("es"){
-            
-            mailbutton.setTitle("correo", for: .normal)
-        }else if locationstr.contains("sv"){
-            
-            mailbutton.setTitle("epost", for: .normal)
-        }else{
-            
-        }
         
         fileTitle.text = ""
         
@@ -3825,39 +3767,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    func noInternet(sheetIdx:Int)->Bool{
+    func noInternet(sheetIdx:Int){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
-        let sheet1Json = ReadWriteJSON()
-        var temp = sheet1Json.titleJsonFile()
+//        let sheet1Json = ReadWriteJSON()
+//        var temp = sheet1Json.titleJsonFile()
         //append rest sheet2, sheet3 from appd.variable
-        temp.append("sheet2")
-        temp.append("sheet3")
-        localFileNames = temp//.reversed()
-        
-        if localFileNames.count > 0{
-            if(sheet1Json.readJsonFIle(title: localFileNames[selectedSheet])){
-                content = sheet1Json.content
-                location = sheet1Json.location
-                textsize = sheet1Json.fontsize
-                bgcolor = sheet1Json.bgcolor
-                tcolor = sheet1Json.fontcolor
-                COLUMNSIZE = sheet1Json.columnsize
-                ROWSIZE = sheet1Json.rowsize
-                appd.customSizedWidth = sheet1Json.customcellWidth
-                appd.customSizedHeight = sheet1Json.customcellHeight
-                appd.cswLocation = sheet1Json.ccwLocation
-                appd.cshLocation = sheet1Json.cchLocation
-            }else{
-             //go to load view
-                print("go to load view")
-                appd.wsIndex = selectedSheet//sheetIdx
-//                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" )//Landscape
-//                targetViewController.modalPresentationStyle = .fullScreen
-//                self.present( targetViewController, animated: true, completion: nil)
-                return false
-            }
-        }
+//        temp.append("sheet2")
+//        temp.append("sheet3")
+        //localFileNames = temp//.reversed()
+        localFileNames = ["sheet1"]
         
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
@@ -3944,7 +3863,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             saveAsLocalJson(filename: newfile)
         }
         
-        return true
     }
     
     //=EXP(A1) -> e^(A1), COMPLEX(x,y)

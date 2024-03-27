@@ -386,16 +386,6 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                     <constraint firstAttribute="width" constant="320" id="p48-p4-g99"/>
                                 </constraints>
                             </view>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Shp-tt-LYE">
-                                <rect key="frame" x="320" y="686" width="94" height="50"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                <state key="normal" title="mail">
-                                    <color key="titleColor" red="0.0" green="0.0" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                </state>
-                                <connections>
-                                    <action selector="elsxExportAction:" destination="lYo-SA-o9a" eventType="touchUpInside" id="2LA-Bw-c3o"/>
-                                </connections>
-                            </button>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="tiV-cz-if5">
                                 <rect key="frame" x="0.0" y="651" width="414" height="35"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -458,12 +448,8 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                             <constraint firstItem="CsX-PN-Uzh" firstAttribute="leading" secondItem="UlV-pG-fMV" secondAttribute="leading" id="Stx-eM-OpH"/>
                             <constraint firstItem="cqv-S1-EKd" firstAttribute="top" secondItem="WnQ-sZ-xLK" secondAttribute="bottom" id="Wuw-Ot-L3Z"/>
                             <constraint firstItem="G1f-VI-PIW" firstAttribute="top" secondItem="tiV-cz-if5" secondAttribute="bottom" id="YCF-ge-eD3"/>
-                            <constraint firstItem="Shp-tt-LYE" firstAttribute="leading" secondItem="G1f-VI-PIW" secondAttribute="trailing" id="Z1n-ew-ClB"/>
-                            <constraint firstAttribute="trailing" secondItem="Shp-tt-LYE" secondAttribute="trailing" id="bGQ-nx-yfl"/>
-                            <constraint firstItem="FaW-A5-hoz" firstAttribute="top" secondItem="Shp-tt-LYE" secondAttribute="bottom" id="eSE-L7-JDX"/>
                             <constraint firstAttribute="trailing" secondItem="tiV-cz-if5" secondAttribute="trailing" id="gfY-ZK-rRN"/>
                             <constraint firstItem="tiV-cz-if5" firstAttribute="leading" secondItem="UlV-pG-fMV" secondAttribute="leading" id="gxT-gn-lOf"/>
-                            <constraint firstItem="Shp-tt-LYE" firstAttribute="top" secondItem="tiV-cz-if5" secondAttribute="bottom" id="jcu-XT-zpx"/>
                             <constraint firstItem="FaW-A5-hoz" firstAttribute="top" secondItem="G1f-VI-PIW" secondAttribute="bottom" id="mXz-cf-k3N"/>
                             <constraint firstItem="tiV-cz-if5" firstAttribute="top" secondItem="CsX-PN-Uzh" secondAttribute="bottom" id="qaS-LC-6EP"/>
                             <constraint firstItem="CsX-PN-Uzh" firstAttribute="top" secondItem="cqv-S1-EKd" secondAttribute="bottom" id="reo-So-ddE"/>
@@ -477,14 +463,13 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <outlet property="fileTitle" destination="1gf-SZ-xET" id="lyS-9a-Iq8"/>
                         <outlet property="hiddenTextField" destination="pFc-Pl-Cdc" id="Uqm-81-KoN"/>
                         <outlet property="label" destination="WnQ-sZ-xLK" id="KaW-RC-Ngk"/>
-                        <outlet property="mailbutton" destination="Shp-tt-LYE" id="CJX-SW-vgq"/>
                         <outlet property="menuButton" destination="cqv-S1-EKd" id="ZsJ-sG-5pW"/>
                         <outlet property="myCollectionView" destination="CsX-PN-Uzh" id="lT5-dX-2Rv"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Mvo-5o-ub7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2378" y="-7410"/>
+            <point key="canvasLocation" x="-2378.2608695652175" y="-7410.326086956522"/>
         </scene>
         <!--Loading View Controller-->
         <scene sceneID="NoG-iL-Wf5">
