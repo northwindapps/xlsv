@@ -127,12 +127,11 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             var rowcount:Int = elementArray!.count
         
         for i in 0..<rowcount {
-            
+
             if (elementArray![i].contains("\r")){
                 elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
                 elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
             }
-            
         }
 
         //
@@ -280,7 +279,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     
     
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        
         dismiss(animated: true, completion: nil)
     }
     

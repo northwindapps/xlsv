@@ -37,6 +37,7 @@
 		6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6A6E8529245DB566008AFA03 /* numberkeyView.xib */; };
 		6A7377882BA5D1D40041EFA9 /* LoadingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */; };
 		6A9743BD2BB3A74E005D341C /* helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9743BC2BB3A74E005D341C /* helper.swift */; };
+		6A9743C12BB428F3005D341C /* ExcelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9743C02BB428F3005D341C /* ExcelHelper.swift */; };
 		6AAFEA04255D56CB000612B8 /* Hint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AAFEA03255D56CB000612B8 /* Hint.swift */; };
 		6AAFEA05255D6A96000612B8 /* Hint.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6AAFEA07255D6A96000612B8 /* Hint.xib */; };
 		6AB0A802245AE82C007703C0 /* Customview3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB0A801245AE82C007703C0 /* Customview3.swift */; };
@@ -161,6 +162,7 @@
 		6A92A8D6251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/formatviewboard.strings; sourceTree = "<group>"; };
 		6A92A8D7251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/numberkeyView.strings; sourceTree = "<group>"; };
 		6A9743BC2BB3A74E005D341C /* helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = helper.swift; sourceTree = "<group>"; };
+		6A9743C02BB428F3005D341C /* ExcelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcelHelper.swift; sourceTree = "<group>"; };
 		6AAFEA03255D56CB000612B8 /* Hint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hint.swift; sourceTree = "<group>"; };
 		6AAFEA06255D6A96000612B8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Hint.xib; sourceTree = "<group>"; };
 		6AAFEA09255D6AC5000612B8 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Hint.strings; sourceTree = "<group>"; };
@@ -367,6 +369,7 @@
 				6A323D9B2B9D69A300C15723 /* GoogleDriveController.swift */,
 				6AD9361123E59D2E00479881 /* mergedCellStyle.swift */,
 				3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */,
+				6A9743C02BB428F3005D341C /* ExcelHelper.swift */,
 				8DF796AD1E4E799500BE7D38 /* NilController.swift */,
 				6AC8322B24663D3E006FA917 /* JSONModel.swift */,
 				6AB0A81A245B320B007703C0 /* ViewController.swift */,
@@ -656,6 +659,7 @@
 				6AB0A813245B14E5007703C0 /* Unzipping.swift in Sources */,
 				6A1F5E192542D734002796C0 /* theme.swift in Sources */,
 				6A323D9C2B9D69A300C15723 /* GoogleDriveController.swift in Sources */,
+				6A9743C12BB428F3005D341C /* ExcelHelper.swift in Sources */,
 				3C6F503920E3D151001EC20D /* TableViewCell.swift in Sources */,
 				8DB176CE1E1492AA009DCD75 /* CustomCollectionViewLayout.swift in Sources */,
 			);

@@ -13,9 +13,6 @@ import Foundation
 
 class colorclass :ViewController {
     //retrive Firebase data
-   
-   
-    
     func storeValues (rl:[String],rc:[String],rsize:Int,csize:Int){
         //23,33
         let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
