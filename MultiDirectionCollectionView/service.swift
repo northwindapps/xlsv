@@ -10,105 +10,6 @@ import Foundation
 import Zip
 
 
-
-
-// Define a class to act as the delegate for the XMLParser
-class XMLParserHelper: NSObject, XMLParserDelegate {
-    var siElementCount: Int = -1
-    var currentElement: String?
-    var currentText: String?
-
-    // Called when the parser finds the start of an element
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
-        currentElement = elementName
-        if elementName == "si" {
-            siElementCount += 1
-        }
-    }
-
-    // Called when the parser finds the characters inside an element
-    func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText = (currentText ?? "") + string
-    }
-
-    // Called when the parser finds the end of an element
-    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if elementName == "t" {
-            //print("Content of <t> element:", currentText)
-            currentText = ""
-        }
-    }
-}
-
-class CustomXMLParserDelegate: XMLParserHelper {
-    var foundTargetElement = false
-    var extractedPart: String?
-
-    override func parser(_ parser: XMLParser, foundCharacters string: String) {
-        if foundTargetElement {
-            extractedPart = (extractedPart ?? "") + string
-        }
-    }
-
-    override func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
-        if elementName == "c" && attributeDict["r"] == "B1" {
-            foundTargetElement = true
-            // Start building the extracted part string
-            extractedPart = "<\(elementName)"
-            for (key, value) in attributeDict {
-                extractedPart! += " \(key)=\"\(value)\""
-            }
-            extractedPart! += ">"
-        }
-    }
-
-    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if foundTargetElement && elementName == "c" {
-            foundTargetElement = false
-            // Close the extracted part string
-            extractedPart! += "</\(elementName)>"
-        }
-    }
-}
-
-// Define a class to act as XMLParser delegate
-class SharedStringsUniqueCountParserDelegate: XMLParserHelper {
-    // Define countValue as a class variable
-    var countValue: String?
-
-    override func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
-        // Extract count attribute value when encountering the start of the element
-        if let count = attributeDict["count"] {
-            countValue = count
-        }
-    }
-}
-
-//update countSize
-
-
-// Create XMLParserDelegate
-class SharedStringsParserDelegate: XMLParserHelper {
-    // Class variables
-    var currentText2: String?
-    var texts: [String] = []
-    var sis: [String] = []
-
-    override func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText2 = string
-    }
-    
-    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if elementName == "t", let text = currentText2 {
-            texts.append(text)
-        }
-        //uniquecount
-        if elementName == "si", let text = currentText2 {
-            sis.append(text)
-        }
-    }
-}
-
 class Service {
     var sheetNumber:Int
     var stringContents:[String]
@@ -225,51 +126,52 @@ class Service {
             let matches = regex.matches(in: xmlString!, range: range)
             
             // Extract matching substrings
-            let match = matches.first
-            if let matchRange = Range(match!.range, in: xmlString!) {
-                let matchingSubstring = xmlString![matchRange]
-                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
-                var items = modified.components(separatedBy: "!")
-                //first is always ""
-                let item = items[1] ?? ""
-                print("item", item)
-                //string
-                if(item.contains("<v>") && item.contains("t=\"s\"")){
-                    var startCpart = item.components(separatedBy:"<v>").first
-                    print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
-                    //startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
-                    if((vIndex) != nil){
-                        let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
+            if let match = matches.first{
+                if let matchRange = Range(match.range, in: xmlString!) {
+                    let matchingSubstring = xmlString![matchRange]
+                    let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                    var items = modified.components(separatedBy: "!")
+                    //first is always ""
+                    let item = items[1] ?? ""
+                    print("item", item)
+                    //string
+                    if(item.contains("<v>") && item.contains("t=\"s\"")){
+                        var startCpart = item.components(separatedBy:"<v>").first
+                        print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
+                        //startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
+                        if((vIndex) != nil){
+                            let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
+                            let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                            return replaced
+                        }
+                        let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         return replaced
                     }
-                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
-                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                    return replaced
-                }
-                
-                //value
-                if(item.contains("<v>")){
-                    var startCpart = item.components(separatedBy:"<v>").first
-                    startCpart = startCpart!.replacingOccurrences(of: ">", with: " t=\"s\">")
-                    if((vIndex) != nil){
-                        let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
-                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        return replaced
-                    }
-                    let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
-                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                    return replaced
                     
+                    //value
+                    if(item.contains("<v>")){
+                        var startCpart = item.components(separatedBy:"<v>").first
+                        startCpart = startCpart!.replacingOccurrences(of: ">", with: " t=\"s\">")
+                        if((vIndex) != nil){
+                            let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
+                            let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                            return replaced
+                        }
+                        let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                        
+                    }
+                    
+                    //empty <c r="B2" s="4"/>
+                    if((vIndex) != nil){
+                        let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        return replaced
+                    }
+                    return item
                 }
-                
-                //empty <c r="B2" s="4"/>
-                if((vIndex) != nil){
-                    let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
-                    let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                    return replaced
-                }
-                return item
             }
         }
         return nil
@@ -447,7 +349,7 @@ class Service {
                     try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
                     
                     print("New <si> element inserted successfully.")
-                    return SSlist.count 
+                    return SSlist.count
                 } else {
                     print("Failed to find </sst> in the XML data.")
                 }
@@ -468,25 +370,28 @@ class Service {
                     let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
                     let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
                             
-                            // Check if the subdirectory already exists
-                            if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
-                                // Create the subdirectory
-                                try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
-                                print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
-                            } else {
-                                // Subdirectory already exists
-                                print("Subdirectory already exists at path: \(subdirectoryURL.path)")
-                                let files = try FileManager.default.contentsOfDirectory(at:
-                                                                                            subdirectoryURL, includingPropertiesForKeys: nil)
-                                for fileURL in files {
-                                           do {
-                                               try FileManager.default.removeItem(at: fileURL)
-                                               print("Deleted file:", fileURL.lastPathComponent)
-                                           } catch {
-                                               print("Error deleting file:", error)
-                                           }
-                                       }
-                            }
+                    // Check if the subdirectory already exists
+                    if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                        // Create the subdirectory
+                        try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                        print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                    } else {
+                        // Subdirectory already exists
+                        print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                        var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
+                        for fileURL in files {
+                           do {
+                               try FileManager.default.removeItem(at: fileURL)
+                               print("Deleted file:", fileURL.lastPathComponent)
+                           } catch {
+                               print("Error deleting file:", error)
+                           }
+                        }
+                        
+                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                        print("Subdirectory is now empty",files)
+                    }
                     
                     // Construct the URL for the destination file
                     let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
@@ -499,7 +404,6 @@ class Service {
                         if FileManager.default.fileExists(atPath: destinationURL.path) {
                             try FileManager.default.removeItem(at: destinationURL)
                         }
-                        
                     } else {
                         // Move the file to the subdirectory
                         try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
@@ -553,8 +457,13 @@ class Service {
                     // Write the modified XML data back to the file
                     try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     
-                    
-                    
+                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                    var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                    let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                        for file in sheetFiles {
+                            print("Found .xml file:", file.lastPathComponent)
+                        }
+                    print("sheetFiles: ", sheetXMLFiles)
                     
                     
                     //ready to zip

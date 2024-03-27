@@ -36,6 +36,7 @@
 		6A6E8522245DA1D5008AFA03 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6A6E8520245DA1D5008AFA03 /* LaunchScreen.xib */; };
 		6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6A6E8529245DB566008AFA03 /* numberkeyView.xib */; };
 		6A7377882BA5D1D40041EFA9 /* LoadingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */; };
+		6A9743BD2BB3A74E005D341C /* helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9743BC2BB3A74E005D341C /* helper.swift */; };
 		6AAFEA04255D56CB000612B8 /* Hint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AAFEA03255D56CB000612B8 /* Hint.swift */; };
 		6AAFEA05255D6A96000612B8 /* Hint.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6AAFEA07255D6A96000612B8 /* Hint.xib */; };
 		6AB0A802245AE82C007703C0 /* Customview3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB0A801245AE82C007703C0 /* Customview3.swift */; };
@@ -159,6 +160,7 @@
 		6A92A8D5251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		6A92A8D6251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/formatviewboard.strings; sourceTree = "<group>"; };
 		6A92A8D7251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/numberkeyView.strings; sourceTree = "<group>"; };
+		6A9743BC2BB3A74E005D341C /* helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = helper.swift; sourceTree = "<group>"; };
 		6AAFEA03255D56CB000612B8 /* Hint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hint.swift; sourceTree = "<group>"; };
 		6AAFEA06255D6A96000612B8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Hint.xib; sourceTree = "<group>"; };
 		6AAFEA09255D6AC5000612B8 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Hint.strings; sourceTree = "<group>"; };
@@ -257,6 +259,7 @@
 			children = (
 				6A1F5E1D2542D74A002796C0 /* service.swift */,
 				6A1F5E162542D734002796C0 /* app.swift */,
+				6A9743BC2BB3A74E005D341C /* helper.swift */,
 				6A1F5E172542D734002796C0 /* core.swift */,
 				6A1F5E132542D734002796C0 /* rels.swift */,
 				6A1F5E152542D734002796C0 /* styles.swift */,
@@ -648,6 +651,7 @@
 				3CD1E3B62142985F0023BC43 /* SettingsViewController.swift in Sources */,
 				6AC832292465CBC2006FA917 /* FileCollectionViewCell.swift in Sources */,
 				6AB0A815245B14F3007703C0 /* StyleReadFile.swift in Sources */,
+				6A9743BD2BB3A74E005D341C /* helper.swift in Sources */,
 				8D3014511F0A74720026E961 /* Datainputview.swift in Sources */,
 				6AB0A813245B14E5007703C0 /* Unzipping.swift in Sources */,
 				6A1F5E192542D734002796C0 /* theme.swift in Sources */,
