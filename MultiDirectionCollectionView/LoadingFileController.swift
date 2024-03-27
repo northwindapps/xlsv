@@ -16,7 +16,7 @@ class LoadingFileController: UIViewController,UITextFieldDelegate {
     super.viewDidLoad()
 
     // Call the showAnimate function after a 5-second delay
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
         self.showAnimate()
     }
     startLoading()

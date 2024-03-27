@@ -3828,7 +3828,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         localFileNames = temp//.reversed()
         
         if localFileNames.count > 0{
-            if(sheet1Json.readJsonFIle(title: localFileNames[appd.wsIndex-1])){
+            if(sheet1Json.readJsonFIle(title: localFileNames[selectedSheet])){
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize

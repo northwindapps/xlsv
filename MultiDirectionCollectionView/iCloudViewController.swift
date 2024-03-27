@@ -320,7 +320,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             //for path in try file!.parseWorksheetPaths() {
             let paths = try file!.parseWorksheetPaths()
             // Filter files with "sheet1.xml" in their file name
-            let sheet1Files = paths.filter { $0.hasSuffix("sheet2.xml") }
+            let sheet1Files = paths.filter { $0.hasSuffix("sheet1.xml") }
             if let path = try sheet1Files.first {
                 print("path",path)
                 //Cleaning instances on table data
@@ -527,7 +527,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 }
                 
                 
-                let dict : [String:Any] = ["filename": "sheet2",
+                let dict : [String:Any] = ["filename": "sheet1",
                                            "date": date,
                                            "content": valueContent+stringContent,
                                            "location": finalL_value + finalL_string,
@@ -547,7 +547,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 let test = ReadWriteJSON()
                 print("savingImportJSON")
-                test.saveJsonFile(source: dict, title: "sheet2")
+                test.saveJsonFile(source: dict, title: "sheet1")
                 //this library is too slow, abound it in the next version
                 
                 

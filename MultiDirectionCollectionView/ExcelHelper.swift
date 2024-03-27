@@ -65,11 +65,9 @@ class ExcelHelper{
                //mergedcells initialization
                appd.diff_start_index.removeAll()
                appd.diff_end_index.removeAll()
-               let mergedCells = try file!.parseWorksheetPaths()
-                   .compactMap { try file!.parseWorksheet(at: $0) }
-                   .compactMap { $0.mergeCells}
-               if mergedCells.count > 0 {
-                   let mergedCellFirstReferences = mergedCells[0].items.map { $0.reference }
+               let mergedCells = try file?.parseWorksheet(at: path).mergeCells
+               if mergedCells?.items.first != nil {
+                   let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }
                    var tmpDictionary = [String: String]()
                    for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
                        tmpDictionary[String(key)] = mergedCell.description
