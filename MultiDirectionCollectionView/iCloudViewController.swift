@@ -115,6 +115,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
         appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+        
+        var isExcel = false
+        
         //
         if url.absoluteString.contains(".csv"){
             
@@ -262,7 +265,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             print("yourExcelfile",fp)
             appd.imported_xlsx_file_path=fp
             readExcel(path: fp)
-            
+            isExcel = true
             
         }else{
             
@@ -270,9 +273,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         print("end iCloudController")
         
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" )//Landscape
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+        targetViewController.isExcel = isExcel
         targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
         
         
     }

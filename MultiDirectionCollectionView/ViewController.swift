@@ -138,6 +138,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var selectingSize = 12
     var selectingBgColor = "white"
     
+    //isExcelFile?
+    var isExcel = false
+    
     
     
     override func didReceiveMemoryWarning() {
@@ -595,7 +598,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
             targetViewController.idx = selectedSheet
             targetViewController.modalPresentationStyle = .fullScreen
-            self.present( targetViewController, animated: true, completion: nil)
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
+            }
         }
     }
     
@@ -3777,6 +3783,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //        temp.append("sheet3")
         //localFileNames = temp//.reversed()
         localFileNames = ["sheet1"]
+        
+        //excel senario
+        if isExcel{
+            let sheet1Json = ReadWriteJSON()
+            let temp = sheet1Json.titleJsonFile()
+            localFileNames = temp
+            
+            if localFileNames.count > 0{
+                sheet1Json.readJsonFIle(title: localFileNames[sheetIdx])
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+                
+            }
+        }
         
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)

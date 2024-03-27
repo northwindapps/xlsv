@@ -15,9 +15,9 @@ class LoadingViewController: UIViewController,UITextFieldDelegate {
         super.viewDidLoad()
         
         // Call the showAnimate function after a 5-second delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.showAnimate()
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.showAnimate()
+        }
         startLoading()
         // Do any additional setup after loading the view.
     }
@@ -35,9 +35,11 @@ class LoadingViewController: UIViewController,UITextFieldDelegate {
     {
         
         let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+        next.isExcel = true
         next.modalPresentationStyle = .fullScreen
-        self.present(next,animated: true, completion: nil)
-        
+        DispatchQueue.main.async {
+            self.present(next, animated: true, completion: nil)
+        }
     }
     
     func startLoading() {
@@ -46,14 +48,14 @@ class LoadingViewController: UIViewController,UITextFieldDelegate {
            
            // Optionally, disable user interaction to prevent interaction during loading
            view.isUserInteractionEnabled = false
-       }
+    }
 
-       func stopLoading() {
-           // Stop animating the activity indicator
-           uai.stopAnimating()
-           
-           // Re-enable user interaction
-           view.isUserInteractionEnabled = true
-       }
+   func stopLoading() {
+       // Stop animating the activity indicator
+       uai.stopAnimating()
+       
+       // Re-enable user interaction
+       view.isUserInteractionEnabled = true
+   }
     
 }
