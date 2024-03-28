@@ -424,9 +424,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                         stringLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })//A2
                     }
                 }
-                
-                var LARGIST_ROW_IN_MERGEDCELLS = 0
-                
+               
                 //Getting values
                 //if let formula = cell.formula?.value { returnString = formula } }
                 for i in 0..<columnName.count {
@@ -513,9 +511,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 
                 var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: appd.diff_end_index)
-//                if rowsize < appd.DEFAULT_ROW_NUMBER{
-//                    rowsize = appd.DEFAULT_ROW_NUMBER
-//                }
                 
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()

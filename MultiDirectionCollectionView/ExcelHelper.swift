@@ -142,9 +142,7 @@ class ExcelHelper{
                        stringLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })//A2
                    }
                }
-               
-               var LARGIST_ROW_IN_MERGEDCELLS = 0
-               
+           
                //Getting values
                //if let formula = cell.formula?.value { returnString = formula } }
                for i in 0..<columnName.count {
