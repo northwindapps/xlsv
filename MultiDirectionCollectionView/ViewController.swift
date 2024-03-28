@@ -223,7 +223,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //something went wrong maybe fix it in future..maybe
         if location.count != textsize.count{
             textsize.removeAll()
@@ -436,18 +436,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if indexPath.item == selectedSheet {
+            if isExcel && indexPath.item == appd.sheetNameIds.firstIndex(of: String(sheetIdx)){
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
-            }else{
-                cell.FileLabel.backgroundColor = UIColor.white
-                cell.FileLabel.textColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1)
+                return cell
             }
             
-            
+            if !isExcel && indexPath.item == selectedSheet {
+                cell.FileLabel.backgroundColor = UIColor.lightGray
+                cell.FileLabel.textColor = UIColor.white
+                return cell
+            }
+
+            cell.FileLabel.backgroundColor = UIColor.white
+            cell.FileLabel.textColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1)
             return cell
         }
-        
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -3766,12 +3770,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func noInternet(sheetIdx:Int){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
-//        let sheet1Json = ReadWriteJSON()
-//        var temp = sheet1Json.titleJsonFile()
-        //append rest sheet2, sheet3 from appd.variable
-//        temp.append("sheet2")
-//        temp.append("sheet3")
-        //localFileNames = temp//.reversed()
         localFileNames = ["sheet1"]
         
         //excel senario
