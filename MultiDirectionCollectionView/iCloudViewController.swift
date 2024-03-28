@@ -59,7 +59,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         super.viewDidLoad()
         Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(self.timerUpdate), userInfo: nil, repeats: false)
-        
+        appd.ws_path = ""
+        appd.wsIndex = 1
+        appd.imported_xlsx_file_path=""
         // Do any additional setup after loading the view.
         startLoading()
     }
@@ -229,6 +231,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd.cswLocation.removeAll()
         appd.numberofRow = rowcount+1
         appd.numberofColumn = columncount+1
+        isExcel = false
         // End of csv.file reading
             
         }else if url.absoluteString.contains(".xlsx"){
