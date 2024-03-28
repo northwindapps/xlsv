@@ -88,9 +88,9 @@ class ReadWriteJSON {
     // https://stackoverflow.com/questions/28768015/how-to-save-an-array-as-a-json-file-in-swift
     // https://stackoverflow.com/questions/26386093/array-from-dictionary-keys-in-swift
     //func readJsonFIle()-> ([String],[String]) {
-    func readJsonFIle(title:String)->Bool {
+    func readJsonFile(title:String)->Bool {
         let pathDirectory = getDocumentsDirectory()
-        let filePath = pathDirectory.appendingPathComponent("/" + title)
+        let filePath = pathDirectory.appendingPathComponent("/" + title + ".xml")//title:shee1,sheet2,sheet3...
         let fileManager = FileManager.default
         print("readFile",filePath)
         if fileManager.fileExists(atPath: filePath.path){
@@ -242,30 +242,6 @@ class ReadWriteJSON {
        
 //        print("JSONFOLDER",paths[0].appendingPathComponent("sub/"))
         return paths[0].appendingPathComponent("sub/")
-    }
-    
-    func titleJsonFile()->[String]{
-        let pathDirectory = getDocumentsDirectory()
-        try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-
-            //You are my hero bro https://stackoverflow.com/questions/33032293/swift-2-ios-get-file-list-sorted-by-creation-date-more-concise-solution
-            var directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-//            directory.appendPathComponent("sub/")
-            if let urlArray = try? FileManager.default.contentsOfDirectory(at: pathDirectory,
-                                                                           includingPropertiesForKeys: [.contentModificationDateKey],
-                                                                           options:.skipsHiddenFiles) {
-           
-                
-                return urlArray.map { url in
-                    (url.lastPathComponent, (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast)
-                    }
-                    .sorted(by: { $0.1 > $1.1 }) // sort descending modification dates
-                    .map { $0.0 } // extract file names
-                
-            } else {
-                return []
-            }
-
     }
     
     func saveuserAll() {

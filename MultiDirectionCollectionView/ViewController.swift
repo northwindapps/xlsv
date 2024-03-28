@@ -140,6 +140,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //isExcelFile?
     var isExcel = false
+    var sheetIdx = 0
     
     
     
@@ -568,13 +569,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //FileNameCollectionview Change Page
             //sheet cell get touched
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-                appd.viewconSelectedName = localFileNames[selectedSheet]
-            }else{
-                selectedSheet = 0
-                appd.viewconSelectedName = localFileNames[selectedSheet]
-            }
-            
             appd.collectionViewCellSizeChanged = 1
             appd.cswLocation.removeAll()
             appd.customSizedWidth.removeAll()
@@ -589,14 +583,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             f_location_alphabet.removeAll()
             
             //print("sheet changed",indexPath.item)
-            selectedSheet = indexPath.item
             stringboxText = ""
-            
+
         
             print("go to file view")
-            print("selectedSheet",selectedSheet)
+            print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-            targetViewController.idx = selectedSheet
+            targetViewController.idx = Int(appd.sheetNameIds[indexPath.item])
             targetViewController.modalPresentationStyle = .fullScreen
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
@@ -979,7 +972,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.nousecells.removeAll()
             
             //Delete all xml files
-            let fileList = ReadWriteJSON().titleJsonFile()
+            let fileList = appd.sheetNameIds.map { "sheet\($0)" }
             
             for i in 0..<fileList.count{
                 let name = fileList[i]
@@ -1281,7 +1274,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func saveJSONAction(_ sender:UIButton){
-        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var message = "Do you save this file?"
         var yes = "OK"
         var no = "No"
@@ -1361,9 +1354,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             
             let test = ReadWriteJSON()
-            let temp = test.titleJsonFile()
             
-            self.localFileNames = temp.reversed()
+            self.localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             
             self.FileCollectionView.reloadData()
             
@@ -1385,7 +1377,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func deleteJSONAction(_ sender:UIButton){
-        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var message = "Do you delete this file?"
         var yes = "OK"
         var no = "No"
@@ -1465,9 +1457,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.deleteLocalJson(filename:name!)
             
             let test = ReadWriteJSON()
-            let temp = test.titleJsonFile()
             
-            self.localFileNames = temp.reversed()
+            self.localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             
             self.FileCollectionView.reloadData()
             
@@ -1535,7 +1526,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         //Get sheet data
-        noInternet(sheetIdx: 0)
+        noInternet(sheetIdx: sheetIdx)
         
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
@@ -1570,12 +1561,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.scrollToNextItem()
         
         //get FileTitle
-        let test = ReadWriteJSON()
-        var temp = test.titleJsonFile()
+//        let test = ReadWriteJSON()
+//        var temp = test.titleJsonFile()
         //test
-        temp.append("sheet2")
-        temp.append("sheet3")
-        localFileNames = temp//.reversed()//sheet1,sheet2
+//        temp.append("sheet2")
+//        temp.append("sheet3")
+        localFileNames = appd.sheetNames //sheet1,sheet2
         FileCollectionView.reloadData()
         
         
@@ -1588,22 +1579,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         if appd.viewconSelectedName == "Initial"{
-            selectedSheet = 0
             let test = ReadWriteJSON()
-            test.readJsonFIle(title: localFileNames[selectedSheet])
+
+            if let title = localFileNames.first {
+                test.readJsonFile(title: title)
+                FileCollectionView.reloadData()
+            }
             
-            FileCollectionView.reloadData()
-            
-            noInternet(sheetIdx: 0)
+            noInternet(sheetIdx: sheetIdx)
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             
-//            if localFileNames.count > 0 {
             if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
                 appd.viewconSelectedName = localFileNames[selectedSheet]
                 fileTitle.text = localFileNames[selectedSheet]
             }
-            //
+            
             calculatormode_update_main()
             
         }
@@ -1867,7 +1858,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func createxlsxSheet(){
-        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         readAllJsonFiles()
         
         sleep(3)
@@ -1883,8 +1874,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //get FileTitle
         let RJ = ReadWriteJSON()
-        let tempFiles = RJ.titleJsonFile()
-        jsonFiles = tempFiles.reversed()
+        jsonFiles = appd.sheetNameIds.map { "sheet\($0)" }
         
         for i in 0..<jsonFiles.count {
             var content = [String]()
@@ -3787,11 +3777,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //excel senario
         if isExcel{
             let sheet1Json = ReadWriteJSON()
-            let temp = sheet1Json.titleJsonFile()
-            localFileNames = temp
+            localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             
-            if localFileNames.count > 0{
-                sheet1Json.readJsonFIle(title: localFileNames[sheetIdx])
+            if localFileNames.count > 0, let index = appd.sheetNameIds.firstIndex(of: String(sheetIdx)) {
+                sheet1Json.readJsonFile(title: localFileNames[index])
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize

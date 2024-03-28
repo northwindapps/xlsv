@@ -223,7 +223,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         print("savingImportJSON CSV")
         test.saveuserAll()
         test.saveJsonFile(source: dict, title: "sheet1")
-
         appd.customSizedHeight.removeAll()
         appd.customSizedWidth.removeAll()
         appd.cshLocation.removeAll()
@@ -275,6 +274,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         targetViewController.isExcel = isExcel
+        targetViewController.sheetIdx = 1
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
@@ -321,6 +321,17 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.wsIndex = wsIndex
             let file = XLSXFile(filepath: path)
             
+            //get all worksheets
+            if let workbook = try file?.parseWorkbooks().first {
+                // Extracting non-nil sheet IDs using compactMap
+                let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
+                print("Sheet Name IDs:", sheetNameIds)
+                appd.sheetNameIds = sheetNameIds
+                let sheetNames = workbook.sheets.items.compactMap { $0.name }
+                print("Sheet Names:", sheetNames)
+                appd.sheetNames = sheetNames
+            }
+            
             //appd.ws_total_pages = sheetsNumber
             //only show first page.
             //for path in try file!.parseWorksheetPaths() {
@@ -337,19 +348,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 valueContent = []
                 
                 let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
-//                let container = try file!.parseWorksheetPaths() too slow...
-//                    .compactMap { try file!.parseWorksheet(at: $0) }
-//                    .flatMap { $0.data?.rows ?? [] }
-//                    .flatMap { $0.cells }
                 columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
                 
                 
                 //mergedcells initialization
                 appd.diff_start_index.removeAll()
                 appd.diff_end_index.removeAll()
-//                let mergedCells = try file!.parseWorksheetPaths()
-//                    .compactMap { try file!.parseWorksheet(at: $0) }
-//                    .compactMap { $0.mergeCells}
                 let mergedCells = try file?.parseWorksheet(at: path).mergeCells
                 if mergedCells?.items.first != nil {
                     let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }

@@ -59,6 +59,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var CELL_WIDTH_EXCEL_GSHEET = 100.0
     
 
+    //workbook info
+    var sheetNameIds = [String]()
+    var sheetNames = [String]()
+    
+    
     var tag_int = 0
     var viewcontroller_tag=0
     var username = ""

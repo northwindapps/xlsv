@@ -39,6 +39,17 @@ class ExcelHelper{
            appd.ws_path = path
            let file = XLSXFile(filepath: path)
            
+           //get all worksheets
+           if let workbook = try file?.parseWorkbooks().first {
+               // Extracting non-nil sheet IDs using compactMap
+               let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
+               print("Sheet Name IDs:", sheetNameIds)
+               appd.sheetNameIds = sheetNameIds
+               let sheetNames = workbook.sheets.items.compactMap { $0.name }
+               print("Sheet Names:", sheetNames)
+               appd.sheetNames = sheetNames
+           }
+           
            //appd.ws_total_pages = sheetsNumber
            //only show first page.
            //for path in try file!.parseWorksheetPaths() {
@@ -55,10 +66,6 @@ class ExcelHelper{
                valueContent = []
                
                let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
-    //                let container = try file!.parseWorksheetPaths() too slow...
-    //                    .compactMap { try file!.parseWorksheet(at: $0) }
-    //                    .flatMap { $0.data?.rows ?? [] }
-    //                    .flatMap { $0.cells }
                columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
                
                
