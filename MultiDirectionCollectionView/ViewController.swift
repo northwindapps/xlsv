@@ -1095,10 +1095,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.diff_start_index.removeAll()
             appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
             appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+            appd.sheetNames = [String]()
+            appd.sheetNameIds = [String]()
             
-            if self.selectedSheet >= 0 && self.localFileNames.count > 0{
-                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
-            }
+//            if self.selectedSheet >= 0 && self.localFileNames.count > 0{
+//                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
+//            }
             
             DispatchQueue.main.async() {
                 self.myCollectionView.collectionViewLayout.invalidateLayout()
