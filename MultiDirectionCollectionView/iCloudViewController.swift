@@ -316,10 +316,13 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.ws_total_pages = 0
             appd.ws_path = path
             appd.wsIndex = wsIndex
             let file = XLSXFile(filepath: path)
+            appd.sheetNameIds = [String]()
+            appd.sheetNames = [String]()
+            appd.diff_start_index.removeAll()
+            appd.diff_end_index.removeAll()
             
             //get all worksheets
             if let workbook = try file?.parseWorkbooks().first {
@@ -352,8 +355,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 
                 //mergedcells initialization
-                appd.diff_start_index.removeAll()
-                appd.diff_end_index.removeAll()
                 let mergedCells = try file?.parseWorksheet(at: path).mergeCells
                 if mergedCells?.items.first != nil {
                     let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }
@@ -528,7 +529,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 }
                 
                 
-                let dict : [String:Any] = ["filename": "sheet1",
+                let dict : [String:Any] = ["filename": "sheet1.xml",
                                            "date": date,
                                            "content": valueContent+stringContent,
                                            "location": finalL_value + finalL_string,
@@ -548,7 +549,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 let test = ReadWriteJSON()
                 print("savingImportJSON")
-                test.saveJsonFile(source: dict, title: "sheet1")
+                test.saveJsonFile(source: dict, title: "sheet1.xml")
                 //this library is too slow, abound it in the next version
                 
                 

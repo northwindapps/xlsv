@@ -41,7 +41,10 @@ class ReadWriteJSON {
         
         
         
-        let filePath = pathDirectory.appendingPathComponent("/" + title)
+        var filePath = pathDirectory.appendingPathComponent("/" + title)
+        if filePath.pathExtension != "xml" {
+            filePath.appendPathExtension("xml")
+        }
         var datedata = Date()
         
         //let jsonString = NSString(data: jsonData, encoding: String.Encoding.utf8.rawValue)
@@ -90,7 +93,10 @@ class ReadWriteJSON {
     //func readJsonFIle()-> ([String],[String]) {
     func readJsonFile(title:String)->Bool {
         let pathDirectory = getDocumentsDirectory()
-        let filePath = pathDirectory.appendingPathComponent("/" + title + ".xml")//title:shee1,sheet2,sheet3...
+        var filePath = pathDirectory.appendingPathComponent("/" + title)//title:shee1,sheet2,sheet3...
+        if filePath.pathExtension != "xml" {
+            filePath.appendPathExtension("xml")
+        }
         let fileManager = FileManager.default
         print("readFile",filePath)
         if fileManager.fileExists(atPath: filePath.path){
@@ -158,7 +164,10 @@ class ReadWriteJSON {
             var input_order = [String]()
            
            let pathDirectory = getDocumentsDirectory()
-           let filePath = pathDirectory.appendingPathComponent("/" + title)
+        var filePath = pathDirectory.appendingPathComponent("/" + title)
+            if filePath.pathExtension != "xml" {
+                filePath.appendPathExtension("xml")
+            }
            let fileManager = FileManager.default
            if fileManager.fileExists(atPath: filePath.path){
                
@@ -207,8 +216,10 @@ class ReadWriteJSON {
         print("Delete")
         let pathDirectory = getDocumentsDirectory()
        
-        let filePath = pathDirectory.appendingPathComponent("/" + title)
-        
+        var filePath = pathDirectory.appendingPathComponent("/" + title)
+        if filePath.pathExtension != "xml" {
+            filePath.appendPathExtension("xml")
+        }
         //let jsonString = NSString(data: jsonData, encoding: String.Encoding.utf8.rawValue)
         
         do {

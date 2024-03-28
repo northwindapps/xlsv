@@ -35,9 +35,12 @@ class ExcelHelper{
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-           appd.ws_total_pages = 0
            appd.ws_path = path
            let file = XLSXFile(filepath: path)
+           appd.sheetNameIds = [String]()
+           appd.sheetNames = [String]()
+           appd.diff_start_index.removeAll()
+           appd.diff_end_index.removeAll()
            
            //get all worksheets
            if let workbook = try file?.parseWorkbooks().first {
@@ -70,8 +73,6 @@ class ExcelHelper{
                
                
                //mergedcells initialization
-               appd.diff_start_index.removeAll()
-               appd.diff_end_index.removeAll()
                let mergedCells = try file?.parseWorksheet(at: path).mergeCells
                if mergedCells?.items.first != nil {
                    let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }

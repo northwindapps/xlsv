@@ -1530,7 +1530,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         //Get sheet data
-        noInternet(sheetIdx: sheetIdx)
+        isExcelSheetData(sheetIdx: sheetIdx)
+        initSheetData(sheetIdx: sheetIdx)
         
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
@@ -1580,27 +1581,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         for idx in 0..<COLUMNSIZE {
             let letters = getExcelColumnName(columnNumber: idx)
             columnNames.append(letters)
-        }
-        
-        if appd.viewconSelectedName == "Initial"{
-            let test = ReadWriteJSON()
-
-            if let title = localFileNames.first {
-                test.readJsonFile(title: title)
-                FileCollectionView.reloadData()
-            }
-            
-            noInternet(sheetIdx: sheetIdx)
-            
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            
-            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-                appd.viewconSelectedName = localFileNames[selectedSheet]
-                fileTitle.text = localFileNames[selectedSheet]
-            }
-            
-            calculatormode_update_main()
-            
         }
         
         //Finally calculate
@@ -2541,7 +2521,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         appd.cshLocation.removeAll()
         appd.customSizedWidth.removeAll()
         appd.customSizedHeight.removeAll()
-        appd.viewconSelectedName = "Initial"
+        //appd.viewconSelectedName = "Initial"
         
         saveuserD()
         saveuserF()
@@ -3771,7 +3751,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    func noInternet(sheetIdx:Int){
+    func isExcelSheetData(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
         localFileNames = ["sheet1"]
@@ -3780,7 +3760,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if isExcel{
             let sheet1Json = ReadWriteJSON()
             localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
-            
+            print("sheetIdx",sheetIdx)
             if localFileNames.count > 0, let index = appd.sheetNameIds.firstIndex(of: String(sheetIdx)) {
                 sheet1Json.readJsonFile(title: localFileNames[index])
                 content = sheet1Json.content
@@ -3794,10 +3774,35 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 appd.customSizedHeight = sheet1Json.customcellHeight
                 appd.cswLocation = sheet1Json.ccwLocation
                 appd.cshLocation = sheet1Json.cchLocation
-                
+                return true
+            }
+            
+            //the workbook is corrupted?
+            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+                return true
+            }
+            
+            //
+            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+                print("something went wrong. maybe corrupt file.")
             }
         }
-        
+        return false
+    }
+    
+    func initSheetData(sheetIdx:Int){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
         content = excel_fomula_transformation(src:content)
@@ -4023,7 +4028,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             stringboxText = ""
             
             
-            noInternet(sheetIdx: selectedSheet)
+            initSheetData(sheetIdx: selectedSheet)
             //
             FileCollectionView.reloadData()
             fileTitle.text = localFileNames[selectedSheet]
