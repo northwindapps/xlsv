@@ -8,8 +8,6 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     var CELL_WIDTH = 120.0
     var INDEX_WIDTH = 50.0
     var INDEX_HEIGHT = 30.0
-    var DEFAULT_COLUMN_NUMBER = 60
-    var DEFAULT_ROW_NUMBER = 501
     
     let STATUS_BAR = UIApplication.shared.statusBarFrame.height
     var each_width = [Double]()
@@ -123,7 +121,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         if dataSourceDidUpdate == true{
 
         //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        c = DEFAULT_COLUMN_NUMBER//30
+        c = appd.DEFAULT_COLUMN_NUMBER//30
         if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
             let v = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
             if v > c{
@@ -131,7 +129,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             }
         }
         
-        r = DEFAULT_ROW_NUMBER
+        r = appd.DEFAULT_ROW_NUMBER
         if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
             let v = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
             if v > r{

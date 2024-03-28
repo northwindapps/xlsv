@@ -512,14 +512,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
                 
                 
-                var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: LARGIST_ROW_IN_MERGEDCELLS)
-                
-                if rowsize < appd.DEFAULT_ROW_NUMBER{
-                    rowsize = appd.DEFAULT_ROW_NUMBER
-                }
-                
-                
-                
+                var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: appd.diff_end_index)
+//                if rowsize < appd.DEFAULT_ROW_NUMBER{
+//                    rowsize = appd.DEFAULT_ROW_NUMBER
+//                }
                 
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
@@ -616,11 +612,15 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     
     
     
-    func GetRowSize(srcAry:[String],fromMergedcells:Int)->Int{
+    func GetRowSize(srcAry:[String],fromMergedcells:[String])->Int{
         var numberOnly = [Int]()
     
         for i in 0..<srcAry.count {
             numberOnly.append(Int(srcAry[i].filter("0123456789.".contains))!)
+        }
+        
+        for i in 0..<fromMergedcells.count {
+            numberOnly.append(Int(fromMergedcells[i].filter("0123456789.".contains))!)
         }
         
         var maxrow = numberOnly.max()
@@ -629,16 +629,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             maxrow = 0
         }
         
-        if maxrow! < fromMergedcells{
-            maxrow = fromMergedcells
-        }
-        
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        if appd.DEFAULT_ROW_NUMBER > maxrow + 10{
+//
+//        }
         let rowsize = UserDefaults.standard
-        rowsize.set(maxrow!+2, forKey: "NEWRsize")
+        rowsize.set(maxrow!+10, forKey: "NEWRsize")
         rowsize.synchronize()
    
         
-        return maxrow!+2
+        return maxrow!+10
         
     }
     

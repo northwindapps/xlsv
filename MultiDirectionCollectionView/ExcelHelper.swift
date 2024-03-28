@@ -227,18 +227,9 @@ class ExcelHelper{
                
                
                print("location",finalL_value + finalL_string)
-               
-               
-               
-               var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: LARGIST_ROW_IN_MERGEDCELLS)
-               
-               if rowsize < appd.DEFAULT_ROW_NUMBER{
-                   rowsize = appd.DEFAULT_ROW_NUMBER
-               }
-               
-               
-               
-               
+
+               var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: appd.diff_end_index)
+ 
                let today: Date = Date()
                let dateFormatter: DateFormatter = DateFormatter()
                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
@@ -334,30 +325,30 @@ class ExcelHelper{
 
 
 
-    func GetRowSize(srcAry:[String],fromMergedcells:Int)->Int{
-       var numberOnly = [Int]()
-
-       for i in 0..<srcAry.count {
-           numberOnly.append(Int(srcAry[i].filter("0123456789.".contains))!)
-       }
-       
-       var maxrow = numberOnly.max()
-       
-       if maxrow == nil {
-           maxrow = 0
-       }
-       
-       if maxrow! < fromMergedcells{
-           maxrow = fromMergedcells
-       }
-       
-       let rowsize = UserDefaults.standard
-       rowsize.set(maxrow!+2, forKey: "NEWRsize")
-       rowsize.synchronize()
-
-       
-       return maxrow!+2
-       
+    func GetRowSize(srcAry:[String],fromMergedcells:[String])->Int{
+        var numberOnly = [Int]()
+    
+        for i in 0..<srcAry.count {
+            numberOnly.append(Int(srcAry[i].filter("0123456789.".contains))!)
+        }
+        
+        for i in 0..<fromMergedcells.count {
+            numberOnly.append(Int(fromMergedcells[i].filter("0123456789.".contains))!)
+        }
+        
+        var maxrow = numberOnly.max()
+        
+        if maxrow == nil {
+            maxrow = 0
+        }
+        
+        let rowsize = UserDefaults.standard
+        rowsize.set(maxrow!+10, forKey: "NEWRsize")
+        rowsize.synchronize()
+   
+        
+        return maxrow!+10
+        
     }
 
 

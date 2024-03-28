@@ -1606,7 +1606,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //Finally calculate
         calculatormode_update_main()
         
-        
+        DispatchQueue.main.async() {
+            appd.collectionViewCellSizeChanged = 1
+            self.myCollectionView.collectionViewLayout.invalidateLayout()
+            self.myCollectionView.reloadData()
+        }
     }
     //the end of viewdidload
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
@@ -4028,11 +4032,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             calcPrep()
             calculatormode_update_main()
             
-//            DispatchQueue.main.async() {
-//                appd.collectionViewCellSizeChanged = 1
-//                self.myCollectionView.collectionViewLayout.invalidateLayout()
-//                self.myCollectionView.reloadData()
-//            }
+            DispatchQueue.main.async() {
+                appd.collectionViewCellSizeChanged = 1
+                self.myCollectionView.collectionViewLayout.invalidateLayout()
+                self.myCollectionView.reloadData()
+            }
         }
     }
     

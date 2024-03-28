@@ -53,7 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0
-    let DEFAULT_ROW_NUMBER = 201
+    let DEFAULT_ROW_NUMBER = 21
     let DEFAULT_COLUMN_NUMBER = 30
     var CELL_HEIGHT_EXCEL_GSHEET = 30.0
     var CELL_WIDTH_EXCEL_GSHEET = 100.0
