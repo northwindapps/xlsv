@@ -108,7 +108,7 @@ class ExcelHelper{
                            for j in 0..<temp[i].count{
                                if String(describing: temp[i][j].text).count > 0{
                                    
-                                   strapi.append("\(String(describing: temp[i][j].text))")
+                                   strapi.append("\(String(temp[i][j].text ?? ""))")
                                    // seems working now..
                                }
                            }
