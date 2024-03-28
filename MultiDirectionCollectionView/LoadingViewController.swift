@@ -35,7 +35,12 @@ class LoadingViewController: UIViewController,UITextFieldDelegate {
     {
         
         let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
-        next.isExcel = true
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        if appd.sheetNames.count{
+//            next.isExcel = false
+//        }else{
+//            next.isExcel = true
+//        }
         next.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(next, animated: true, completion: nil)

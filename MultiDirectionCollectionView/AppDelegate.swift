@@ -18,8 +18,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var radigree = 0
     var accessID = String()
     
-    var initialLaunch = true
-    
     //StringFormat
     var FONT_SIZE_DEFAULT = 12
     var fontcolor = 10
@@ -52,7 +50,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0
-    let DEFAULT_ROW_NUMBER = 21
+    let DEFAULT_ROW_NUMBER = 51
     let DEFAULT_COLUMN_NUMBER = 30
     var CELL_HEIGHT_EXCEL_GSHEET = 30.0
     var CELL_WIDTH_EXCEL_GSHEET = 100.0
@@ -64,9 +62,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     
     var tag_int = 0
-    var viewcontroller_tag=0
-    var username = ""
-    var currtenfile = 0
 
     
     var numberofRow = 0
@@ -114,12 +109,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var R_csize8 = Int()
     var R_rsize9 = Int()
     var R_csize9 = Int()
-    
-    //currentFile
-    var currentDirFiles = [URL]()
-    var nousecells = [[Int]]()
-    var viewconSelectedName = "Initial"
-    
+
     
     //
     var collectionViewCellSizeChanged = -1

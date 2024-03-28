@@ -288,7 +288,22 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     
     
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        dismiss(animated: true, completion: nil)
+        //dismiss(animated: true, completion: nil)
+        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.imported_xlsx_file_path = ""
+        appd.sheetNameIds = [String]()
+        appd.sheetNames = [String]()
+        appd.diff_start_index.removeAll()
+        appd.diff_end_index.removeAll()
+        
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )
+        targetViewController.modalPresentationStyle = .fullScreen
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+        
+        
     }
     
     

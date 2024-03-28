@@ -50,9 +50,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var sum_str = ""
     
     //Font location
-    //    var bglocation = [String]()
-    //    var tlocation = [String]()
-    //    var sizelocation = [String]()
     var cursor = String()
     var changeaffected = [String]()
     
@@ -973,7 +970,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             UserDefaults.standard.synchronize()
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.nousecells.removeAll()
             
             //Delete all xml files
             let fileList = appd.sheetNameIds.map { "sheet\($0)" }
@@ -1091,7 +1087,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             UserDefaults.standard.synchronize()
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.nousecells.removeAll()
             appd.cswLocation.removeAll()
             appd.cshLocation.removeAll()
             appd.customSizedWidth.removeAll()
@@ -1229,7 +1224,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.nousecells.removeAll()
             appd.cswLocation.removeAll()
             appd.cshLocation.removeAll()
             appd.customSizedWidth.removeAll()
@@ -2516,15 +2510,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         UserDefaults.standard.synchronize()
         
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.nousecells.removeAll()
         appd.cswLocation.removeAll()
         appd.cshLocation.removeAll()
         appd.customSizedWidth.removeAll()
         appd.customSizedHeight.removeAll()
-        //appd.viewconSelectedName = "Initial"
-        
+        appd.sheetNames = [String]()
         saveuserD()
         saveuserF()
+        
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )//Landscape
+        targetViewController.modalPresentationStyle = .fullScreen
+        self.present( targetViewController, animated: true, completion: nil)
         
     }
     
@@ -4009,7 +4005,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //FileNameCollectionview Change Page
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.viewconSelectedName = localFileNames[selectedSheet]
             appd.collectionViewCellSizeChanged = 1
             appd.cswLocation.removeAll()
             appd.customSizedWidth.removeAll()
