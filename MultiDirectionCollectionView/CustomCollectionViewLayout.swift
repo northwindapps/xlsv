@@ -58,11 +58,11 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             let size = UserDefaults.standard.object(forKey: "cellSize") as! Int
             switch size {
             case 0:
-            CELL_HEIGHT = 30.0
-            CELL_WIDTH = 40.0
-            INDEX_WIDTH = 30.0
-            INDEX_HEIGHT = 30.0
-            excel_cell_width_margin = 20
+            CELL_HEIGHT = 20.0
+            CELL_WIDTH = 30.0
+            INDEX_WIDTH = 20.0
+            INDEX_HEIGHT = 20.0
+            excel_cell_width_margin = 10
                 break
                     case 1:
                         CELL_HEIGHT = 30.0
@@ -102,8 +102,8 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         merged = appd.diff_start_index //["1,1","5,5"]
         
-        if appd.CELL_HEIGHT_EXCEL_GSHEET > 0 && appd.CELL_WIDTH_EXCEL_GSHEET > 0{
-            CELL_WIDTH = appd.CELL_WIDTH_EXCEL_GSHEET + Double(excel_cell_width_margin)
+        if appd.CELL_WIDTH_EXCEL_GSHEET > 100{
+            CELL_WIDTH = appd.CELL_WIDTH_EXCEL_GSHEET
         }
         
         
@@ -162,12 +162,21 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         yPOS.append(0.0)
         xPOS.append(0.0)
         
-        
+        //read temp when it's count was not 0
         for i in 0..<each_height.count{
-            if appd.cshLocation.contains(i){
-                let l = appd.cshLocation.index(of: i)
-                let doubled = Double(appd.customSizedHeight[l!])
-                each_height[i] = doubled
+            switch appd.cshLocation_temp.count {
+            case 0:
+                if appd.cshLocation.contains(i){
+                    let l = appd.cshLocation.index(of: i)
+                    let doubled = Double(appd.customSizedHeight[l!])
+                    each_height[i] = doubled
+                }
+            default:
+                if appd.cshLocation_temp.contains(i){
+                    let l = appd.cshLocation_temp.index(of: i)
+                    let doubled = Double(appd.customSizedHeight_temp[l!])
+                    each_height[i] = doubled
+                }
             }
             
             yPos += each_height[i]
@@ -175,10 +184,19 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         }
         
         for j in 0..<each_width.count{
-            if appd.cswLocation.contains(j){
-                let l = appd.cswLocation.index(of: j)
-                let doubled = Double(appd.customSizedWidth[l!])
-                each_width[j] = doubled
+            switch appd.cswLocation_temp.count {
+            case 0:
+                if appd.cswLocation.contains(j){
+                    let l = appd.cswLocation.index(of: j)
+                    let doubled = Double(appd.customSizedWidth[l!])
+                    each_width[j] = doubled
+                }
+            default:
+                if appd.cswLocation_temp.contains(j){
+                    let l = appd.cswLocation_temp.index(of: j)
+                    let doubled = Double(appd.customSizedWidth_temp[l!])
+                    each_width[j] = doubled
+                }
             }
             
             xPos += each_width[j]

@@ -11,6 +11,7 @@ import UIKit
 class SettingsViewController: UIViewController,UITextFieldDelegate {
 
      @IBOutlet weak var cellWidthlabel: UILabel!
+    var idx:Int?
        
     @IBOutlet weak var `return`: UIButton!
     
@@ -62,12 +63,26 @@ class SettingsViewController: UIViewController,UITextFieldDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-    func showAnimate()
+    func showAnimate() -> Bool
     {
-      
-        let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
-        next.modalPresentationStyle = .fullScreen
-        self.present(next,animated: true, completion: nil)
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if appd.ws_path == "" {
+            let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+            next.modalPresentationStyle = .fullScreen
+            self.present(next,animated: true, completion: nil)
+            return true
+        }
+        
+        print("go to file view")
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+        targetViewController.idx = idx
+        targetViewController.modalPresentationStyle = .fullScreen
+        // Present the target view controller after LoadingFileController's view has appeared
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+        
+        return true
         
     }
     

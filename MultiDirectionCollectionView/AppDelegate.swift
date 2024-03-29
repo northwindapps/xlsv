@@ -31,6 +31,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var customSizedWidth = [Double]()
     var cshLocation = [Int]()
     var customSizedHeight = [Double]()
+    var cswLocation_temp = [Int]()
+    var customSizedWidth_temp = [Double]()
+    var cshLocation_temp = [Int]()
+    var customSizedHeight_temp = [Double]()
+    //
     var border_ids = [Int]()
     var borders_left_style = [String]()
     var borders_right_style = [String]()

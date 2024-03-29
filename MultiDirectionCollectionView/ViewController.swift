@@ -65,6 +65,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var FONTEDIT :String = ""
     var orientaion = ""
     var cell_scalevalue = 1.0
+    var settingCellSelected = false
     
     var tag_int :Int!
     
@@ -474,10 +475,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             saveuserD()
             
 //            if selectedSheet >= 0{
-            if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
                 print("saved")
-                saveAsLocalJson(filename: localFileNames[selectedSheet])
-            }
+                saveAsLocalJson(filename: "sheet1")
+            //}
             
             
             let locationIdx = location.firstIndex(of: currentindexstr)
@@ -548,22 +549,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 changeaffected.removeAll()
                 //sizing column width and height
                 if indexPath.item == 0{
-                    
+                    settingCellSelected = true
                     numberviewopen()
                     
                     
                 }else if indexPath.section == 0{
-                    
+                    settingCellSelected  = true
                     numberviewopen()
                     
                 }else{
                     //version 1.3.6 csv mode only not in excel file viewer mode
-                    if !isExcel{
+                    if !isExcel && !settingCellSelected{
                         if datainputview == nil{
                             hiddenTextField.becomeFirstResponder()
                         }
                         let locationIdx = location.firstIndex(of: currentindexstr)
-                        if locationIdx != nil {
+                        if locationIdx != nil && datainputview != nil {
                             datainputview.stringbox.text = content[locationIdx!]
                         }
                         self.myCollectionView.reloadData()
@@ -756,13 +757,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if self.view.subviews.contains(Hintview){
                 Hintview.removeFromSuperview()
             }else{
-                Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 190,height: 315))
+                Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 300,height: 330))
                 Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
                 
                 self.view.addSubview(Hintview)
             }
         }else{
-            Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 190,height: 315))
+            Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 300,height: 330))
             Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
             
             self.view.addSubview(Hintview)
@@ -1096,22 +1097,30 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.cshLocation.removeAll()
             appd.customSizedWidth.removeAll()
             appd.customSizedHeight.removeAll()
+            appd.cswLocation_temp.removeAll()
+            appd.cshLocation_temp.removeAll()
+            appd.customSizedWidth_temp.removeAll()
+            appd.customSizedHeight_temp.removeAll()
             appd.diff_end_index.removeAll()
             appd.diff_start_index.removeAll()
             appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
             appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             appd.sheetNames = [String]()
             appd.sheetNameIds = [String]()
+            appd.ws_path = ""
+            appd.imported_xlsx_file_path = ""
             
 //            if self.selectedSheet >= 0 && self.localFileNames.count > 0{
 //                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
 //            }
             
-            DispatchQueue.main.async() {
-                self.myCollectionView.collectionViewLayout.invalidateLayout()
-                self.myCollectionView.reloadData()
-            }
+//            DispatchQueue.main.async() {
+//                self.myCollectionView.collectionViewLayout.invalidateLayout()
+//                self.myCollectionView.reloadData()
+//            }
             
+            let sheet1Json = ReadWriteJSON()
+            sheet1Json.deleteJsonFile(title: "sheet1")
             
             self.customview2.removeFromSuperview()
             
@@ -1128,9 +1137,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func goSettings(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Settings" ) as! SettingsViewController
+        if isExcel{
+            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+        }
         targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
+        print("go to setting view")
+      
+        self.saveAsLocalJson(filename: "sheet1")
+        // Present the target view controller after LoadingFileController's view has appeared
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+        
     }
     
     @objc func resetStyle(_ sender:UIButton){
@@ -1252,9 +1272,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             r4.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
             r4.synchronize()
             
-            if self.selectedSheet >= 0{
-                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
-            }
+            //if self.selectedSheet >= 0{
+                self.saveAsLocalJson(filename: "sheet1")
+            //}
             
             DispatchQueue.main.async() {
                 appd.collectionViewCellSizeChanged = 1
@@ -1262,11 +1282,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.myCollectionView.reloadData()
                 appd.collectionViewCellSizeChanged = 0
             }
-            
+
             self.customview2.removeFromSuperview()
-            
-            
-            
+
         }))
         alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
         
@@ -1277,213 +1295,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.customview2.removeFromSuperview()
         
     }
-    
-    @objc func saveJSONAction(_ sender:UIButton){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        var message = "Do you save this file?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "このファイルを保存しますか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Enregistrez-vous ce fichier?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "您保存此文件吗？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Speichern Sie diese Datei?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Salvi questo file?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Вы сохраняете этот файл?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("sv")
-        {
-            message = "Sparar du den här filen?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("da")
-        {
-            message = "Gemmer du denne fil?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("ar")
-        {
-            message = "هل تحفظ هذا الملف؟"
-            yes = "نعم"
-            no = "لا"
-            
-        }else if locationstr.contains("es")
-        {
-            message = "¿Guarda este archivo?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
-        alert.addTextField()
-        
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            alert.textFields![0].text = localFileNames[selectedSheet]
-        }
-        
-        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-            let name = alert.textFields![0].text
-            
-            if name!.count > 0 {
-                self.saveAsLocalJson(filename:name!.replacingOccurrences(of: " ", with: "_"))
-            }
-            
-            let test = ReadWriteJSON()
-            
-            self.localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
-            
-            self.FileCollectionView.reloadData()
-            
-            self.customview2.removeFromSuperview()
-            
-            self.fileTitle.text = name!.replacingOccurrences(of: " ", with: "_")
-            
-        })
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
-    }
-    
-    @objc func deleteJSONAction(_ sender:UIButton){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        var message = "Do you delete this file?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "このファイルを削除しますか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Supprimez-vous ce fichier?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "是否删除此文件？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Löschen Sie diese Datei?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Elimina questo file?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Вы удаляете этот файл?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("sv")
-        {
-            message = "Tar du bort den här filen?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("da")
-        {
-            message = "Slet du denne fil?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("ar")
-        {
-            message = "هل تحذف هذا الملف؟"
-            yes = "نعم"
-            no = "لا"
-            
-        }else if locationstr.contains("es")
-        {
-            message = "¿Eliminas este archivo?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
-        alert.addTextField()
-        
-        
-//        if  selectedSheet >= 0 && localFileNames.count > 0 {
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            alert.textFields![0].text = localFileNames[selectedSheet]
-        }
-        
-        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-            let name = alert.textFields![0].text
-            
-            self.deleteLocalJson(filename:name!)
-            
-            let test = ReadWriteJSON()
-            
-            self.localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
-            
-            self.FileCollectionView.reloadData()
-            
-            self.customview2.removeFromSuperview()
-            
-            self.fileTitle.text = ""
-            
-        })
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
-    }
-    
     
     
     override func viewDidLoad() {
@@ -1529,8 +1340,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         //Get sheet data
-        isExcelSheetData(sheetIdx: sheetIdx)
-        initSheetData(sheetIdx: sheetIdx)
+        if !isExcelSheetData(sheetIdx: sheetIdx){
+            let sheet1Json = ReadWriteJSON()
+            if sheet1Json.readJsonFile(title: "sheet1"){
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+            }else{
+                initSheetData(sheetIdx: sheetIdx)
+            }
+        }
         
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
@@ -1746,9 +1573,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
         customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
-        
-        customview2.savebutton.addTarget(self, action: #selector(saveJSONAction(_:)), for: UIControl.Event.touchUpInside)
-        customview2.deletebutton.addTarget(self, action: #selector(deleteJSONAction(_:)), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
@@ -2143,9 +1967,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //
         
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex {
-            saveAsLocalJson(filename: localFileNames[selectedSheet])
-        }
+        //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex {
+            saveAsLocalJson(filename: "sheet1")
+        //}
         
         Fview.removeFromSuperview()
     }
@@ -2393,20 +2217,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if Double(value)! < 20.0{
                     
                 }else{
-                    if appd.cswLocation.contains(indexItem){
-                        let idx = appd.cswLocation.firstIndex(of: indexItem)
-                        appd.customSizedWidth[idx!] = Double(value)!
+                    if appd.cswLocation_temp.contains(indexItem){
+                        let idx = appd.cswLocation_temp.firstIndex(of: indexItem)
+                        appd.customSizedWidth_temp[idx!] = Double(value)!
                     }
-                    appd.customSizedWidth.append(Double(value)!)
-                    appd.cswLocation.append(indexItem)
+                    appd.customSizedWidth_temp.append(Double(value)!)
+                    appd.cswLocation_temp.append(indexItem)
                     
-                    let r2 = UserDefaults.standard
-                    r2.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
-                    r2.synchronize()
-                    
-                    let r3 = UserDefaults.standard
-                    r3.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
-                    r3.synchronize()
                 }
                 
             }else if numberview.width_height_selector.selectedSegmentIndex == 1{
@@ -2415,21 +2232,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if Double(value)! < 20.0{
                     
                 }else {
-                    if appd.cshLocation.contains(indexSection){
-                        let idx = appd.cshLocation.firstIndex(of: indexSection)
-                        appd.customSizedHeight[idx!] = Double(value)!
+                    if appd.cshLocation_temp.contains(indexSection){
+                        let idx = appd.cshLocation_temp.firstIndex(of: indexSection)
+                        appd.customSizedHeight_temp[idx!] = Double(value)!
                     }
-                    appd.customSizedHeight.append(Double(value)!)
-                    appd.cshLocation.append(indexSection)
-                    
-                    let r2 = UserDefaults.standard
-                    r2.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
-                    r2.synchronize()
-                    
-                    let r3 = UserDefaults.standard
-                    r3.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
-                    r3.synchronize()
-                    
+                    appd.customSizedHeight_temp.append(Double(value)!)
+                    appd.cshLocation_temp.append(indexSection)
+                                    
                     
                 }
                 
@@ -2445,17 +2254,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         numberview.removeFromSuperview()
         
         
-//        if selectedSheet >= 0{
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: localFileNames[selectedSheet])
+        print("go to file view")
+        //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+        if isExcel{
+            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
         }
-        
-        
-        DispatchQueue.main.async() {
-            appd.collectionViewCellSizeChanged = 1
-            self.myCollectionView.collectionViewLayout.invalidateLayout()
-            self.myCollectionView.reloadData()
-            
+        targetViewController.modalPresentationStyle = .fullScreen
+        // Present the target view controller after LoadingFileController's view has appeared
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
         }
         
     }
@@ -2535,9 +2343,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         horrible.synchronize()
         
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: localFileNames[selectedSheet])
-        }
+        //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: "sheet1")
+        //}
         
         
         DispatchQueue.main.async() {
@@ -2629,9 +2437,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
 //        if selectedSheet >= 0{
-        if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: localFileNames[selectedSheet])
-        }
+        //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            saveAsLocalJson(filename: "sheet1")
+        //}
         
         
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -3594,7 +3402,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             KEYBOARDLOCATION = keyboardHeight
-            if !isExcel{
+            if !isExcel && !settingCellSelected{
                 opendatainputview()
             }
         }
@@ -3607,6 +3415,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
          
         }
+        settingCellSelected = false
     }
     
     @objc func moveUp(){
@@ -3908,7 +3717,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         changeaffected.removeAll()
 //        if selectedSheet >= 0{
         if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: localFileNames[selectedSheet])
+            saveAsLocalJson(filename: "sheet1")//localFileNames[selectedSheet])
         }
         self.customview3.removeFromSuperview()
     }

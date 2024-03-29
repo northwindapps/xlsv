@@ -42,7 +42,7 @@
 "lKn-Uh-Xdf.text" = "=e^(5)";
 
 /* Class = "UILabel"; text = "dog:cat:raccoon →"; ObjectID = "ucd-dI-lW7"; */
-"ucd-dI-lW7.text" = "Chien:Chat:Vache →";
+"ucd-dI-lW7.text" = "Chien:Chat:Vache → *Cela remplit 3 cellules d'affilée.";
 
 /* Class = "UILabel"; text = "=IMSUM(A3,A4)"; ObjectID = "vCQ-3w-Afp"; */
 "vCQ-3w-Afp.text" = "=IMSUM(A3,A4)";
