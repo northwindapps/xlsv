@@ -195,7 +195,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if (error != nil || user == nil) {
                 // Show the app's signed-out state.
                 print("sign out")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleSignIn")
+                let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
 
                 self.window?.rootViewController = initialViewController
                 self.window?.frame = self.window!.bounds
@@ -204,7 +204,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 // Show the app's signed-in state.
                 print("sign in")
                 //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleDrive")
+                let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
 
                 self.window?.rootViewController = initialViewController
                 self.window?.frame = self.window!.bounds
@@ -213,7 +213,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         
-        let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleSignIn")
+        let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()

@@ -3594,7 +3594,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             KEYBOARDLOCATION = keyboardHeight
-            opendatainputview()
+            if !isExcel{
+                opendatainputview()
+            }
         }
     }
     
