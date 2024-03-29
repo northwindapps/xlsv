@@ -316,6 +316,11 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd.sheetNames = [String]()
         appd.diff_start_index.removeAll()
         appd.diff_end_index.removeAll()
+        appd.ws_path = ""
+        appd.wsIndex = 1
+        
+        let sheet1Json = ReadWriteJSON()
+        sheet1Json.deleteJsonFile(title: "csv_sheet1")
         
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )
         targetViewController.modalPresentationStyle = .fullScreen

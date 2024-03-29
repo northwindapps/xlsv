@@ -477,7 +477,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //            if selectedSheet >= 0{
             //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
                 print("saved")
-                saveAsLocalJson(filename: "sheet1")
+                saveAsLocalJson(filename: "csv_sheet1")
             //}
             
             
@@ -1120,7 +1120,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //            }
             
             let sheet1Json = ReadWriteJSON()
-            sheet1Json.deleteJsonFile(title: "sheet1")
+            sheet1Json.deleteJsonFile(title: "csv_sheet1")
             
             self.customview2.removeFromSuperview()
             
@@ -1145,7 +1145,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         targetViewController.modalPresentationStyle = .fullScreen
         print("go to setting view")
       
-        self.saveAsLocalJson(filename: "sheet1")
+        self.saveAsLocalJson(filename: "csv_sheet1")
         // Present the target view controller after LoadingFileController's view has appeared
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
@@ -1273,7 +1273,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             r4.synchronize()
             
             //if self.selectedSheet >= 0{
-                self.saveAsLocalJson(filename: "sheet1")
+                self.saveAsLocalJson(filename: "csv_sheet1")
             //}
             
             DispatchQueue.main.async() {
@@ -1340,24 +1340,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         //Get sheet data
-        if !isExcelSheetData(sheetIdx: sheetIdx){
-            let sheet1Json = ReadWriteJSON()
-            if sheet1Json.readJsonFile(title: "sheet1"){
-                content = sheet1Json.content
-                location = sheet1Json.location
-                textsize = sheet1Json.fontsize
-                bgcolor = sheet1Json.bgcolor
-                tcolor = sheet1Json.fontcolor
-                COLUMNSIZE = sheet1Json.columnsize
-                ROWSIZE = sheet1Json.rowsize
-                appd.customSizedWidth = sheet1Json.customcellWidth
-                appd.customSizedHeight = sheet1Json.customcellHeight
-                appd.cswLocation = sheet1Json.ccwLocation
-                appd.cshLocation = sheet1Json.cchLocation
-            }else{
-                initSheetData(sheetIdx: sheetIdx)
-            }
-        }
+        isExcelSheetData(sheetIdx: sheetIdx)
+        initSheetData(sheetIdx: sheetIdx)
+   
         
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
@@ -1624,6 +1609,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }
         customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
+        
+        //unhidden in next version 1.3.7 TODO develop googleDrive upload
+        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
         
         self.view.addSubview(customview2)
     }
@@ -1968,7 +1956,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //
         
         //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex {
-            saveAsLocalJson(filename: "sheet1")
+            saveAsLocalJson(filename: "csv_sheet1")
         //}
         
         Fview.removeFromSuperview()
@@ -2344,7 +2332,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
 //        if selectedSheet >= 0{
         //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: "sheet1")
+            saveAsLocalJson(filename: "csv_sheet1")
         //}
         
         
@@ -2438,7 +2426,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
 //        if selectedSheet >= 0{
         //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: "sheet1")
+            saveAsLocalJson(filename: "csv_sheet1")
         //}
         
         
@@ -3531,7 +3519,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func isExcelSheetData(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
-        localFileNames = ["sheet1"]
+        //localFileNames = ["sheet1"]
         
         //excel senario
         if isExcel{
@@ -3573,6 +3561,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //
             if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
                 print("something went wrong. maybe corrupt file.")
+            }
+        }else{
+            let sheet1Json = ReadWriteJSON()
+            if sheet1Json.readJsonFile(title: "csv_sheet1"){
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+                return false
             }
         }
         return false
@@ -3659,7 +3663,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         if localFileNames.count == 0 {
-            let newfile = "sheet1"
+            let newfile = "csv_sheet1"
             
             
             saveAsLocalJson(filename: newfile)
@@ -3717,7 +3721,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         changeaffected.removeAll()
 //        if selectedSheet >= 0{
         if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
-            saveAsLocalJson(filename: "sheet1")//localFileNames[selectedSheet])
+            saveAsLocalJson(filename: "csv_sheet1")//localFileNames[selectedSheet])
         }
         self.customview3.removeFromSuperview()
     }
@@ -3755,9 +3759,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
 
             //print("ViewController" ,filePath)
-            let fileName = (url?.lastPathComponent)!
             if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
+                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
             }else{
                 print("noContent")
             }

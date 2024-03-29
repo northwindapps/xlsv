@@ -63,21 +63,18 @@
                         <color key="titleColor" red="1" green="0.19125069140000001" blue="0.12444555039999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="0dO-3H-IDI">
-                    <rect key="frame" x="9" y="89" width="128" height="30"/>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MuS-sR-VDI">
+                    <rect key="frame" x="189" y="139" width="48" height="27"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="30" id="63Z-SD-F8v"/>
+                        <constraint firstAttribute="height" constant="27" id="yXF-Vu-fV1"/>
                     </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Settings"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="0dO-3H-IDI">
+                    <rect key="frame" x="141" y="186" width="128" height="30"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Export"/>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="TPE-jL-3nQ">
-                    <rect key="frame" x="58" y="139" width="31" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="30" id="gJv-zp-8CW"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Email"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Eit-4b-Vlp">
                     <rect key="frame" x="30" y="186" width="72" height="94"/>
@@ -87,43 +84,46 @@
                     <fontDescription key="fontDescription" type="system" pointSize="13"/>
                     <state key="normal" title="↩︎"/>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MuS-sR-VDI">
-                    <rect key="frame" x="189" y="139" width="48" height="27"/>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="TPE-jL-3nQ">
+                    <rect key="frame" x="55" y="92" width="31" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="30" id="gJv-zp-8CW"/>
+                    </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Settings"/>
+                    <state key="normal" title="Email"/>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
                 <constraint firstItem="x2D-Hd-mUz" firstAttribute="leading" secondItem="okp-xm-cxi" secondAttribute="trailing" constant="20" id="1dW-GE-OLN"/>
                 <constraint firstItem="AkM-DE-7L6" firstAttribute="baseline" secondItem="lCK-kP-XA0" secondAttribute="baseline" id="1kj-fS-YXX"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="top" secondItem="AkM-DE-7L6" secondAttribute="bottom" constant="15" id="31K-5O-GNI"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="leading" secondItem="TPE-jL-3nQ" secondAttribute="leading" constant="-49" id="4d9-Ml-OMI"/>
+                <constraint firstAttribute="trailing" secondItem="MuS-sR-VDI" secondAttribute="trailing" constant="48" id="2Rb-LT-116"/>
+                <constraint firstItem="MuS-sR-VDI" firstAttribute="top" secondItem="pcP-NY-tUo" secondAttribute="bottom" constant="22" id="2mZ-La-zwv"/>
                 <constraint firstItem="x2D-Hd-mUz" firstAttribute="leading" secondItem="lCK-kP-XA0" secondAttribute="leading" id="53U-4y-6jU"/>
                 <constraint firstAttribute="trailing" secondItem="pcP-NY-tUo" secondAttribute="trailing" id="5eS-V4-JqU"/>
                 <constraint firstItem="Eit-4b-Vlp" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="30" id="6Kx-JC-OvM"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="centerX" secondItem="Eit-4b-Vlp" secondAttribute="centerX" constant="7.5" id="7yx-2q-9Sx"/>
+                <constraint firstItem="TPE-jL-3nQ" firstAttribute="centerX" secondItem="Eit-4b-Vlp" secondAttribute="centerX" constant="4.5" id="7yx-2q-9Sx"/>
                 <constraint firstItem="okp-xm-cxi" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="topMargin" id="9Tx-lm-qc9"/>
                 <constraint firstItem="okp-xm-cxi" firstAttribute="firstBaseline" secondItem="x2D-Hd-mUz" secondAttribute="firstBaseline" id="BHd-I6-3Xh"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="top" secondItem="MuS-sR-VDI" secondAttribute="top" id="Cgx-8W-61j"/>
+                <constraint firstItem="TPE-jL-3nQ" firstAttribute="top" secondItem="MuS-sR-VDI" secondAttribute="top" constant="-47" id="Cgx-8W-61j"/>
+                <constraint firstItem="0dO-3H-IDI" firstAttribute="trailing" secondItem="iN0-l3-epB" secondAttribute="trailingMargin" id="DZ8-ZY-ABa"/>
                 <constraint firstItem="okp-xm-cxi" firstAttribute="baseline" secondItem="x2D-Hd-mUz" secondAttribute="baseline" id="H3I-Ab-SB1"/>
                 <constraint firstAttribute="trailing" secondItem="x2D-Hd-mUz" secondAttribute="trailing" constant="11" id="KdT-BC-YZn"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="centerY" secondItem="pcP-NY-tUo" secondAttribute="centerY" id="LzR-G6-h4F"/>
                 <constraint firstAttribute="bottom" secondItem="Eit-4b-Vlp" secondAttribute="bottom" constant="8" id="Qoc-B1-A9A"/>
                 <constraint firstItem="AkM-DE-7L6" firstAttribute="top" secondItem="okp-xm-cxi" secondAttribute="bottom" constant="24" id="Vzr-WG-svu"/>
+                <constraint firstItem="0dO-3H-IDI" firstAttribute="top" secondItem="MuS-sR-VDI" secondAttribute="bottom" constant="20" id="ZOe-B0-fhy"/>
                 <constraint firstAttribute="trailing" secondItem="lCK-kP-XA0" secondAttribute="trailing" constant="9" id="dTb-jD-eaB"/>
-                <constraint firstItem="pcP-NY-tUo" firstAttribute="leading" secondItem="0dO-3H-IDI" secondAttribute="trailing" constant="8" id="fDq-uC-VGe"/>
+                <constraint firstAttribute="bottom" secondItem="0dO-3H-IDI" secondAttribute="bottom" constant="72" id="dmg-As-Dyi"/>
                 <constraint firstItem="pcP-NY-tUo" firstAttribute="top" secondItem="lCK-kP-XA0" secondAttribute="bottom" constant="18" id="fWd-7R-2sA"/>
                 <constraint firstItem="AkM-DE-7L6" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="-1" id="g4G-F6-WSS"/>
+                <constraint firstItem="0dO-3H-IDI" firstAttribute="leading" secondItem="Eit-4b-Vlp" secondAttribute="trailing" constant="39" id="hf9-Pp-VAn"/>
                 <constraint firstItem="lCK-kP-XA0" firstAttribute="centerX" secondItem="MuS-sR-VDI" secondAttribute="centerX" id="ibd-SH-4Kc"/>
                 <constraint firstAttribute="bottom" secondItem="MuS-sR-VDI" secondAttribute="bottom" constant="122" id="kMR-k1-ote"/>
-                <constraint firstItem="MuS-sR-VDI" firstAttribute="leading" secondItem="TPE-jL-3nQ" secondAttribute="trailing" constant="100" id="lAP-bb-0HQ"/>
-                <constraint firstItem="Eit-4b-Vlp" firstAttribute="top" secondItem="TPE-jL-3nQ" secondAttribute="bottom" constant="17" id="o73-2Z-JEW"/>
+                <constraint firstItem="MuS-sR-VDI" firstAttribute="leading" secondItem="TPE-jL-3nQ" secondAttribute="trailing" constant="103" id="lAP-bb-0HQ"/>
+                <constraint firstItem="Eit-4b-Vlp" firstAttribute="top" secondItem="TPE-jL-3nQ" secondAttribute="bottom" constant="64" id="o73-2Z-JEW"/>
                 <constraint firstItem="lCK-kP-XA0" firstAttribute="leading" secondItem="AkM-DE-7L6" secondAttribute="trailing" constant="8" id="oZY-fR-BV5"/>
                 <constraint firstItem="okp-xm-cxi" firstAttribute="top" secondItem="x2D-Hd-mUz" secondAttribute="top" id="pkq-Kd-qlO"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="top" secondItem="0dO-3H-IDI" secondAttribute="bottom" constant="20" id="tzh-0F-icv"/>
                 <constraint firstItem="okp-xm-cxi" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="4" id="xBj-z3-Q17"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="centerX" secondItem="TPE-jL-3nQ" secondAttribute="centerX" id="xtV-ez-kR2"/>
                 <constraint firstItem="AkM-DE-7L6" firstAttribute="firstBaseline" secondItem="lCK-kP-XA0" secondAttribute="firstBaseline" id="yTr-Tu-Etw"/>
                 <constraint firstItem="AkM-DE-7L6" firstAttribute="top" secondItem="lCK-kP-XA0" secondAttribute="top" id="yr8-gw-2Rx"/>
             </constraints>
