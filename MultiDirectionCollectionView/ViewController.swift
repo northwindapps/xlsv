@@ -559,7 +559,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }else{
                     //version 1.3.6 csv mode only not in excel file viewer mode
                     if !isExcel{
-                        opendatainputview()
+                        if datainputview == nil{
+                            hiddenTextField.becomeFirstResponder()
+                        }
                         let locationIdx = location.firstIndex(of: currentindexstr)
                         if locationIdx != nil {
                             datainputview.stringbox.text = content[locationIdx!]
@@ -1485,8 +1487,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     override func viewDidLoad() {
-        
-        hiddenTextField.becomeFirstResponder()
         menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
@@ -2709,7 +2709,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func terminate(){
         if pastemode == false && getRefmode == false {
             datainputview.stringbox.resignFirstResponder()
-            datainputview.removeFromSuperview()
+            for subview in self.view.subviews.filter({ $0 is Datainputview }){
+                subview.removeFromSuperview()
+            }
+            datainputview = nil
         }
     }
     
@@ -3591,6 +3594,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             KEYBOARDLOCATION = keyboardHeight
+            opendatainputview()
         }
     }
     
@@ -3599,6 +3603,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if pastemode == false && getRefmode == false{
                 terminate()
             }
+         
         }
     }
     
