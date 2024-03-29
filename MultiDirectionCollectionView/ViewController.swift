@@ -3601,7 +3601,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func keyboardWillHide(_ notification: Notification) {
-        if datainputview != nil{
+        if !isExcel && datainputview != nil{
             if pastemode == false && getRefmode == false{
                 terminate()
             }
