@@ -358,7 +358,7 @@ class Service {
         return nil
     }
     
-    func tesstSandBox(fp: String = "", url: URL? = nil) -> URL? {
+    func testSandBox(fp: String = "", url: URL? = nil) -> URL? {
         do {
                 // Get the sandbox directory for documents
                 if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -468,7 +468,9 @@ class Service {
                     
                     //ready to zip
                     var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    let productURL = subdirectoryURL.appendingPathComponent("imported2.xlsx")
+                    let fpURL = URL(fileURLWithPath: fp)
+                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                    //appendingPathComponent("imported2.xlsx")
                     let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
                     let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
                     

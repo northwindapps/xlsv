@@ -101,109 +101,109 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     }
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
-        print("this is url")
-        print(url)
-        print(url.absoluteString)
-        //g.sheet 未対応
-        //csvPath = url.absoluteString
-        //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
-        //https://developer.apple.com/reference/foundation/nsfilemanager
-        //
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-        appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
-        
-        var isExcel = false
-        
-        //
-        if url.absoluteString.contains(".csv"){
+            print("this is url")
+            print(url)
+            print(url.absoluteString)
+            //g.sheet 未対応
+            //csvPath = url.absoluteString
+            //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
+            //https://developer.apple.com/reference/foundation/nsfilemanager
+            //
             
-        let fnameArry = url.absoluteString.split(separator: "/")
-        let fnameA = fnameArry.last!.split(separator: ".")
-        excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-        let mydata = try! Data(contentsOf: url)
-        let str = swiftDataToString(someData: mydata)
-        var elementArray = str?.components(separatedBy: "\n")
-            var rowcount:Int = elementArray!.count
-        
-        for i in 0..<rowcount {
-
-            if (elementArray![i].contains("\r")){
-                elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
-                elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
-            }
-        }
-
-        //
-        location.removeAll()
-        contents.removeAll()
-        
-        //Let's start
-        var columncount = 0
-        for r in 0..<rowcount//the number of rows
-        {
-            let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
+            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             
-            if columncount < wordsArray.count {
-                columncount = wordsArray.count
-            }
+            var isExcel = false
             
-            if wordsArray.count < columncount{
+            //
+            if url.absoluteString.contains(".csv"){
                 
+            let fnameArry = url.absoluteString.split(separator: "/")
+            let fnameA = fnameArry.last!.split(separator: ".")
+            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
+            let mydata = try! Data(contentsOf: url)
+            let str = swiftDataToString(someData: mydata)
+            var elementArray = str?.components(separatedBy: "\n")
+                var rowcount:Int = elementArray!.count
+            
+            for i in 0..<rowcount {
+
+                if (elementArray![i].contains("\r")){
+                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
+                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
+                }
             }
-            else
+
+            //
+            location.removeAll()
+            contents.removeAll()
+            
+            //Let's start
+            var columncount = 0
+            for r in 0..<rowcount//the number of rows
             {
-                for c in 0..<columncount
+                let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
+                
+                if columncount < wordsArray.count {
+                    columncount = wordsArray.count
+                }
+                
+                if wordsArray.count < columncount{
+                    
+                }
+                else
                 {
-                    if wordsArray[c] == "" || wordsArray[c] == " "
+                    for c in 0..<columncount
                     {
-                        
-                    }
-                    else
-                    {
-                        let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
-                        
-                        location.append(targetlocation)
-                        contents.append(wordsArray[c])
+                        if wordsArray[c] == "" || wordsArray[c] == " "
+                        {
+                            
+                        }
+                        else
+                        {
+                            let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
+                            
+                            location.append(targetlocation)
+                            contents.append(wordsArray[c])
+                        }
                     }
                 }
             }
-        }
+                
+            if columncount < appd.DEFAULT_COLUMN_NUMBER {
+                columncount = appd.DEFAULT_COLUMN_NUMBER
+            }
             
-        if columncount < appd.DEFAULT_COLUMN_NUMBER {
-            columncount = appd.DEFAULT_COLUMN_NUMBER
-        }
-        
-        if rowcount < appd.DEFAULT_ROW_NUMBER {
-            rowcount = appd.DEFAULT_ROW_NUMBER
-        }
+            if rowcount < appd.DEFAULT_ROW_NUMBER {
+                rowcount = appd.DEFAULT_ROW_NUMBER
+            }
 
-        let csvData = UserDefaults.standard
-        csvData.set(location, forKey: "NEWTMLOCATION")
-        csvData.set(contents, forKey: "NEWTMCONTENT")
-        csvData.set(rowcount, forKey: "NEWRsize")
-        csvData.set(columncount, forKey: "NEWCsize")
-        csvData.synchronize()
+            let csvData = UserDefaults.standard
+            csvData.set(location, forKey: "NEWTMLOCATION")
+            csvData.set(contents, forKey: "NEWTMCONTENT")
+            csvData.set(rowcount, forKey: "NEWRsize")
+            csvData.set(columncount, forKey: "NEWCsize")
+            csvData.synchronize()
 
-       let today: Date = Date()
-       let dateFormatter: DateFormatter = DateFormatter()
-       dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-       let date = dateFormatter.string(from: today)
-       var fontSize = [String]()
-       var fontColor = [String]()
-       var bgColor = [String]()
-       for i in 0..<location.count{
-           fontSize.append(String(13))
-           bgColor.append("white")
-           fontColor.append("black")
-       }
+           let today: Date = Date()
+           let dateFormatter: DateFormatter = DateFormatter()
+           dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+           let date = dateFormatter.string(from: today)
+           var fontSize = [String]()
+           var fontColor = [String]()
+           var bgColor = [String]()
+           for i in 0..<location.count{
+               fontSize.append(String(13))
+               bgColor.append("white")
+               fontColor.append("black")
+           }
  
-       let dict : [String:Any] = ["filename": "sheet1",
+            let dict : [String:Any] = ["filename": "sheet1",
                                   "date": date,
                                   "content": contents,
                                   "location": location,
@@ -221,20 +221,33 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
 
        
 
-        let test = ReadWriteJSON()
-        print("savingImportJSON CSV")
-        test.saveuserAll()
-        test.saveJsonFile(source: dict, title: "sheet1")
-        appd.customSizedHeight.removeAll()
-        appd.customSizedWidth.removeAll()
-        appd.cshLocation.removeAll()
-        appd.cswLocation.removeAll()
-        appd.numberofRow = rowcount+1
-        appd.numberofColumn = columncount+1
-        isExcel = false
-        // End of csv.file reading
+            let test = ReadWriteJSON()
+            print("savingImportJSON CSV")
+            test.saveuserAll()
+            test.saveJsonFile(source: dict, title: "sheet1")
+            appd.customSizedHeight.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.cswLocation.removeAll()
+            appd.numberofRow = rowcount+1
+            appd.numberofColumn = columncount+1
+            isExcel = false
+            print("end iCloudController")
             
-        }else if url.absoluteString.contains(".xlsx"){
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = isExcel
+            targetViewController.sheetIdx = 1
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
+            }
+            
+            
+            return
+            
+        }
+        
+        if url.absoluteString.contains(".xlsx"){
             //excel process
             print("excel file")
             let fnameArry = url.absoluteString.split(separator: "/")
@@ -269,12 +282,19 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             readExcel(path: fp)
             isExcel = true
             
-        }else{
-            
-        }
         
         print("end iCloudController")
         
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+        targetViewController.isExcel = isExcel
+        targetViewController.sheetIdx = 1
+        targetViewController.modalPresentationStyle = .fullScreen
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+            return
+        }
+            
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         targetViewController.isExcel = isExcel
         targetViewController.sheetIdx = 1

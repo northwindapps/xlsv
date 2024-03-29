@@ -557,12 +557,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     numberviewopen()
                     
                 }else{
-                    opendatainputview()
-                    let locationIdx = location.firstIndex(of: currentindexstr)
-                    if locationIdx != nil {
-                        datainputview.stringbox.text = content[locationIdx!]
+                    //version 1.3.6 csv mode only not in excel file viewer mode
+                    if !isExcel{
+                        opendatainputview()
+                        let locationIdx = location.firstIndex(of: currentindexstr)
+                        if locationIdx != nil {
+                            datainputview.stringbox.text = content[locationIdx!]
+                        }
+                        self.myCollectionView.reloadData()
                     }
-                    self.myCollectionView.reloadData()
                 }
             }
             
@@ -1652,46 +1655,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //http://stackoverflow.com/questions/35782218/swift-how-to-make-mfmailcomposeviewcontroller-disappear
     func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
         controller.dismiss(animated: true)
-    }
-    
-    
-    @objc func sendEmail(_ sender:UIButton) {
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let url = serviceInstance.tesstSandBox()
-        
-        //save temp content
-        var result = content
-        for idx in 0..<f_location.count{
-            let content_idx = location.index(of: f_location[idx])
-            result[content_idx!] = f_calculated[idx]
-        }
-
-        csvexport(result: result)
-        if MFMailComposeViewController.canSendMail() {
-            let today: Date = Date()
-            let dateFormatter: DateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-            let date = dateFormatter.string(from: today)
-
-            let mail = MFMailComposeViewController()
-            mail.mailComposeDelegate = self
-
-
-            let url1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            let filePath0 = URL(fileURLWithPath: url1).appendingPathComponent("archived.zip").path //20200307 it's root directory
-
-
-            //print("filePath",filePath)
-            if let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: "test.xlsx")
-            }
-
-            //mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
-
-            present(mail, animated: true, completion: nil)
-        } else {
-            // show failure alert
-        }
     }
     
     
@@ -3943,11 +3906,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.customview3.removeFromSuperview()
     }
     
-    
+    //sendEmail
     @objc func excelEmail() {
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let url = serviceInstance.tesstSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
         //createxlsxSheet()
         //save temp content
         var result = content
@@ -3976,9 +3939,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
 
             //print("ViewController" ,filePath)
-
-            if let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: "XLSV " + dateStr + ".xlsx")
+            let fileName = (url?.lastPathComponent)!
+            if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
+                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
             }else{
                 print("noContent")
             }
