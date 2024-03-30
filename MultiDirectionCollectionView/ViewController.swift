@@ -405,7 +405,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         rowinNumber.append("r" + String(indexPath.section))
                     }
                     
-                    cell.label2?.backgroundColor = UIColor(red: 195/255, green: 255/255, blue: 255/255, alpha: 1)
+                    cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
+
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
                 }else if indexPath.section == 0{
@@ -416,7 +417,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                     
                     
-                    cell.label2?.backgroundColor = UIColor(red: 195/255, green: 255/255, blue: 255/255, alpha:1)
+                    cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
                 }
@@ -1365,11 +1366,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
-//        bannerview.rootViewController = self
-//        bannerview.load(GADRequest())
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
+        bannerview.rootViewController = self
+        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -2556,6 +2557,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
+            
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
             //20200502
             switch UIDevice.current.userInterfaceIdiom {
             case .phone:

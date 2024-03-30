@@ -659,6 +659,19 @@ extension FileManager {
        
     }
     
+    func uploadFileToICloud(url: URL) {
+            // Implement file upload logic to iCloud Drive using FileManager or CloudKit APIs
+            // For example:
+            do {
+                let fileManager = FileManager.default
+                let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent(url.lastPathComponent)
+                try fileManager.copyItem(at: url, to: iCloudURL!)
+                print("File uploaded to iCloud Drive successfully")
+            } catch {
+                print("Error uploading file to iCloud Drive: \(error.localizedDescription)")
+            }
+        }
+    
 }
 
 
