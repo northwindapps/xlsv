@@ -12,6 +12,8 @@ target 'MultiDirectionCollectionView' do
   pod 'GoogleAPIClientForREST/Drive'
   pod 'GoogleSignIn', '7.1.0-fac-eap-1.0.0'
   pod 'SwiftyXMLParser'
+  pod 'SWXMLHash'
+
 
   # Pods for MultiDirectionCollectionView
   

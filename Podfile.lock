@@ -40,6 +40,7 @@ PODS:
   - PromisesObjC (2.4.0)
   - SSZipArchive (2.4.3)
   - SwiftyXMLParser (5.6.0)
+  - SWXMLHash (7.0.2)
   - XMLCoder (0.11.1)
   - Zip (2.1.2)
   - ZIPFoundation (0.9.18)
@@ -52,6 +53,7 @@ DEPENDENCIES:
   - GoogleSignIn (= 7.1.0-fac-eap-1.0.0)
   - SSZipArchive
   - SwiftyXMLParser
+  - SWXMLHash
   - Zip (~> 2.1)
 
 SPEC REPOS:
@@ -69,6 +71,7 @@ SPEC REPOS:
     - PromisesObjC
     - SSZipArchive
     - SwiftyXMLParser
+    - SWXMLHash
     - XMLCoder
     - Zip
     - ZIPFoundation
@@ -87,10 +90,11 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
   SwiftyXMLParser: 9b98995235961881322015ebe38d1f3d7c953bd7
+  SWXMLHash: dd733a457e9c4fe93b1538654057aefae4acb382
   XMLCoder: c4638336674de7ba279cd23f2005817d69f538e0
   Zip: b3fef584b147b6e582b2256a9815c897d60ddc67
   ZIPFoundation: fa9ae5af13b7cf168245f24d1c672a4fb972e37f
 
-PODFILE CHECKSUM: f4b059948c3d3991701eef4eb92a9e3e2d7897a3
+PODFILE CHECKSUM: aa85bc594d1a957c9938a5c9cd9c6588ce965092
 
 COCOAPODS: 1.15.2

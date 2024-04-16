@@ -248,6 +248,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         }
         
         if url.absoluteString.contains(".xlsx"){
+            
             //excel process
             print("excel file")
             let fnameArry = url.absoluteString.split(separator: "/")
@@ -281,6 +282,11 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.imported_xlsx_file_path=fp
             readExcel(path: fp)
             isExcel = true
+            
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            //createxlsxSheet()
             
         
         print("end iCloudController")
@@ -367,6 +373,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.diff_start_index.removeAll()
             appd.diff_end_index.removeAll()
             
+            
+            
             //get all worksheets
             if let workbook = try file?.parseWorkbooks().first {
                 // Extracting non-nil sheet IDs using compactMap
@@ -377,6 +385,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 print("Sheet Names:", sheetNames)
                 appd.sheetNames = sheetNames
             }
+            
+            
+
             
             //appd.ws_total_pages = sheetsNumber
             //only show first page.
@@ -396,7 +407,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
                 columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
                 
-                
+               
                 //mergedcells initialization
                 let mergedCells = try file?.parseWorksheet(at: path).mergeCells
                 if mergedCells?.items.first != nil {
@@ -432,6 +443,13 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                         // Normal Text
                         var temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
                         
+                        
+                        //get style
+                        for l in 0..<columnCStrings.count {
+                            //get styleindex
+                            let styleIdx = columnCStrings[l].styleIndex
+                            let locationIdx = columnCStrings[l].reference.column.value + "," + String(columnCStrings[l].reference.row)
+                        }
                         
                         
                         // RitchTextArray
@@ -482,6 +500,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                         for i in 0..<columnCStrings.count {
                             let formulaContent = columnCStrings[i].formula?.value
                             let valueContent = columnCStrings[i].value
+                            //get styleindex
+                            let styleIdx = columnCStrings[i].styleIndex
+                            let locationIdx = columnCStrings[i].reference.column.value + "," + String(columnCStrings[i].reference.row)
                             
                             if formulaContent == nil {
                                 formulaCheck.append(valueContent!)

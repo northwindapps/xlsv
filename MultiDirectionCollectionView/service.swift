@@ -8,7 +8,7 @@
 
 import Foundation
 import Zip
-
+import SWXMLHash
 
 class Service {
     var sheetNumber:Int
@@ -91,6 +91,71 @@ class Service {
               semaphore.signal()
         
         
+    }
+    
+    //making now
+    func testExtractStyle(url:URL? = nil){
+        if let url2 = url{
+            let xmlData = try? Data(contentsOf: url2)
+            let parser = XMLParser(data: xmlData!)
+            // Set XMLParserDelegate
+            let delegate = CustomXMLParserDelegate()
+            parser.delegate = delegate
+            
+            var patternFound = false
+            // Start parsing
+            if parser.parse() {
+                // Retrieve the extracted part
+                let extractedPart = delegate.extractedPart
+                //print(extractedPart)
+            }
+            
+            //regular expression
+            var xmlString = try? String(contentsOf: url2)
+            let xml = XMLHash.parse(xmlString!)
+            
+            var cellXfs = [String]()
+            // Assuming `xml` is your XML object
+            for child in xml.children.first!.children[5].children {
+                if let borderId = child.element?.allAttributes["borderId"]?.text {
+                    print("BorderId: \(borderId)")
+                    cellXfs.append(borderId)
+                } else {
+                    print("BorderId not found")
+                }
+            }
+            
+            var cellStyleXfs = [String]()
+            // Assuming `xml` is your XML object
+            for child in xml.children.first!.children[4].children {
+                if let borderId = child.element?.allAttributes["borderId"]?.text {
+                    print("BorderId: \(borderId)")
+                    cellStyleXfs.append(borderId)
+                } else {
+                    print("BorderId not found")
+                }
+            }
+            
+            var border_lefts = [Int]()
+            var border_rights = [Int]()
+            var border_bottoms = [Int]()
+            var border_tops = [Int]()
+            // Assuming `xml` is your XML object
+            for child in xml.children.first!.children[3].children{
+                child.children[0]
+                let leftCount = child.children[0].children.count
+                border_lefts.append(leftCount)
+                
+                let rightCount = child.children[1].children.count
+                border_rights.append(rightCount)
+                
+                let topCount = child.children[2].children.count
+                border_tops.append(topCount)
+                
+                let bottomCount = child.children[3].children.count
+                border_bottoms.append(bottomCount)
+            }
+        }
     }
     
     //making now
@@ -434,6 +499,11 @@ class Service {
                     //value and string update test
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
+                    //extract sytles
+                    let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
+                    testExtractStyle(url:styleXMLURL)
+                    
+                    
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                     
                     let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
@@ -452,10 +522,10 @@ class Service {
                     
                     
                     //update Values
-                    let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
+                    //let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
                     
                     // Write the modified XML data back to the file
-                    try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                    //try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     
                     let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                     var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)

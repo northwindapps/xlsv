@@ -411,34 +411,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     
         return true
     }
-    
-//    func createMergedCells(){ forget it
-//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//        for (index, element) in appd.diff_start_column.enumerated() {
-//            var each_height = 0.0
-//            var each_width = 0.0
-//            for section in appd.diff_start_column[index]...appd.diff_end_column[index]{
-////                each_height += CELL_HEIGHT
-//                for item in appd.diff_start_row[index]...appd.diff_end_row[index]{
-//    //                each_width += CELL_WIDTH
-//                    let cellIndex = IndexPath(item: item, section: section)
-//                    let cellAttributes = UICollectionViewLayoutAttributes(forCellWith: cellIndex)
-//                    if(section == appd.diff_start_column[index] && item == appd.diff_start_row[index]){
-//                        cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: CELL_WIDTH * Double((appd.diff_end_column[index] - appd.diff_start_column[index])), height: CELL_HEIGHT *  Double((appd.diff_end_row[index] - appd.diff_start_row[index])) )
-//
-//                    // Determine zIndex based on cell type.
-//                    cellAttributes.zIndex = 5
-//                    print(cellAttributes)
-//                    // Save the attributes.
-//                    cellAttrsDictionary[cellIndex] = cellAttributes
-//                  }
-//                }
-//            }
-//
-//
-//
-//        }
-//    }
+ 
     
    
     

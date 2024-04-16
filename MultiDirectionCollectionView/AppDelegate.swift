@@ -196,29 +196,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             FONT_SIZE_DEFAULT  = UserDefaults.standard.object(forKey: "FONT_SIZE_DEFAULT ") as! Int
         }
         
+        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
+        
         GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
             if (error != nil || user == nil) {
                 // Show the app's signed-out state.
                 print("sign out")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
-
-                self.window?.rootViewController = initialViewController
-                self.window?.frame = self.window!.bounds
-                self.window?.makeKeyAndVisible()
+                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
             } else {
                 // Show the app's signed-in state.
                 print("sign in")
                 //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
-
-                self.window?.rootViewController = initialViewController
-                self.window?.frame = self.window!.bounds
-                self.window?.makeKeyAndVisible()
+                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
             }
         }
-
         
-        let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()

@@ -14,7 +14,7 @@ import Zip
 import SSZipArchive
 import CoreFoundation
 import GoogleMobileAds
-
+import AVFoundation
 
 let reuseIdentifier = "customCell"
 var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
@@ -25,6 +25,7 @@ var otherclass = colorclass()
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate,GADBannerViewDelegate{
     
+    private let synthesizer = AVSpeechSynthesizer()
     @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
@@ -470,6 +471,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if(text == "\n") {
             changeaffected.removeAll()
             
+            //data input
             input()
             
             saveuserF()
@@ -565,9 +567,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             hiddenTextField.becomeFirstResponder()
                         }
                         let locationIdx = location.firstIndex(of: currentindexstr)
-                        if locationIdx != nil && datainputview != nil {
+                        if (locationIdx != nil) && datainputview != nil {
                             datainputview.stringbox.text = content[locationIdx!]
                         }
+                        if (locationIdx != nil){
+                            let utterance = AVSpeechUtterance(string: content[locationIdx!] ?? "")
+                            utterance.voice = AVSpeechSynthesisVoice(language: "de-DE")
+                            synthesizer.speak(utterance)
+                        }
+                        
                         self.myCollectionView.reloadData()
                     }
                 }
@@ -609,7 +617,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     //http://stackoverflow.com/questions/27674317/changing-cell-background-color-in-uicollectionview-in-swift
-    
+    //data input
     func opendatainputview(){
         //don't forget first call
         if datainputview != nil{
@@ -2471,31 +2479,211 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    
+    //copy
     @objc func copyText(){
         
-        currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
-        if location.contains(currentindexstr){
-            let i = location.index(of: currentindexstr)
+//        currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
+//        if location.contains(currentindexstr){
+//            let i = location.index(of: currentindexstr)
+//            
+//            datainputview.stringbox.text = datainputview.stringbox.text  + content[i!]
+//            
+//            //new functionality
+//            let ary = datainputview.stringbox.text.components(separatedBy: "+")
+//            for i in 0..<COLUMNSIZE {
+//                for j in 0..<ary.count {
+//                    if ary[j].contains(getExcelColumnName(columnNumber:COLUMNSIZE-i)){
+//                        let item = ary[j].replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
+//                        let row = numberOnlyString(text: item)
+//                        
+//                        if row.count > 0{
+//                            let original = getExcelColumnName(columnNumber:COLUMNSIZE-i)
+//                            let change = item.replacingOccurrences(of: original, with: String(COLUMNSIZE-i) + ",")
+//                            changeaffected.append(change)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.collectionViewCellSizeChanged = 0
+        let pasteboard = UIPasteboard.general
+        pasteboard.string = ""
+        
+        
+        
+        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        
+        
+        var element :String = datainputview.stringbox.text!
+        datainputview.stringbox.text = ""
+        
+        //add more complicated functionality
+        if autoComplete(src: element).count > 1 {
+            element = autoComplete(src: element)
+        }
+        
+        
+        let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let t_item = IP.components(separatedBy: ",")[0]
+        let t_section = IP.components(separatedBy: ",")[1]
+        
+        let IP_i = Int(t_item)!
+        var IP_s = Int(t_section)!
+        var checkInt = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        
+        var collocation = -1
+        if element.contains("→"){
+            let checkAlpha = alphabetOnlyString(text: element)
+            if columnNames.index(of: checkAlpha) != nil {
+                collocation = columnNames.index(of: checkAlpha)!
+                checkInt = checkInt.replacingOccurrences(of: checkAlpha, with: String(collocation))
+            }
+        }
+        
+        if element.contains(" ") && down_bool == true || element.contains(" ") && left_bool == true || element.contains(" ") && up_bool == true || element.contains(" ") && right_bool == true{
             
-            datainputview.stringbox.text = datainputview.stringbox.text  + content[i!]
-            
-            //new functionality
-            let ary = datainputview.stringbox.text.components(separatedBy: "+")
-            for i in 0..<COLUMNSIZE {
-                for j in 0..<ary.count {
-                    if ary[j].contains(getExcelColumnName(columnNumber:COLUMNSIZE-i)){
-                        let item = ary[j].replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-                        let row = numberOnlyString(text: item)
-                        
-                        if row.count > 0{
-                            let original = getExcelColumnName(columnNumber:COLUMNSIZE-i)
-                            let change = item.replacingOccurrences(of: original, with: String(COLUMNSIZE-i) + ",")
-                            changeaffected.append(change)
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
+            //20200502
+            switch UIDevice.current.userInterfaceIdiom {
+            case .phone:
+                //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
+                var padAry = element.components(separatedBy: " ")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
                         }
                     }
                 }
+                else if right_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i+idx) + "," + String(IP_s)
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                        }
+                    }
+                }
+                
+                break
+                
+            case .pad:
+                
+                var padAry = element.components(separatedBy: " ")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                        }
+                    }
+                }
+                else if up_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s-idx)
+                        if IP_s-idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            
+                        }
+                    }
+                }
+                else if left_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i-idx) + "," + String(IP_s)
+                        if IP_i-idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            
+                        }
+                    }
+                }
+                else if right_bool{
+                    var modulo = 0
+                    for idx in 0..<padAry.count{
+                        modulo = idx % 8
+                        if modulo == 0 {
+                            IP_s += 1
+                        }
+                        let IPl = String(IP_i+modulo + 1) + "," + String(IP_s)
+                     
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                        }
+                    }
+                }
+                
+                break
+                
+            default:
+                storeInput(IPd: IP, elementd: element)
+                break
             }
+            pasteboard.string = clipboard
         }
         
         stringboxText = ""
