@@ -142,6 +142,19 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             //
             location.removeAll()
             contents.removeAll()
+            //
+            appd.sheetNameIds = [String]()
+            appd.sheetNames = [String]()
+            appd.diff_start_index.removeAll()
+            appd.diff_end_index.removeAll()
+            appd.excelStyleIdx.removeAll()
+            appd.excelStyleLocation.removeAll()
+            appd.cellXfs.removeAll()
+            appd.cellStyleXfs.removeAll()
+            appd.border_lefts.removeAll()
+            appd.border_rights.removeAll()
+            appd.border_bottoms.removeAll()
+            appd.border_tops.removeAll()
             
             //Let's start
             var columncount = 0
@@ -203,7 +216,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                fontColor.append("black")
            }
  
-            let dict : [String:Any] = ["filename": "sheet1",
+            let dict : [String:Any] = ["filename": "csv_sheet1",
                                   "date": date,
                                   "content": contents,
                                   "location": location,
@@ -224,7 +237,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let test = ReadWriteJSON()
             print("savingImportJSON CSV")
             test.saveuserAll()
-            test.saveJsonFile(source: dict, title: "sheet1")
+            test.saveJsonFile(source: dict, title: "csv_sheet1")
             appd.customSizedHeight.removeAll()
             appd.customSizedWidth.removeAll()
             appd.cshLocation.removeAll()

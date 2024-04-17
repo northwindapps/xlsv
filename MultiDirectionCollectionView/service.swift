@@ -166,18 +166,34 @@ class Service {
             var border_tops = [Int]()
             // Assuming `xml` is your XML object
             for child in xml.children.first!.children[3].children{
-                child.children[0]
-                let leftCount = child.children[0].children.count
-                border_lefts.append(leftCount)
-                
-                let rightCount = child.children[1].children.count
-                border_rights.append(rightCount)
-                
-                let topCount = child.children[2].children.count
-                border_tops.append(topCount)
-                
-                let bottomCount = child.children[3].children.count
-                border_bottoms.append(bottomCount)
+                if child.children.count > 0{
+                    border_lefts.append(0)
+                    border_rights.append(0)
+                    border_bottoms.append(0)
+                    border_tops.append(0)
+                    for gChild in child.children{
+                        if gChild.element?.name == "left"{
+                            let leftCount = gChild.children.count
+                            border_lefts[border_lefts.count - 1] = leftCount
+                        }
+                         
+                        if gChild.element?.name == "right"{
+                            let rightCount = gChild.children.count
+                            border_rights[border_rights.count - 1] = rightCount
+                        }
+                        
+                        if gChild.element?.name == "top"{
+                            let topCount = gChild.children.count
+                            border_tops[border_tops.count - 1] = topCount
+                        }
+                        
+                        if gChild.element?.name == "bottom"{
+                            let bottomCount = gChild.children.count
+                            border_bottoms[border_bottoms.count - 1] = bottomCount
+                        }
+                        
+                    }
+                }
             }
             
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
