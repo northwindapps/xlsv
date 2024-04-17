@@ -53,16 +53,21 @@ func showAnimate()
     }
     
     if appd.ws_path != "" {
+        
         print("yourExcelfile",appd.ws_path)
         let ehp = ExcelHelper()
-        ehp.readExcel2(path: appd.ws_path, wsIndex: idx ?? 1)
+        ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
         // Do any additional setup after loading the view.
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        
         print("end LoadingFileController")
         
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         
         targetViewController.isExcel = true
-        targetViewController.sheetIdx = idx ?? 1
+        targetViewController.sheetIdx = appd.wsSheetIndex
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)

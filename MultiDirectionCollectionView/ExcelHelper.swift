@@ -41,6 +41,14 @@ class ExcelHelper{
            appd.sheetNames = [String]()
            appd.diff_start_index.removeAll()
            appd.diff_end_index.removeAll()
+           appd.excelStyleIdx.removeAll()
+           appd.excelStyleLocation.removeAll()
+           appd.cellXfs.removeAll()
+           appd.cellStyleXfs.removeAll()
+           appd.border_lefts.removeAll()
+           appd.border_rights.removeAll()
+           appd.border_bottoms.removeAll()
+           appd.border_tops.removeAll()
            
            //get all worksheets
            if let workbook = try file?.parseWorkbooks().first {
@@ -125,6 +133,17 @@ class ExcelHelper{
                            }
                        }
                        
+                       //get style
+                       let allCells = ws.cells(atColumns: [ColumnReference(k)!])
+                       for l in 0..<allCells.count {
+                           //get styleindex
+                           let styleIdx = allCells[l].styleIndex ?? -1
+                           let locationIdx =   String(allCells[l].reference.row) + "," + String(columnToInt(allCells[l].reference.column.value)!)
+                           //let locationIdx = String(columnToInt(columnCStrings[l].reference.column.value)!) + "," + String(columnCStrings[l].reference.row)
+                           
+                           appd.excelStyleIdx.append(styleIdx)
+                           appd.excelStyleLocation.append(locationIdx)
+                       }
                        
                        var aPlusbArray = [String](repeating: "", count:temp2.count + keyValues.count)
                        for (k,value) in keyValues {
@@ -412,6 +431,27 @@ class ExcelHelper{
            result = result * 26 + intValue
        }
        return result
+    }
+    
+    func columnToInt(_ column: String) -> Int? {
+        // Convert the string to uppercase to handle lowercase inputs
+        let uppercasedColumn = column.uppercased()
+        
+        // Calculate the integer value by subtracting the unicode value of "A" and adding 1
+        guard let unicodeScalar = uppercasedColumn.unicodeScalars.first
+              else {
+            return nil
+        }
+        
+        let asciiValue = unicodeScalar.value
+        
+        // Check if the character is within the range of A-Z
+        guard asciiValue >= 65 && asciiValue <= 90 else {
+            return nil
+        }
+        
+        // Return the integer value (A=1, B=2, ..., Z=26)
+        return Int(asciiValue - 64)
     }
 
 }

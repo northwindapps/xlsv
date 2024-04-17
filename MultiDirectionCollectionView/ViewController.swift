@@ -428,25 +428,33 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //http://qiita.com/satomyumi/items/b0d071cc906574086ac4
             
             //print("width size",cell.frame.width)
-            print("indexPath",indexPath)
             let ipstr = String(indexPath.section) + "," + String(indexPath.row)
             let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
-            if (styleId != nil){
+            if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1)){
+                var c = 0
                 let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
                 if appd.border_lefts[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .left)
+                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .left)
+                    c+=1
                 }
                 
                 if appd.border_rights[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .right)
+                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .right)
+                    c+=1
                 }
                 
                 if appd.border_tops[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .top)
+                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .top)
+                    c+=1
                 }
                 
                 if appd.border_bottoms[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .bottom)
+                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
+                    c+=1
+                }
+                
+                if c == 0{
+                    cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
                 }
             }else{
                 cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
@@ -630,6 +638,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
             targetViewController.idx = Int(appd.sheetNameIds[indexPath.item])
+            print(indexPath.item)
+            print(indexPath.section)
+            appd.wsSheetIndex = indexPath.item + 1
             targetViewController.modalPresentationStyle = .fullScreen
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {

@@ -51,6 +51,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cellIndex = IndexPath()
     var ws_path = ""
     var wsIndex = 1
+    var wsSheetIndex = 1
     var imported_xlsx_file_path=""
     var excelStyleIdx = [Int]()
     var excelStyleLocation = [String]()

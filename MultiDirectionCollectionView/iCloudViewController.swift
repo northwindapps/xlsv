@@ -372,6 +372,14 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.sheetNames = [String]()
             appd.diff_start_index.removeAll()
             appd.diff_end_index.removeAll()
+            appd.excelStyleIdx.removeAll()
+            appd.excelStyleLocation.removeAll()
+            appd.cellXfs.removeAll()
+            appd.cellStyleXfs.removeAll()
+            appd.border_lefts.removeAll()
+            appd.border_rights.removeAll()
+            appd.border_bottoms.removeAll()
+            appd.border_tops.removeAll()
             
             
             
