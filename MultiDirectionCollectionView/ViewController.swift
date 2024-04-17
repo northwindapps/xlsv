@@ -427,6 +427,30 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //http://stackoverflow.com/questions/29381994/swift-check-string-for-nil-empty
             //http://qiita.com/satomyumi/items/b0d071cc906574086ac4
             
+            //print("width size",cell.frame.width)
+            print("indexPath",indexPath)
+            let ipstr = String(indexPath.section) + "," + String(indexPath.row)
+            let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
+            if (styleId != nil){
+                let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
+                if appd.border_lefts[borderId] > 0{
+                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .left)
+                }
+                
+                if appd.border_rights[borderId] > 0{
+                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .right)
+                }
+                
+                if appd.border_tops[borderId] > 0{
+                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .top)
+                }
+                
+                if appd.border_bottoms[borderId] > 0{
+                    cell.setBorder(width: 0.8, color: UIColor.black, sides: .bottom)
+                }
+            }else{
+                cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
+            }
             
             return cell
             
@@ -1374,11 +1398,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
-        bannerview.isHidden = true
-        bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
-        bannerview.rootViewController = self
-        bannerview.load(GADRequest())
+//        bannerview.isHidden = true
+//        bannerview.delegate = self
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
+//        bannerview.rootViewController = self
+//        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -4371,4 +4395,30 @@ extension UICollectionView {
 extension Collection {
     func distance(to index: Index) -> Int { distance(from: startIndex, to: index) }
 }
-
+extension UIView {
+    func setBorder(width: CGFloat, color: UIColor, sides: UIRectEdge) {
+        layer.borderWidth = width
+        layer.borderColor = color.cgColor
+        
+        // Clear existing borders
+        layer.maskedCorners = []
+        
+        // Apply borders to specified sides
+        if sides.contains(.top) {
+            layer.maskedCorners.insert(.layerMinXMinYCorner)
+            layer.maskedCorners.insert(.layerMaxXMinYCorner)
+        }
+        if sides.contains(.bottom) {
+            layer.maskedCorners.insert(.layerMinXMaxYCorner)
+            layer.maskedCorners.insert(.layerMaxXMaxYCorner)
+        }
+        if sides.contains(.left) {
+            layer.maskedCorners.insert(.layerMinXMinYCorner)
+            layer.maskedCorners.insert(.layerMinXMaxYCorner)
+        }
+        if sides.contains(.right) {
+            layer.maskedCorners.insert(.layerMaxXMinYCorner)
+            layer.maskedCorners.insert(.layerMaxXMaxYCorner)
+        }
+    }
+}

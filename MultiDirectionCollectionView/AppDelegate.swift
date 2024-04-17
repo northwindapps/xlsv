@@ -36,15 +36,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cshLocation_temp = [Int]()
     var customSizedHeight_temp = [Double]()
     //
-    var border_ids = [Int]()
-    var borders_left_style = [String]()
-    var borders_right_style = [String]()
-    var borders_top_style = [String]()
-    var borders_bottom_style = [String]()
-    var borders_left_color = [String]()
-    var borders_right_color = [String]()
-    var borders_top_color = [String]()
-    var borders_bottom_color = [String]()
+//    var border_ids = [Int]()
+//    var borders_left_style = [String]()
+//    var borders_right_style = [String]()
+//    var borders_top_style = [String]()
+//    var borders_bottom_style = [String]()
+//    var borders_left_color = [String]()
+//    var borders_right_color = [String]()
+//    var borders_top_color = [String]()
+//    var borders_bottom_color = [String]()
     var index_border_id = [String: String]()
     var diff_start_index = [String]()
     var diff_end_index = [String]()
@@ -52,6 +52,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var ws_path = ""
     var wsIndex = 1
     var imported_xlsx_file_path=""
+    var excelStyleIdx = [Int]()
+    var excelStyleLocation = [String]()
+    var cellXfs = [Int]()
+    var cellStyleXfs = [Int]()
+    var border_lefts = [Int]()
+    var border_rights = [Int]()
+    var border_bottoms = [Int]()
+    var border_tops = [Int]()
+    
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0

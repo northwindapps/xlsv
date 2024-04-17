@@ -114,23 +114,23 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             let xml = XMLHash.parse(xmlString!)
             
-            var cellXfs = [String]()
+            var cellXfs = [Int]()
             // Assuming `xml` is your XML object
             for child in xml.children.first!.children[5].children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
                     print("BorderId: \(borderId)")
-                    cellXfs.append(borderId)
+                    cellXfs.append(Int(borderId) ?? -1)
                 } else {
                     print("BorderId not found")
                 }
             }
             
-            var cellStyleXfs = [String]()
+            var cellStyleXfs = [Int]()
             // Assuming `xml` is your XML object
             for child in xml.children.first!.children[4].children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
                     print("BorderId: \(borderId)")
-                    cellStyleXfs.append(borderId)
+                    cellStyleXfs.append(Int(borderId) ?? -1)
                 } else {
                     print("BorderId not found")
                 }
@@ -155,6 +155,14 @@ class Service {
                 let bottomCount = child.children[3].children.count
                 border_bottoms.append(bottomCount)
             }
+            
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.cellXfs = cellXfs
+            appd.cellStyleXfs = cellStyleXfs
+            appd.border_lefts = border_lefts
+            appd.border_rights  = border_rights
+            appd.border_bottoms = border_bottoms
+            appd.border_tops = border_tops
         }
     }
     

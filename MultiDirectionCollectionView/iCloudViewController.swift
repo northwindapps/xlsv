@@ -428,6 +428,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
                 appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
                 
+                
                 //Getting strings
                 for i in 0..<columnName.count {
                     let k = String(columnName[i])
@@ -445,10 +446,15 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                         
                         
                         //get style
-                        for l in 0..<columnCStrings.count {
+                        let allCells = ws.cells(atColumns: [ColumnReference(k)!])
+                        for l in 0..<allCells.count {
                             //get styleindex
-                            let styleIdx = columnCStrings[l].styleIndex
-                            let locationIdx = columnCStrings[l].reference.column.value + "," + String(columnCStrings[l].reference.row)
+                            let styleIdx = allCells[l].styleIndex ?? -1
+                            let locationIdx =   String(allCells[l].reference.row) + "," + String(columnToInt(allCells[l].reference.column.value)!)
+                            //let locationIdx = String(columnToInt(columnCStrings[l].reference.column.value)!) + "," + String(columnCStrings[l].reference.row)
+                            
+                            appd.excelStyleIdx.append(styleIdx)
+                            appd.excelStyleLocation.append(locationIdx)
                         }
                         
                         
@@ -500,9 +506,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                         for i in 0..<columnCStrings.count {
                             let formulaContent = columnCStrings[i].formula?.value
                             let valueContent = columnCStrings[i].value
-                            //get styleindex
-                            let styleIdx = columnCStrings[i].styleIndex
-                            let locationIdx = columnCStrings[i].reference.column.value + "," + String(columnCStrings[i].reference.row)
                             
                             if formulaContent == nil {
                                 formulaCheck.append(valueContent!)
@@ -859,7 +862,30 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         }
         return result
     }
- 
+    
+    
+    
+
+    func columnToInt(_ column: String) -> Int? {
+        // Convert the string to uppercase to handle lowercase inputs
+        let uppercasedColumn = column.uppercased()
+        
+        // Calculate the integer value by subtracting the unicode value of "A" and adding 1
+        guard let unicodeScalar = uppercasedColumn.unicodeScalars.first
+              else {
+            return nil
+        }
+        
+        let asciiValue = unicodeScalar.value
+        
+        // Check if the character is within the range of A-Z
+        guard asciiValue >= 65 && asciiValue <= 90 else {
+            return nil
+        }
+        
+        // Return the integer value (A=1, B=2, ..., Z=26)
+        return Int(asciiValue - 64)
+    }
 }
 
 
