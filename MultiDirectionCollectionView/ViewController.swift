@@ -468,7 +468,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if isExcel && indexPath.item == appd.sheetNameIds.firstIndex(of: String(sheetIdx)){
+            if isExcel && indexPath.item == appd.wsSheetIndex-1{
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
                 return cell
@@ -639,7 +639,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
             targetViewController.idx = Int(appd.sheetNameIds[indexPath.item])
             print(indexPath.item)
-            print(indexPath.section)
             appd.wsSheetIndex = indexPath.item + 1
             targetViewController.modalPresentationStyle = .fullScreen
             // Present the target view controller after LoadingFileController's view has appeared
@@ -3752,8 +3751,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let sheet1Json = ReadWriteJSON()
             localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             print("sheetIdx",sheetIdx)
-            if localFileNames.count > 0, let index = appd.sheetNameIds.firstIndex(of: String(sheetIdx)) {
-                sheet1Json.readJsonFile(title: localFileNames[index])
+            if localFileNames.count > 0 {
+                sheet1Json.readJsonFile(title:"sheet" + String(sheetIdx) + ".xml" )
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize
