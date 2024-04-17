@@ -114,14 +114,41 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             let xml = XMLHash.parse(xmlString!)
             
+            var numFmts = [String]()
+            var formatCodes = [String]()
+            // Assuming `xml` is your XML object
+            for child in xml.children.first!.children[0].children {
+                if child.element?.name == "numFmt" {
+                        // Get the attributes
+                    let attributes = child.element?.allAttributes
+                        // Extract numFmtId
+                    if let numFmtId = attributes!["numFmtId"]?.text {
+                            print("numFmtId:", numFmtId)
+                        numFmts.append(numFmtId)
+                        }
+                        // Extract formatCode
+                    if let formatCode = attributes!["formatCode"]?.text {
+                            print("formatCode:", formatCode)
+                        formatCodes.append(formatCode)
+                        }
+                    }
+            }
+            
+            var numFmtIds = [Int]()
+            // Assuming `xml` is your XML object
+            for child in xml.children.first!.children[5].children {
+                if let id = child.element?.allAttributes["numFmtId"]?.text {
+                    numFmtIds.append(Int(id) ?? -1)
+                }
+            }
+            
+            
+            
             var cellXfs = [Int]()
             // Assuming `xml` is your XML object
             for child in xml.children.first!.children[5].children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
-                    print("BorderId: \(borderId)")
                     cellXfs.append(Int(borderId) ?? -1)
-                } else {
-                    print("BorderId not found")
                 }
             }
             
@@ -129,10 +156,7 @@ class Service {
             // Assuming `xml` is your XML object
             for child in xml.children.first!.children[4].children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
-                    print("BorderId: \(borderId)")
                     cellStyleXfs.append(Int(borderId) ?? -1)
-                } else {
-                    print("BorderId not found")
                 }
             }
             
