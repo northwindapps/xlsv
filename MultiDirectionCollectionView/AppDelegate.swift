@@ -61,6 +61,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var border_rights = [Int]()
     var border_bottoms = [Int]()
     var border_tops = [Int]()
+    var formatCodes = [String]()
+    var numFmts = [String]()
+    var numFmtIds = [Int]()
     
     //
     var CELL_HEIGHT_INIT = 40.0
@@ -185,26 +188,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             tag_int = 5
         }
 
-        //
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") != nil) {
-            customSizedWidth = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") as! Array
-        }
         
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") != nil) {
-            customSizedHeight = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") != nil) {
-            cswLocation = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") != nil) {
-            cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "FONT_SIZE_DEFAULT ") != nil) {
-            FONT_SIZE_DEFAULT  = UserDefaults.standard.object(forKey: "FONT_SIZE_DEFAULT ") as! Int
-        }
+        // Remove all UserDefaults data
+        UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
+                
+        let sheet1Json = ReadWriteJSON()
+        sheet1Json.deleteJsonFile(title: "csv_sheet1")
         
         var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
         

@@ -49,6 +49,9 @@ class ExcelHelper{
            appd.border_rights.removeAll()
            appd.border_bottoms.removeAll()
            appd.border_tops.removeAll()
+           appd.formatCodes.removeAll()
+           appd.numFmts.removeAll()
+           appd.numFmtIds.removeAll()
            
            //get all worksheets
            if let workbook = try file?.parseWorkbooks().first {
@@ -180,7 +183,8 @@ class ExcelHelper{
                            if formulaContent == nil {
                                formulaCheck.append(valueContent!)
                            }else{
-                               formulaCheck.append("=" + formulaContent!)
+                               //formulaCheck.append("=" + formulaContent!) TODO It takes time
+                               formulaCheck.append(valueContent!)
                            }
                            
                        }

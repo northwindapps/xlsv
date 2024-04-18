@@ -203,6 +203,9 @@ class Service {
             appd.border_rights  = border_rights
             appd.border_bottoms = border_bottoms
             appd.border_tops = border_tops
+            appd.formatCodes = formatCodes
+            appd.numFmts = numFmts
+            appd.numFmtIds = numFmtIds
         }
     }
     

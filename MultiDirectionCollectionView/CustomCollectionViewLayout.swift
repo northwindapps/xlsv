@@ -65,29 +65,29 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             excel_cell_width_margin = 10
                 break
                     case 1:
-                        CELL_HEIGHT = 30.0
-                        CELL_WIDTH = 80.0
+                        CELL_HEIGHT = 20.0
+                        CELL_WIDTH = 40.0
                         INDEX_WIDTH = 30.0
                         INDEX_HEIGHT = 30.0
                         excel_cell_width_margin = 20
                 break
                 case 2:
                 CELL_HEIGHT = 30.0
-                CELL_WIDTH = 120.0
+                CELL_WIDTH = 70.0
                 INDEX_WIDTH = 30.0
                 INDEX_HEIGHT = 30.0
                 excel_cell_width_margin = 30
             break
             case 3:
                 CELL_HEIGHT = 30.0
-                CELL_WIDTH = 150.0
+                CELL_WIDTH = 90.0
                 INDEX_WIDTH = 30.0
                 INDEX_HEIGHT = 30.0
                 excel_cell_width_margin = 30
             break
             case 4:
                 CELL_HEIGHT = 40.0
-                CELL_WIDTH = 200.0
+                CELL_WIDTH = 150.0
                 INDEX_WIDTH = 40.0
                 INDEX_HEIGHT = 40.0
                 excel_cell_width_margin = 40

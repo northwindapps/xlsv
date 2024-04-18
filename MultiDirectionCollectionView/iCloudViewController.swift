@@ -393,6 +393,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.border_rights.removeAll()
             appd.border_bottoms.removeAll()
             appd.border_tops.removeAll()
+            appd.formatCodes.removeAll()
+            appd.numFmts.removeAll()
+            appd.numFmtIds.removeAll()
             
             
             
@@ -413,10 +416,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             //appd.ws_total_pages = sheetsNumber
             //only show first page.
             //for path in try file!.parseWorksheetPaths() {
-            let paths = try file!.parseWorksheetPaths()
+            let paths = try file?.parseWorksheetPaths()
             // Filter files with "sheet1.xml" in their file name
-            let sheet1Files = paths.filter { $0.hasSuffix("sheet1.xml") }
-            if let path = try sheet1Files.first {
+            let sheet1Files = paths?.filter { $0.hasSuffix("sheet1.xml") }
+            if let path = try sheet1Files?.first {
                 print("path",path)
                 //Cleaning instances on table data
                 columnName = []
@@ -529,14 +532,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                             let valueContent = columnCStrings[i].value
                             
                             if formulaContent == nil {
+                                //normal values
                                 formulaCheck.append(valueContent!)
                             }else{
-                                formulaCheck.append("=" + formulaContent!)
+                                //formulaCheck.append("=" + formulaContent!) TODO
+                                formulaCheck.append(valueContent!)
                             }
                             
                         }
                         valueContent.append(contentsOf: formulaCheck)//$0.value
-                        valueLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })
+                        valueLocation.append(contentsOf: columnCStrings.map { $0.reference.description })
                         
                     }
                 }

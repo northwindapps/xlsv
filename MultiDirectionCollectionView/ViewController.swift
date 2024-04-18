@@ -428,27 +428,165 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //http://qiita.com/satomyumi/items/b0d071cc906574086ac4
             
             //print("width size",cell.frame.width)
+            let predifinedIds = [31]
             let ipstr = String(indexPath.section) + "," + String(indexPath.row)
             let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
             if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1)){
                 var c = 0
                 let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
-                if appd.border_lefts[borderId] > 0{
+                let numId = appd.numFmtIds[appd.excelStyleIdx[styleId!]]
+                var idx = appd.numFmts.firstIndex(of: String(numId))
+                //https://c-rex.net/samples/ooxml/e1/Part4/OOXML_P4_DOCX_numFmt_topic_ID0EHDH6.html
+                if idx == nil && predifinedIds.contains(numId){
+                    idx = 0
+                }
+                
+                if (idx != nil) {
+                    var a = false
+                    //date format and other
+                    print("idx",appd.formatCodes[idx!])
+                    print(cell.label2.text)
+                    
+                    //id first
+                    if numId == 31 && !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                             
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "yyyy/MM/dd"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if appd.formatCodes[idx!] == "[h]:mm" || appd.formatCodes[idx!] == "hh:mm"{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let totalHours = inputValue * 24
+                            let strHours = String(floor(inputValue * 24))
+                            let fractionHours = totalHours - floor(inputValue * 24)
+                            var strMinutes = String(fractionHours * 60)
+                            if fractionHours * 60 < 10.0{
+                                strMinutes = "0" + strMinutes
+                            }
+                            cell.label2.text = strHours.components(separatedBy: ".").first! + ":" + strMinutes.components(separatedBy: ".").first!
+                            a = true
+                        }
+                    }
+                    
+                    if appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                             
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "yyyy/MM/dd"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if (appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") ) || (appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("m")) &&  !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400) // Your timestamp
+                            
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "yyyy/MM"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if  appd.formatCodes[idx!].contains("m") && appd.formatCodes[idx!].contains("d") && !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                            
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "MM/dd"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if  appd.formatCodes[idx!].contains("m") && !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                            
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "MM"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if   appd.formatCodes[idx!].contains("d") && !a{
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                            
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "d"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                }
+                if borderId < appd.border_lefts.count && appd.border_lefts[borderId] > 0{
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .left)
                     c+=1
                 }
                 
-                if appd.border_rights[borderId] > 0{
+                if borderId < appd.border_rights.count && appd.border_rights[borderId] > 0{
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .right)
                     c+=1
                 }
                 
-                if appd.border_tops[borderId] > 0{
+                if borderId < appd.border_tops.count && appd.border_tops[borderId] > 0{
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .top)
                     c+=1
                 }
                 
-                if appd.border_bottoms[borderId] > 0{
+                if borderId < appd.border_bottoms.count && appd.border_bottoms[borderId] > 0{
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
                     c+=1
                 }
@@ -1152,15 +1290,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.sheetNameIds = [String]()
             appd.ws_path = ""
             appd.imported_xlsx_file_path = ""
-            
-//            if self.selectedSheet >= 0 && self.localFileNames.count > 0{
-//                self.saveAsLocalJson(filename: self.localFileNames[self.selectedSheet])
-//            }
-            
-//            DispatchQueue.main.async() {
-//                self.myCollectionView.collectionViewLayout.invalidateLayout()
-//                self.myCollectionView.reloadData()
-//            }
             
             let sheet1Json = ReadWriteJSON()
             sheet1Json.deleteJsonFile(title: "csv_sheet1")
