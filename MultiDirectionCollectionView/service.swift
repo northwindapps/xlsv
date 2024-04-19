@@ -209,6 +209,122 @@ class Service {
         }
     }
     
+//    //making now
+//    func testExtractSharedString(url:URL? = nil){
+//        if let url2 = url{
+//            let xmlData = try? Data(contentsOf: url2)
+//            let parser = XMLParser(data: xmlData!)
+//            // Set XMLParserDelegate
+//            let delegate = CustomXMLParserDelegate()
+//            parser.delegate = delegate
+//            
+//            var patternFound = false
+//            // Start parsing
+//            if parser.parse() {
+//                // Retrieve the extracted part
+//                let extractedPart = delegate.extractedPart
+//                //print(extractedPart)
+//            }
+//            
+//            //regular expression
+//            var xmlString = try? String(contentsOf: url2)
+//            let xml = XMLHash.parse(xmlString!)
+//            
+//            var numFmts = [String]()
+//            var formatCodes = [String]()
+//            // Assuming `xml` is your XML object
+//            for child in xml.children.first!.children[0].children {
+//                if child.element?.name == "numFmt" {
+//                        // Get the attributes
+//                    let attributes = child.element?.allAttributes
+//                        // Extract numFmtId
+//                    if let numFmtId = attributes!["numFmtId"]?.text {
+//                            print("numFmtId:", numFmtId)
+//                        numFmts.append(numFmtId)
+//                        }
+//                        // Extract formatCode
+//                    if let formatCode = attributes!["formatCode"]?.text {
+//                            print("formatCode:", formatCode)
+//                        formatCodes.append(formatCode)
+//                        }
+//                    }
+//            }
+//            
+//            var numFmtIds = [Int]()
+//            // Assuming `xml` is your XML object
+//            for child in xml.children.first!.children[5].children {
+//                if let id = child.element?.allAttributes["numFmtId"]?.text {
+//                    numFmtIds.append(Int(id) ?? -1)
+//                }
+//            }
+//            
+//            
+//            
+//            var cellXfs = [Int]()
+//            // Assuming `xml` is your XML object
+//            for child in xml.children.first!.children[5].children {
+//                if let borderId = child.element?.allAttributes["borderId"]?.text {
+//                    cellXfs.append(Int(borderId) ?? -1)
+//                }
+//            }
+//            
+//            var cellStyleXfs = [Int]()
+//            // Assuming `xml` is your XML object
+//            for child in xml.children.first!.children[4].children {
+//                if let borderId = child.element?.allAttributes["borderId"]?.text {
+//                    cellStyleXfs.append(Int(borderId) ?? -1)
+//                }
+//            }
+//            
+//            var border_lefts = [Int]()
+//            var border_rights = [Int]()
+//            var border_bottoms = [Int]()
+//            var border_tops = [Int]()
+//            // Assuming `xml` is your XML object
+//            for child in xml.children.first!.children[3].children{
+//                if child.children.count > 0{
+//                    border_lefts.append(0)
+//                    border_rights.append(0)
+//                    border_bottoms.append(0)
+//                    border_tops.append(0)
+//                    for gChild in child.children{
+//                        if gChild.element?.name == "left"{
+//                            let leftCount = gChild.children.count
+//                            border_lefts[border_lefts.count - 1] = leftCount
+//                        }
+//                         
+//                        if gChild.element?.name == "right"{
+//                            let rightCount = gChild.children.count
+//                            border_rights[border_rights.count - 1] = rightCount
+//                        }
+//                        
+//                        if gChild.element?.name == "top"{
+//                            let topCount = gChild.children.count
+//                            border_tops[border_tops.count - 1] = topCount
+//                        }
+//                        
+//                        if gChild.element?.name == "bottom"{
+//                            let bottomCount = gChild.children.count
+//                            border_bottoms[border_bottoms.count - 1] = bottomCount
+//                        }
+//                        
+//                    }
+//                }
+//            }
+//            
+//            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+////            appd.cellXfs = cellXfs
+////            appd.cellStyleXfs = cellStyleXfs
+////            appd.border_lefts = border_lefts
+////            appd.border_rights  = border_rights
+////            appd.border_bottoms = border_bottoms
+////            appd.border_tops = border_tops
+////            appd.formatCodes = formatCodes
+////            appd.numFmts = numFmts
+////            appd.numFmtIds = numFmtIds
+//        }
+//    }
+    
     //making now
     func testUpdateString(url:URL? = nil, vIndex:String?, index:String?) -> String?{
         if let url2 = url{
@@ -217,6 +333,7 @@ class Service {
             // Set XMLParserDelegate
             let delegate = CustomXMLParserDelegate()
             parser.delegate = delegate
+            
             
             var patternFound = false
             // Start parsing
@@ -228,6 +345,7 @@ class Service {
             
             //regular expression
             var xmlString = try? String(contentsOf: url2)
+            let xml = XMLHash.parse(xmlString!)
             
             // Define the regular expression pattern D3
             let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
@@ -288,7 +406,91 @@ class Service {
                     }
                     return item
                 }
+            }else{
+                
+                //get the list of locations
+                do {
+                    // Create a regular expression pattern to match the r attribute
+                    let pattern = #"r=\"([A-Z]+\d+)\""#
+                    
+                    // Create a regular expression object
+                    let regex = try NSRegularExpression(pattern: pattern, options: [])
+                    
+                    // Find all matches in the XML snippet
+                    let matches = regex.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
+                    
+                    // Extract the r values from the matches
+                    var rValues = matches.map { match -> String in
+                        guard let range = Range(match.range(at: 1), in: xmlString!) else {
+                            return ""
+                        }
+                        return String(xmlString![range])
+                    }
+                    
+                    // Output the list of r values
+                    rValues.append(String(index!))
+                    
+                    let rValues2 = rValues.sorted { (r1, r2) -> Bool in
+                        // Extract the alphabetic part of the cell reference
+                        let alphabeticPart1 = r1.prefix(while: { $0.isLetter })
+                        let alphabeticPart2 = r2.prefix(while: { $0.isLetter })
+                        
+                        // If the alphabetic parts are different, compare them
+                        if alphabeticPart1 != alphabeticPart2 {
+                            return alphabeticPart1 < alphabeticPart2
+                        }
+                        
+                        // If the alphabetic parts are the same, compare the numeric parts
+                        let numericPart1 = Int(r1.drop(while: { !$0.isNumber })) ?? 0
+                        let numericPart2 = Int(r2.drop(while: { !$0.isNumber })) ?? 0
+                        
+                        return numericPart1 < numericPart2
+                    }
+                    
+                    
+                    let idx = rValues2.firstIndex(of: String(index!))!
+                    if (idx != 0) {
+                        // Define the regular expression pattern D3
+                        let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+                        
+                        // Create the regular expression object
+                        guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
+                            fatalError("Failed to create regular expression")
+                        }
+                        
+                        // Find matches in the XML string
+                        let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+                        let matches = regex2.matches(in: xmlString!, range: range)
+                        
+                        // Extract matching substrings
+                        if let match = matches.first{
+                            if let matchRange = Range(match.range, in: xmlString!) {
+                                let matchingSubstring = xmlString![matchRange]
+                                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                                var items = modified.components(separatedBy: "!")
+                                //first is always ""
+                                let item = items[1] ?? ""
+                                print("item", item)
+                                let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                // Find the correct position to insert the new element
+                                if let range = xmlString?.range(of: item) {
+                                    // Insert the new element after the element with r="J2"
+                                    xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
+                                    return xmlString
+                                }
+                                //
+                                //                            let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                                //                            print(replaced)
+                                
+                            }
+                        }
+                    }
+                    
+                } catch {
+                    print("Error: \(error)")
+                }
             }
+            
         }
         return nil
     }
@@ -384,9 +586,6 @@ class Service {
             parser.delegate = delegate
             
             if parser.parse() {
-                // Print the extracted texts
-//                print("t",delegate.texts)
-//                print("t count", delegate.texts.count)
                 print("si",delegate.sis)
                 print("si count", delegate.sis.count)
                 //var xmlString = try? String(contentsOf: url2)
@@ -595,6 +794,182 @@ class Service {
                     let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
                     let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
                     
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Done: ", files)
+                    
+                    return productURL
+
+                    
+                } else {
+                    // Handle the case where the specified path doesn't exist
+                    print("File or directory does not exist at path: \(fp)")
+                }
+                
+            } else {
+                print("Document directory not found.")
+            }
+            
+            
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        return nil
+    }
+    
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "") -> URL? {
+        do {
+                // Get the sandbox directory for documents
+                if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+                //
+                if FileManager.default.fileExists(atPath: fp) {
+                            // The specified path exists, continue with your code
+                            print("File or directory exists at path: \(fp)")
+                    let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                    let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                            
+                    // Check if the subdirectory already exists
+                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                        // Subdirectory already exists
+                        print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                        var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
+                        
+                        
+                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                        print("Subdirectory's files",files)
+                    }
+                    
+                    //shardString update test
+                    let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
+                    
+                    //value and string update test
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
+                    
+                    
+                    let oldAry = testStringUniqueAry(url: shardStringXMLURL)
+                    
+                    if input.count > 0{
+                        let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
+                        
+                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId!), index: cellIdxString)//A3
+                    
+                        // Write the modified XML data back to the file
+                        if(shredStringId != nil && replacedWithNewString != nil){
+                            try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        }
+                            
+                    }
+                        
+                    let newAry = testStringUniqueAry(url: shardStringXMLURL)
+                    
+                    let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
+                    
+                    
+                    
+                  
+                    
+                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                    var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                    let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                        for file in sheetFiles {
+                            print("Found .xml file:", file.lastPathComponent)
+                        }
+                    print("sheetFiles: ", sheetXMLFiles)
+                    
+                    
+//                    //ready to zip
+//                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+//                    let fpURL = URL(fileURLWithPath: fp)
+//                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+//                    //appendingPathComponent("imported2.xlsx")
+//                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+//                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
+//                    
+//                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+//                    print("Done: ", files)
+                    
+                    return nil
+
+                    
+                } else {
+                    // Handle the case where the specified path doesn't exist
+                    print("File or directory does not exist at path: \(fp)")
+                }
+                
+            } else {
+                print("Document directory not found.")
+            }
+            
+            
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        return nil
+    }
+    
+    func writeXlsxEmail(fp: String = "", url: URL? = nil) -> URL? {
+        do {
+                // Get the sandbox directory for documents
+                if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+                //
+                if FileManager.default.fileExists(atPath: fp) {
+                            // The specified path exists, continue with your code
+                            print("File or directory exists at path: \(fp)")
+                    let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                    let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                            
+                    // Check if the subdirectory already exists
+                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                        // Subdirectory already exists
+                        print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                        var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
+                        
+                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                        print("Subdirectory's files",files)
+                    }
+                    
+                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                    var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                    let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                        for file in sheetFiles {
+                            print("Found .xml file:", file.lastPathComponent)
+                        }
+                    print("sheetFiles: ", sheetXMLFiles)
+                    
+                    
+                    //ready to zip
+                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    let fpURL = URL(fileURLWithPath: fp)
+                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                    //appendingPathComponent("imported2.xlsx")
+                    
+                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                        for file in files{
+                            // Check if the file has the .xlsx extension
+                            if file.pathExtension == "xlsx" {
+                                // Remove the file
+                                try FileManager.default.removeItem(at: file)
+                                print("File removed successfully.")
+                            } else {
+                                print("File does not have the .xlsx extension.")
+                            }
+                        }
+                    }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory's files",files)
+                    
+                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                    // Check if the destination file exists
+                    if FileManager.default.fileExists(atPath: productURL.path) {
+                        // If it exists, remove it
+                        try FileManager.default.removeItem(at: productURL)
+                    }
+                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
+
                     files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     print("Done: ", files)
                     

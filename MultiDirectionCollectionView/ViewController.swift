@@ -139,6 +139,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //isExcelFile?
     var isExcel = false
+    var isMail = false
     var sheetIdx = 0
     
     
@@ -444,8 +445,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if (idx != nil) {
                     var a = false
                     //date format and other
-                    print("idx",appd.formatCodes[idx!])
-                    print(cell.label2.text)
+//                    print("idx",appd.formatCodes[idx!])
+//                    print(cell.label2.text)
                     
                     //id first
                     if numId == 31 && !a{
@@ -612,6 +613,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 return cell
             }
             
+            //if !isExcel && indexPath.item == selectedSheet {
             if !isExcel && indexPath.item == selectedSheet {
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
@@ -732,9 +734,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     
                 }else{
                     //version 1.3.6 csv mode only not in excel file viewer mode
-                    if !isExcel && !settingCellSelected{
+                    //if !isExcel && !settingCellSelected{
+                    if !settingCellSelected{
                         if datainputview == nil{
-                            hiddenTextField.becomeFirstResponder()
+                           
+                            opendatainputview()
+                        
                         }
                         let locationIdx = location.firstIndex(of: currentindexstr)
                         if (locationIdx != nil) && datainputview != nil {
@@ -1470,6 +1475,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     override func viewDidLoad() {
+        hiddenTextField.becomeFirstResponder()
         menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
@@ -2878,11 +2884,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         
+        
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
         
         var element :String = datainputview.stringbox.text!
         datainputview.stringbox.text = ""
+        
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        let url = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
         
         //add more complicated functionality
         if autoComplete(src: element).count > 1 {
@@ -3677,7 +3687,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return InputArray
     }
     
-    func getIndexlabel(){
+    func getIndexlabel() -> String{
         
         let column = getExcelColumnName(columnNumber: currentindex.item)
         let row = currentindex.section
@@ -3691,6 +3701,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if currentindex.section == 0{
             label.text = column
         }
+        
+        return String(column)+String(row)
+    }
+    
+    func getIndexlabelForExcel() -> String{
+        
+        let column = getExcelColumnName(columnNumber: currentindex.item)
+        let row = currentindex.section
+        
+        return String(column)+String(row)
     }
     
     
@@ -3744,14 +3764,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             KEYBOARDLOCATION = keyboardHeight
-            if !isExcel && !settingCellSelected{
-                opendatainputview()
-            }
         }
     }
     
     @objc func keyboardWillHide(_ notification: Notification) {
-        if !isExcel && datainputview != nil{
+        if datainputview != nil{
             if pastemode == false && getRefmode == false{
                 terminate()
             }
@@ -4082,9 +4099,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //sendEmail
     @objc func excelEmail() {
+        isMail = true
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
         //createxlsxSheet()
         //save temp content
         var result = content
@@ -4123,6 +4142,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
 
             present(mail, animated: true, completion: nil)
+            
+            isMail = false
         } else {
             // show failure alert
         }
