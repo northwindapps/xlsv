@@ -274,14 +274,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     let fl: CGFloat = CGFloat((textsize[i!] as NSString).doubleValue)
                     cell.label2?.font = UIFont.systemFont(ofSize: fl)
                     cell.label2?.textAlignment = .left
-                    
-                    
                 }
-                
-                
-            }else
-            {
-                
+            }else{
+                //empty
                 let fl: CGFloat = CGFloat(("13" as NSString).doubleValue)
                 cell.label2?.font = UIFont.systemFont(ofSize: fl)
                 cell.label2?.text = ""
@@ -657,7 +652,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let locationIdx = location.firstIndex(of: currentindexstr)
-            if locationIdx != nil {
+            if locationIdx != nil && content[locationIdx!] != ""{
                 datainputview.stringbox.text = content[locationIdx!]
             }
             
@@ -678,66 +673,68 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             getIndexlabel()
             cursor = currentindexstr
             
-            if getRefmode == true {
-                if changeaffected.contains(currentindexstr){
-                    
-                }else{
-                    changeaffected.append(currentindexstr)
-                    let number = currentindexstr .components(separatedBy: ",")[0]
-                    let number2 = currentindexstr .components(separatedBy: ",")[1]
-                    let intnumber = Int(number)
-                    let alphabets = getExcelColumnName(columnNumber: intnumber!)
-                    datainputview.stringbox.text =  datainputview.stringbox.text + String(alphabets + number2) + "+"//E5
-                    stringboxText = datainputview.stringbox.text
-                    sum_str = "="
-                    sum_str = sum_str + stringboxText
-                    sum_str = String(sum_str.dropLast())
-                    myCollectionView.reloadData()
-                }
-                
-            }else if pastemode == true{
-                
-                if indexPath.item == 0{
-                    
-                    
-                    
-                }else if indexPath.section == 0{
-                    
-                    
-                }else{
-                    
-                    if location.index(of: currentindexstr) != nil{
-                        let i = location.index(of: currentindexstr)
-                        location.remove(at: i!)
-                        content.remove(at: i!)
-                        tcolor.remove(at: i!)
-                        bgcolor.remove(at: i!)
-                        textsize.remove(at: i!)
-                        
-                    }
-                    myCollectionView.reloadData()
-                }
-            }else{
+//            if getRefmode == true {
+//                if changeaffected.contains(currentindexstr){
+//                    
+//                }else{
+//                    changeaffected.append(currentindexstr)
+//                    let number = currentindexstr .components(separatedBy: ",")[0]
+//                    let number2 = currentindexstr .components(separatedBy: ",")[1]
+//                    let intnumber = Int(number)
+//                    let alphabets = getExcelColumnName(columnNumber: intnumber!)
+//                    datainputview.stringbox.text =  datainputview.stringbox.text + String(alphabets + number2) + "+"//E5
+//                    stringboxText = datainputview.stringbox.text
+//                    sum_str = "="
+//                    sum_str = sum_str + stringboxText
+//                    sum_str = String(sum_str.dropLast())
+//                    myCollectionView.reloadData()
+//                }
+//                
+//            }else if pastemode == true{
+//                
+//                if indexPath.item == 0{
+//                    
+//                    
+//                    
+//                }else if indexPath.section == 0{
+//                    
+//                    
+//                }else{
+//                    
+//                    if location.index(of: currentindexstr) != nil{
+//                        let i = location.index(of: currentindexstr)
+//                        location.remove(at: i!)
+//                        content.remove(at: i!)
+//                        tcolor.remove(at: i!)
+//                        bgcolor.remove(at: i!)
+//                        textsize.remove(at: i!)
+//                        
+//                    }
+//                    myCollectionView.reloadData()
+//                }
+//            }else{
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 appd.collectionViewCellSizeChanged = 0
                 
                 changeaffected.removeAll()
                 //sizing column width and height
                 if indexPath.item == 0{
-                    settingCellSelected = true
-                    numberviewopen()
+                    //do nothing
+                    //settingCellSelected = true
+                    //numberviewopen()
                     
                     
                 }else if indexPath.section == 0{
-                    settingCellSelected  = true
-                    numberviewopen()
+                    //do nothing
+                    //settingCellSelected  = true
+                    //numberviewopen()
                     
                 }else{
                     //version 1.3.6 csv mode only not in excel file viewer mode
                     //if !isExcel && !settingCellSelected{
                     if !settingCellSelected{
                         if datainputview == nil{
-                           
+                            //if there's not
                             opendatainputview()
                         
                         }
@@ -745,16 +742,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         if (locationIdx != nil) && datainputview != nil {
                             datainputview.stringbox.text = content[locationIdx!]
                         }
-                        if (locationIdx != nil){
-                            let utterance = AVSpeechUtterance(string: content[locationIdx!] ?? "")
-                            utterance.voice = AVSpeechSynthesisVoice(language: "de-DE")
-                            synthesizer.speak(utterance)
+                        if (locationIdx == nil && datainputview != nil){
+                            //let utterance = AVSpeechUtterance(string: content[locationIdx!] ?? "")
+                            //utterance.voice = AVSpeechSynthesisVoice(language: "de-DE")
+                            //synthesizer.speak(utterance)
+                            datainputview.stringbox.text = ""
                         }
                         
                         self.myCollectionView.reloadData()
                     }
                 }
-            }
+//            }
             
         }else{
             //FileNameCollectionview Change Page
@@ -775,7 +773,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-
         
             print("go to file view")
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
@@ -2882,17 +2879,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let pasteboard = UIPasteboard.general
         pasteboard.string = ""
         
-        
-        
-        
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
         
         var element :String = datainputview.stringbox.text!
         datainputview.stringbox.text = ""
         
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let url = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
+        if isExcel{
+            //update sheet1,or2,or3 or xml each data entry
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            let url = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
+            
+        }
         
         //add more complicated functionality
         if autoComplete(src: element).count > 1 {
