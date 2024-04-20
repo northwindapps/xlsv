@@ -478,6 +478,15 @@ class Service {
                     //is it first
                     let idx = rValues2.firstIndex(of: String(index!))!
                     if (idx != 0) {
+                        if idx == rValues2.count-1{
+                            let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                            
+                            var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
+                            replacing = replacing + newElement + "</row>"
+                            let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
+                            print(replaced)
+                            return replaced
+                        }else{
                         // Define the regular expression pattern D3
                         let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
                         
@@ -491,25 +500,26 @@ class Service {
                         let matches = regex2.matches(in: targetRowTag, range: range)
                         
                         // Extract matching substrings
-                        if let match = matches.first{
-                            if let matchRange = Range(match.range, in: targetRowTag) {
-                                let matchingSubstring = targetRowTag[matchRange]
-                                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
-                                var items = modified.components(separatedBy: "!")
-                                //first is always ""
-                                let item = items[1] ?? ""
-                                print("item", item)
-                                let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                                // Find the correct position to insert the new element
-                                if let range = xmlString?.range(of: item) {
-                                    // Insert the new element after the element with r="J2"
-                                    xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
-                                    return xmlString
+                            if let match = matches.first{
+                                if let matchRange = Range(match.range, in: targetRowTag) {
+                                    let matchingSubstring = targetRowTag[matchRange]
+                                    let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                                    var items = modified.components(separatedBy: "!")
+                                    //first is always ""
+                                    let item = items[1] ?? ""
+                                    print("item", item)
+                                    let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                    // Find the correct position to insert the new element
+                                    if let range = xmlString?.range(of: item) {
+                                        // Insert the new element after the element with r="J2"
+                                        xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
+                                        return xmlString
+                                    }
+                                    //
+                                    //                            let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                                    //                            print(replaced)
+                                    
                                 }
-                                //
-                                //                            let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                                //                            print(replaced)
-                                
                             }
                         }
                     }else{
