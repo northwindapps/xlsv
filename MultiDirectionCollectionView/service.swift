@@ -488,12 +488,15 @@ class Service {
                             return replaced
                         }else{
                         // Define the regular expression pattern D3
+                        let pattern1 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)/>"
                         let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
                         
-                        // Create the regular expression object
-                        guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
-                            fatalError("Failed to create regular expression")
-                        }
+                        let combinedPattern = "\(pattern1)|\(pattern2)"
+
+                            // Create the regular expression object
+                            guard let regex2 = try? NSRegularExpression(pattern: combinedPattern, options: []) else {
+                                fatalError("Failed to create regular expression")
+                            }
                         
                         // Find matches in the XML string
                         let range = NSRange(targetRowTag.startIndex..<targetRowTag.endIndex, in: targetRowTag)
