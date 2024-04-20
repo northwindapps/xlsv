@@ -3705,12 +3705,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return String(column)+String(row)
     }
     
-    func getIndexlabelForExcel() -> String{
-        
+    func getIndexlabelForExcel(mode:Int=0) -> String{
         let column = getExcelColumnName(columnNumber: currentindex.item)
         let row = currentindex.section
-        
-        return String(column)+String(row)
+        switch mode {
+        case 0:
+            return String(column)+String(row)
+        case 1:
+            return String(column)
+        case 2:
+            return String(row)
+        default:
+            return String(column)+String(row)
+        }
     }
     
     

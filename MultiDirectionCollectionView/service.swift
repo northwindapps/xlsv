@@ -408,23 +408,51 @@ class Service {
                 }
             }else{
                 
+                
                 //get the list of locations
                 do {
-                    // Create a regular expression pattern to match the r attribute
+                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    
+                    // Retrieve all row tags
+                    let patternRow = "<row r=\"\(row)\".*?>(.*?)</row>"
+                    let regexRow = try NSRegularExpression(pattern: patternRow, options: [])
+
+                    // Find all matches in the XML snippet
+                    let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
+                    
+                    var targetRowTag = ""
+                    for match in matchesRow {
+                        // Extract the row number from the match
+                        let nsRange = match.range(at: 1) // Use the capture group index
+                        if let range = Range(nsRange, in: xmlString!) {
+                            if let matchRange = Range(match.range, in: xmlString!) {
+                                targetRowTag = String(xmlString![matchRange])
+                                if targetRowTag.contains("/><row"){
+                                    let items = targetRowTag.components(separatedBy: "/><row")
+                                    if (items.first != nil){
+                                        targetRowTag = items.first! + "/>"
+                                        print(targetRowTag)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Create a regular expression pattern to match the r attribute C4,C44
                     let pattern = #"r=\"([A-Z]+\d+)\""#
                     
                     // Create a regular expression object
                     let regex = try NSRegularExpression(pattern: pattern, options: [])
                     
                     // Find all matches in the XML snippet
-                    let matches = regex.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
+                    let matches = regex.matches(in: targetRowTag, options: [], range: NSRange(location: 0, length: targetRowTag.utf16.count))
                     
                     // Extract the r values from the matches
                     var rValues = matches.map { match -> String in
                         guard let range = Range(match.range(at: 1), in: xmlString!) else {
                             return ""
                         }
-                        return String(xmlString![range])
+                        return String(targetRowTag[range])
                     }
                     
                     // Output the list of r values
@@ -447,7 +475,7 @@ class Service {
                         return numericPart1 < numericPart2
                     }
                     
-                    
+                    //is it first
                     let idx = rValues2.firstIndex(of: String(index!))!
                     if (idx != 0) {
                         // Define the regular expression pattern D3
@@ -459,13 +487,13 @@ class Service {
                         }
                         
                         // Find matches in the XML string
-                        let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-                        let matches = regex2.matches(in: xmlString!, range: range)
+                        let range = NSRange(targetRowTag.startIndex..<targetRowTag.endIndex, in: targetRowTag)
+                        let matches = regex2.matches(in: targetRowTag, range: range)
                         
                         // Extract matching substrings
                         if let match = matches.first{
-                            if let matchRange = Range(match.range, in: xmlString!) {
-                                let matchingSubstring = xmlString![matchRange]
+                            if let matchRange = Range(match.range, in: targetRowTag) {
+                                let matchingSubstring = targetRowTag[matchRange]
                                 let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
                                 var items = modified.components(separatedBy: "!")
                                 //first is always ""
@@ -484,6 +512,13 @@ class Service {
                                 
                             }
                         }
+                    }else{
+                        //first c tag
+                        let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        let replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
+                        let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing + newElement + "</row>")
+                        print(replaced)
+                        return replaced
                     }
                     
                 } catch {
