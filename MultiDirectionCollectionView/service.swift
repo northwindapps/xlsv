@@ -570,11 +570,19 @@ class Service {
                         }
                     }else{
                         //first c tag with sharedstring
-                        let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                        let replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
-                        let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing + newElement + "</row>")
-                        print(replaced)
-                        return replaced
+                        if targetRowTag == ""{
+                            let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                            let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                            return replaced
+                        }else{
+                            let newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                            
+                            let replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
+                            let replaced = xmlString?.replacingOccurrences(of: replacing, with: replacing + newElement2 + "</row>")
+                            print(replaced)
+                            return replaced
+                        }
+                        
                     }
                     
                 } catch {
@@ -939,24 +947,8 @@ class Service {
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                     testExtractStyle(url:styleXMLURL)
                     
-                    
-                    let oldAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
-                    
-                    
-                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
-                        // Write the modified XML data back to the file
-                    if(idx != nil && replacedWithNewString != nil){
-                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                    }
-                    
-                    let newAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-                    let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
-                    
-                    
-                    
+                   
+               
                     //update Values
                     //let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
                     
@@ -1030,7 +1022,8 @@ class Service {
                     let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                     
                     //value and string update test
-                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
                     
                     
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)

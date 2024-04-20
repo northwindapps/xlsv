@@ -301,7 +301,7 @@ class ExcelHelper{
            }
                
        } catch {
-           print("sorry pal cant copy it.")
+           print(error)
        }
     }
 
