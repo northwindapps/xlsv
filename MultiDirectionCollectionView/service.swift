@@ -407,13 +407,14 @@ class Service {
             let matches = regex.matches(in: xmlString!, range: range)
             
             // Extract matching substrings
+            //TODO switch sharedString or value here or not?
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     let matchingSubstring = xmlString![matchRange]
-                    let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
-                    var items = modified.components(separatedBy: "!")
+                    //let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
+                    //var items = modified.components(separatedBy: "!")
                     //first is always ""
-                    let item = items[1] ?? ""
+                    let item = String(matchingSubstring)
                     print("item", item)
                     //string
                     if(item.contains("<v>") && item.contains("t=\"s\"")){
@@ -431,7 +432,7 @@ class Service {
                     }
                     
                     //value
-                    if(item.contains("<v>")){
+                    if(item.contains("<v>") && item.contains("t=\"s\"")){
                         var startCpart = item.components(separatedBy:"<v>").first
                         startCpart = startCpart!.replacingOccurrences(of: ">", with: " t=\"s\">")
                         if((vIndex) != nil){
@@ -446,7 +447,7 @@ class Service {
                     }
                     
                     //empty <c r="B2" s="4"/>
-                    if((vIndex) != nil){
+                    if((vIndex) != nil && item.hasSuffix("/>") ){
                         let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         return replaced
