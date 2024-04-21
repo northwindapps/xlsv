@@ -363,6 +363,37 @@ class Service {
                 if let matchRange = Range(match.range, in: xmlString!) {
                     let matchingSubstring = xmlString![matchRange]
                     let replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
+                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    
+                    //after manupilation check
+                    let patternRow = "<row r=\"\(row)\".*?>(.*?)</row>"
+                    guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else {
+                        fatalError("Failed to create regular expression")
+                    }
+
+                    // Find all matches in the XML snippet
+                    let matchesRow = regexRow.matches(in: replaced!, options: [], range: NSRange(location: 0, length: replaced!.utf16.count))
+                    
+                    var targetRowTag = ""
+                    if let match2 = matchesRow.first{
+                        // Extract the row number from the match
+                        let nsRange = match2.range(at: 1) // Use the capture group index
+                        if let range = Range(nsRange, in: replaced!) {
+                            if let matchRange2 = Range(match2.range, in: replaced!) {
+                                let checkStr = String(replaced![matchRange2])
+                                if !checkStr.contains("><c r="){
+                                    let items = checkStr.components(separatedBy: "</row>")
+                                    if (items.first != nil){
+                                        var replacing2 = items.first!.replacingOccurrences(of: ">", with:  "/>")
+                                        print(replacing2)
+                                        
+                                        let replaced2 = replaced?.replacingOccurrences(of: checkStr, with: replacing2)
+                                        return replaced2
+                                    }
+                                }
+                            }
+                        }
+                    }
                     return replaced
                 }
             }
@@ -390,7 +421,7 @@ class Service {
             
             //regular expression
             var xmlString = try? String(contentsOf: url2)
-            let xml = XMLHash.parse(xmlString!)
+            var xml = XMLHash.parse(xmlString!)
             
             // Define the regular expression pattern D3
             let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
@@ -498,8 +529,8 @@ class Service {
                         return String(targetRowTag[range])
                     }
                     
-                    // Output the list of r values
-                    rValues.append(String(index!))
+                    // Output the list of r values D1, G1
+                    //rValues.append(String(index!))
                     
                     let rValues2 = rValues.sorted { (r1, r2) -> Bool in
                         // Extract the alphabetic part of the cell reference
@@ -519,8 +550,8 @@ class Service {
                     }
                     
                     //is it first
-                    let idx = rValues2.firstIndex(of: String(index!))!
-                    if (idx != 0) {
+                    if let idx = rValues2.firstIndex(of: String(index!)) {
+                        print("rowindex",idx)
                         if idx == rValues2.count-1{
                             let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
                             
@@ -568,20 +599,138 @@ class Service {
                                 }
                             }
                         }
+                    
                     }else{
-                        //first c tag with sharedstring
+                        //first c tag with sharedstring idx == nil
                         if targetRowTag == ""{
                             let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
-                            return replaced
+                           
+                            
+                            xml = XMLHash.parse(replaced!)
+//                            //xml.children.first?.children[4].children
+//                            if let rows = xml.children.first?.children[4].children {
+//                                for row in rows {
+//                                    let ele = row.element
+//                                    let cs = ele?.children
+//                                    
+//                               }
+//                            } else {
+//                                print("No rows found")
+//                            }
+                            // Get the children under the fourth child of the first child of the root element
+                            if let rows = xml.children.first?.children[4].children {
+                                // Iterate through the rows
+                                for row in rows {
+                                    // Sort the child elements (cells) within each row based on some criteria
+                                    let sortedCells = row.children.sorted { (cell1: XMLIndexer, cell2: XMLIndexer) -> Bool in
+                                        // Compare cells based on some criteria (e.g., column index)
+                                        if let name1 = cell1.element?.attribute(by: "r")?.text, let name2 = cell2.element?.attribute(by: "r")?.text {
+                                            let indices1 = extractIndices(from: name1)
+                                            let indices2 = extractIndices(from: name2)
+                                            let ary = [indices1,indices2]
+                                            
+                                            let sortedArray = ary.sorted { (string1, string2) -> Bool in
+                                                return string1! < string2! // Compare strings in descending order
+                                            }
+                                            
+                                            print(ary)
+                                              
+                                            
+                                            // Rows are equal, compare columns
+                                            if indices1!.column < indices2!.column{
+                                                return name1 < name2
+                                            }
+                                        }
+                                            
+                                           
+                                        return false // Modify as per your sorting criteria
+                                    }
+                                    
+                                    // Convert sortedCells back to an array of XMLIndexer objects
+                                    let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
+                                    
+                                    // Update the children of the current row with the sorted cells
+                                    // Note: You may need to find an alternative way to update the children of the row element
+                                    // row.children = sortedCellsArray // This will not work due to read-only property
+                                    
+                                    // Print the sorted cells (optional)
+                                    for cell in sortedCellsArray {
+                                        //print(cell)
+                                    }
+                                }
+                            } else {
+                                print("No rows found or there are no children under the specified path")
+                            }
+                            
+                            print("xmlDESC",xml.description)
+                            return xml.description
+                            
                         }else{
+                            //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
+                            var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
+                            let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                             let newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
                             
-                            var replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
+                            var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                             replacing = replacing + newElement2 + "</row>"
+                            if replacing .contains("/><c"){
+                                let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing.replacingOccurrences(of: "/><c", with: "><c"))
+                                return replaced
+                            }
                             let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
-                            print(replaced)
-                            return replaced
+                            let old = xmlString
+                            
+                            
+                            xml = XMLHash.parse(replaced!)
+                            if let rows = xml.children.first?.children[4].children {
+                                // Iterate through the rows
+                                for row in rows {
+                                    // Sort the child elements (cells) within each row based on some criteria
+                                    let sortedCells = row.children.sorted { (cell1: XMLIndexer, cell2: XMLIndexer) -> Bool in
+                                        // Compare cells based on some criteria (e.g., column index)
+                                        if let name1 = cell1.element?.attribute(by: "r")?.text, let name2 = cell2.element?.attribute(by: "r")?.text {
+                                            let indices1 = extractIndices(from: name1)
+                                            let indices2 = extractIndices(from: name2)
+                                            if indices1?.row.description == rowNumber{
+                                                
+                                                // Rows are equal, compare columns
+                                                if indices1!.column < indices2!.column{
+                                                    return name1 < name2
+                                                }
+                                            }
+                                        }
+                                            
+                                        return false // Modify as per your sorting criteria
+                                    }
+                                    
+                                    // Convert sortedCells back to an array of XMLIndexer objects
+                                    let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
+                                    
+                                
+                                    
+                                    // Update the children of the current row with the sorted cells
+                                    // Note: You may need to find an alternative way to update the children of the row element
+                                    // row.children = sortedCellsArray // This will not work due to read-only property
+                                    
+                                    // Print the sorted cells (optional)
+                                    for cell in sortedCellsArray {
+                                        let name1 = (cell.element?.attribute(by: "r")?.text)!
+                                        let indices1 = extractIndices(from: name1)
+                                        if indices1?.row.description == rowNumber{
+                                            print(cell)
+                                            rowPart += cell.description
+                                        }
+                                    }
+                                }
+                            } else {
+                                print("No rows found or there are no children under the specified path")
+                            }
+                            
+                            let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
+                            print("xmlDESC",final)
+                            return final
+                            //TODO SORT D1, C2
                         }
                         
                     }
@@ -856,14 +1005,14 @@ class Service {
                     
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                     
-                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
-                    
-                    
-                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
-                        // Write the modified XML data back to the file
-                    if(idx != nil && replacedWithNewString != nil){
-                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                    }
+//                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
+//                    
+//                    
+//                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
+//                        // Write the modified XML data back to the file
+//                    if(idx != nil && replacedWithNewString != nil){
+//                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+//                    }
                     
                     let newAry = testStringUniqueAry(url: shardStringXMLURL)
                     
@@ -1210,86 +1359,105 @@ class Service {
     
     func writeXlsxEmail(fp: String = "", url: URL? = nil) -> URL? {
         do {
-                // Get the sandbox directory for documents
-                if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
-                //
-                if FileManager.default.fileExists(atPath: fp) {
-                            // The specified path exists, continue with your code
-                            print("File or directory exists at path: \(fp)")
-                    let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
-                    let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
-                            
-                    // Check if the subdirectory already exists
-                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
-                        // Subdirectory already exists
-                        print("Subdirectory already exists at path: \(subdirectoryURL.path)")
-                        var files = try FileManager.default.contentsOfDirectory(at:
-                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
-                        
-                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                        print("Subdirectory's files",files)
-                    }
+        // Get the sandbox directory for documents
+        if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+        let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+        //
+        if FileManager.default.fileExists(atPath: fp) {
+                    // The specified path exists, continue with your code
+                    print("File or directory exists at path: \(fp)")
+            let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+            let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
                     
-                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
-                    var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
-                    let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
-                        for file in sheetFiles {
-                            print("Found .xml file:", file.lastPathComponent)
-                        }
-                    print("sheetFiles: ", sheetXMLFiles)
-                    
-                    
-                    //ready to zip
-                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    let fpURL = URL(fileURLWithPath: fp)
-                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
-                    //appendingPathComponent("imported2.xlsx")
-                    
-                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
-                        for file in files{
-                            // Check if the file has the .xlsx extension
-                            if file.pathExtension == "xlsx" {
-                                // Remove the file
-                                try FileManager.default.removeItem(at: file)
-                                print("File removed successfully.")
-                            } else {
-                                print("File does not have the .xlsx extension.")
-                            }
-                        }
-                    }
-                    
-                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    print("Subdirectory's files",files)
-                    
-                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-                    // Check if the destination file exists
-                    if FileManager.default.fileExists(atPath: productURL.path) {
-                        // If it exists, remove it
-                        try FileManager.default.removeItem(at: productURL)
-                    }
-                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
-
-                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    print("Done: ", files)
-                    
-                    return productURL
-
-                    
-                } else {
-                    // Handle the case where the specified path doesn't exist
-                    print("File or directory does not exist at path: \(fp)")
+            // Check if the subdirectory already exists
+            if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                // Create the subdirectory
+                try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+            } else {
+                // Subdirectory already exists
+                print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                var files = try FileManager.default.contentsOfDirectory(at:
+                                                                            subdirectoryURL, includingPropertiesForKeys: nil)
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                   }
                 }
                 
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Subdirectory is now empty",files)
+            }
+            
+            // Construct the URL for the destination file
+            let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+            //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+           
+            // Check if the file already exists at the destination
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                print("File already exists at the destination.")
+                // Remove destination file if it already exists
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.removeItem(at: destinationURL)
+                }
             } else {
-                print("Document directory not found.")
+                // Move the file to the subdirectory
+                try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                print("File moved successfully to: \(destinationURL.path)")
+            }
+            
+            do {
+                //unzip
+                let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                print("File unzipped successfully.")
+            } catch {
+                print("Error unzipping file: \(error)")
             }
             
             
-        } catch {
-            print("Error: \(error)")
+            
+            do {
+                //delete imported2.zip or imported2.xlsx
+                try FileManager.default.removeItem(at: destinationURL)
+                print("Deleted zip file:", destinationURL)
+            } catch {
+                print("Error deleting file:", error)
+            }
+            
+          
+            
+            //ready to zip
+            var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+            let fpURL = URL(fileURLWithPath: fp)
+            let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+            //appendingPathComponent("imported2.xlsx")
+            let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+            let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
+            
+            files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+            print("Done: ", files)
+            
+            return productURL
+
+            
+        } else {
+            // Handle the case where the specified path doesn't exist
+            print("File or directory does not exist at path: \(fp)")
         }
         
-        return nil
+    } else {
+        print("Document directory not found.")
+    }
+    
+    
+} catch {
+    print("Error: \(error)")
+}
+
+return nil
     }
     
     func writeXlsxSandBox(path: URL, fileName: String) {
@@ -1341,6 +1509,22 @@ class Service {
         catch
         {
             print("Something went wrong")
+        }
+    }
+    
+    // Function to extract row and column indices from the "r" attribute value
+    func extractIndices(from attribute: String) -> (row: Int, column: String)? {
+        guard let match = attribute.rangeOfCharacter(from: .decimalDigits) else {
+            return nil
+        }
+        
+        let rowString = attribute[match.lowerBound...]
+        let columnString = attribute.prefix(upTo: match.lowerBound)
+        
+        if let row = Int(rowString), !columnString.isEmpty {
+            return (row, String(columnString))
+        } else {
+            return nil
         }
     }
     
@@ -1466,6 +1650,8 @@ extension FileManager {
                 print("Error uploading file to iCloud Drive: \(error.localizedDescription)")
             }
         }
+    
+    
     
 }
 
