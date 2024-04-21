@@ -414,7 +414,11 @@ class Service {
                     //let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
                     //var items = modified.components(separatedBy: "!")
                     //first is always ""
-                    let item = String(matchingSubstring)
+                    let occurrences = String(matchingSubstring).components(separatedBy: "<c").count
+                    var item = String(matchingSubstring)
+                    if occurrences > 1{
+                        item = "<c" + String(matchingSubstring).components(separatedBy: "<c")[1]
+                    }
                     print("item", item)
                     //string
                     if(item.contains("<v>") && item.contains("t=\"s\"")){
