@@ -577,8 +577,9 @@ class Service {
                         }else{
                             let newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
                             
-                            let replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
-                            let replaced = xmlString?.replacingOccurrences(of: replacing, with: replacing + newElement2 + "</row>")
+                            var replacing = targetRowTag.replacingOccurrences(of: "/>", with: ">")
+                            replacing = replacing + newElement2 + "</row>"
+                            let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                             print(replaced)
                             return replaced
                         }
@@ -930,10 +931,60 @@ class Service {
                             
                     // Check if the subdirectory already exists
                     if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
-                        print("SubdirectoryURL is empty")
+                        // Create the subdirectory
+                        try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                        print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
                     } else {
                         // Subdirectory already exists
                         print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                        var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
+                        for fileURL in files {
+                           do {
+                               try FileManager.default.removeItem(at: fileURL)
+                               print("Deleted file:", fileURL.lastPathComponent)
+                           } catch {
+                               print("Error deleting file:", error)
+                           }
+                        }
+                        
+                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                        print("Subdirectory is now empty",files)
+                    }
+                    
+                    // Construct the URL for the destination file
+                    let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                    //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+                   
+                    // Check if the file already exists at the destination
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        print("File already exists at the destination.")
+                        // Remove destination file if it already exists
+                        if FileManager.default.fileExists(atPath: destinationURL.path) {
+                            try FileManager.default.removeItem(at: destinationURL)
+                        }
+                    } else {
+                        // Move the file to the subdirectory
+                        try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                        print("File moved successfully to: \(destinationURL.path)")
+                    }
+                    
+                    do {
+                        //unzip
+                        let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                        print("File unzipped successfully.")
+                    } catch {
+                        print("Error unzipping file: \(error)")
+                    }
+                    
+                    
+                    
+                    do {
+                        //delete imported2.zip or imported2.xlsx
+                        try FileManager.default.removeItem(at: destinationURL)
+                        print("Deleted zip file:", destinationURL)
+                    } catch {
+                        print("Error deleting file:", error)
                     }
                    
                     
@@ -997,26 +1048,73 @@ class Service {
     
     func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "") -> URL? {
         do {
-                // Get the sandbox directory for documents
-                if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
-                //
-                if FileManager.default.fileExists(atPath: fp) {
-                            // The specified path exists, continue with your code
-                            print("File or directory exists at path: \(fp)")
-                    let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
-                    let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
-                            
-                    // Check if the subdirectory already exists
-                    if FileManager.default.fileExists(atPath: subdirectoryURL.path) {
-                        // Subdirectory already exists
-                        print("Subdirectory already exists at path: \(subdirectoryURL.path)")
-                        var files = try FileManager.default.contentsOfDirectory(at:
-                                                                                    subdirectoryURL, includingPropertiesForKeys: nil)
+            // Get the sandbox directory for documents
+            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+            let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+            //
+            if FileManager.default.fileExists(atPath: fp) {
+                        // The specified path exists, continue with your code
+                        print("File or directory exists at path: \(fp)")
+                let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
                         
-                        
-                        files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                        print("Subdirectory's files",files)
+                // Check if the subdirectory already exists
+                if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                    // Create the subdirectory
+                    try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                    print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                } else {
+                    // Subdirectory already exists
+                    print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                    var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                       }
                     }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory is now empty",files)
+                }
+                
+                // Construct the URL for the destination file
+                let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+               
+                // Check if the file already exists at the destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                    // Remove destination file if it already exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                } else {
+                    // Move the file to the subdirectory
+                    try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                    print("File moved successfully to: \(destinationURL.path)")
+                }
+                
+                do {
+                    //unzip
+                    let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                    print("File unzipped successfully.")
+                } catch {
+                    print("Error unzipping file: \(error)")
+                }
+                
+                
+                
+                do {
+                    //delete imported2.zip or imported2.xlsx
+                    try FileManager.default.removeItem(at: destinationURL)
+                    print("Deleted zip file:", destinationURL)
+                } catch {
+                    print("Error deleting file:", error)
+                }
                     
                     //shardString update test
                     let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
@@ -1074,6 +1172,18 @@ class Service {
                     }
                     //overwrite or update xlsx
                     let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                    
+                    
+                    
+                 
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                       }
+                    }
                     
                     files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                     print("Done: ", files)
