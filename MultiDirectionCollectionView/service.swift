@@ -362,38 +362,9 @@ class Service {
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     let matchingSubstring = xmlString![matchRange]
-                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
-                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                     
-                    //after manupilation check
-                    let patternRow = "<row r=\"\(row)\".*?>(.*?)</row>"
-                    guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else {
-                        fatalError("Failed to create regular expression")
-                    }
-
-                    // Find all matches in the XML snippet
-                    let matchesRow = regexRow.matches(in: replaced!, options: [], range: NSRange(location: 0, length: replaced!.utf16.count))
-                    
-                    var targetRowTag = ""
-                    if let match2 = matchesRow.first{
-                        // Extract the row number from the match
-                        let nsRange = match2.range(at: 1) // Use the capture group index
-                        if let range = Range(nsRange, in: replaced!) {
-                            if let matchRange2 = Range(match2.range, in: replaced!) {
-                                let checkStr = String(replaced![matchRange2])
-                                if !checkStr.contains("><c r="){
-                                    let items = checkStr.components(separatedBy: "</row>")
-                                    if (items.first != nil){
-                                        var replacing2 = items.first!.replacingOccurrences(of: ">", with:  "/>")
-                                        print(replacing2)
-                                        
-                                        let replaced2 = replaced?.replacingOccurrences(of: checkStr, with: replacing2)
-                                        return replaced2
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
                     return replaced
                 }
             }
