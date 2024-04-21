@@ -452,7 +452,7 @@ class Service {
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         return replaced
                     }
-                    return item
+                    return xmlString
                 }
             }else{
                 //get the list of locations
@@ -590,7 +590,6 @@ class Service {
 //                            } else {
 //                                print("No rows found")
 //                            }
-                            // Get the children under the fourth child of the first child of the root element
                             if let rows = xml.children.first?.children[4].children {
                                 // Iterate through the rows
                                 for row in rows {

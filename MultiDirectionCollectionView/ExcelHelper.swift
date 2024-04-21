@@ -105,6 +105,7 @@ class ExcelHelper{
                
                //Getting strings
                for i in 0..<columnName.count {
+                   //you need to update sharedstring count and use count or it throws out of index error
                    let k = String(columnName[i])
                    if k.count != 0 {
                        let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
