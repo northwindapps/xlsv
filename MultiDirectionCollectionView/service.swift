@@ -147,7 +147,7 @@ class Service {
             
             var numFmtIds = [Int]()
             // Assuming `xml` is your XML object
-            for child in xml.children.first!.children[5].children {
+            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
                 if let id = child.element?.allAttributes["numFmtId"]?.text {
                     numFmtIds.append(Int(id) ?? -1)
                 }
@@ -157,7 +157,7 @@ class Service {
             
             var cellXfs = [Int]()
             // Assuming `xml` is your XML object
-            for child in xml.children.first!.children[5].children {
+            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
                     cellXfs.append(Int(borderId) ?? -1)
                 }
@@ -165,7 +165,7 @@ class Service {
             
             var cellStyleXfs = [Int]()
             // Assuming `xml` is your XML object
-            for child in xml.children.first!.children[4].children {
+            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellStyleXfs" })!.children {
                 if let borderId = child.element?.allAttributes["borderId"]?.text {
                     cellStyleXfs.append(Int(borderId) ?? -1)
                 }
@@ -176,7 +176,7 @@ class Service {
             var border_bottoms = [Int]()
             var border_tops = [Int]()
             // Assuming `xml` is your XML object
-            for child in xml.children.first!.children[3].children{
+            for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
                 if child.children.count > 0{
                     border_lefts.append(0)
                     border_rights.append(0)
@@ -524,7 +524,7 @@ class Service {
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
                            
                             xml = XMLHash.parse(replaced!)
-                            if let rows = xml.children.first?.children[4].children {
+                            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
                                     // Sort the child elements (cells) within each row based on some criteria
@@ -598,7 +598,7 @@ class Service {
                             let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                             let old = xmlString
                             xml = XMLHash.parse(replaced!)
-                            if let rows = xml.children.first?.children[4].children {
+                            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
                                     // Sort the child elements (cells) within each row based on some criteria
@@ -920,7 +920,7 @@ class Service {
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
                            
                             xml = XMLHash.parse(replaced!)
-                            if let rows = xml.children.first?.children[4].children {
+                            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
                                     // Sort the child elements (cells) within each row based on some criteria
@@ -994,7 +994,7 @@ class Service {
                             let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                             let old = xmlString
                             xml = XMLHash.parse(replaced!)
-                            if let rows = xml.children.first?.children[4].children {
+                            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
                                     // Sort the child elements (cells) within each row based on some criteria
@@ -1184,16 +1184,16 @@ class Service {
         }
     }
 
-    func checkSharedStringsIndex(url:URL? = nil, SSlist:[String] = [], word:String)->Int?{
+    func checkSharedStringsIndex(url:URL? = nil, SSlist:[String] = [], word:String)->(Int?,String?){
         var new_count : Int?
         var new_count2 : Int?
         
         if word == ""{
-            return nil
+            return (nil,nil)
         }
         
         if word != "" && (Float(word) != nil) {
-            return nil
+            return (nil,nil)
         }
         
         if let url2 = url{
@@ -1203,7 +1203,7 @@ class Service {
             //
             if let idx = SSlist.firstIndex(of:word) {
                 print("String exists at", idx + INDEX_1_DIFF_ADJUST)
-                return idx + INDEX_1_DIFF_ADJUST
+                return (idx + INDEX_1_DIFF_ADJUST, xmlString)
             } else {
                 print("String not exists.")
                 // Find the position to insert the new <si> element
@@ -1227,18 +1227,14 @@ class Service {
                     } else {
                         print("Failed to parse XML data.")
                     }
-                    
-                    // Write the modified XML data back to the file
-                    try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
-                    
                     print("New <si> element inserted successfully.")
-                    return SSlist.count
+                    return (SSlist.count ,xmlString)
                 } else {
                     print("Failed to find </sst> in the XML data.")
                 }
             }
         }
-        return nil
+        return (nil,nil)
     }
     
     func testSandBox(fp: String = "", url: URL? = nil) -> URL? {
@@ -1597,27 +1593,33 @@ class Service {
                     if input.count > 0{
                         var check = false
                         let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
-                        if shredStringId == nil && (Float(input) != nil){
+                        if shredStringId.0 == nil && (Float(input) != nil){
                             //value todo complete this function
                             let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString)!//A3
                             // Write the modified XML data back to the file
                             if(replacedWithNewString != ""){
                                 try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                                
+                                //update sharedstring xml here
+                                
                             }
                             check = true
                         }
-                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId!), index: cellIdxString)!//A3
+                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId.0!), index: cellIdxString)!//A3
                         // Write the modified XML data back to the file
                         if(!check && replacedWithNewString != ""){
                             try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            
+                            // Write the modified XML data back to the file
+                            try? shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
                         }
                             
                     }else{
                         //delete
-                        let replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString)!//A3
+                        let replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString)//A3
                         // Write the modified XML data back to the file
-                        if(replacedWithNewString != ""){
-                            try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        if(replacedWithNewString != nil && replacedWithNewString != ""){
+                            try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                         }
                     }
                         

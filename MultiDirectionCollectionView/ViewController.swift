@@ -646,8 +646,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
 //            if selectedSheet >= 0{
             //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
+            if !isExcel{
                 print("saved")
                 saveAsLocalJson(filename: "csv_sheet1")
+            }
             //}
             
             
@@ -2884,7 +2886,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var element :String = datainputview.stringbox.text!
         datainputview.stringbox.text = ""
         
-        if isExcel{
+        if isExcel && !element.hasPrefix("="){//mathematical expression doesnt support in Excel
             //update sheet1,or2,or3 or xml each data entry
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             

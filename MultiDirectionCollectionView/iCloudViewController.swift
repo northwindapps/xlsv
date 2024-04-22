@@ -9,8 +9,8 @@
 import UIKit
 import CoreXLSX
 import Foundation
-import GoogleAPIClientForREST
-import GoogleSignIn
+//import GoogleAPIClientForREST
+//import GoogleSignIn
 import SwiftyXMLParser
 
 
@@ -21,16 +21,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         present(documentPicker, animated: true, completion: nil)
     }
     
-    let driveService  = GTLRDriveService()
-    func downloadFile(file: GTLRDrive_File){
-        let url = "https://www.googleapis.com/drive/v3/files/\(file.identifier!)?alt=media"
+//    let driveService  = GTLRDriveService()
+//    func downloadFile(file: GTLRDrive_File){
+//        let url = "https://www.googleapis.com/drive/v3/files/\(file.identifier!)?alt=media"
+//
+//        let fetcher = driveService.fetcherService.fetcher(withURLString: url)
 
-        let fetcher = driveService.fetcherService.fetcher(withURLString: url)
-
-//        fetcher.beginFetchWithDelegate(
+//   dont need it     fetcher.beginFetchWithDelegate(
 //            self,
 //            didFinishSelector: #selector(ViewController.finishedFileDownload(_:finishedWithData:error:)))
-    }
+//    }
     
     
     var location = [String]()

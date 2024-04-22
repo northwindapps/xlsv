@@ -8,7 +8,7 @@
 
 import UIKit
 import GoogleMobileAds
-import GoogleSignIn
+//import GoogleSignIn
 
 @UIApplicationMain
 //https://stackoverflow.com/questions/46648834/ld-entry-point-main-undefined-for-architecture-x86-64-xcode-9
@@ -197,18 +197,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
         
-        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-            if (error != nil || user == nil) {
-                // Show the app's signed-out state.
-                print("sign out")
-                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
-            } else {
-                // Show the app's signed-in state.
-                print("sign in")
-                //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
-                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
-            }
-        }
+//        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+//            if (error != nil || user == nil) {
+//                // Show the app's signed-out state.
+//                print("sign out")
+//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
+//            } else {
+//                // Show the app's signed-in state.
+//                print("sign in")
+//                //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
+//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
+//            }
+//        }
         
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
