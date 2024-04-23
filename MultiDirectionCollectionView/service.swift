@@ -41,16 +41,6 @@ class Service {
         
     }
     
-    func validateXML(xmlString: String) -> Bool {
-        do {
-            let _ = try XML.parse(xmlString)
-            return true
-        } catch {
-            print("XML validation error: \(error)")
-            return false
-        }
-    }
-    
     func export(){
         FileManager.default.deleteWorksheets()
               
@@ -324,7 +314,8 @@ class Service {
                         if((vIndex) != nil){
                             let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
                             let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -335,8 +326,8 @@ class Service {
                         }
                         let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -353,7 +344,8 @@ class Service {
                         if((vIndex) != nil){
                             let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
                             let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -364,7 +356,8 @@ class Service {
                         }
                         let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -374,12 +367,13 @@ class Service {
                         }
                     }
                     
-                    //empty <c r="B2" s="4"/>
+                    //empty <c r="B2" s="4"/><c r=\"B6\" s=\"10\"/>
                     //"<c r=\"B2\" s=\"61\"><v>2023</v></c>"
                     if((vIndex) != nil && item.hasSuffix("/>") ){
                         let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -467,7 +461,8 @@ class Service {
                             replacing = replacing + newElement + "</row>"
                             let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                             print(replaced)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -505,7 +500,8 @@ class Service {
                                     if let range = xmlString?.range(of: item) {
                                         // Insert the new element after the element with r="J2"
                                         xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
-                                        if validateXML(xmlString: xmlString!) {
+                                        let validator = XMLValidator()
+                                        if validator.validateXML(xmlString: xmlString!) {
                                             print("XML is valid.")
                                         } else {
                                             print("XML is not valid.")
@@ -568,7 +564,8 @@ class Service {
                                 print("No rows found or there are no children under the specified path")
                             }
                             
-                            if validateXML(xmlString: xml.description) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: xml.description) {
                                 print("XML is valid.")
                                 return xml.description
                             } else {
@@ -586,7 +583,8 @@ class Service {
                             replacing = replacing + newElement2 + "</row>"
                             if replacing .contains("/><c"){
                                 let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing.replacingOccurrences(of: "/><c", with: "><c"))
-                                if validateXML(xmlString: replaced!) {
+                                let validator = XMLValidator()
+                                if validator.validateXML(xmlString: replaced!) {
                                     print("XML is valid.")
                                     return replaced
                                 } else {
@@ -643,7 +641,8 @@ class Service {
                             }
                             
                             let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
-                            if validateXML(xmlString: final) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: final) {
                                 print("XML is valid.")
                                 return final
                             } else {
@@ -720,7 +719,8 @@ class Service {
                         if((vIndex) != nil){
                             let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
                             let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -732,7 +732,8 @@ class Service {
                         let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -749,7 +750,8 @@ class Service {
                         if((vIndex) != nil){
                             let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
                             let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -760,7 +762,8 @@ class Service {
                         }
                         let replacing = startCpart!.replacingOccurrences(of: ">", with: "/>")
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -775,7 +778,8 @@ class Service {
                     if((vIndex) != nil && item.hasSuffix("/>") ){
                         let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
-                        if validateXML(xmlString: replaced!) {
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
                             print("XML is valid.")
                             return replaced
                         } else {
@@ -863,7 +867,8 @@ class Service {
                             replacing = replacing + newElement + "</row>"
                             let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                             print(replaced)
-                            if validateXML(xmlString: replaced!) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: replaced!) {
                                 print("XML is valid.")
                                 return replaced
                             } else {
@@ -901,7 +906,8 @@ class Service {
                                     if let range = xmlString?.range(of: item) {
                                         // Insert the new element after the element with r="J2"
                                         xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
-                                        if validateXML(xmlString: xmlString!) {
+                                        let validator = XMLValidator()
+                                        if validator.validateXML(xmlString: xmlString!) {
                                             print("XML is valid.")
                                         } else {
                                             print("XML is not valid.")
@@ -964,7 +970,8 @@ class Service {
                                 print("No rows found or there are no children under the specified path")
                             }
                             
-                            if validateXML(xmlString: xml.description) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: xml.description) {
                                 print("XML is valid.")
                                 return xml.description
                             } else {
@@ -982,7 +989,8 @@ class Service {
                             replacing = replacing + newElement2 + "</row>"
                             if replacing .contains("/><c"){
                                 let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing.replacingOccurrences(of: "/><c", with: "><c"))
-                                if validateXML(xmlString: replaced!) {
+                                let validator = XMLValidator()
+                                if validator.validateXML(xmlString: replaced!) {
                                     print("XML is valid.")
                                     return replaced
                                 } else {
@@ -1039,7 +1047,8 @@ class Service {
                             }
                             
                             let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
-                            if validateXML(xmlString: final) {
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: final) {
                                 print("XML is valid.")
                                 return final
                             } else {
@@ -1198,7 +1207,7 @@ class Service {
         
         if let url2 = url{
             var xmlString = try? String(contentsOf: url2)
-            let INDEX_1_DIFF_ADJUST = 1
+            let INDEX_1_DIFF_ADJUST = 0
             
             //
             if let idx = SSlist.firstIndex(of:word) {
@@ -1989,5 +1998,20 @@ extension StringProtocol {
         self[index(startIndex, offsetBy: offset)]
     }
 }
-
-
+class XMLValidator: NSObject, XMLParserDelegate {
+    
+    var validationError: Error?
+    
+    func validateXML(xmlString: String) -> Bool {
+        let parser = XMLParser(data: xmlString.data(using: .utf8)!)
+        parser.delegate = self
+        
+        return parser.parse()
+    }
+    
+    // MARK: - XMLParserDelegate
+    
+    func parser(_ parser: XMLParser, parseErrorOccurred parseError: Error) {
+        validationError = parseError
+    }
+}

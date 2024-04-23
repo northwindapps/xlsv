@@ -14,7 +14,6 @@ import Zip
 import SSZipArchive
 import CoreFoundation
 import GoogleMobileAds
-import AVFoundation
 
 let reuseIdentifier = "customCell"
 var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
@@ -25,7 +24,6 @@ var otherclass = colorclass()
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate,GADBannerViewDelegate{
     
-    private let synthesizer = AVSpeechSynthesizer()
     @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
@@ -745,16 +743,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             datainputview.stringbox.text = content[locationIdx!]
                         }
                         if (locationIdx == nil && datainputview != nil){
-                            //let utterance = AVSpeechUtterance(string: content[locationIdx!] ?? "")
-                            //utterance.voice = AVSpeechSynthesisVoice(language: "de-DE")
-                            //synthesizer.speak(utterance)
                             datainputview.stringbox.text = ""
                         }
                         
                         self.myCollectionView.reloadData()
                     }
                 }
-//            }
             
         }else{
             //FileNameCollectionview Change Page
