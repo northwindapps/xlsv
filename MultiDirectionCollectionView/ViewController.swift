@@ -401,17 +401,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                     
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
-
+                    cell.label2?.layer.borderColor = UIColor.white.cgColor
+                    cell.label2?.layer.borderWidth = 0.7
+                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
                 }else if indexPath.section == 0{
+                    
+                    
                     
                     if indexPath.item > 0{//0,0 == greyzone
                         cell.label2?.text = getExcelColumnName(columnNumber: indexPath.item)//ABCDE...
                         columninNumber.append(getExcelColumnName(columnNumber: indexPath.item))
                     }
                     
-                    
+                    cell.label2?.layer.borderColor = UIColor.white.cgColor
+                    cell.label2?.layer.borderWidth = 0.7
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
@@ -546,7 +551,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if   appd.formatCodes[idx!].contains("d") && !a{
+                    if appd.formatCodes[idx!].contains("d") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -882,37 +887,37 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         datainputview.returnbutton.addTarget(self, action: #selector(ViewController.restore), for: UIControl.Event.touchUpInside)
         
-        datainputview.copyButton.addTarget(self, action: #selector(ViewController.copyText), for: UIControl.Event.touchUpInside)
+//        datainputview.copyButton.addTarget(self, action: #selector(ViewController.copyText), for: UIControl.Event.touchUpInside)
         
-        datainputview.fontbutton.addTarget(self, action: #selector(endterDelete), for: UIControl.Event.touchUpInside)
+//        datainputview.fontbutton.addTarget(self, action: #selector(endterDelete), for: UIControl.Event.touchUpInside)
         
         //give user a hint
         datainputview.getValuesButton.addTarget(self, action: #selector(showHint), for: UIControl.Event.touchUpInside)
         
-        datainputview.getRefButton.addTarget(self, action: #selector(getRef), for: UIControl.Event.touchUpInside)
+//        datainputview.getRefButton.addTarget(self, action: #selector(getRef), for: UIControl.Event.touchUpInside)
         
         datainputview.stringbox.becomeFirstResponder()
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        if locationstr.contains("ja"){
-            datainputview.fontbutton.setTitle("消去", for: .normal)
-        }else if locationstr.contains("fr"){
-            datainputview.fontbutton.setTitle("supprimer", for: .normal)
-        }else if locationstr.contains("zh"){
-            datainputview.fontbutton.setTitle("删除", for: .normal)
-        }else if locationstr.contains("de"){
-            datainputview.fontbutton.setTitle("Löschen", for: .normal)
-        }else if locationstr.contains("it"){
-            datainputview.fontbutton.setTitle("Cancellare", for: .normal)
-        }else if locationstr.contains("ru"){
-            datainputview.fontbutton.setTitle("удалить", for: .normal)
-        }else if locationstr.contains("es"){
-            datainputview.fontbutton.setTitle("borrar", for: .normal)
-        }else if locationstr == "sv"{
-            datainputview.fontbutton.setTitle("radera", for: .normal)
-        }else{
-            datainputview.fontbutton.setTitle("Delete", for: .normal)
-        }
+//        if locationstr.contains("ja"){
+//            datainputview.fontbutton.setTitle("消去", for: .normal)
+//        }else if locationstr.contains("fr"){
+//            datainputview.fontbutton.setTitle("supprimer", for: .normal)
+//        }else if locationstr.contains("zh"){
+//            datainputview.fontbutton.setTitle("删除", for: .normal)
+//        }else if locationstr.contains("de"){
+//            datainputview.fontbutton.setTitle("Löschen", for: .normal)
+//        }else if locationstr.contains("it"){
+//            datainputview.fontbutton.setTitle("Cancellare", for: .normal)
+//        }else if locationstr.contains("ru"){
+//            datainputview.fontbutton.setTitle("удалить", for: .normal)
+//        }else if locationstr.contains("es"){
+//            datainputview.fontbutton.setTitle("borrar", for: .normal)
+//        }else if locationstr == "sv"{
+//            datainputview.fontbutton.setTitle("radera", for: .normal)
+//        }else{
+//            datainputview.fontbutton.setTitle("Delete", for: .normal)
+//        }
         
         
         if sum_str.count > 0 {
