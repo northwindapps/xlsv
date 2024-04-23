@@ -311,7 +311,7 @@ class Service {
                         var startCpart = item.components(separatedBy:"<v>").first
                         print("string", startCpart)//+<v>new value</v> + endCpart <c r=\"B1\" s=\"89\" t=\"s\"><v>0</v></c>
                         //startCpart = startCpart!.replacingOccurrences(of: "t=\"s\"", with: "")
-                        if((vIndex) != nil){
+                        if(vIndex != nil){
                             let replacing = startCpart! + "<v>" + String(vIndex!) + "</v></c>"
                             let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                             let validator = XMLValidator()
@@ -369,8 +369,38 @@ class Service {
                     
                     //empty <c r="B2" s="4"/><c r=\"B6\" s=\"10\"/>
                     //"<c r=\"B2\" s=\"61\"><v>2023</v></c>"
-                    if((vIndex) != nil && item.hasSuffix("/>") ){
+                    if(vIndex != nil && item.hasSuffix("/>") ){
                         let replacing = item.replacingOccurrences(of: "/>", with: " t=\"s\">") + "<v>" + String(vIndex!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
+                            print("XML is valid.")
+                            return replaced
+                        } else {
+                            print("XML is not valid.")
+                            print(replaced)
+                            return backUpXmlString
+                        }
+                    }
+                    
+                    if(vIndex != nil && item.contains("<f>") && !item.contains("t=\"s\">") ){
+                        var startCpart = item.components(separatedBy:"><f>").first
+                        let replacing = startCpart! + " t=\"s\"><v>" + String(vIndex!) + "</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
+                            print("XML is valid.")
+                            return replaced
+                        } else {
+                            print("XML is not valid.")
+                            print(replaced)
+                            return backUpXmlString
+                        }
+                    }
+                    
+                    if(vIndex != nil && item.contains("<v>") && !item.contains("t=\"s\">") ){
+                        var startCpart = item.components(separatedBy:"><v>").first
+                        let replacing = startCpart! + " t=\"s\"><v>" + String(vIndex!) + "</v></c>"
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: replaced!) {
