@@ -442,9 +442,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 if (idx != nil) {
                     var a = false
-                    //date format and other
-//                    print("idx",appd.formatCodes[idx!])
-//                    print(cell.label2.text)
                     
                     //id first
                     if numId == 31 && !a{
@@ -515,7 +512,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if  appd.formatCodes[idx!].contains("m") && appd.formatCodes[idx!].contains("d") && !a{
+                    if  appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -533,25 +530,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if  appd.formatCodes[idx!].contains("m") && !a{
-                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
-                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
-                            
-                            // Convert timestamp to Date
-                            let date = Date(timeIntervalSince1970: timestamp)
-                            
-                            // Create a date formatter
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateFormat = "MM"
-                            
-                            // Convert Date to String
-                            let dateString = dateFormatter.string(from: date)
-                            cell.label2.text = dateString
-                            a = true
-                        }
-                    }
+//                    if  appd.formatCodes[idx!].contains("mm") && !a{
+//                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+//                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+//                            
+//                            // Convert timestamp to Date
+//                            let date = Date(timeIntervalSince1970: timestamp)
+//                            
+//                            // Create a date formatter
+//                            let dateFormatter = DateFormatter()
+//                            dateFormatter.dateFormat = "MM"
+//                            
+//                            // Convert Date to String
+//                            let dateString = dateFormatter.string(from: date)
+//                            cell.label2.text = dateString
+//                            a = true
+//                        }
+//                    }
                     
-                    if appd.formatCodes[idx!].contains("d") && !a{
+                    if appd.formatCodes[idx!].hasPrefix("d") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -565,7 +562,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             // Convert Date to String
                             let dateString = dateFormatter.string(from: date)
                             cell.label2.text = dateString
-                            a = true
                         }
                     }
                     
