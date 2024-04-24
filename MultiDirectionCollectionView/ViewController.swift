@@ -1541,23 +1541,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
-//        bannerview.rootViewController = self
-//        bannerview.load(GADRequest())
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
+        bannerview.rootViewController = self
+        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
         myCollectionView.setContentOffset(pointA, animated: true)
         myCollectionView.scrollToNextItem()
         
-        //get FileTitle
-//        let test = ReadWriteJSON()
-//        var temp = test.titleJsonFile()
-        //test
-//        temp.append("sheet2")
-//        temp.append("sheet3")
         localFileNames = appd.sheetNames //sheet1,sheet2
         FileCollectionView.reloadData()
         
