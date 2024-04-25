@@ -203,6 +203,49 @@ class ReadWriteJSON {
            return (file_content,file_content_location,file_formula_result,input_order)
        }
     
+    func old_readJsonForSheet(title:String)->([String],[String],[String],[String]) {
+            var file_content = [String]()
+            var file_content_location = [String]()
+            var file_formula_result = [String]()
+            var input_order = [String]()
+           
+           let pathDirectory = getDocumentsDirectory()
+           let filePath = pathDirectory.appendingPathComponent("/" + title)
+           let fileManager = FileManager.default
+           if fileManager.fileExists(atPath: filePath.path){
+               
+               do {
+                   let data = try Data(contentsOf: filePath, options: [])
+                   let dict = try JSONSerialization.jsonObject(with: data, options: []) as? Dictionary<String, Any>
+
+                   for (key, value) in dict! {
+                       // access all key / value pairs in dictionary
+                       switch key {
+                       case "content":
+                           file_content = value as! [String]
+                           break
+                       case "location":
+                           file_content_location = value as! [String]
+                           break
+                       case "formulaResult":
+                            file_formula_result = value as! [String]
+                            break
+                        case "inputOrder":
+                            input_order = value as! [String]
+                            break
+                  
+                       default:
+                           break
+                       }
+                   }
+                   
+               } catch {
+                   print(error)
+               }
+           }
+           return (file_content,file_content_location,file_formula_result,input_order)
+       }
+    
     func fileModificationDate(url: URL) -> Date? {
         do {
             let attr = try FileManager.default.attributesOfItem(atPath: url.path)
@@ -308,5 +351,92 @@ class ReadWriteJSON {
         r5.synchronize()
         
         print("saved on userdefault")
+    }
+    
+    
+    
+    func titleJsonFile()->[String]{
+        let pathDirectory = getDocumentsDirectory()
+        try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
+
+            //You are my hero bro https://stackoverflow.com/questions/33032293/swift-2-ios-get-file-list-sorted-by-creation-date-more-concise-solution
+            var directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+//            directory.appendPathComponent("sub/")
+            if let urlArray = try? FileManager.default.contentsOfDirectory(at: pathDirectory,
+                                                                           includingPropertiesForKeys: [.contentModificationDateKey],
+                                                                           options:.skipsHiddenFiles) {
+           
+                
+                return urlArray.map { url in
+                    (url.lastPathComponent, (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast)
+                    }
+                    .sorted(by: { $0.1 > $1.1 }) // sort descending modification dates
+                    .map { $0.0 } // extract file names
+                
+            } else {
+                return []
+            }
+
+    }
+    
+    func readJsonFIle(title:String) {
+        let pathDirectory = getDocumentsDirectory()
+        let filePath = pathDirectory.appendingPathComponent("/" + title)
+        let fileManager = FileManager.default
+        print("readFile",filePath)
+        if fileManager.fileExists(atPath: filePath.path){
+            
+            do {
+                let data = try Data(contentsOf: filePath, options: [])
+                let dict = try JSONSerialization.jsonObject(with: data, options: []) as? Dictionary<String, Any>
+
+                for (key, value) in dict! {
+                    // access all key / value pairs in dictionary
+                    switch key {
+                    case "content":
+                        content = value as! [String]
+                        break
+                    case "location":
+                        location = value as! [String]
+                        break
+                    case "fontsize":
+                        fontsize = value as! [String]
+                        break
+                    case "fontcolor":
+                        fontcolor = value as! [String]
+                        break
+                    case "bgcolor":
+                        bgcolor = value as! [String]
+                        break
+                    case "rowsize":
+                        rowsize = value as! Int
+                        break
+                    case "columnsize":
+                        columnsize = value as! Int
+                        break
+                    case "customcellWidth":
+                        customcellWidth = value as! [Double]
+                        break
+                    case "customcellHeight":
+                        customcellHeight = value as! [Double]
+                        break
+                    case "ccwLocation":
+                        ccwLocation = value as! [Int]
+                        break
+                    case "cchLocation":
+                        cchLocation = value as! [Int]
+                        break
+                    
+                    default:
+                        break
+                    }
+                }
+                saveuserAll()
+                
+            } catch {
+                print(error)
+            }
+        }
+        
     }
 }

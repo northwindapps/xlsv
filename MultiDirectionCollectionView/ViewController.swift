@@ -34,7 +34,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     var location = [String]()
     var content = [String]()
-    
+    var old_localFileNames = [String]()
     //
     var search_text = ""
     var replace_text = ""
@@ -548,7 +548,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                        }
 //                    }
                     
-                    if appd.formatCodes[idx!].hasPrefix("d") && !a{
+                    if appd.formatCodes[idx!] == "d" && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -1509,9 +1509,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         orientaion = "P"
         
         //checkSheet
-        
-        
-        //Get sheet data
         isExcelSheetData(sheetIdx: sheetIdx)
         initSheetData(sheetIdx: sheetIdx)
    
@@ -1539,7 +1536,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         bannerview.isHidden = true
         bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/5531570182"
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
         bannerview.rootViewController = self
         bannerview.load(GADRequest())
         
@@ -1727,6 +1724,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
+        customview2.v135Data.addTarget(self, action: #selector(ViewController.old_excelEmail), for: UIControl.Event.touchUpInside)
+        
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
         customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
@@ -1799,14 +1798,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //get FileTitle
         let RJ = ReadWriteJSON()
-        jsonFiles = appd.sheetNameIds.map { "sheet\($0)" }
         
-        for i in 0..<jsonFiles.count {
+        
+        for i in 0..<old_localFileNames.count {
             var content = [String]()
             var location = [String]()
             var FR = [String]()
             var IO = [String]()
-            (content,location,FR,IO) = RJ.readJsonForSheet(title: jsonFiles[i])
+            (content,location,FR,IO) = RJ.old_readJsonForSheet(title: old_localFileNames[i])
             export_content.append(contentsOf: content)
             export_location.append(contentsOf: location)
             export_formula_result.append(contentsOf: FR)
@@ -2862,6 +2861,118 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if Hintview != nil{
             Hintview.removeFromSuperview()
         }
+    }
+    
+    
+    
+    func noInternet(sheetIdx:Int){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        
+        let sheet1Json = ReadWriteJSON()
+        let temp = sheet1Json.titleJsonFile()
+        old_localFileNames = temp.reversed()
+        
+        if old_localFileNames.count > 0{
+            sheet1Json.readJsonFIle(title: old_localFileNames[sheetIdx])
+            content = sheet1Json.content
+            location = sheet1Json.location
+            textsize = sheet1Json.fontsize
+            bgcolor = sheet1Json.bgcolor
+            tcolor = sheet1Json.fontcolor
+            COLUMNSIZE = sheet1Json.columnsize
+            ROWSIZE = sheet1Json.rowsize
+            appd.customSizedWidth = sheet1Json.customcellWidth
+            appd.customSizedHeight = sheet1Json.customcellHeight
+            appd.cswLocation = sheet1Json.ccwLocation
+            appd.cshLocation = sheet1Json.cchLocation
+            
+        }
+        
+        //EXCEL FORMULA TRANSFORMATION STARTS
+        //PI(),EXP(1)
+        content = excel_fomula_transformation(src:content)
+        
+        //Taking out Empty Cells
+        filterEmptyContent()
+        
+        //SOME THING WENT WRONG RESET PROCESS STARTS
+        if location.count != content.count {
+            let domain = Bundle.main.bundleIdentifier!
+            UserDefaults.standard.removePersistentDomain(forName: domain)
+            UserDefaults.standard.synchronize()
+            
+            location.removeAll()
+            content.removeAll()
+            
+            bgcolor.removeAll()
+            cursor = String()
+            tcolor.removeAll()
+            textsize.removeAll()
+            
+            initString()
+        }
+        
+        if location.count != bgcolor.count || location.count != tcolor.count || location.count != textsize.count{
+            bgcolor.removeAll()
+            textsize.removeAll()
+            tcolor.removeAll()
+            
+            
+            
+            switch UIDevice.current.userInterfaceIdiom {
+            case .pad:
+                for _ in 0..<location.count{
+                    textsize.append(String(selectingSize))
+                    bgcolor.append(selectingBgColor)
+                    tcolor.append(selectingColor)
+                }
+                break
+                
+            default:
+                for _ in 0..<location.count{
+                    textsize.append(String(selectingSize))
+                    bgcolor.append(selectingBgColor)
+                    tcolor.append(selectingColor)
+                }
+                break
+            }
+        }
+        
+        //FOR COLLECTIONVIEW
+        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") != nil) {
+            appd.customSizedWidth = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") as! Array
+        }
+        
+        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") != nil) {
+            appd.customSizedHeight = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") as! Array
+        }
+        
+        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") != nil) {
+            appd.cswLocation = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") as! Array
+        }
+        
+        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") != nil) {
+            appd.cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
+        }
+        
+        if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
+            COLUMNSIZE = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
+        }
+        
+        if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
+            ROWSIZE = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
+        }
+        
+        
+        
+        
+//        if localFileNames.count == 0 {
+//            let newfile = "sheet1"
+//            
+//            
+//            saveAsLocalJson(filename: newfile)
+//        }
+        
     }
     
     @objc func input(){
@@ -4140,6 +4251,58 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             present(mail, animated: true, completion: nil)
             
             isMail = false
+        } else {
+            // show failure alert
+        }
+    }
+    
+    @objc func old_excelEmail() {
+        //get FileTitle
+        let test = ReadWriteJSON()
+        let temp = test.titleJsonFile()
+        old_localFileNames = temp.reversed()
+        noInternet(sheetIdx: 0)
+        calculatormode_update_main()
+        
+        createxlsxSheet()
+//        //save temp content
+        var result = content
+        for idx in 0..<f_calculated.count{
+            if let l_idx = location.index(of: f_location[idx]){
+                result[l_idx] = f_calculated[idx]
+            }
+        }
+        csvexport(result: result)
+        if MFMailComposeViewController.canSendMail() {
+            let today: Date = Date()
+            let dateFormatter: DateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+            var date = dateFormatter.string(from: today)
+            let dateStr = String(date)
+            dateStr.replacingOccurrences(of: ":", with: "_")
+            
+            let mail = MFMailComposeViewController()
+            mail.mailComposeDelegate = self
+            
+            mail.setSubject("from ios")
+            
+            
+            let url1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+            let filePath0 = URL(fileURLWithPath: url1).appendingPathComponent("outputInAppContainer.zip").path //20200307 root directory
+            
+            
+            //print("ViewController" ,filePath)
+            
+            if let fileData = NSData(contentsOfFile: filePath0) {
+                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: "XLSV " + dateStr + ".xlsx")
+            }else{
+                print("noContent")
+            }
+            
+            //csv
+            //mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
+            
+            present(mail, animated: true)
         } else {
             // show failure alert
         }

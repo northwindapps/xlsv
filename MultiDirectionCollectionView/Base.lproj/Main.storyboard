@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="lYo-SA-o9a">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="lYo-SA-o9a">
     <device id="retina5_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -88,7 +88,7 @@
                                 </connections>
                             </button>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="8Mf-Pc-arl">
-                                <rect key="frame" x="20" y="51" width="374" height="615"/>
+                                <rect key="frame" x="20" y="71" width="374" height="595"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <string key="text">Blueframe
 Copyright 2019 Yujin Yano . All rights reserved.</string>
@@ -96,7 +96,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tutoril and Credits" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wmb-rR-fu7">
-                                <rect key="frame" x="20" y="20" width="374" height="21"/>
+                                <rect key="frame" x="20" y="40" width="374" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
@@ -223,34 +223,34 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="chd-YV-m5p">
-                                <rect key="frame" x="184.66666666666666" y="101" width="45" height="30"/>
+                                <rect key="frame" x="184.66666666666666" y="121" width="45" height="30"/>
                                 <state key="normal" title="50x30"/>
                                 <connections>
                                     <action selector="exsmallCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="9mG-r7-aRw"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dst-Uf-Yb3">
-                                <rect key="frame" x="184.66666666666666" y="161" width="45" height="30"/>
+                                <rect key="frame" x="184.66666666666666" y="181" width="45" height="30"/>
                                 <state key="normal" title="80x30"/>
                                 <connections>
                                     <action selector="smallCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="biv-dB-9gV"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="A1v-ZI-zqU">
-                                <rect key="frame" x="181.66666666666666" y="221" width="51" height="30"/>
+                                <rect key="frame" x="181.66666666666666" y="241" width="51" height="30"/>
                                 <state key="normal" title="120x30"/>
                                 <connections>
                                     <action selector="middiumCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="ieU-c3-2aq"/>
                                 </connections>
                             </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Settings" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uow-lz-iWZ">
-                                <rect key="frame" x="175.66666666666666" y="50" width="63" height="21"/>
+                                <rect key="frame" x="175.66666666666666" y="70" width="63" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Hj7-dL-dIf">
-                                <rect key="frame" x="181" y="281" width="52" height="30"/>
+                                <rect key="frame" x="181" y="301" width="52" height="30"/>
                                 <state key="normal" title="180x30"/>
                                 <connections>
                                     <action selector="largeCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="gv2-Qz-Z2P"/>
@@ -469,7 +469,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Mvo-5o-ub7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2378.2608695652175" y="-7410.326086956522"/>
+            <point key="canvasLocation" x="-2254" y="-7560"/>
         </scene>
         <!--Loading View Controller-->
         <scene sceneID="NoG-iL-Wf5">
