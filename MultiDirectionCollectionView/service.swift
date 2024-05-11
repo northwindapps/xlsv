@@ -115,6 +115,14 @@ class Service {
             //regular expression
             var xmlString = try? String(contentsOf: url2)
             if (xmlString != nil){
+                let generalNumFmt = "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                
+                if !xmlString!.contains(generalNumFmt) {
+                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: generalNumFmt + "</cellXfs>")
+                    modifiedPartNum += 1
+                }
+                
+                
                 //edit it first. append numFmtId 14 Date
                 let dateNumFmt = "<xf numFmtId=\"14\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
                 
@@ -122,6 +130,15 @@ class Service {
                     xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: dateNumFmt + "</cellXfs>")
                     modifiedPartNum += 1
                 }
+                
+                let timeNumFmt = "<xf numFmtId=\"20\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                
+                if !xmlString!.contains(timeNumFmt) {
+                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: timeNumFmt + "</cellXfs>")
+                    modifiedPartNum += 1
+                }
+                
+                
                 
                 let xml = XMLHash.parse(xmlString!)
                 
@@ -1520,7 +1537,7 @@ class Service {
         return nil
     }
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", isDate:Bool? = false) -> URL? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {

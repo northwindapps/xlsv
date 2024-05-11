@@ -2985,6 +2985,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         var element :String = datainputview.stringbox.text!
         datainputview.stringbox.text = ""
+        var numFmt = -1
         
         if isExcel && !element.hasPrefix("="){//mathematical expression doesnt support in Excel
             //update sheet1,or2,or3 or xml each data entry
@@ -3004,6 +3005,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 // Calculate the fraction representing the time
                 element = String(describing: divid / max)
+                numFmt = 20
             }
             
             //date conversion
@@ -3029,12 +3031,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
                 print("Excel serial number:", serialNumber) // Output: 39448
                 element = String(serialNumber)
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),isDate: true)
+                numFmt = 14
+                
             }
             
-            if (dateFormatter.date(from: dateString) == nil){
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
-            }
+           
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),numFmt:numFmt)
             
         }
         
