@@ -114,10 +114,13 @@ class ExcelHelper{
                            .filter { $0.value != nil }
                        
                        // Rich Text
-                       let temp = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].richText }
+                       let temp = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings?.items[$0].richText }
                        
                        // Normal Text
-                       var temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
+                       var temp2 = [String]()
+                       if (sharedStrings != nil){
+                           temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
+                       }
                        
                        
                        

@@ -1534,11 +1534,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
-        bannerview.isHidden = true
-        bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
-        bannerview.rootViewController = self
-        bannerview.load(GADRequest())
+//        bannerview.isHidden = true
+//        bannerview.delegate = self
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
+//        bannerview.rootViewController = self
+//        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -2990,7 +2990,51 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //update sheet1,or2,or3 or xml each data entry
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
-            let url = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
+            //date object
+            //hh:mm case MAX 24*60*60[s]
+            let hhmm = element.components(separatedBy: ":")
+            if hhmm.count == 2, let hh = Decimal(string: hhmm[0]), let mm = Decimal(string: hhmm[1]) {
+                // Ensure hhmm array has two elements and both are successfully converted to Decimal
+                
+                // Calculate total number of seconds in a day
+                let max = Decimal(24) * Decimal(60) * Decimal(60)
+                
+                // Calculate total number of seconds from HH:MM format
+                let divid = hh * Decimal(60) * Decimal(60) + mm * Decimal(60)
+                
+                // Calculate the fraction representing the time
+                element = String(describing: divid / max)
+            }
+            
+            //date conversion
+            let dateString = element
+
+            // Create a DateFormatter to parse the date string
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy/MM/dd"
+
+            // Parse the date string
+            if let date = dateFormatter.date(from: dateString) {
+                // Define the Excel base date (January 1, 1900)
+                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
+                let calendar = Calendar(identifier: .gregorian)
+                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
+
+                // Calculate the time interval between the given date and the Excel base date
+                let dateTimeInterval = date.timeIntervalSinceReferenceDate
+                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
+
+                // Calculate the corresponding serial number
+                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
+
+                print("Excel serial number:", serialNumber) // Output: 39448
+                element = String(serialNumber)
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),isDate: true)
+            }
+            
+            if (dateFormatter.date(from: dateString) == nil){
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel())
+            }
             
         }
         
@@ -4610,6 +4654,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             datainputview.stringbox.text = datainputview.stringbox.text + ":"
         }
     }
+    
+    func isNumeric(_ str: String) -> Bool {
+        // Check if the string is empty
+        guard !str.isEmpty else {
+            return false
+        }
+        
+        // Define a character set containing decimal digits and the decimal point
+        var decimalDigits = CharacterSet.decimalDigits
+        decimalDigits.insert(".")
+        
+        // Check if the string contains only characters from the decimalDigits set
+        return str.rangeOfCharacter(from: decimalDigits.inverted) == nil
+    }
+
 }
 
 extension FileManager {

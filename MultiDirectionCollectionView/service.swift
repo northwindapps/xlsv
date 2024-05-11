@@ -94,9 +94,10 @@ class Service {
         
     }
     
-    //making now
-    func testExtractStyle(url:URL? = nil){
+    //making now style
+    func testExtractStyle(url:URL? = nil)->String?{
         if let url2 = url{
+            var modifiedPartNum = 0
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
             // Set XMLParserDelegate
@@ -113,101 +114,121 @@ class Service {
             
             //regular expression
             var xmlString = try? String(contentsOf: url2)
-            let xml = XMLHash.parse(xmlString!)
-            
-            var numFmts = [String]()
-            var formatCodes = [String]()
-            // Assuming `xml` is your XML object
-            for child in xml.children.first!.children[0].children {
-                if child.element?.name == "numFmt" {
+            if (xmlString != nil){
+                //edit it first. append numFmtId 14 Date
+                let dateNumFmt = "<xf numFmtId=\"14\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                
+                if !xmlString!.contains(dateNumFmt) {
+                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: dateNumFmt + "</cellXfs>")
+                    modifiedPartNum += 1
+                }
+                
+                let xml = XMLHash.parse(xmlString!)
+                
+                var numFmts = [String]()
+                var formatCodes = [String]()
+                // Assuming `xml` is your XML object
+                for child in xml.children.first!.children[0].children {
+                    if child.element?.name == "numFmt" {
                         // Get the attributes
-                    let attributes = child.element?.allAttributes
+                        let attributes = child.element?.allAttributes
                         // Extract numFmtId
-                    if let numFmtId = attributes!["numFmtId"]?.text {
+                        if let numFmtId = attributes!["numFmtId"]?.text {
                             print("numFmtId:", numFmtId)
-                        numFmts.append(numFmtId)
+                            numFmts.append(numFmtId)
                         }
                         // Extract formatCode
-                    if let formatCode = attributes!["formatCode"]?.text {
+                        if let formatCode = attributes!["formatCode"]?.text {
                             print("formatCode:", formatCode)
-                        formatCodes.append(formatCode)
+                            formatCodes.append(formatCode)
                         }
                     }
-            }
-            
-            var numFmtIds = [Int]()
-            // Assuming `xml` is your XML object
-            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
-                if let id = child.element?.allAttributes["numFmtId"]?.text {
-                    numFmtIds.append(Int(id) ?? -1)
                 }
-            }
-            
-            
-            
-            var cellXfs = [Int]()
-            // Assuming `xml` is your XML object
-            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
-                if let borderId = child.element?.allAttributes["borderId"]?.text {
-                    cellXfs.append(Int(borderId) ?? -1)
-                }
-            }
-            
-            var cellStyleXfs = [Int]()
-            // Assuming `xml` is your XML object
-            for child in xml.children.first!.children.first(where: { $0.element?.name == "cellStyleXfs" })!.children {
-                if let borderId = child.element?.allAttributes["borderId"]?.text {
-                    cellStyleXfs.append(Int(borderId) ?? -1)
-                }
-            }
-            
-            var border_lefts = [Int]()
-            var border_rights = [Int]()
-            var border_bottoms = [Int]()
-            var border_tops = [Int]()
-            // Assuming `xml` is your XML object
-            for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
-                if child.children.count > 0{
-                    border_lefts.append(0)
-                    border_rights.append(0)
-                    border_bottoms.append(0)
-                    border_tops.append(0)
-                    for gChild in child.children{
-                        if gChild.element?.name == "left"{
-                            let leftCount = gChild.children.count
-                            border_lefts[border_lefts.count - 1] = leftCount
-                        }
-                         
-                        if gChild.element?.name == "right"{
-                            let rightCount = gChild.children.count
-                            border_rights[border_rights.count - 1] = rightCount
-                        }
-                        
-                        if gChild.element?.name == "top"{
-                            let topCount = gChild.children.count
-                            border_tops[border_tops.count - 1] = topCount
-                        }
-                        
-                        if gChild.element?.name == "bottom"{
-                            let bottomCount = gChild.children.count
-                            border_bottoms[border_bottoms.count - 1] = bottomCount
-                        }
-                        
+                
+                var numFmtIds = [Int]()
+                // Assuming `xml` is your XML object
+                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
+                    if let id = child.element?.allAttributes["numFmtId"]?.text {
+                        numFmtIds.append(Int(id) ?? -1)
                     }
                 }
+                
+
+                var cellXfs = [Int]()
+                // Assuming `xml` is your XML object
+                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
+                    if let borderId = child.element?.allAttributes["borderId"]?.text {
+                        cellXfs.append(Int(borderId) ?? -1)
+                    }
+                }
+                
+                var cellStyleXfs = [Int]()
+                // Assuming `xml` is your XML object
+                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellStyleXfs" })!.children {
+                    if let borderId = child.element?.allAttributes["borderId"]?.text {
+                        cellStyleXfs.append(Int(borderId) ?? -1)
+                    }
+                }
+                
+                if modifiedPartNum > 0 {
+                    if let cellXfsElement = xml.children.first?.children.first(where: { $0.element?.name == "cellXfs" }) {
+                        let oldcnt = cellXfsElement.children.count
+                        xmlString! = xmlString!.replacingOccurrences(of: "<cellXfs count=\"\(oldcnt)\"", with: "<cellXfs count=\"\(oldcnt + modifiedPartNum)\"")
+                    }
+                }
+                
+                
+                var border_lefts = [Int]()
+                var border_rights = [Int]()
+                var border_bottoms = [Int]()
+                var border_tops = [Int]()
+                // Assuming `xml` is your XML object
+                for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
+                    if child.children.count > 0{
+                        border_lefts.append(0)
+                        border_rights.append(0)
+                        border_bottoms.append(0)
+                        border_tops.append(0)
+                        for gChild in child.children{
+                            if gChild.element?.name == "left"{
+                                let leftCount = gChild.children.count
+                                border_lefts[border_lefts.count - 1] = leftCount
+                            }
+                            
+                            if gChild.element?.name == "right"{
+                                let rightCount = gChild.children.count
+                                border_rights[border_rights.count - 1] = rightCount
+                            }
+                            
+                            if gChild.element?.name == "top"{
+                                let topCount = gChild.children.count
+                                border_tops[border_tops.count - 1] = topCount
+                            }
+                            
+                            if gChild.element?.name == "bottom"{
+                                let bottomCount = gChild.children.count
+                                border_bottoms[border_bottoms.count - 1] = bottomCount
+                            }
+                            
+                        }
+                    }
+                }
+                
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                appd.cellXfs = cellXfs
+                appd.cellStyleXfs = cellStyleXfs
+                appd.border_lefts = border_lefts
+                appd.border_rights  = border_rights
+                appd.border_bottoms = border_bottoms
+                appd.border_tops = border_tops
+                appd.formatCodes = formatCodes
+                appd.numFmts = numFmts
+                appd.numFmtIds = numFmtIds
+                
+                return xmlString
             }
-            
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.cellXfs = cellXfs
-            appd.cellStyleXfs = cellStyleXfs
-            appd.border_lefts = border_lefts
-            appd.border_rights  = border_rights
-            appd.border_bottoms = border_bottoms
-            appd.border_tops = border_tops
-            appd.formatCodes = formatCodes
-            appd.numFmts = numFmts
-            appd.numFmtIds = numFmtIds
         }
+        return nil
     }
      
     //making now
@@ -545,11 +566,38 @@ class Service {
                     
                     }else{
                         //first c tag with sharedstring idx == nil
+                        var sortedRowstr = ""
                         if targetRowTag == ""{
                             let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
-                           
+                            
                             xml = XMLHash.parse(replaced!)
+                            
+                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                                // Sort the rows based on some criteria (e.g., the value of the "r" attribute of cells)
+                                let sortedCells = sortedRows.sorted { (row1, row2) -> Bool in
+                                    guard let cell1 = row1.children.first(where: { $0.element?.name == "c" }),
+                                          let cell2 = row2.children.first(where: { $0.element?.name == "c" }),
+                                          let text1 = cell1.element?.attribute(by: "r")?.text,
+                                          let text2 = cell2.element?.attribute(by: "r")?.text else {
+                                        return false
+                                    }
+                                    return text1 < text2
+                                }
+                                
+                                // Use the sorted cells
+                                // For example, print them
+                                for cell in sortedCells {
+                                    print(cell)
+                                    sortedRowstr += cell.description
+                                }
+                            }
+
+                            if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
+                                let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring, with:"<sheetData>" + sortedRowstr + "</sheetData>")
+                                xml = XMLHash.parse(rowSortedStr)
+                            }
+                               
                             if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
@@ -565,7 +613,6 @@ class Service {
                                                 return string1! < string2! // Compare strings in descending order
                                             }
                                             
-                                            print(ary)
                                               
                                             
                                             // Rows are equal, compare columns
@@ -587,7 +634,7 @@ class Service {
                                     
                                     // Print the sorted cells (optional)
                                     for cell in sortedCellsArray {
-                                        //print(cell)
+                                        print(cell)
                                     }
                                 }
                             } else {
@@ -742,6 +789,7 @@ class Service {
                     }
                     print("item", item)
                     //string
+                    //<c r="B3" t="s"><v>45413</v></c>
                     if(item.contains("<v>") && item.contains("t=\"s\"")){
                         var startCpart = item.components(separatedBy:"<v>").first
                         startCpart = startCpart?.replacingOccurrences(of: "t=\"s\"", with: "")
@@ -940,11 +988,38 @@ class Service {
                     
                     }else{
                         //first c tag with sharedstring idx == nil
+                        var sortedRowstr = ""
                         if targetRowTag == ""{
-                            let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                            let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\"><v>\(String(vIndex!))</v></c></row>"
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
                            
                             xml = XMLHash.parse(replaced!)
+                            
+                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                                // Sort the rows based on some criteria (e.g., the value of the "r" attribute of cells)
+                                let sortedCells = sortedRows.sorted { (row1, row2) -> Bool in
+                                    guard let cell1 = row1.children.first(where: { $0.element?.name == "c" }),
+                                          let cell2 = row2.children.first(where: { $0.element?.name == "c" }),
+                                          let text1 = cell1.element?.attribute(by: "r")?.text,
+                                          let text2 = cell2.element?.attribute(by: "r")?.text else {
+                                        return false
+                                    }
+                                    return text1 < text2
+                                }
+                                
+                                // Use the sorted cells
+                                // For example, print them
+                                for cell in sortedCells {
+                                    print(cell)
+                                    sortedRowstr += cell.description
+                                }
+                            }
+
+                            if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
+                                let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring, with:"<sheetData>" + sortedRowstr + "</sheetData>")
+                                xml = XMLHash.parse(rowSortedStr)
+                            }
+                               
                             if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                                 // Iterate through the rows
                                 for row in rows {
@@ -959,9 +1034,7 @@ class Service {
                                             let sortedArray = ary.sorted { (string1, string2) -> Bool in
                                                 return string1! < string2! // Compare strings in descending order
                                             }
-                                            
-                                            print(ary)
-                                              
+                                  
                                             
                                             // Rows are equal, compare columns
                                             if indices1!.column < indices2!.column{
@@ -982,12 +1055,14 @@ class Service {
                                     
                                     // Print the sorted cells (optional)
                                     for cell in sortedCellsArray {
-                                        //print(cell)
+                                        print(cell)
                                     }
                                 }
                             } else {
                                 print("No rows found or there are no children under the specified path")
                             }
+                            
+
                             
                             let validator = XMLValidator()
                             if validator.validateXML(xmlString: xml.description) {
@@ -1002,7 +1077,7 @@ class Service {
                             //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
                             var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
                             let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                            let newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                            let newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
                             
                             var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                             replacing = replacing + newElement2 + "</row>"
@@ -1090,18 +1165,20 @@ class Service {
     func testStringUniqueAry(url:URL? = nil)->[String]?{
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
-            let parser = XMLParser(data: xmlData!)
-            // Set XMLParserDelegate
-            let delegate = SharedStringsParserDelegate()
-            parser.delegate = delegate
-            
-            if parser.parse() {
-                print("si",delegate.sis)
-                print("si count", delegate.sis.count)
-                //var xmlString = try? String(contentsOf: url2)
+            if (xmlData != nil){
+                let parser = XMLParser(data: xmlData!)
+                // Set XMLParserDelegate
+                let delegate = SharedStringsParserDelegate()
+                parser.delegate = delegate
                 
-                //try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
-                return delegate.sis
+                if parser.parse() {
+                    print("si",delegate.sis)
+                    print("si count", delegate.sis.count)
+                    //var xmlString = try? String(contentsOf: url2)
+                    
+                    //try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
+                    return delegate.sis
+                }
             }
         }
         return []
@@ -1110,22 +1187,24 @@ class Service {
     func testStringOldUniqueCount(url:URL? = nil){
         if let url2 = url{
             var xmlString = try? String(contentsOf: url2)
-            let pattern = "uniqueCount=\"([^\"]+)\"" //"count=\"([^\"]+)\""
-            
-            // Create a regular expression object
-            guard let regex = try? NSRegularExpression(pattern: pattern) else {
-                fatalError("Invalid regular expression pattern")
-            }
-            
-            // Search for matches in the XML string
-            if let match = regex.firstMatch(in: xmlString!, range: NSRange(xmlString!.startIndex..., in: xmlString!)) {
-                // Extract the matched substring
-                let countPartRange = Range(match.range(at: 1), in: xmlString!)!
-                let countPart = String(xmlString![countPartRange])
+            if (xmlString != nil){
+                let pattern = "uniqueCount=\"([^\"]+)\"" //"count=\"([^\"]+)\""
                 
-                print("Extracted count part:", countPart)
-            } else {
-                print("No match found")
+                // Create a regular expression object
+                guard let regex = try? NSRegularExpression(pattern: pattern) else {
+                    fatalError("Invalid regular expression pattern")
+                }
+                
+                // Search for matches in the XML string
+                if let match = regex.firstMatch(in: xmlString!, range: NSRange(xmlString!.startIndex..., in: xmlString!)) {
+                    // Extract the matched substring
+                    let countPartRange = Range(match.range(at: 1), in: xmlString!)!
+                    let countPart = String(xmlString![countPartRange])
+                    
+                    print("Extracted count part:", countPart)
+                } else {
+                    print("No match found")
+                }
             }
         }
     }
@@ -1145,38 +1224,39 @@ class Service {
         if let url2 = url{
             var xmlString = try? String(contentsOf: url2)
             let INDEX_1_DIFF_ADJUST = 0
-            
-            //
-            if let idx = SSlist.firstIndex(of:word) {
-                print("String exists at", idx + INDEX_1_DIFF_ADJUST)
-                return (idx + INDEX_1_DIFF_ADJUST, xmlString)
-            } else {
-                print("String not exists.")
-                // Find the position to insert the new <si> element
-                if let range = xmlString!.range(of: "</sst>") {
-                    // Construct the new <si> element
-                    let newSIElement = "<si><t>" + word + "</t></si>"
-                    
-                    // Insert the new <si> element at the end of <sst>
-                    xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
-                    
-                    let xmlData = try? Data(contentsOf: url2)
-                        
-                    // Create an XML parser and set its delegate
-                    let parser = XMLParser(data: xmlData!)
-                    let delegate = XMLParserHelper()
-                    parser.delegate = delegate
-                    // Parse the XML data
-                    if parser.parse() {
-                        print("Number of <si> elements:", delegate.siElementCount)
-                        new_count = delegate.siElementCount
-                    } else {
-                        print("Failed to parse XML data.")
-                    }
-                    print("New <si> element inserted successfully.")
-                    return (SSlist.count ,xmlString)
+            if (xmlString != nil){
+                //
+                if let idx = SSlist.firstIndex(of:word) {
+                    print("String exists at", idx + INDEX_1_DIFF_ADJUST)
+                    return (idx + INDEX_1_DIFF_ADJUST, xmlString)
                 } else {
-                    print("Failed to find </sst> in the XML data.")
+                    print("String not exists.")
+                    // Find the position to insert the new <si> element
+                    if let range = xmlString!.range(of: "</sst>") {
+                        // Construct the new <si> element
+                        let newSIElement = "<si><t>" + word + "</t></si>"
+                        
+                        // Insert the new <si> element at the end of <sst>
+                        xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
+                        
+                        let xmlData = try? Data(contentsOf: url2)
+                        
+                        // Create an XML parser and set its delegate
+                        let parser = XMLParser(data: xmlData!)
+                        let delegate = XMLParserHelper()
+                        parser.delegate = delegate
+                        // Parse the XML data
+                        if parser.parse() {
+                            print("Number of <si> elements:", delegate.siElementCount)
+                            new_count = delegate.siElementCount
+                        } else {
+                            print("Failed to parse XML data.")
+                        }
+                        print("New <si> element inserted successfully.")
+                        return (SSlist.count ,xmlString)
+                    } else {
+                        print("Failed to find </sst> in the XML data.")
+                    }
                 }
             }
         }
@@ -1259,7 +1339,7 @@ class Service {
                     //value and string update test
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
-                    //extract sytles
+                    //extract sytles read only
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                     testExtractStyle(url:styleXMLURL)
                     
@@ -1406,15 +1486,11 @@ class Service {
                     
                     //extract sytles
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
-                    testExtractStyle(url:styleXMLURL)
-                    
-                   
-               
-                    //update Values
-                    //let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
-                    
-                    // Write the modified XML data back to the file
-                    //try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                    let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
+                    //update to it contains date numFmt and other format
+                    if (modifiedStylesStr != nil){
+                        try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                    }
                     
                     let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                     var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
@@ -1423,18 +1499,6 @@ class Service {
                             print("Found .xml file:", file.lastPathComponent)
                         }
                     print("sheetFiles: ", sheetXMLFiles)
-                    
-                    
-//                    //ready to zip
-//                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-//                    let fpURL = URL(fileURLWithPath: fp)
-//                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
-//                    //appendingPathComponent("imported2.xlsx")
-//                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-//                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: productURL)
-//                    
-//                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-//                    print("Done: ", files)
                     
                     return nil
 
@@ -1456,7 +1520,7 @@ class Service {
         return nil
     }
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "") -> URL? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", isDate:Bool? = false) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -1804,6 +1868,16 @@ class Service {
             return nil
         }
     }
+
+    func extractSheetDataSubstring(from input: String) -> String? {
+        let pattern = "<sheetData>(.*?)</sheetData>"
+        if let range = input.range(of: pattern, options: .regularExpression) {
+            return String(input[range])
+        }
+        return nil
+    }
+
+
 }
 extension FileManager {
     open func writeXml(folder:String,filename:String,content:String) -> Bool{
