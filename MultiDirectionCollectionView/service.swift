@@ -187,12 +187,12 @@ class Service {
                     }
                 }
                 
-                if modifiedPartNum > 0 {
-                    if let cellXfsElement = xml.children.first?.children.first(where: { $0.element?.name == "cellXfs" }) {
-                        let oldcnt = cellXfsElement.children.count
-                        xmlString! = xmlString!.replacingOccurrences(of: "<cellXfs count=\"\(oldcnt)\"", with: "<cellXfs count=\"\(oldcnt + modifiedPartNum)\"")
-                    }
-                }
+//                if modifiedPartNum > 0 {
+//                    if let cellXfsElement = xml.children.first?.children.first(where: { $0.element?.name == "cellXfs" }) {
+//                        let oldcnt = cellXfsElement.children.count
+//                        xmlString! = xmlString!.replacingOccurrences(of: "<cellXfs count=\"\(oldcnt)\"", with: "<cellXfs count=\"\(oldcnt + modifiedPartNum)\"")
+//                    }
+//                }
                 
                 
                 var border_lefts = [Int]()
@@ -757,7 +757,8 @@ class Service {
     }
     
     //todo creating
-    func testUpdateValue(url:URL? = nil, vIndex:String?, index:String?) -> String?{
+    func testUpdateValue(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?) -> String?{
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
@@ -945,7 +946,7 @@ class Service {
                     if let idx = rValues2.firstIndex(of: String(index!)) {
                         print("rowindex",idx)
                         if idx == rValues2.count-1{
-                            let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                            let newElement = "<c r=\"\(String(index!))\" s=\"\(String(numFmtId!))\"><v>\(String(vIndex!))</v></c>"
                             
                             var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                             replacing = replacing + newElement + "</row>"
@@ -985,7 +986,8 @@ class Service {
                                     //first is always ""
                                     let item = items[1] ?? ""
                                     print("item", item)
-                                    let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                    let newElement = "<c r=\"\(String(index!))\" s=\"\(String(numFmtId!))\"><v>\(String(vIndex!))</v></c>"
+
                                     // Find the correct position to insert the new element
                                     if let range = xmlString?.range(of: item) {
                                         // Insert the new element after the element with r="J2"
@@ -1007,7 +1009,13 @@ class Service {
                         //first c tag with sharedstring idx == nil
                         var sortedRowstr = ""
                         if targetRowTag == ""{
-                            let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\"><v>\(String(vIndex!))</v></c></row>"
+                    //"<sheetData><row r=\"4\"><c r=\"A4\" s=\"1\"><v>10</v></c></row>"
+                            var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+                            var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c></row>"
+                            if (sValueId != nil && sValueId! != 0){
+                                newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c></row>"
+                            }
+                            
                             let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
                            
                             xml = XMLHash.parse(replaced!)
@@ -1094,7 +1102,11 @@ class Service {
                             //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
                             var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
                             let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                            let newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
+                            var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+                            var newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
+                            if (sValueId != nil && sValueId! != 0){
+                                newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                            }
                             
                             var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                             replacing = replacing + newElement2 + "</row>"
@@ -1358,7 +1370,14 @@ class Service {
                     
                     //extract sytles read only
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
-                    testExtractStyle(url:styleXMLURL)
+                    let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
+                    //update to it contains date numFmt and other format
+                    if (modifiedStylesStr != nil){
+                        try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                        
+                        var xmlString = try? String(contentsOf: styleXMLURL)
+                        print(xmlString)
+                    }
                     
                     
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
@@ -1375,14 +1394,6 @@ class Service {
                     let newAry = testStringUniqueAry(url: shardStringXMLURL)
                     
                     let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
-                    
-                    
-                    
-                    //update Values
-                    //let replacedWithNewValue = testUpdateValue(url: worksheetXMLURL,newValue: -30, index: "E2")
-                    
-                    // Write the modified XML data back to the file
-                    //try? replacedWithNewValue?.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     
                     let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                     var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
@@ -1505,9 +1516,6 @@ class Service {
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                     let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                     //update to it contains date numFmt and other format
-                    if (modifiedStylesStr != nil){
-                        try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
-                    }
                     
                     let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                     var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
@@ -1536,6 +1544,7 @@ class Service {
         
         return nil
     }
+    
     
     func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?) -> URL? {
         do {
@@ -1606,106 +1615,114 @@ class Service {
                 } catch {
                     print("Error deleting file:", error)
                 }
+                
+                //TODO update sytle.xml here
+                let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
+                let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
+                //update to it contains date numFmt and other format
+                if (modifiedStylesStr != nil){
+                    try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                    var xmlString = try? String(contentsOf: styleXMLURL)
+                    print(xmlString)
+                }
+                
                     
-                    //shardString update test
-                    let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
-                    
-                    //value and string update test
-                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
-                    
-                    
-                    let oldAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-                    if input.count > 0{
-                        var check = false
-                        let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
-                        if shredStringId.0 == nil && (Float(input) != nil){
-                            //value todo complete this function
-                            let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString)!//A3
-                            // Write the modified XML data back to the file
-                            if(replacedWithNewString != ""){
-                                try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                                
-                                //update sharedstring xml here
-                                
-                            }
-                            check = true
-                        }
-                        if (shredStringId.0 != nil){
-                            let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId.0!), index: cellIdxString)//A3
-                            // Write the modified XML data back to the file
-                            if(!check && replacedWithNewString != nil && replacedWithNewString != ""){
-                                try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                                
-                                // Write the modified XML data back to the file
-                                try? shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
-                            }
-                        }
-                            
-                    }else{
-                        //delete
-                        let replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString)//A3
+                //shardString update test
+                let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
+                
+                //value and string update test
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
+                
+                
+                let oldAry = testStringUniqueAry(url: shardStringXMLURL)
+                
+                if input.count > 0{
+                    var check = false
+                    let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
+                    if shredStringId.0 == nil && (Float(input) != nil){
+                        //value update
+                        let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt)!//A3
                         // Write the modified XML data back to the file
-                        if(replacedWithNewString != nil && replacedWithNewString != ""){
+                        if(replacedWithNewString != ""){
+                            try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        }
+                        check = true
+                    }
+                    if (shredStringId.0 != nil){
+                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId.0!), index: cellIdxString)//A3
+                        // Write the modified XML data back to the file
+                        if(!check && replacedWithNewString != nil && replacedWithNewString != ""){
                             try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            
+                            // Write the modified XML data back to the file
+                            try? shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
                         }
                     }
                         
-                    let newAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-                    let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
-                    
-                    
-                    
-                  
-                    
-                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
-                    var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
-                    let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
-                        for file in sheetFiles {
-                            print("Found .xml file:", file.lastPathComponent)
-                        }
-                    print("sheetFiles: ", sheetXMLFiles)
-                    
-                    
-                    //ready to zip
-                    var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    let fpURL = URL(fileURLWithPath: fp)
-                    let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
-                    //appendingPathComponent("imported2.xlsx")
-                    let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-                    // Check if the destination file exists
-                    if FileManager.default.fileExists(atPath: fpURL.path) {
-                        // If it exists, remove it
-                        try FileManager.default.removeItem(at: fpURL)
+                }else{
+                    //delete
+                    let replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString)//A3
+                    // Write the modified XML data back to the file
+                    if(replacedWithNewString != nil && replacedWithNewString != ""){
+                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     }
-                    //overwrite or update xlsx
-                    let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                }
                     
-                    for fileURL in files {
-                       do {
-                           try FileManager.default.removeItem(at: fileURL)
-                           print("Deleted file:", fileURL.lastPathComponent)
-                       } catch {
-                           print("Error deleting file:", error)
-                       }
+                let newAry = testStringUniqueAry(url: shardStringXMLURL)
+                
+                let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
+                
+                
+                
+              
+                
+                let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                    for file in sheetFiles {
+                        print("Found .xml file:", file.lastPathComponent)
                     }
-                    
-                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
-                    print("Done: ", files)
-                    
-                    return nil
-
-                    
-                } else {
-                    // Handle the case where the specified path doesn't exist
-                    print("File or directory does not exist at path: \(fp)")
+                print("sheetFiles: ", sheetXMLFiles)
+                
+                
+                //ready to zip
+                var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                let fpURL = URL(fileURLWithPath: fp)
+                let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                //appendingPathComponent("imported2.xlsx")
+                let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                // Check if the destination file exists
+                if FileManager.default.fileExists(atPath: fpURL.path) {
+                    // If it exists, remove it
+                    try FileManager.default.removeItem(at: fpURL)
+                }
+                //overwrite or update xlsx
+                let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                   }
                 }
                 
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Done: ", files)
+                
+                return nil
+
+                
             } else {
-                print("Document directory not found.")
+                // Handle the case where the specified path doesn't exist
+                print("File or directory does not exist at path: \(fp)")
             }
+            
+        } else {
+            print("Document directory not found.")
+        }
             
             
         } catch {

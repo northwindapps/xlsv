@@ -444,7 +444,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     var a = false
                     
                     //id first
-                    if numId == 31 && !a{
+                    if numId == 14 || (numId == 31 && !a){
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                              
@@ -462,7 +462,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if appd.formatCodes[idx!] == "[h]:mm" || appd.formatCodes[idx!] == "hh:mm"{
+                    if numId == 20 || appd.formatCodes[idx!] == "[h]:mm" || appd.formatCodes[idx!] == "hh:mm"{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let totalHours = inputValue * 24
                             let strHours = String(floor(inputValue * 24))
@@ -2985,8 +2985,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         var element :String = datainputview.stringbox.text!
         datainputview.stringbox.text = ""
-        var numFmt = -1
+        var numFmt = 0
         
+        //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
         if isExcel && !element.hasPrefix("="){//mathematical expression doesnt support in Excel
             //update sheet1,or2,or3 or xml each data entry
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
