@@ -435,6 +435,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
                 let numId = appd.numFmtIds[appd.excelStyleIdx[styleId!]]
                 var idx = appd.numFmts.firstIndex(of: String(numId))
+                if idx == nil{
+                    idx = appd.numFmtIds.firstIndex(of: numId)
+                }
                 //https://c-rex.net/samples/ooxml/e1/Part4/OOXML_P4_DOCX_numFmt_topic_ID0EHDH6.html
                 if idx == nil && predifinedIds.contains(numId){
                     idx = 0
@@ -444,7 +447,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     var a = false
                     
                     //id first
-                    if numId == 14 || (numId == 31 && !a){
+                    if numId == 14 {
+                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
+                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
+                             
+                            // Convert timestamp to Date
+                            let date = Date(timeIntervalSince1970: timestamp)
+                            
+                            // Create a date formatter
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "MM/dd/yyyy"
+                            
+                            // Convert Date to String
+                            let dateString = dateFormatter.string(from: date)
+                            cell.label2.text = dateString
+                            a = true
+                        }
+                    }
+                    
+                    if numId == 31 && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                              
@@ -462,7 +483,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if numId == 20 || appd.formatCodes[idx!] == "[h]:mm" || appd.formatCodes[idx!] == "hh:mm"{
+                    if numId == 20 || (appd.formatCodes.count > idx! &&  appd.formatCodes[idx!] == "[h]:mm") || (appd.formatCodes.count > idx! && appd.formatCodes[idx!] == "hh:mm"){
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let totalHours = inputValue * 24
                             let strHours = String(floor(inputValue * 24))
@@ -476,7 +497,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
+                    if appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                              
@@ -494,7 +515,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if (appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") ) || (appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("m")) &&  !a{
+                    if (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") ) || (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("m")) &&  !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400) // Your timestamp
                             
@@ -512,7 +533,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if  appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
+                    if  appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -548,7 +569,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                        }
 //                    }
                     
-                    if appd.formatCodes[idx!] == "d" && !a{
+                    if appd.formatCodes.count > idx! && appd.formatCodes[idx!] == "d" && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -2984,6 +3005,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
         var element :String = datainputview.stringbox.text!
+        let original_element = element
         datainputview.stringbox.text = ""
         var numFmt = 0
         
@@ -3036,8 +3058,35 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             }
             
+            // Create a DateFormatter to parse the date string
+            let dateFormatter2 = DateFormatter()
+            dateFormatter2.dateFormat = "MM/dd/yyyy"
+            
+            // Parse the date string
+            if let date = dateFormatter2.date(from: dateString) {
+                // Define the Excel base date (January 1, 1900)
+                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
+                let calendar = Calendar(identifier: .gregorian)
+                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
+
+                // Calculate the time interval between the given date and the Excel base date
+                let dateTimeInterval = date.timeIntervalSinceReferenceDate
+                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
+
+                // Calculate the corresponding serial number
+                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
+
+                print("Excel serial number:", serialNumber) // Output: 39448
+                element = String(serialNumber)
+                numFmt = 14
+                
+            }
+            
            
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),numFmt:numFmt)
+            
+            //this is the easy way
+            element = original_element
             
         }
         
