@@ -505,7 +505,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
+                    //numId> 49 not predefined number by xlsx?
+                    if numId > 49 && (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd")) && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                              
@@ -523,7 +524,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") ) || (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("m")) &&  !a{
+                    if numId > 49 && ((appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("mm") ) || (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("yyyy") && appd.formatCodes[idx!].contains("m"))) &&  !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400) // Your timestamp
                             
@@ -541,7 +542,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     
-                    if  appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd") && !a{
+                if  numId > 49 && (appd.formatCodes.count > idx! && appd.formatCodes[idx!].contains("mm") && appd.formatCodes[idx!].contains("dd")) && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -558,26 +559,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             a = true
                         }
                     }
+                
                     
-//                    if  appd.formatCodes[idx!].contains("mm") && !a{
-//                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
-//                            let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
-//                            
-//                            // Convert timestamp to Date
-//                            let date = Date(timeIntervalSince1970: timestamp)
-//                            
-//                            // Create a date formatter
-//                            let dateFormatter = DateFormatter()
-//                            dateFormatter.dateFormat = "MM"
-//                            
-//                            // Convert Date to String
-//                            let dateString = dateFormatter.string(from: date)
-//                            cell.label2.text = dateString
-//                            a = true
-//                        }
-//                    }
-                    
-                    if appd.formatCodes.count > idx! && appd.formatCodes[idx!] == "d" && !a{
+                    if numId > 49 && (appd.formatCodes.count > idx! && appd.formatCodes[idx!] == "d") && !a{
                         if let labelText = cell.label2.text, let inputValue = Float(labelText) {
                             let timestamp = TimeInterval((inputValue - 25569) * 86400)  // Your timestamp
                             
@@ -814,6 +798,37 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
+//    xlsx numFmtId
+//    numFmtId    Format Code    Description
+//    0    General    General format
+//    1    0    Decimal
+//    2    0.00    Decimal with two places
+//    3    #,##0    Thousands separator
+//    4    #,##0.00    Thousands separator with two places
+//    9    0%    Percentage
+//    10    0.00%    Percentage with two places
+//    11    0.00E+00    Scientific notation
+//    12    # ?/?    Fraction (1/4)
+//    13    # ??/??    Fraction (1/16)
+//    14    mm-dd-yy    Date
+//    15    d-mmm-yy    Date
+//    16    d-mmm    Date
+//    17    mmm-yy    Date
+//    18    h:mm AM/PM    Time
+//    19    h:mm:ss AM/PM    Time
+//    20    h:mm    Time
+//    21    h:mm:ss    Time
+//    22    m/d/yy h:mm    Date and time
+//    37    #,##0_);(#,##0)    Accounting
+//    38    #,##0_);[Red](#,##0)    Accounting (with red negative numbers)
+//    39    #,##0.00_);(#,##0.00)    Accounting with two decimal places
+//    40    #,##0.00_);[Red](#,##0.00)    Accounting with red negative numbers
+//    45    mm:ss    Elapsed time
+//    46    [h]:mm:ss    Elapsed time with hours
+//    47    mmss.0    Elapsed time with decimal seconds
+//    48    ##0.0E+0    Scientific with one place
+//    49    @    Text
+//    
     
     
     //http://stackoverflow.com/questions/27674317/changing-cell-background-color-in-uicollectionview-in-swift
