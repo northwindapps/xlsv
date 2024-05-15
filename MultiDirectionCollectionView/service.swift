@@ -187,13 +187,6 @@ class Service {
                     }
                 }
                 
-//                if modifiedPartNum > 0 {
-//                    if let cellXfsElement = xml.children.first?.children.first(where: { $0.element?.name == "cellXfs" }) {
-//                        let oldcnt = cellXfsElement.children.count
-//                        xmlString! = xmlString!.replacingOccurrences(of: "<cellXfs count=\"\(oldcnt)\"", with: "<cellXfs count=\"\(oldcnt + modifiedPartNum)\"")
-//                    }
-//                }
-                
                 
                 var border_lefts = [Int]()
                 var border_rights = [Int]()
@@ -872,6 +865,23 @@ class Service {
                             return backUpXmlString
                         }
                     }
+                    
+                    if((vIndex != nil)  && (numFmtId != nil) && (index != nil))
+                    {
+                        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+                        let newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                        let replaced = xmlString?.replacingOccurrences(of: item, with: newElement)
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: replaced!) {
+                            print("XML is valid.")
+                            return replaced
+                        } else {
+                            print("XML is not valid.")
+                            print(replaced)
+                            return backUpXmlString
+                        }
+                    }
+                    
                     
                     return backUpXmlString
                 }
@@ -1642,7 +1652,7 @@ class Service {
                     let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
                     if shredStringId.0 == nil && (Float(input) != nil){
                         //value update
-                        let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt)!//A3
+                        let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt) ?? ""//A3
                         // Write the modified XML data back to the file
                         if(replacedWithNewString != ""){
                             try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)

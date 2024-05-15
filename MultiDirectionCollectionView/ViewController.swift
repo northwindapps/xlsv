@@ -3036,29 +3036,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
             // Create a DateFormatter to parse the date string
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy/MM/dd"
-
-            // Parse the date string
-            if let date = dateFormatter.date(from: dateString) {
-                // Define the Excel base date (January 1, 1900)
-                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
-                let calendar = Calendar(identifier: .gregorian)
-                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
-
-                // Calculate the time interval between the given date and the Excel base date
-                let dateTimeInterval = date.timeIntervalSinceReferenceDate
-                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
-
-                // Calculate the corresponding serial number
-                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
-
-                print("Excel serial number:", serialNumber) // Output: 39448
-                element = String(serialNumber)
-                numFmt = 14
-                
-            }
+//            dateFormatter.dateFormat = "yyyy/MM/dd"
+//
+//            // Parse the date string
+//            if let date = dateFormatter.date(from: dateString) {
+//                // Define the Excel base date (January 1, 1900)
+//                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
+//                let calendar = Calendar(identifier: .gregorian)
+//                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
+//
+//                // Calculate the time interval between the given date and the Excel base date
+//                let dateTimeInterval = date.timeIntervalSinceReferenceDate
+//                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
+//
+//                // Calculate the correswrtkjyekjrtkponding serial number
+//                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
+//
+//                print("Excel serial number:", serialNumber) // Output: 39448
+//                element = String(serialNumber)
+//                numFmt = 14
+//                
+//            }
             
-            // Create a DateFormatter to parse the date string
+//            // Create a DateFormatter to parse the date string
             let dateFormatter2 = DateFormatter()
             dateFormatter2.dateFormat = "MM/dd/yyyy"
             
