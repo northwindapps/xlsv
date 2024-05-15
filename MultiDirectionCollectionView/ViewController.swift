@@ -484,11 +484,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                     
                     if numId == 20 || (appd.formatCodes.count > idx! &&  appd.formatCodes[idx!] == "[h]:mm") || (appd.formatCodes.count > idx! && appd.formatCodes[idx!] == "hh:mm"){
-                        if let labelText = cell.label2.text, let inputValue = Float(labelText) {
-                            let totalHours = inputValue * 24
-                            let strHours = String(floor(inputValue * 24))
-                            let fractionHours = totalHours - floor(inputValue * 24)
-                            var strMinutes = String(fractionHours * 60)
+                        if let labelText = cell.label2.text, let inputValue = Decimal(string:labelText) {
+                            let totalHours = inputValue * Decimal(24)
+                            let input24 = inputValue * Decimal(24)
+                            let strHours = String(floor(input24.doubleValue))
+                            let fractionHours = totalHours - Decimal(floor(input24.doubleValue))
+                            let decimalMinutes = fractionHours * Decimal(60)
+                           
+                           
+                            let roundingBehavior = NSDecimalNumberHandler(roundingMode: .plain, scale: 4, raiseOnExactness: false, raiseOnOverflow: false, raiseOnUnderflow: false, raiseOnDivideByZero: false)
+                            let resultAsNSDecimalNumber = NSDecimalNumber(decimal: decimalMinutes)
+                            let roundedResult = resultAsNSDecimalNumber.rounding(accordingToBehavior: roundingBehavior)
+
+                            var strMinutes = String(roundedResult.description)
                             if fractionHours * 60 < 10.0{
                                 strMinutes = "0" + strMinutes
                             }
