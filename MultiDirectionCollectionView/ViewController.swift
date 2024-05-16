@@ -3108,6 +3108,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
            
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),numFmt:numFmt)
             
+            //xml files update. not it needs to get read here
+            if appd.ws_path != "" {
+                print("yourExcelfile",appd.ws_path)
+                let ehp = ExcelHelper()
+                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+                // Do any additional setup after loading the view.
+                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            }
+            
         }
         
         //add more complicated functionality
