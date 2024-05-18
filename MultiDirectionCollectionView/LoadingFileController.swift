@@ -53,7 +53,6 @@ func showAnimate()
     }
     
     if appd.ws_path != "" {
-        
         print("yourExcelfile",appd.ws_path)
         let ehp = ExcelHelper()
         ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
@@ -62,7 +61,6 @@ func showAnimate()
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
         let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        
         print("end LoadingFileController")
         
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape

@@ -1333,6 +1333,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.sheetNameIds = [String]()
             appd.ws_path = ""
             appd.imported_xlsx_file_path = ""
+            appd.isAppStarted = false
             
             let sheet1Json = ReadWriteJSON()
             sheet1Json.deleteJsonFile(title: "csv_sheet1")
@@ -1519,49 +1520,36 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
         
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        
-        
-        
         fileTitle.text = ""
-        
-        
         super.viewDidLoad()
-        
-        
-        
+
         columninNumber.removeAll()
         columninNumber.append("null")
         rowinNumber.removeAll()
         rowinNumber.append("null")
         
-        
-        
         //http://qiita.com/xa_un/items/814a5cd4472674640f58
-        
-        
-        
-        
-        
-        
-        let appDelegate:AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        
-        tag_int = appDelegate.tag_int
-        
+        tag_int = appd.tag_int
         myCollectionView.delegate = self
-        
-        
         orientaion = "P"
+        
+        //loadinitialXLSX
+        if let filePath = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"), !appd.isAppStarted {
+            do {
+                let icc = iCloudViewController()
+                icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath))
+                isExcel = true
+                sheetIdx = 1
+                appd.isAppStarted = true
+            } catch {
+                print("Error reading file: \(error)")
+            }
+        }
         
         //checkSheet
         isExcelSheetData(sheetIdx: sheetIdx)
         initSheetData(sheetIdx: sheetIdx)
-   
-        
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
-        
-        
-        
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(

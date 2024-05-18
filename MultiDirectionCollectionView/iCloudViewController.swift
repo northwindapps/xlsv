@@ -325,6 +325,71 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
     }
     
+    func loadInitialXLSX(url: URL) {
+            print("this is url")
+            print(url)
+            print(url.absoluteString)
+            //g.sheet 未対応
+            //csvPath = url.absoluteString
+            //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
+            //https://developer.apple.com/reference/foundation/nsfilemanager
+            //
+            
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
+            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+            
+            var isExcel = false
+        
+        if url.absoluteString.contains(".xlsx"){
+            //excel process
+            print("excel file")
+            let fnameArry = url.absoluteString.split(separator: "/")
+            let pathDirectory = getRootDocumentsDirectory()
+            try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
+            let filePath = pathDirectory.appendingPathComponent(String(fnameArry.last!))
+            let fnameA = fnameArry.last!.split(separator: ".")
+            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
+            if FileManager.default.fileExists(atPath: filePath.path) {
+                do{
+                    print("remove file")
+                    try FileManager.default.removeItem(at: filePath)
+                    
+                }catch {
+                    print("new to this app")
+                }
+            }
+            
+            do{
+                print("copy file", filePath)
+                try FileManager.default.copyItem(at: url, to: filePath)
+            }catch let error{
+                //dump(error)
+            }
+            
+            let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+            let url2 = URL(fileURLWithPath: path2)
+            let filename = String(fnameArry.last!)
+            let fp = url2.appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: fp) {
+                print("yourExcelfile",fp)
+            }
+            appd.imported_xlsx_file_path=fp
+            readExcel(path: fp)
+            isExcel = true
+            
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            print("end iCloudController")
+        }
+        return
+    }
+    
     
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         //dismiss(animated: true, completion: nil)
@@ -337,6 +402,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd.diff_end_index.removeAll()
         appd.ws_path = ""
         appd.wsIndex = 1
+        appd.isAppStarted = false
         
         let sheet1Json = ReadWriteJSON()
         sheet1Json.deleteJsonFile(title: "csv_sheet1")

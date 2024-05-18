@@ -17,6 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     var radigree = 0
     var accessID = String()
+    var isAppStarted = false
     
     //StringFormat
     var FONT_SIZE_DEFAULT = 12
@@ -210,10 +211,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //            }
 //        }
         
+        
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()
-        
         return true
 
     }
