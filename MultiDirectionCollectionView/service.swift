@@ -587,24 +587,27 @@ class Service {
                             
                             xml = XMLHash.parse(replaced!)
                             
-                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children{
                                 // Sort the rows based on some criteria (e.g., the value of the "r" attribute of cells)
                                 let sortedCells = sortedRows.sorted { (row1, row2) -> Bool in
-                                    guard let cell1 = row1.children.first(where: { $0.element?.name == "c" }),
-                                          let cell2 = row2.children.first(where: { $0.element?.name == "c" }),
-                                          let text1 = cell1.element?.attribute(by: "r")?.text,
-                                          let text2 = cell2.element?.attribute(by: "r")?.text else {
+                                    guard
+                                          let text1 = row1.element?.attribute(by: "r")?.text,
+                                          let text2 = row2.element?.attribute(by: "r")?.text
+                                           
+                                    else {
                                         return false
                                     }
+                                    print("guard",text1)
+                                    print("gurard",text2)
                                     return text1 < text2
                                 }
                                 
                                 // Use the sorted cells
                                 // For example, print them
                                 for cell in sortedCells {
-                                    print(cell)
                                     sortedRowstr += cell.description
                                 }
+                                print("row",sortedRowstr)
                             }
 
                             if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
@@ -648,7 +651,7 @@ class Service {
                                     
                                     // Print the sorted cells (optional)
                                     for cell in sortedCellsArray {
-                                        print(cell)
+                                        print("updateString",cell)
                                     }
                                 }
                             } else {
@@ -1038,24 +1041,27 @@ class Service {
                            
                             xml = XMLHash.parse(replaced!)
                             
-                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                            if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children{
                                 // Sort the rows based on some criteria (e.g., the value of the "r" attribute of cells)
                                 let sortedCells = sortedRows.sorted { (row1, row2) -> Bool in
-                                    guard let cell1 = row1.children.first(where: { $0.element?.name == "c" }),
-                                          let cell2 = row2.children.first(where: { $0.element?.name == "c" }),
-                                          let text1 = cell1.element?.attribute(by: "r")?.text,
-                                          let text2 = cell2.element?.attribute(by: "r")?.text else {
+                                    guard
+                                          let text1 = row1.element?.attribute(by: "r")?.text,
+                                          let text2 = row2.element?.attribute(by: "r")?.text
+                                           
+                                    else {
                                         return false
                                     }
+                                    print("guard",text1)
+                                    print("gurard",text2)
                                     return text1 < text2
                                 }
                                 
                                 // Use the sorted cells
                                 // For example, print them
                                 for cell in sortedCells {
-                                    print(cell)
                                     sortedRowstr += cell.description
                                 }
+                                print("row",sortedRowstr)
                             }
 
                             if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {

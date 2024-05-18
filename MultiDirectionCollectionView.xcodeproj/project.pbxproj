@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2B864A632BF89DDA00F7726C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B864A622BF89DDA00F7726C /* initialXLSX.xlsx */; };
-		2B864A642BF89DDA00F7726C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B864A622BF89DDA00F7726C /* initialXLSX.xlsx */; };
+		2B864A692BF8CFBB00F7726C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B864A682BF8CFBB00F7726C /* initialXLSX.xlsx */; };
+		2B864A6A2BF8CFBB00F7726C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B864A682BF8CFBB00F7726C /* initialXLSX.xlsx */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
 		3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22A79621DCD860001ADDD9 /* Input4Pad.xib */; };
 		3C40887121D6321D005D0E6D /* colorclass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C40887021D6321D005D0E6D /* colorclass.swift */; };
@@ -86,7 +86,7 @@
 /* Begin PBXFileReference section */
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXlsxSheet1.xlsx; sourceTree = "<group>"; };
-		2B864A622BF89DDA00F7726C /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
+		2B864A682BF8CFBB00F7726C /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		3C22A75F21D79003001ADDD9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Datainput.strings; sourceTree = "<group>"; };
 		3C22A76121D7902A001ADDD9 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Datainput.strings; sourceTree = "<group>"; };
 		3C22A76321D7904F001ADDD9 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -390,7 +390,7 @@
 				6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */,
 				6A9743C22BB436FD005D341C /* LoadingFileController.swift */,
 				8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */,
-				2B864A622BF89DDA00F7726C /* initialXLSX.xlsx */,
+				2B864A682BF8CFBB00F7726C /* initialXLSX.xlsx */,
 				6A1F5E062542D70E002796C0 /* xmlProject */,
 				8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */,
 				6AC8322A24663CA8006FA917 /* boards */,
@@ -522,7 +522,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2B864A642BF89DDA00F7726C /* initialXLSX.xlsx in Resources */,
+				2B864A6A2BF8CFBB00F7726C /* initialXLSX.xlsx in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -533,13 +533,13 @@
 				8D8201001E3AC9D60039540A /* Customviewboard3.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
 				8DB176FA1E149410009DCD75 /* Main.storyboard in Resources */,
+				2B864A692BF8CFBB00F7726C /* initialXLSX.xlsx in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
 				8DB1770F1E149464009DCD75 /* Customviewboard2.xib in Resources */,
 				6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */,
 				3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */,
 				6A6E8522245DA1D5008AFA03 /* LaunchScreen.xib in Resources */,
-				2B864A632BF89DDA00F7726C /* initialXLSX.xlsx in Resources */,
 				6AAFEA05255D6A96000612B8 /* Hint.xib in Resources */,
 				6A496CA723B8ED1B00E7AE0F /* Images.xcassets in Resources */,
 				8DB177B51E1499F0009DCD75 /* InfoPlist.strings in Resources */,
