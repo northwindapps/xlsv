@@ -579,7 +579,11 @@ class Service {
                         var sortedRowstr = ""
                         if targetRowTag == ""{
                             let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
-                            let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                            var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                            
+                            if replaced!.contains("<sheetData/>"){
+                                replaced = xmlString?.replacingOccurrences(of: "<sheetData/>", with: newElement + "</sheetData>")
+                            }
                             
                             xml = XMLHash.parse(replaced!)
                             
@@ -1277,7 +1281,7 @@ class Service {
                     // Find the position to insert the new <si> element
                     if let range = xmlString!.range(of: "</sst>") {
                         // Construct the new <si> element
-                        let newSIElement = "<si><t>" + word + "</t></si>"
+                        var newSIElement = "<si><t>" + word + "</t></si>"
                         
                         // Insert the new <si> element at the end of <sst>
                         xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
@@ -1296,6 +1300,7 @@ class Service {
                             print("Failed to parse XML data.")
                         }
                         print("New <si> element inserted successfully.")
+                        
                         return (SSlist.count ,xmlString)
                     } else {
                         print("Failed to find </sst> in the XML data.")
@@ -1620,8 +1625,6 @@ class Service {
                     print("Error unzipping file: \(error)")
                 }
                 
-                
-                
                 do {
                     //delete imported2.zip or imported2.xlsx
                     try FileManager.default.removeItem(at: destinationURL)
@@ -1644,6 +1647,17 @@ class Service {
                 //shardString update test
                 let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
                 
+                //check missing files and create the missing ones
+                if !FileManager.default.fileExists(atPath: shardStringXMLURL.path) {
+                    let content = """
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                    <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1"></sst>
+                    """
+                    
+                    try? content.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
+                }
+                
+                
                 //value and string update test
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
@@ -1653,6 +1667,7 @@ class Service {
                 
                 if input.count > 0{
                     var check = false
+                    //sharedString
                     let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
                     if shredStringId.0 == nil && (Float(input) != nil){
                         //value update
