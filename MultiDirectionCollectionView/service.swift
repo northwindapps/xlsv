@@ -1026,7 +1026,11 @@ class Service {
                                 newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c></row>"
                             }
                             
-                            let replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                            var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                            
+                            if ((replaced?.contains("<sheetData/>")) != nil){
+                                replaced = replaced?.replacingOccurrences(of: "<sheetData/>", with: newElement + "</sheetData>")
+                            }
                            
                             xml = XMLHash.parse(replaced!)
                             
