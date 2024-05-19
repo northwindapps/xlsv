@@ -844,7 +844,13 @@ class Service {
                     //"<c r=\"B2\" s=\"61\"><v>2023</v></c>"
                     if(vIndex != nil && item.hasSuffix("/>"))
                     {
-                        let replacing = item.replacingOccurrences(of: "/>", with: " >").replacingOccurrences(of: "t=\"s\"", with: "") + "<v>" + String(vIndex!) + "</v></c>"
+                        var replacing = item.replacingOccurrences(of: "/>", with: " >").replacingOccurrences(of: "t=\"s\"", with: "") + "<v>" + String(vIndex!) + "</v></c>"
+                        
+                        var numidx = appd.numFmtIds.firstIndex(of: numFmtId ?? 0)
+                        if (numidx != nil){
+                            replacing = "<c r=\"\(String(index!))\" s=\"\(String(numidx!))\">" + "<v>" + String(vIndex!) + "</v></c>"
+                        }
+                        
                         let replaced = xmlString?.replacingOccurrences(of: item, with: replacing)
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: replaced!) {
