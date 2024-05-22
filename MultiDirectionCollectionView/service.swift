@@ -313,7 +313,16 @@ class Service {
     
     //making now
     func testUpdateString(url:URL? = nil, vIndex:String?, index:String?) -> String?{
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if let url2 = url{
+            //get style id
+            var styleIdx = -1
+            let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
+            
+            if (slocatinIdx != nil){
+                styleIdx = appd.excelStyleIdx[slocatinIdx!]
+            }
+            
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
             // Set XMLParserDelegate
@@ -474,7 +483,11 @@ class Service {
                 if let idx = rValues2.firstIndex(of: String(index!)) {
                     print("rowindex",idx)
                     if idx == rValues2.count-1{
-                        let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        
+                        if styleIdx > 0{
+                            newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        }
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement + "</row>"
@@ -514,7 +527,12 @@ class Service {
                                 //first is always ""
                                 let item = items[1] ?? ""
                                 print("item", item)
-                                let newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                
+                                var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                if styleIdx > 0{
+                                    newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                                }
+                                
                                 // Find the correct position to insert the new element
                                 if let range = xmlString?.range(of: item) {
                                     // Insert the new element after the element with r="J2"
@@ -536,7 +554,11 @@ class Service {
                     //first c tag with sharedstring idx == nil
                     var sortedRowstr = ""
                     if targetRowTag == ""{
-                        let newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                        var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                        if styleIdx > 0{
+                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                        }
+                        
                         var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
                         
                         if replaced!.contains("<sheetData/>"){
@@ -629,23 +651,24 @@ class Service {
                         //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
                         var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                        let newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        var newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        
+                        if styleIdx > 0{
+                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                        }
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement2 + "</row>"
-                        if replacing .contains("/><c"){
-                            let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing.replacingOccurrences(of: "/><c", with: "><c"))
-                            let validator = XMLValidator()
-                            if validator.validateXML(xmlString: replaced!) {
-                                print("XML is valid.")
-                                return replaced
-                            } else {
-                                print("XML is not valid.")
-                                print(xmlString)
-                                return backUpXmlString
-                            }
-                        }
                         let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
+                        
+                        let validator0 = XMLValidator()
+                        if validator0.validateXML(xmlString: replaced!) {
+                            print("XML is valid.")
+                        } else {
+                            print("XML is not valid.")
+                            print(xmlString)
+                            return backUpXmlString
+                        }
                         let old = xmlString
                         xml = XMLHash.parse(replaced!)
                         if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
@@ -939,6 +962,7 @@ class Service {
                     }
                 
                 }else{
+                    //row exists
                     //first c tag with sharedstring idx == nil
                     var sortedRowstr = ""
                     if targetRowTag == ""{
@@ -1039,6 +1063,7 @@ class Service {
                             return backUpXmlString
                         }
                     }else{
+                        //row exists c element exists
                         //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
                         var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
@@ -1050,19 +1075,15 @@ class Service {
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement2 + "</row>"
-                        if replacing .contains("/><c"){
-                            let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing.replacingOccurrences(of: "/><c", with: "><c"))
-                            let validator = XMLValidator()
-                            if validator.validateXML(xmlString: replaced!) {
-                                print("XML is valid.")
-                                return replaced
-                            } else {
-                                print("XML is not valid.")
-                                print(xmlString)
-                                return backUpXmlString
-                            }
-                        }
                         let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
+                        let validator0 = XMLValidator()
+                        if validator0.validateXML(xmlString: replaced!) {
+                            print("XML is valid.")
+                        } else {
+                            print("XML is not valid.")
+                            print(xmlString)
+                            return backUpXmlString
+                        }
                         let old = xmlString
                         xml = XMLHash.parse(replaced!)
                         if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {

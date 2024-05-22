@@ -149,6 +149,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.diff_end_index.removeAll()
             appd.excelStyleIdx.removeAll()
             appd.excelStyleLocation.removeAll()
+            appd.excelStyleLocationAlphabet.removeAll()
             appd.cellXfs.removeAll()
             appd.cellStyleXfs.removeAll()
             appd.border_lefts.removeAll()
@@ -453,6 +454,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.diff_end_index.removeAll()
             appd.excelStyleIdx.removeAll()
             appd.excelStyleLocation.removeAll()
+            appd.excelStyleLocationAlphabet.removeAll()
             appd.cellXfs.removeAll()
             appd.cellStyleXfs.removeAll()
             appd.border_lefts.removeAll()
@@ -545,6 +547,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                             
                             appd.excelStyleIdx.append(styleIdx)
                             appd.excelStyleLocation.append(locationIdx)
+                            appd.excelStyleLocationAlphabet.append(allCells[l].reference.description)
                         }
                         
                         

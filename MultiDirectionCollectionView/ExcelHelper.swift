@@ -43,6 +43,7 @@ class ExcelHelper{
            appd.diff_end_index.removeAll()
            appd.excelStyleIdx.removeAll()
            appd.excelStyleLocation.removeAll()
+           appd.excelStyleLocationAlphabet.removeAll()
            appd.cellXfs.removeAll()
            appd.cellStyleXfs.removeAll()
            appd.border_lefts.removeAll()
@@ -150,6 +151,7 @@ class ExcelHelper{
                            
                            appd.excelStyleIdx.append(styleIdx)
                            appd.excelStyleLocation.append(locationIdx)
+                           appd.excelStyleLocationAlphabet.append(allCells[l].reference.description)
                        }
                        
                        var aPlusbArray = [String](repeating: "", count:temp2.count + keyValues.count)

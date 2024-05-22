@@ -56,6 +56,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var imported_xlsx_file_path=""
     var excelStyleIdx = [Int]()
     var excelStyleLocation = [String]()
+    var excelStyleLocationAlphabet = [String]()
     var cellXfs = [Int]()
     var cellStyleXfs = [Int]()
     var border_lefts = [Int]()
