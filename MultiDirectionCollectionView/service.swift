@@ -1074,7 +1074,13 @@ class Service {
                     }else{
                         //row exists c element exists
                         //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
-                        var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
+                        var rowPart = targetRowTag
+                        if rowPart.hasSuffix("/>"){
+                            rowPart = rowPart.replacingOccurrences(of: "/>", with: ">")
+                        }
+                        if !rowPart.hasSuffix(">"){
+                            rowPart = rowPart + ">"
+                        }
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                         var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
                         var newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
@@ -1139,6 +1145,7 @@ class Service {
                             print("No rows found or there are no children under the specified path")
                         }
                         
+                        rowPart = rowPart.replacingOccurrences(of: "</row>", with: "")
                         let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: final) {
