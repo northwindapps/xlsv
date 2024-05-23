@@ -277,8 +277,16 @@ class Service {
             // Extract matching substrings
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange]
+                    var matchingSubstring = xmlString![matchRange].description
                     //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                    
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
+                    
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
                     
                     let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
                     return replaced
@@ -300,8 +308,15 @@ class Service {
             // Extract matching substrings
             if let match = matches2.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange]
+                    var matchingSubstring = xmlString![matchRange].description
                     //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
+                    
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
                     
                     let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
                     return replaced
@@ -344,7 +359,50 @@ class Service {
             var xml = XMLHash.parse(xmlString!)
             
             // Define the regular expression pattern D3
-            let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+            let pattern3 = "<c r=\"\(String(index!))\".*?/>"
+            //#"<c\s+r="B1".*?</c>"#
+            
+            // Create the regular expression object
+            guard let regex3 = try? NSRegularExpression(pattern: pattern3, options: []) else {
+                fatalError("Failed to create regular expression")
+            }
+            
+            // Find matches in the XML string
+            let range3 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+            let matches3 = regex3.matches(in: xmlString!, range: range3)
+            
+            // Extract matching substrings
+            //TODO switch sharedString or value here or not?
+            if let match = matches3.first{
+                if let matchRange = Range(match.range, in: xmlString!) {
+                    var matchingSubstring = xmlString![matchRange].description
+                    
+                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
+                    
+                    let validator = XMLValidator()
+                    if validator.validateXML(xmlString: xmlString!) {
+                        print("XML is valid.")
+                        return xmlString
+                    } else {
+                        print("XML is not valid.")
+                        print(xmlString)
+                        return backUpXmlString
+                    }
+                }
+            }
+            
+            
+            // Define the regular expression pattern D3
+            //let pattern = "<c.*?r=\"\(String(index!))\".*?>(.*?)</c>"
+            //#"<c\s+r="B1".*?</c>"#
+            let pattern = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
+
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -358,18 +416,32 @@ class Service {
             // Extract matching substrings
             //TODO switch sharedString or value here or not?
             if let match = matches.first{
+            //if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange].description
+                    var matchingSubstring = xmlString![matchRange].description
+                    
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
+                    
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
+                    
+                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
-                    
-                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                    
-                    xmlString = xmlString?.replacingOccurrences(of: "<row r=\"\(row)\"></row>", with: "")
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
                         print("XML is valid.")
+                        return xmlString
                     } else {
                         print("XML is not valid.")
                         print(xmlString)
@@ -378,8 +450,8 @@ class Service {
                 }
             }
             
-            
-            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>.*?</c>"
+            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
+
             
             // Create the regular expression object
             guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
@@ -392,19 +464,30 @@ class Service {
             
             // Extract matching substrings
             //TODO switch sharedString or value here or not?
-            if let match = matches2.first{
+            for match in matches2{
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange].description
+                    var matchingSubstring = xmlString![matchRange].description
                     
-                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
                     
-                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
                     
-                    xmlString = xmlString?.replacingOccurrences(of: "<row r=\"\(row)\"></row>", with: "")
+                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
                         print("XML is valid.")
+                        return xmlString
                     } else {
                         print("XML is not valid.")
                         print(xmlString)
@@ -412,6 +495,8 @@ class Service {
                     }
                 }
             }
+            
+           
                      
             //get the list of locations
             do {
@@ -521,7 +606,16 @@ class Service {
                     // Extract matching substrings
                         if let match = matches.first{
                             if let matchRange = Range(match.range, in: targetRowTag) {
-                                let matchingSubstring = targetRowTag[matchRange]
+                                var matchingSubstring = targetRowTag[matchRange].description
+                                
+                                if matchingSubstring.contains("<row r"){
+                                    matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                                }
+                                
+                                if matchingSubstring.hasSuffix("</row>"){
+                                    matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                                }
+                                
                                 let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
                                 var items = modified.components(separatedBy: "!")
                                 //first is always ""
@@ -678,6 +772,7 @@ class Service {
                             return backUpXmlString
                         }
                         let old = xmlString
+                        rowPart = ""
                         xml = XMLHash.parse(replaced!)
                         if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                             // Iterate through the rows
@@ -724,7 +819,7 @@ class Service {
                         }
                         
                         rowPart = rowPart.replacingOccurrences(of: "</row>", with: "")
-                        let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
+                        let final = old!.replacingOccurrences(of: targetRowTag, with: "<row r=\"\(row)\">" + rowPart + "</row>")
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: final) {
                             print("XML is valid.")
@@ -749,6 +844,14 @@ class Service {
     //todo creating
     func testUpdateValue(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        //get style id
+        var styleIdx = -1
+        let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
+        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+        
+        if (slocatinIdx != nil){
+            styleIdx = appd.excelStyleIdx[slocatinIdx!]
+        }
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
@@ -771,7 +874,46 @@ class Service {
             var xml = XMLHash.parse(xmlString!)
             
             // Define the regular expression pattern D3
-            let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+            let pattern3 = "<c r=\"\(String(index!))\".*?/>"
+            //#"<c\s+r="B1".*?</c>"#
+            
+            // Create the regular expression object
+            guard let regex3 = try? NSRegularExpression(pattern: pattern3, options: []) else {
+                fatalError("Failed to create regular expression")
+            }
+            
+            // Find matches in the XML string
+            let range3 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+            let matches3 = regex3.matches(in: xmlString!, range: range3)
+            
+            // Extract matching substrings
+            //TODO switch sharedString or value here or not?
+            if let match = matches3.first{
+                if let matchRange = Range(match.range, in: xmlString!) {
+                    var matchingSubstring = xmlString![matchRange].description
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
+                    
+                    let validator = XMLValidator()
+                    if validator.validateXML(xmlString: xmlString!) {
+                        print("XML is valid.")
+                        return xmlString
+                    } else {
+                        print("XML is not valid.")
+                        print(xmlString)
+                        return backUpXmlString
+                    }
+                }
+            }
+            
+            
+            // Define the regular expression pattern D3
+            let pattern = "<c.*?r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -786,19 +928,30 @@ class Service {
             //TODO switch sharedString or value here or not?
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange].description
+                    var matchingSubstring = xmlString![matchRange].description
                     //let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
                     //var items = modified.components(separatedBy: "!")
                     //first is always ""
-                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
                     
-                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
                     
-                    xmlString = xmlString?.replacingOccurrences(of: "<row r=\"\(row)\"></row>", with: "")
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
                         print("XML is valid.")
+                        return xmlString
                     } else {
                         print("XML is not valid.")
                         print(xmlString)
@@ -807,7 +960,7 @@ class Service {
                 }
             }
             
-            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>.*?</c>"
+            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
             
             // Create the regular expression object
             guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
@@ -820,19 +973,30 @@ class Service {
             
             // Extract matching substrings
             //TODO switch sharedString or value here or not?
-            if let match = matches2.first{
+            for match in matches2 {
                 if let matchRange = Range(match.range, in: xmlString!) {
-                    let matchingSubstring = xmlString![matchRange].description
+                    var matchingSubstring = xmlString![matchRange].description
                     
-                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                    }
                     
-                    let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
                     
-                    xmlString = xmlString?.replacingOccurrences(of: "<row r=\"\(row)\"></row>", with: "")
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    
+                    if styleIdx > 0{
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                    }
+                    
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
                         print("XML is valid.")
+                        return xmlString
                     } else {
                         print("XML is not valid.")
                         print(xmlString)
@@ -840,6 +1004,8 @@ class Service {
                     }
                 }
             }
+            
+           
   
             //get the list of locations
             do {
@@ -858,7 +1024,7 @@ class Service {
                     let nsRange = match.range(at: 1) // Use the capture group index
                     if let range = Range(nsRange, in: xmlString!) {
                         if let matchRange = Range(match.range, in: xmlString!) {
-                            targetRowTag = String(xmlString![matchRange])
+                            targetRowTag = String(xmlString![matchRange]).description
                             if targetRowTag.contains("/><row"){
                                 let items = targetRowTag.components(separatedBy: "/><row")
                                 if (items.first != nil){
@@ -911,7 +1077,11 @@ class Service {
                 if let idx = rValues2.firstIndex(of: String(index!)) {
                     print("rowindex",idx)
                     if idx == rValues2.count-1{
-                        let newElement = "<c r=\"\(String(index!))\" s=\"\(String(numFmtId!))\"><v>\(String(vIndex!))</v></c>"
+                        var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                        
+                        if styleIdx > 0{
+                            newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        }
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement + "</row>"
@@ -945,13 +1115,26 @@ class Service {
                     // Extract matching substrings
                         if let match = matches.first{
                             if let matchRange = Range(match.range, in: targetRowTag) {
-                                let matchingSubstring = targetRowTag[matchRange]
+                                var matchingSubstring = targetRowTag[matchRange].description
+                                
+                                if matchingSubstring.contains("<row r"){
+                                    matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+                                }
+                                
+                                if matchingSubstring.hasSuffix("</row>"){
+                                    matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                                }
+                                
                                 let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
                                 var items = modified.components(separatedBy: "!")
                                 //first is always ""
                                 let item = items[1] ?? ""
                                 print("item", item)
-                                let newElement = "<c r=\"\(String(index!))\" s=\"\(String(numFmtId!))\"><v>\(String(vIndex!))</v></c>"
+                                var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                                
+                                if styleIdx > 0{
+                                    newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                                }
 
                                 // Find the correct position to insert the new element
                                 if let range = xmlString?.range(of: item) {
@@ -971,15 +1154,19 @@ class Service {
                     }
                 
                 }else{
-                    //row exists
+                    //row not exists
                     //first c tag with sharedstring idx == nil
                     var sortedRowstr = ""
                     if targetRowTag == ""{
                 //"<sheetData><row r=\"4\"><c r=\"A4\" s=\"1\"><v>10</v></c></row>"
-                        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+                        //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
                         var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c></row>"
                         if (sValueId != nil && sValueId! != 0){
                             newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c></row>"
+                        }
+                        
+                        if styleIdx > 0{
+                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c></row>"
                         }
                         
                         var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
@@ -1082,11 +1269,17 @@ class Service {
                             rowPart = rowPart + ">"
                         }
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+                        //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
                         var newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
                         if (sValueId != nil && sValueId! != 0){
                             newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
                         }
+                        
+                        if (styleIdx > 0){
+                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        }
+                        
+                        
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement2 + "</row>"
@@ -1100,6 +1293,7 @@ class Service {
                             return backUpXmlString
                         }
                         let old = xmlString
+                        rowPart = ""
                         xml = XMLHash.parse(replaced!)
                         if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
                             // Iterate through the rows
@@ -1146,7 +1340,8 @@ class Service {
                         }
                         
                         rowPart = rowPart.replacingOccurrences(of: "</row>", with: "")
-                        let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
+                        rowPart = "<row r=\"\(row)\">" + rowPart + "</row>"
+                        let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart)
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: final) {
                             print("XML is valid.")
@@ -1269,6 +1464,7 @@ class Service {
         }
         return (nil,nil)
     }
+    
     
     func testSandBox(fp: String = "", url: URL? = nil) -> URL? {
         do {
