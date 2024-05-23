@@ -649,7 +649,15 @@ class Service {
                         }
                     }else{
                         //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
-                        var rowPart = targetRowTag.components(separatedBy: "><c").first! + ">"
+                        var rowPart = targetRowTag
+                        if rowPart.hasSuffix("/>"){
+                            rowPart = rowPart.replacingOccurrences(of: "/>", with: ">")
+                        }
+                        
+                        //rowPart = rowPart.components(separatedBy: "><c").first!
+                        if !rowPart.hasSuffix(">"){
+                            rowPart = rowPart + ">"
+                        }
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                         var newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
                         
@@ -657,7 +665,7 @@ class Service {
                             newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
                         }
                         
-                        var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
+                        var replacing = rowPart.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement2 + "</row>"
                         let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                         
@@ -715,6 +723,7 @@ class Service {
                             print("No rows found or there are no children under the specified path")
                         }
                         
+                        rowPart = rowPart.replacingOccurrences(of: "</row>", with: "")
                         let final = old!.replacingOccurrences(of: targetRowTag, with: rowPart + "</row>")
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: final) {
