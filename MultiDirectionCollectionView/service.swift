@@ -277,15 +277,27 @@ class Service {
             // Extract matching substrings
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
+//                    var matchingSubstring = xmlString![matchRange].description
+//
+//                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+//                    
+//                    var replaced = xmlString
+//                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
+//                    if cCnt == 2{
+//                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+//                    }
+//                    return replaced
                     var matchingSubstring = xmlString![matchRange].description
-
-                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-                    
-                    var replaced = xmlString
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                    //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                    if matchingSubstring.contains("<row r"){
+                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
                     }
+                    
+                    if matchingSubstring.hasSuffix("</row>"){
+                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    }
+                    
+                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
                     return replaced
                 }
             }
@@ -564,7 +576,7 @@ class Service {
                     let nsRange = match.range(at: 1) // Use the capture group index
                     if let range = Range(nsRange, in: xmlString!) {
                         if let matchRange = Range(match.range, in: xmlString!) {
-                            targetRowTag = String(xmlString![matchRange])
+                            targetRowTag = String(xmlString![matchRange]).description
                             if targetRowTag.contains("/><row"){
                                 let items = targetRowTag.components(separatedBy: "/><row")
                                 if (items.first != nil){
@@ -694,19 +706,25 @@ class Service {
                     }
                 
                 }else{
-                    //first c tag with sharedstring idx == nil
+                    //first c tag with sharedstring idx == nil no row yet
                     var sortedRowstr = ""
+                    var sortedRowcnt = [String]()
+                    var sortedRowInt = [Int]()
                     if targetRowTag == ""{
-                        var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                        var newElement = "<sheetData><row r=\"\(row)\"><c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
                         if styleIdx > 0{
-                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
+                            newElement = "<sheetData><row r=\"\(row)\"><c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
                         }
                         
-                        var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
+                        var replaced = xmlString
                         
                         if replaced!.contains("<sheetData/>"){
-                            replaced = xmlString?.replacingOccurrences(of: "<sheetData/>", with: newElement + "</sheetData>")
+                            replaced = replaced!.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
                         }
+                        
+                        replaced = replaced!.replacingOccurrences(of: "<sheetData>", with: newElement)
+                        
+                        
                         
                         xml = XMLHash.parse(replaced!)
                         
@@ -729,69 +747,41 @@ class Service {
                             // For example, print them
                             for cell in sortedCells {
                                 sortedRowstr += cell.description
+                                let idx = cell.element?.attribute(by: "r")?.text.description
+                                sortedRowcnt.append(cell.description)
+                                sortedRowInt.append(Int(idx!)!)
                             }
                             print("row",sortedRowstr)
                         }
 
-                        if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
-                            let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring, with:"<sheetData>" + sortedRowstr + "</sheetData>")
-                            xml = XMLHash.parse(rowSortedStr)
+                        let sheetDataSubstring = extractSheetDataSubstring(from: replaced!)
+                        if sheetDataSubstring == nil{
+                            return backUpXmlString
                         }
-                           
-                        if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
-                            // Iterate through the rows
-                            for row in rows {
-                                // Sort the child elements (cells) within each row based on some criteria
-                                let sortedCells = row.children.sorted { (cell1: XMLIndexer, cell2: XMLIndexer) -> Bool in
-                                    // Compare cells based on some criteria (e.g., column index)
-                                    if let name1 = cell1.element?.attribute(by: "r")?.text, let name2 = cell2.element?.attribute(by: "r")?.text {
-                                        let indices1 = extractIndices(from: name1)
-                                        let indices2 = extractIndices(from: name2)
-                                        let ary = [indices1,indices2]
-                                        
-                                        let sortedArray = ary.sorted { (string1, string2) -> Bool in
-                                            return string1! < string2! // Compare strings in descending order
-                                        }
-                                        
-                                          
-                                        
-                                        // Rows are equal, compare columns
-                                        if indices1!.column < indices2!.column{
-                                            return name1 < name2
-                                        }
-                                    }
-                                        
-                                       
-                                    return false // Modify as per your sorting criteria
-                                }
-                                
-                                // Convert sortedCells back to an array of XMLIndexer objects
-                                let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
-                                
-                                // Update the children of the current row with the sorted cells
-                                // Note: You may need to find an alternative way to update the children of the row element
-                                // row.children = sortedCellsArray // This will not work due to read-only property
-                                
-                                // Print the sorted cells (optional)
-                                for cell in sortedCellsArray {
-                                    print("updateString",cell)
-                                }
-                            }
-                        } else {
-                            print("No rows found or there are no children under the specified path")
+                        if (sheetDataSubstring != nil) {
+                            let zippedArray = zip(sortedRowcnt, sortedRowInt)
+
+                            // Sort the zipped array based on the second element (sortedRowInt)
+                            let sortedZippedArray = zippedArray.sorted { $0.1 < $1.1 }
+
+                            // Extract the sorted strings from the sorted zipped array
+                            let sortedStrings = sortedZippedArray.map { $0.0 }
+                            
+                            let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring!, with:"<sheetData>" + sortedStrings.joined(separator: "") + "</sheetData>")
+                            xml = XMLHash.parse(rowSortedStr)
                         }
                         
                         let validator = XMLValidator()
-                        if validator.validateXML(xmlString: xml.description) {
+                        
+                        if validator.validateXML(xmlString:xml.description) {
                             print("XML is valid.")
                             return xml.description
                         } else {
                             print("XML is not valid.")
-                            print(xml.description)
                             return backUpXmlString
                         }
                     }else{
-                        //targetRowTag   "<row r=\"1\"><c r=\"B1\" t=\"s\"><v>78</v></c></row>"
+                        //targetRowTag   "<row r=\"1\"><c r=\"B1\" row exists t=\"s\"><v>78</v></c></row>"
                         var rowPart = targetRowTag
                         if rowPart.hasSuffix("/>"){
                             rowPart = rowPart.replacingOccurrences(of: "/>", with: ">")
@@ -1258,7 +1248,9 @@ class Service {
                 }else{
                     //row not exists
                     //first c tag with sharedstring idx == nil
+                    var sortedRowcnt = [String]()
                     var sortedRowstr = ""
+                    var sortedRowInt = [Int]()
                     if targetRowTag == ""{
                 //"<sheetData><row r=\"4\"><c r=\"A4\" s=\"1\"><v>10</v></c></row>"
                         //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
@@ -1289,68 +1281,35 @@ class Service {
                                 else {
                                     return false
                                 }
-                                print("guard",text1)
-                                print("gurard",text2)
+                               
                                 return text1 < text2
                             }
                             
                             // Use the sorted cells
                             // For example, print them
                             for cell in sortedCells {
+                                let idx = cell.element?.attribute(by: "r")?.text.description
+                                sortedRowcnt.append(cell.description)
+                                sortedRowInt.append(Int(idx!)!)
                                 sortedRowstr += cell.description
                             }
                             print("row",sortedRowstr)
                         }
 
                         if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
-                            let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring, with:"<sheetData>" + sortedRowstr + "</sheetData>")
+                            
+                            let zippedArray = zip(sortedRowcnt, sortedRowInt)
+
+                            // Sort the zipped array based on the second element (sortedRowInt)
+                            let sortedZippedArray = zippedArray.sorted { $0.1 < $1.1 }
+
+                            // Extract the sorted strings from the sorted zipped array
+                            let sortedStrings = sortedZippedArray.map { $0.0 }
+                            
+                            let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring, with:"<sheetData>" + sortedStrings.joined(separator: "") + "</sheetData>")
                             xml = XMLHash.parse(rowSortedStr)
                         }
                            
-                        if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
-                            // Iterate through the rows
-                            for row in rows {
-                                // Sort the child elements (cells) within each row based on some criteria
-                                let sortedCells = row.children.sorted { (cell1: XMLIndexer, cell2: XMLIndexer) -> Bool in
-                                    // Compare cells based on some criteria (e.g., column index)
-                                    if let name1 = cell1.element?.attribute(by: "r")?.text, let name2 = cell2.element?.attribute(by: "r")?.text {
-                                        let indices1 = extractIndices(from: name1)
-                                        let indices2 = extractIndices(from: name2)
-                                        let ary = [indices1,indices2]
-                                        
-                                        let sortedArray = ary.sorted { (string1, string2) -> Bool in
-                                            return string1! < string2! // Compare strings in descending order
-                                        }
-                              
-                                        
-                                        // Rows are equal, compare columns
-                                        if indices1!.column < indices2!.column{
-                                            return name1 < name2
-                                        }
-                                    }
-                                        
-                                       
-                                    return false // Modify as per your sorting criteria
-                                }
-                                
-                                // Convert sortedCells back to an array of XMLIndexer objects
-                                let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
-                                
-                                // Update the children of the current row with the sorted cells
-                                // Note: You may need to find an alternative way to update the children of the row element
-                                // row.children = sortedCellsArray // This will not work due to read-only property
-                                
-                                // Print the sorted cells (optional)
-                                for cell in sortedCellsArray {
-                                    print(cell)
-                                }
-                            }
-                        } else {
-                            print("No rows found or there are no children under the specified path")
-                        }
-                        
-
-                        
                         let validator = XMLValidator()
                         if validator.validateXML(xmlString: xml.description) {
                             print("XML is valid.")
@@ -1372,7 +1331,7 @@ class Service {
                         }
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                         //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
-                        var newElement2 = "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c>"
+                        var newElement2 = "<c r=\"\(String(index!))\"><v>\(String(vIndex!))</v></c>"
                         if (sValueId != nil && sValueId! != 0){
                             newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
                         }
