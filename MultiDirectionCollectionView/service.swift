@@ -277,27 +277,15 @@ class Service {
             // Extract matching substrings
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
-//                    var matchingSubstring = xmlString![matchRange].description
-//
-//                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-//                    
-//                    var replaced = xmlString
-//                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-//                    if cCnt == 2{
-//                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
-//                    }
-//                    return replaced
                     var matchingSubstring = xmlString![matchRange].description
-                    //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
+
+                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                     
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    var replaced = xmlString
+                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
+                    if cCnt == 2{
+                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
                     }
-                    
-                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
                     return replaced
                 }
             }
@@ -318,16 +306,14 @@ class Service {
             if let match = matches2.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     var matchingSubstring = xmlString![matchRange].description
-                    //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
+
+                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                     
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+                    var replaced = xmlString
+                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
+                    if cCnt == 2{
+                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
                     }
-                    
-                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
                     return replaced
                 }
             }
@@ -650,8 +636,9 @@ class Service {
                         }
                     }else{
                     // Define the regular expression pattern D3
-                    let pattern1 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)/>"
-                    let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+                        
+                    let pattern1 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*>(.*?)</c>"
+                    let pattern2 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*/>" //#"<c\s+r="B1".*?</c>"#
                     
                     let combinedPattern = "\(pattern1)|\(pattern2)"
 
@@ -1190,8 +1177,10 @@ class Service {
                         }
                     }else{
                     // Define the regular expression pattern D3
-                    let pattern1 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)/>"
-                    let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+//                    let pattern1 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)/>"
+//                    let pattern2 = "<c r=\"\(rValues2[idx+1])\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+                    let pattern1 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*>(.*?)</c>"
+                    let pattern2 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*/>"
                     
                     let combinedPattern = "\(pattern1)|\(pattern2)"
 
