@@ -280,15 +280,18 @@ class Service {
                     var matchingSubstring = xmlString![matchRange].description
                     //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                     
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
-                    
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                    }
-                    
-                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
+//                    if matchingSubstring.contains("<row r"){
+//                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
+//                    }
+//                    
+//                    if matchingSubstring.hasSuffix("</row>"){
+//                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
+//                    }
+//                    
+//                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
+                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                                       
+                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
                     return replaced
                 }
             }
