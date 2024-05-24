@@ -264,7 +264,7 @@ class Service {
             let xml = XMLHash.parse(xmlString!)
             
             // Define the regular expression pattern D3
-            let pattern = "<c r=\"\(String(index!))\".*?>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
+            let pattern = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>" //#"<c\s+r="B1".*?</c>"#
             
             // Create the regular expression object
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
@@ -278,20 +278,14 @@ class Service {
             if let match = matches.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     var matchingSubstring = xmlString![matchRange].description
-                    //var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-                    
-//                    if matchingSubstring.contains("<row r"){
-//                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-//                    }
-//                    
-//                    if matchingSubstring.hasSuffix("</row>"){
-//                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-//                    }
-//                    
-//                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring.description, with: "")
+
                     var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-                                       
-                    let replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                    
+                    var replaced = xmlString
+                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
+                    if cCnt == 2{
+                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                    }
                     return replaced
                 }
             }
