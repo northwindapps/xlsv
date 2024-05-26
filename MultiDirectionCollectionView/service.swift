@@ -823,12 +823,7 @@ class Service {
                                 
                                 // Convert sortedCells back to an array of XMLIndexer objects
                                 let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
-                                
-                            
-                                
-                                // Update the children of the current row with the sorted cells
-                                // Note: You may need to find an alternative way to update the children of the row element
-                                // row.children = sortedCellsArray // This will not work due to read-only property
+
                                 
                                 // Print the sorted cells (optional)
                                 for cell in sortedCellsArray {
@@ -917,10 +912,12 @@ class Service {
             if let match = matches4.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     var matchingSubstring = xmlString![matchRange].description
-                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    var functionstr = ""
+                    functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     }
                     
                     //"<c r=\"D14\" s=\"54\"><v>0.375</v></c><c r=\"E14\" s=\"55\"><v>0.75</v></c><c r=\"F14\" s=\"56\"><v>0.5</v></c><c r=\"G14\" s=\"57\"><v>0.54166666666666663</v></c><c r=\"H14\" s=\"56\"/>"
@@ -959,10 +956,12 @@ class Service {
             if let match = matches3.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     var matchingSubstring = xmlString![matchRange].description
-                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    var functionstr = ""
+                    functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     }
                     
                     //"<c r=\"D14\" s=\"54\"><v>0.375</v></c><c r=\"E14\" s=\"55\"><v>0.75</v></c><c r=\"F14\" s=\"56\"><v>0.5</v></c><c r=\"G14\" s=\"57\"><v>0.54166666666666663</v></c><c r=\"H14\" s=\"56\"/>"
@@ -1013,10 +1012,13 @@ class Service {
                         matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
                     }
                     
-                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    var functionstr = ""
+                    functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     }
                     
                     let cCnt = matchingSubstring.components(separatedBy: "r=").count
@@ -1061,10 +1063,13 @@ class Service {
                         matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
                     }
                     
-                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                    var functionstr = ""
+                    functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    
+                    var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     }
                     
                     let cCnt = matchingSubstring.components(separatedBy: "r=").count
@@ -1282,7 +1287,6 @@ class Service {
                                 sortedRowInt.append(Int(idx!)!)
                                 sortedRowstr += cell.description
                             }
-                            print("row",sortedRowstr)
                         }
 
                         if let sheetDataSubstring = extractSheetDataSubstring(from: replaced!) {
@@ -2143,6 +2147,36 @@ class Service {
             return String(input[range])
         }
         return nil
+    }
+    
+    func extractFunctionSubstring(from input: String) -> String? {
+        let pattern1 = "<f.*?/>"
+        if let range = input.range(of: pattern1, options: .regularExpression) {
+            return String(input[range])
+        }
+        
+        let pattern2 = "<f>(.*?)</f>"
+        if let range = input.range(of: pattern2, options: .regularExpression) {
+            return String(input[range])
+        }
+        return ""
+    }
+    
+    //TODO
+    //b: Boolean (0 or 1)
+    //d: Date (in ISO 8601 format)
+    //e: Error (error message text)
+    //inlineStr: Inline string (actual string value stored directly in the cell element)
+    //n: Number
+    //s: Shared string (an index to the shared string table)
+    func extractFunctionTtagSubstring(from input: String) -> String? {
+        if input.contains("t=\"str\""){
+            return "t=\"str\""
+        }
+        if input.contains("t=\"str\""){
+            return "t=\"str\""
+        }
+        return ""
     }
 
 
