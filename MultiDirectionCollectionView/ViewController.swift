@@ -1233,6 +1233,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
+    
     @objc func resetSheet(_ sender:UIButton){
         
         var message = "Current data will be lost. Is that ok?"
@@ -1632,12 +1633,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func restore()
     {
         //It's now restoreing.
-        
         (content,location,COLUMNSIZE,ROWSIZE) = otherclass.outValues()
-        
-        
-        
-        
         myCollectionView.reloadData()
         
     }
@@ -1748,8 +1744,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.localSave.addTarget(self, action: #selector(ViewController.localsave(_:)), for: UIControl.Event.touchUpInside)
-        
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
         customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
@@ -1757,6 +1751,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
         customview2.v135Data.addTarget(self, action: #selector(ViewController.old_excelEmail), for: UIControl.Event.touchUpInside)
+        
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
@@ -1805,13 +1800,100 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
             
         }
-        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
-        
-        //unhidden in next version 1.3.7 TODO develop googleDrive upload
-        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
+        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
     }
+    
+    @objc func saveOniCloudAction(){
+        
+        var message = "Do you save this file on iCloud?"
+        var yes = "OK"
+        var no = "No"
+        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+        
+        if locationstr.contains( "ja")
+        {
+            message = "このファイルをiCloudに保存しますか？"
+            yes = "はい"
+            no = "いいえ"
+        }else if locationstr.contains( "fr")
+        {
+            message = "Enregistrez-vous ce fichier sur iCloud ?"
+            yes = "oui"
+            no = "non"
+        }else if locationstr.contains( "zh"){
+            
+            message = "您是否将此文件保存在 iCloud 上？"
+            yes = "是"
+            no = "否"
+        }else if locationstr.contains( "de")
+        {
+            
+            message = "Speichern Sie diese Datei in iCloud?"
+            yes = "ja"
+            no = "nein"
+        }else if locationstr.contains( "it")
+        {
+            
+            message = "Salvi questo file su iCloud?"
+            yes = "si"
+            no = "no"
+        }else if locationstr.contains( "ru")
+        {
+            
+            message = "Вы сохраняете этот файл в iCloud?"
+            yes = "да"
+            no = "нет"
+        }else if locationstr.contains("da")
+        {
+            message = "Gemmer du denne fil på iCloud?"
+            yes = "ja"
+            no = "nej"
+        }else if locationstr.contains("es")
+        {
+            message = "¿Guardas este archivo en iCloud?"
+            yes = "si"
+            no = "no"
+        }else{
+            
+        }
+        
+        
+        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
+        alert.addTextField()
+        
+        //
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        
+      
+        alert.textFields?[0].text = (url?.pathExtension == "xlsx") ? url?.lastPathComponent : "can't find an xlsx file"
+
+    
+        
+        
+        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+            let name = alert.textFields![0].text
+            if name!.count > 0 {
+                if let url2 = url{
+                    self.uploadFileToICloud(url: url2,filename: name!)
+                }
+            }
+        })
+        
+        alert.addAction(confirmAction)
+        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+        
+        self.present(alert, animated: true)
+        
+        
+        
+        self.customview2.removeFromSuperview()
+        
+    }
+    
     
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -4341,17 +4423,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let dateFormatter: DateFormatter = DateFormatter()
             dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
             var date = dateFormatter.string(from: today)
-            let dateStr = String(date)
-            dateStr.replacingOccurrences(of: ":", with: "_")
 
             let mail = MFMailComposeViewController()
             mail.mailComposeDelegate = self
 
             mail.setSubject("from ios")
-
-
-            let url1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            let filePath0 = URL(fileURLWithPath: url1).appendingPathComponent("outputInAppContainer.zip").path //20200307 root directory
 
 
             //print("ViewController" ,filePath)
@@ -4371,6 +4447,44 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // show failure alert
         }
     }
+    
+    func uploadFileToICloud(url: URL,filename: String) {
+        let fileManager = FileManager.default
+        
+        if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+            if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
+                do {
+                    //create directory
+                    try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true, attributes: nil)
+                }
+                catch {
+                    print(error.localizedDescription)
+                }
+            }
+            
+            let fileUrl = containerUrl.appendingPathComponent(filename.replacingOccurrences(of: ".xlsx", with: "") + ".xlsx")
+            do {
+                // Check if the file already exists in iCloud and remove it if it does
+                if fileManager.fileExists(atPath: fileUrl.path) {
+                    try fileManager.removeItem(at: fileUrl)
+                }
+                
+                // Copy the file to iCloud Drive
+                try fileManager.copyItem(at: url, to: fileUrl)
+                
+                // Verify the file was successfully copied
+                if fileManager.fileExists(atPath: fileUrl.path) {
+                    print("File verified to exist in iCloud Drive at: \(fileUrl.path)")
+                } else {
+                    print("File could not be verified in iCloud Drive")
+                }
+            } catch {
+                print("Error uploading file to iCloud Drive: \(error.localizedDescription)")
+            }
+           
+        }
+    }
+    
     
     @objc func old_excelEmail() {
         //get FileTitle

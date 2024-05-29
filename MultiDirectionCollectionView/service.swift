@@ -2295,7 +2295,7 @@ extension FileManager {
             // For example:
             do {
                 let fileManager = FileManager.default
-                let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent(url.lastPathComponent)
+                let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents").appendingPathComponent(url.lastPathComponent)
                 try fileManager.copyItem(at: url, to: iCloudURL!)
                 print("File uploaded to iCloud Drive successfully")
             } catch {
