@@ -1567,6 +1567,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
+       
 //        bannerview.isHidden = true
 //        bannerview.delegate = self
 //        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
@@ -1599,6 +1600,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.myCollectionView.reloadData()
         }
     }
+    
     //the end of viewdidload
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         bannerview.isHidden = false
@@ -4112,7 +4114,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if let keyboardFrame: NSValue = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
-            KEYBOARDLOCATION = keyboardHeight
+            UIView.animate(withDuration: 0.3) {
+                self.KEYBOARDLOCATION = keyboardHeight
+            }
         }
     }
     
