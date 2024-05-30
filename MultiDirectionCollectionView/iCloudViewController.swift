@@ -535,7 +535,30 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             // Date and Time Functions
             "DATEDIF",
             "NETWORKDAYS",
-            "WORKDAY"
+            "WORKDAY",
+            "IMPRODUCT",
+            "IMSUM",
+            "IMSUB",
+            "IMCONJUGATE",
+            "IMDIV",
+            "IMARGUMENT",
+            "IMABS",
+            "IMRECTANGULAR",
+            "COMPLEX",
+            "pi",
+            "e",
+            "asin",
+            "acos",
+            "atan",
+            "sin",
+            "cos",
+            "tan",
+            "exp",
+            "logb",
+            "logd",
+            "log",
+            "abs",
+            "sqrt"
         ]
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {

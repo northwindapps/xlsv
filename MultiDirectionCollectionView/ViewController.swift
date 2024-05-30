@@ -29,7 +29,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @IBOutlet weak var fileTitle: UILabel!
     
     @IBOutlet weak var FileCollectionView: UICollectionView!
-    var KEYBOARDLOCATION = CGFloat()
+    var KEYBOARDLOCATION:CGFloat = 0.0
     @objc var List: Array<AnyObject> = []
     
     var location = [String]()
@@ -1568,11 +1568,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         )
         
        
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
-//        bannerview.rootViewController = self
-//        bannerview.load(GADRequest())
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
+        bannerview.rootViewController = self
+        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -4148,7 +4148,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             UIView.animate(withDuration: 0.3) {
-                self.KEYBOARDLOCATION = keyboardHeight
+                if self.KEYBOARDLOCATION < 1.0{
+                    self.KEYBOARDLOCATION = keyboardHeight
+                }
             }
         }
     }
