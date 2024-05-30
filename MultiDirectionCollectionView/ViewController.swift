@@ -1567,11 +1567,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             object: nil
         )
         
-        bannerview.isHidden = true
-        bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
-        bannerview.rootViewController = self
-        bannerview.load(GADRequest())
+//        bannerview.isHidden = true
+//        bannerview.delegate = self
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
+//        bannerview.rootViewController = self
+//        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -3126,30 +3126,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //date conversion
             let dateString = element
-
             // Create a DateFormatter to parse the date string
             let dateFormatter = DateFormatter()
-//            dateFormatter.dateFormat = "yyyy/MM/dd"
-//
-//            // Parse the date string
-//            if let date = dateFormatter.date(from: dateString) {
-//                // Define the Excel base date (January 1, 1900)
-//                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
-//                let calendar = Calendar(identifier: .gregorian)
-//                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
-//
-//                // Calculate the time interval between the given date and the Excel base date
-//                let dateTimeInterval = date.timeIntervalSinceReferenceDate
-//                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
-//
-//                // Calculate the correswrtkjyekjrtkponding serial number
-//                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
-//
-//                print("Excel serial number:", serialNumber) // Output: 39448
-//                element = String(serialNumber)
-//                numFmt = 14
-//                
-//            }
             
 //            // Create a DateFormatter to parse the date string
             let dateFormatter2 = DateFormatter()
@@ -3433,6 +3411,72 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         calculatormode_update_main()
+        
+        //excel work
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        
+        //date object
+        //hh:mm case MAX 24*60*60[s]
+        let hhmm = element.components(separatedBy: ":")
+        if hhmm.count == 2, let hh = Decimal(string: hhmm[0]), let mm = Decimal(string: hhmm[1]) {
+            // Ensure hhmm array has two elements and both are successfully converted to Decimal
+            
+            // Calculate total number of seconds in a day
+            let max = Decimal(24) * Decimal(60) * Decimal(60)
+            
+            // Calculate total number of seconds from HH:MM format
+            let divid = hh * Decimal(60) * Decimal(60) + mm * Decimal(60)
+            
+            // Calculate the fraction representing the time
+            element = String(describing: divid / max)
+            numFmt = 20
+        }
+        
+        //date conversion
+        let dateString = element
+        // Create a DateFormatter to parse the date string
+        let dateFormatter = DateFormatter()
+        
+//            // Create a DateFormatter to parse the date string
+        let dateFormatter2 = DateFormatter()
+        dateFormatter2.dateFormat = "MM/dd/yyyy"
+        
+        // Parse the date string
+        if let date = dateFormatter2.date(from: dateString) {
+            // Define the Excel base date (January 1, 1900)
+            let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
+            let calendar = Calendar(identifier: .gregorian)
+            let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
+
+            // Calculate the time interval between the given date and the Excel base date
+            let dateTimeInterval = date.timeIntervalSinceReferenceDate
+            let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
+
+            // Calculate the corresponding serial number
+            let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
+
+            print("Excel serial number:", serialNumber) // Output: 39448
+            element = String(serialNumber)
+            numFmt = 14
+            
+        }
+        
+        let cellidx = getIndexlabel()
+        if let f_idx = f_location_alphabet.firstIndex(of: cellidx), isExcel && element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: getIndexlabelForExcel(),numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+            
+            //xml files update. not it needs to get read here
+            if appd.ws_path != "" {
+                print("yourExcelfile",appd.ws_path)
+                let ehp = ExcelHelper()
+                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+                // Do any additional setup after loading the view.
+                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            }
+        }
         
         //It makes better UX
         changeaffected.removeAll()

@@ -604,8 +604,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                                 //normal values
                                 formulaCheck.append(valueContent!)
                             }else{
-                                //formulaCheck.append("=" + formulaContent!) TODO
-                                formulaCheck.append(valueContent!)
+                                formulaCheck.append("=" + formulaContent!) //TODO
+                                //formulaCheck.append(valueContent!)
                             }
                             
                         }

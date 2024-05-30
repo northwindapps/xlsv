@@ -189,8 +189,8 @@ class ExcelHelper{
                            if formulaContent == nil {
                                formulaCheck.append(valueContent!)
                            }else{
-                               //formulaCheck.append("=" + formulaContent!) TODO It takes time
-                               formulaCheck.append(valueContent!)
+                               formulaCheck.append("=" + formulaContent!) //TODO It takes time
+                               //formulaCheck.append(valueContent!)
                            }
                            
                        }

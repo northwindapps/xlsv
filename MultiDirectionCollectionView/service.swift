@@ -863,7 +863,7 @@ class Service {
     }
     
     //todo creating
-    func testUpdateValue(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?) -> String?{
+    func testUpdateValue(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //get style id
         var styleIdx = -1
@@ -914,6 +914,9 @@ class Service {
                     var matchingSubstring = xmlString![matchRange].description
                     var functionstr = ""
                     functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    if (fString != nil){
+                        functionstr = "<f>\(fString!)</f>"
+                    }
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
@@ -958,6 +961,9 @@ class Service {
                     var matchingSubstring = xmlString![matchRange].description
                     var functionstr = ""
                     functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    if (fString != nil){
+                        functionstr = "<f>\(fString!)</f>"
+                    }
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
@@ -1014,7 +1020,9 @@ class Service {
                     
                     var functionstr = ""
                     functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
-                    
+                    if (fString != nil){
+                        functionstr = "<f>\(fString!)</f>"
+                    }
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
                     if styleIdx > 0{
@@ -1065,6 +1073,9 @@ class Service {
                     
                     var functionstr = ""
                     functionstr = extractFunctionSubstring(from: matchingSubstring) ?? ""
+                    if (fString != nil){
+                        functionstr = "<f>\(fString!)</f>"
+                    }
                     
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                     
@@ -1089,10 +1100,16 @@ class Service {
                 }
             }
             
-           
+            //
+            
   
             //get the list of locations
             do {
+                var functionstr = ""
+                if (fString != nil){
+                    functionstr = "<f>\(fString!)</f>"
+                }
+                
                 let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                 
                 // Retrieve all row tags
@@ -1161,10 +1178,10 @@ class Service {
                 if let idx = rValues2.firstIndex(of: String(index!)) {
                     print("rowindex",idx)
                     if idx == rValues2.count-1{
-                        var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                        var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                         
                         if styleIdx > 0{
-                            newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                            newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                         }
                         
                         var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
@@ -1216,10 +1233,10 @@ class Service {
                                 //first is always ""
                                 let item = items[1] ?? ""
                                 print("item", item)
-                                var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                                var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                                 
                                 if styleIdx > 0{
-                                    newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                                    newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                                 }
 
                                 // Find the correct position to insert the new element
@@ -1248,13 +1265,13 @@ class Service {
                     if targetRowTag == ""{
                 //"<sheetData><row r=\"4\"><c r=\"A4\" s=\"1\"><v>10</v></c></row>"
                         //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
-                        var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" ><v>\(String(vIndex!))</v></c></row>"
+                        var newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" >\(functionstr)<v>\(String(vIndex!))</v></c></row>"
                         if (sValueId != nil && sValueId! != 0){
-                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c></row>"
+                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c></row>"
                         }
                         
                         if styleIdx > 0{
-                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c></row>"
+                            newElement = "<sheetData><row r=\"\(row)\">" + "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c></row>"
                         }
                         
                         var replaced = xmlString?.replacingOccurrences(of: "<sheetData>", with: newElement)
@@ -1324,13 +1341,13 @@ class Service {
                         }
                         let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                         //var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
-                        var newElement2 = "<c r=\"\(String(index!))\"><v>\(String(vIndex!))</v></c>"
+                        var newElement2 = "<c r=\"\(String(index!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                         if (sValueId != nil && sValueId! != 0){
-                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\"><v>\(String(vIndex!))</v></c>"
+                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                         }
                         
                         if (styleIdx > 0){
-                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\"><v>\(String(vIndex!))</v></c>"
+                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\">\(functionstr)<v>\(String(vIndex!))</v></c>"
                         }
                         
                         
@@ -1774,7 +1791,7 @@ class Service {
     }
     
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?) -> URL? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -1880,7 +1897,7 @@ class Service {
                     let shredStringId = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
                     if shredStringId.0 == nil && (Float(input) != nil){
                         //value update
-                        let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt) ?? ""//A3
+                        let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString) ?? ""//A3
                         // Write the modified XML data back to the file
                         if(replacedWithNewString != ""){
                             try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
@@ -1969,6 +1986,7 @@ class Service {
         
         return nil
     }
+    
     
     func writeXlsxEmail(fp: String = "", url: URL? = nil) -> URL? {
         do {
