@@ -387,7 +387,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -432,7 +432,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -488,7 +488,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -537,7 +537,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -684,7 +684,7 @@ class Service {
                                         print("XML is valid.")
                                     } else {
                                         print("XML is not valid.")
-                                        print(xmlString)
+                                        //print(xmlString)
                                         return backUpXmlString
                                     }
                                 }
@@ -794,7 +794,7 @@ class Service {
                             print("XML is valid.")
                         } else {
                             print("XML is not valid.")
-                            print(xmlString)
+                            //print(xmlString)
                             return backUpXmlString
                         }
                         let old = xmlString
@@ -935,7 +935,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -983,7 +983,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -1040,7 +1040,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -1094,7 +1094,7 @@ class Service {
                         return xmlString
                     } else {
                         print("XML is not valid.")
-                        print(xmlString)
+                        //print(xmlString)
                         return backUpXmlString
                     }
                 }
@@ -1248,7 +1248,7 @@ class Service {
                                         print("XML is valid.")
                                     } else {
                                         print("XML is not valid.")
-                                        print(xmlString)
+                                        //print(xmlString)
                                         return backUpXmlString
                                     }
                                 }
@@ -1360,7 +1360,7 @@ class Service {
                             print("XML is valid.")
                         } else {
                             print("XML is not valid.")
-                            print(xmlString)
+                            //print(xmlString)
                             return backUpXmlString
                         }
                         let old = xmlString
@@ -1444,8 +1444,8 @@ class Service {
                 parser.delegate = delegate
                 
                 if parser.parse() {
-                    print("si",delegate.sis)
-                    print("si count", delegate.sis.count)
+                    //print("si",delegate.sis)
+                    //print("si count", delegate.sis.count)
                     //var xmlString = try? String(contentsOf: url2)
                     
                     //try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
@@ -1621,7 +1621,7 @@ class Service {
                         try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
                         
                         var xmlString = try? String(contentsOf: styleXMLURL)
-                        print(xmlString)
+                        //print(xmlString)
                     }
                     
                     
@@ -1866,7 +1866,7 @@ class Service {
                 if (modifiedStylesStr != nil){
                     try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
                     var xmlString = try? String(contentsOf: styleXMLURL)
-                    print(xmlString)
+                    //print(xmlString)
                 }
                 
                     

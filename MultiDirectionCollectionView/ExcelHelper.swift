@@ -330,7 +330,8 @@ class ExcelHelper{
                //content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
                content1.synchronize()
                
-               print("content",valueContent+stringContent)
+               //heavy
+               //print("content",valueContent+stringContent)
                
                var finalL_value = [String]()
                var finalL_string = [String]()
