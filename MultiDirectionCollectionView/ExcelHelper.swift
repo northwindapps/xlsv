@@ -32,6 +32,101 @@ class ExcelHelper{
     
 
     func readExcel2(path:String, wsIndex:Int){
+        let excelFunctions = [
+            "SUM",
+            "AVERAGE",
+            "MIN",
+            "MAX",
+            "COUNT",
+            "COUNTA",
+            "PRODUCT",
+            "SUMIF",
+            "ROUND",
+            "INT",
+            "CONCATENATE",
+            "LEFT",
+            "RIGHT",
+            "MID",
+            "LEN",
+            "FIND",
+            "SUBSTITUTE",
+            "UPPER",
+            "LOWER",
+            "TRIM",
+            "TODAY",
+            "NOW",
+            "DATE",
+            "TIME",
+            "DAY",
+            "MONTH",
+            "YEAR",
+            "HOUR",
+            "MINUTE",
+            "SECOND",
+            "VLOOKUP",
+            "HLOOKUP",
+            "INDEX",
+            "MATCH",
+            "OFFSET",
+            "CHOOSE",
+            "IF",
+            "AND",
+            "OR",
+            "NOT",
+            "IFERROR",
+            "PMT",
+            "FV",
+            "PV",
+            "RATE",
+            "NPV",
+            "AVERAGE",
+            "MEDIAN",
+            "MODE",
+            "STDEV",
+            "VAR",
+            "CORREL",
+            "FORECAST",
+            "ISNUMBER",
+            "ISERROR",
+            "ISBLANK",
+            "ISTEXT",
+            // Information Functions
+            "CELL",
+            "ERROR.TYPE",
+            "INFO",
+            "N",
+            // Lookup and Reference Functions
+            "ADDRESS",
+            "COLUMN",
+            "ROW",
+            "TRANSPOSE",
+            "INDIRECT",
+            // Text Functions
+            "REPLACE",
+            "REPT",
+            "TEXT",
+            "CLEAN",
+            "CODE",
+            // Statistical Functions
+            "PERCENTILE",
+            "PERCENTRANK",
+            "QUARTILE",
+            "RANK",
+            // Mathematical Functions
+            "CEILING",
+            "FLOOR",
+            "MOD",
+            "POWER",
+            "GCD",
+            // Financial Functions
+            "DURATION",
+            "MDURATION",
+            "YIELD",
+            // Date and Time Functions
+            "DATEDIF",
+            "NETWORKDAYS",
+            "WORKDAY"
+        ]
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -189,8 +284,15 @@ class ExcelHelper{
                            if formulaContent == nil {
                                formulaCheck.append(valueContent!)
                            }else{
-                               formulaCheck.append("=" + formulaContent!) //TODO It takes time
-                               //formulaCheck.append(valueContent!)
+                               let containsItem = excelFunctions.contains { formulaContent!.contains($0) }
+                               if !containsItem{
+                                   formulaCheck.append("=" + formulaContent!)
+                               }
+                               
+                               if containsItem{
+                                   //TODO
+                                   formulaCheck.append(valueContent!)
+                               }
                            }
                            
                        }

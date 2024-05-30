@@ -1352,7 +1352,7 @@ class Service {
                         
                         
                         
-                        var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
+                        var replacing = rowPart.replacingOccurrences(of: "</row>", with: "")
                         replacing = replacing + newElement2 + "</row>"
                         let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
                         let validator0 = XMLValidator()

@@ -3415,6 +3415,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         calculatormode_update_main()
         
         //excel work
+        let cellidx = getIndexlabel()
+        if let f_idx = f_location_alphabet.firstIndex(of: cellidx), isExcel && element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+            
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         
         //date object
@@ -3463,8 +3466,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }
         
-        let cellidx = getIndexlabel()
-        if let f_idx = f_location_alphabet.firstIndex(of: cellidx), isExcel && element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+        
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: getIndexlabelForExcel(),numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             
             //xml files update. not it needs to get read here
@@ -3771,11 +3773,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //TODO How can I determin a calculation order ? When a calculation excuted it should store the result in an array. And it should saved in json file to retreive it later.
         
+        //check cellidx
+        
         
         for i in 0..<f_content.count {
+            let checkL = extractCellIndices(from: f_content[i])
             for j in 0..<numberContentLocationInLetters.count {
                 if f_content[i].contains(numberContentLocationInLetters[j]) {
+                    if (checkL.firstIndex(of: numberContentLocationInLetters[j]) == nil){
+                        f_calculated.append("error")
+                            return
+                    }
+                    
                     f_content[i] = f_content[i].replacingOccurrences(of: numberContentLocationInLetters[j], with: numberContent[j])
+                    
                 }
             }
         }
@@ -3858,6 +3869,28 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }//forloopend
     }
+    
+    
+    func extractCellIndices(from formula: String) -> [String] {
+        // Define the regular expression pattern for cell references
+        let pattern = "[A-Z]+[0-9]+"
+        
+        // Create a regular expression object
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return []
+        }
+        
+        // Find matches in the input formula
+        let matches = regex.matches(in: formula, options: [], range: NSRange(location: 0, length: formula.count))
+        
+        // Extract the matched strings
+        let cellIndices = matches.map { match in
+            (formula as NSString).substring(with: match.range)
+        }
+        
+        return cellIndices
+    }
+
     
     func GetExcelColumnName(columnNumber: Int) -> String
     {
