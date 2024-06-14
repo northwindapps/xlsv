@@ -2720,7 +2720,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func autoComplete(src:String)->String{
-        let dotdot = src.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "→", with: "")
+        let dotdot = src.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "...", with: "…")
+        
         let ary = dotdot.components(separatedBy: "…")
         if ary.count > 1{
             if Int(ary[0]) != nil && Int(ary[1]) != nil{
