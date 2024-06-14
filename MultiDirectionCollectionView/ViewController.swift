@@ -689,7 +689,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
 //            if getRefmode == true {
 //                if changeaffected.contains(currentindexstr){
-//                    
+//
 //                }else{
 //                    changeaffected.append(currentindexstr)
 //                    let number = currentindexstr .components(separatedBy: ",")[0]
@@ -703,18 +703,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                    sum_str = String(sum_str.dropLast())
 //                    myCollectionView.reloadData()
 //                }
-//                
+//
 //            }else if pastemode == true{
-//                
+//
 //                if indexPath.item == 0{
-//                    
-//                    
-//                    
+//
+//
+//
 //                }else if indexPath.section == 0{
-//                    
-//                    
+//
+//
 //                }else{
-//                    
+//
 //                    if location.index(of: currentindexstr) != nil{
 //                        let i = location.index(of: currentindexstr)
 //                        location.remove(at: i!)
@@ -722,7 +722,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                        tcolor.remove(at: i!)
 //                        bgcolor.remove(at: i!)
 //                        textsize.remove(at: i!)
-//                        
+//
 //                    }
 //                    myCollectionView.reloadData()
 //                }
@@ -828,7 +828,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //    47    mmss.0    Elapsed time with decimal seconds
 //    48    ##0.0E+0    Scientific with one place
 //    49    @    Text
-//    
+//
     
     
     //http://stackoverflow.com/questions/27674317/changing-cell-background-color-in-uicollectionview-in-swift
@@ -2757,9 +2757,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //        currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
 //        if location.contains(currentindexstr){
 //            let i = location.index(of: currentindexstr)
-//            
+//
 //            datainputview.stringbox.text = datainputview.stringbox.text  + content[i!]
-//            
+//
 //            //new functionality
 //            let ary = datainputview.stringbox.text.components(separatedBy: "+")
 //            for i in 0..<COLUMNSIZE {
@@ -2767,7 +2767,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                    if ary[j].contains(getExcelColumnName(columnNumber:COLUMNSIZE-i)){
 //                        let item = ary[j].replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
 //                        let row = numberOnlyString(text: item)
-//                        
+//
 //                        if row.count > 0{
 //                            let original = getExcelColumnName(columnNumber:COLUMNSIZE-i)
 //                            let change = item.replacingOccurrences(of: original, with: String(COLUMNSIZE-i) + ",")
@@ -3078,17 +3078,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
             ROWSIZE = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
         }
-        
-        
-        
-        
-//        if localFileNames.count == 0 {
-//            let newfile = "sheet1"
-//            
-//            
-//            saveAsLocalJson(filename: newfile)
-//        }
-        
     }
     
     @objc func input(){
@@ -3102,74 +3091,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var element :String = datainputview.stringbox.text!
         let original_element = element
         datainputview.stringbox.text = ""
-        var numFmt = 0
-        
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        
-        //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
-        if isExcel && !element.hasPrefix("="){//mathematical expression doesnt support in Excel
-            //update sheet1,or2,or3 or xml each data entry
-            //date object
-            //hh:mm case MAX 24*60*60[s]
-            let hhmm = element.components(separatedBy: ":")
-            if hhmm.count == 2, let hh = Decimal(string: hhmm[0]), let mm = Decimal(string: hhmm[1]) {
-                // Ensure hhmm array has two elements and both are successfully converted to Decimal
-                
-                // Calculate total number of seconds in a day
-                let max = Decimal(24) * Decimal(60) * Decimal(60)
-                
-                // Calculate total number of seconds from HH:MM format
-                let divid = hh * Decimal(60) * Decimal(60) + mm * Decimal(60)
-                
-                // Calculate the fraction representing the time
-                element = String(describing: divid / max)
-                numFmt = 20
-            }
-            
-            //date conversion
-            let dateString = element
-            // Create a DateFormatter to parse the date string
-            let dateFormatter = DateFormatter()
-            
-            // Create a DateFormatter to parse the date string
-            let dateFormatter2 = DateFormatter()
-            dateFormatter2.dateFormat = "MM/dd/yyyy"
-            
-            // Parse the date string
-            if let date = dateFormatter2.date(from: dateString) {
-                // Define the Excel base date (January 1, 1900)
-                let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
-                let calendar = Calendar(identifier: .gregorian)
-                let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
-
-                // Calculate the time interval between the given date and the Excel base date
-                let dateTimeInterval = date.timeIntervalSinceReferenceDate
-                let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
-
-                // Calculate the corresponding serial number
-                let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
-
-                print("Excel serial number:", serialNumber) // Output: 39448
-                element = String(serialNumber)
-                numFmt = 14
-                
-            }
-            
-           
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: getIndexlabelForExcel(),numFmt:numFmt)
-            
-            //xml files update. does it needed? necessary?
-//            if appd.ws_path != "" {
-//                print("yourExcelfile",appd.ws_path)
-//                let ehp = ExcelHelper()
-//                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
-//                // Do any additional setup after loading the view.
-//                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-//                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//            }
-        }
         
         //add more complicated functionality
         if autoComplete(src: element).count > 1 {
@@ -3183,14 +3104,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let IP_i = Int(t_item)!
         let IP_s = Int(t_section)!
-        var checkInt = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
         
         var collocation = -1
         if element.contains("→"){
             let checkAlpha = alphabetOnlyString(text: element)
             if columnNames.index(of: checkAlpha) != nil {
                 collocation = columnNames.index(of: checkAlpha)!
-                checkInt = checkInt.replacingOccurrences(of: checkAlpha, with: String(collocation))
+                checkInput = checkInput.replacingOccurrences(of: checkAlpha, with: String(collocation))
             }
         }
         
@@ -3201,7 +3122,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             switch UIDevice.current.userInterfaceIdiom {
             case .phone:
                 //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
-                var padAry = element.components(separatedBy: ":")
+                let padAry = element.components(separatedBy: ":")
                 
                 if down_bool {
                     for idx in 0..<padAry.count{
@@ -3219,10 +3140,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             storeInput(IPd: IPl, elementd: each)
                             let alphabet = getExcelColumnName(columnNumber: IP_i)
                             clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
                 }
-                else if right_bool{
+                
+                if right_bool{
                     for idx in 0..<padAry.count{
                         let IPl = String(IP_i+idx) + "," + String(IP_s)
                         if IP_i+idx <= 0 {
@@ -3238,15 +3161,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             storeInput(IPd: IPl, elementd: each)
                             let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
                             clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
                 }
-                
                 break
+                
                 
             case .pad:
                 
-                var padAry = element.components(separatedBy: ":")
+                let padAry = element.components(separatedBy: ":")
                 
                 if down_bool {
                     for idx in 0..<padAry.count{
@@ -3264,46 +3188,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             storeInput(IPd: IPl, elementd: each)
                             let alphabet = getExcelColumnName(columnNumber: IP_i)
                             clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
                 }
-                else if up_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s-idx)
-                        if IP_s-idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            
-                        }
-                    }
-                }
-                else if left_bool{
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i-idx) + "," + String(IP_s)
-                        if IP_i-idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            
-                        }
-                    }
-                }
-                else if right_bool{
+                
+                
+                
+                if right_bool{
                     for idx in 0..<padAry.count{
                         let IPl = String(IP_i+idx) + "," + String(IP_s)
                         if IP_i+idx <= 0 {
@@ -3319,6 +3211,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             storeInput(IPd: IPl, elementd: each)
                             let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
                             clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
                 }
@@ -3327,97 +3220,65 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             default:
                 storeInput(IPd: IP, elementd: element)
+                let alphabet = getExcelColumnName(columnNumber: IP_i)
+                excelEntry(srcString: element, cellId: alphabet + String(IP_s))
                 break
             }
+            
             pasteboard.string = clipboard
-        }else if Int(checkInt) != nil {
+            //It makes better UX
+            changeaffected.removeAll()
+            currentindex.section = currentindex.section + 1
+            currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
+            cursor = currentindexstr
+            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+            changeaffected.append(currentUpdate)
+            self.myCollectionView.reloadData()
             
-            
-            //20200502
-            //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
-            var padAry = element.components(separatedBy: "↓")//7,2 replac, loop
-            if padAry.count == 1{
-                padAry = element.components(separatedBy: "→")
-            }
-            var expression = ""
-            //print(padAry)
-            
-            
-            //
-            var test = -1
-            
-            if location.index(of: IP) != nil{
-                test = location.index(of: IP)!
-            }
-            expression = ""
-            if test != -1{
-                expression = content[test]
-            }
-            
-            
-            if padAry.count == 2 {
-                //todo make SUM function like excel it's not working at all. think about B220. Is can be 320 if B2 cell is a 3.
-                
-                pasteboard.string = ""
-                
-                let loop = Int(padAry[1])
-                let tgt = Int(padAry[0])
-                
-                if element.contains("↓") && loop != nil && Int(numberOnlyString(text:expression)) != nil{
-                    for idx in 0..<loop!{
-                        let IPl = t_item + "," + String(IP_s+idx)
-                        if IP_s+idx <= 0 {
-                            //it's
-                        }else{
-                            
-                            let nextRow = tgt! + idx
-                            let each = expression.replacingOccurrences(of: padAry[0], with: String(nextRow))
-                            storeInput(IPd: IPl, elementd: each)
-                            clipboard = clipboard + each + "+"
-                        }
-                    }
-                }
-                else if element.contains("→") && loop != nil {
-                    let loop = Int(padAry[1])
-                    let tgt = collocation
-                    
-                    for idx in 0..<loop!{
-                        let IPl = String(IP_i+idx) + "," + t_section
-                        if IP_i+idx <= 0 {
-                            //it's
-                        }else{
-                            let nextColumn = tgt + idx
-                            let nextColumnLetters = getExcelColumnName(columnNumber: nextColumn)
-                            let each = expression.replacingOccurrences(of: padAry[0], with: nextColumnLetters)
-                            storeInput(IPd: IPl, elementd: each)
-                            clipboard = clipboard + each + "+"
-                        }
-                    }
-                }
-                
-                pasteboard.string = clipboard
-                
-            }else{
-                storeInput(IPd: IP, elementd: element)
-            }
-            
-        }else{
-            storeInput(IPd: IP, elementd: element)
+            stringboxText = element
+            return
         }
         
-        
-        
-        if element.hasPrefix("="){
-            f_content.removeAll()
-            f_calculated.removeAll()
-            f_location_alphabet.removeAll()
-            f_location.removeAll()
-            calculatormode_update_main()
-        
-            //excel work set function tag
-            let cellidx = getIndexlabel()
-            if let f_idx = f_location_alphabet.firstIndex(of: cellidx), isExcel && element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
-                
+        if checkInput.count > 0{
+            storeInput(IPd: IP, elementd: element)
+            
+            if element.hasPrefix("="){
+                f_content.removeAll()
+                f_calculated.removeAll()
+                f_location_alphabet.removeAll()
+                f_location.removeAll()
+                calculatormode_update_main()
+            }
+            
+            //
+            excelEntry(srcString: element,cellId: getIndexlabel())
+            
+            //It makes better UX
+            changeaffected.removeAll()
+            currentindex.section = currentindex.section + 1
+            currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
+            cursor = currentindexstr
+            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+            changeaffected.append(currentUpdate)
+            self.myCollectionView.reloadData()
+            
+            stringboxText = element
+            return
+        }
+    }
+    
+    func excelEntry(srcString:String,cellId:String)
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        var element = srcString
+        if isExcel && srcString.count > 0{
+            //excel work
+            var numFmt = 0
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
+            if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
+                //update sheet1,or2,or3 or xml each data entry
                 //date object
                 //hh:mm case MAX 24*60*60[s]
                 let hhmm = element.components(separatedBy: ":")
@@ -3440,7 +3301,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // Create a DateFormatter to parse the date string
                 let dateFormatter = DateFormatter()
                 
-                //            // Create a DateFormatter to parse the date string
+                // Create a DateFormatter to parse the date string
                 let dateFormatter2 = DateFormatter()
                 dateFormatter2.dateFormat = "MM/dd/yyyy"
                 
@@ -3465,21 +3326,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 
                 
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: getIndexlabelForExcel(),numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
+                
+                //storeInput(IPd: IP, elementd: element)
             }
+            
+            if let f_idx = f_location_alphabet.firstIndex(of: getIndexlabelForExcel()), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+            }
+            
+            
+            //xml files update. does it needed? necessary? it slows speed
+//            if appd.ws_path != "" {
+//                print("yourExcelfile",appd.ws_path)
+//                let ehp = ExcelHelper()
+//                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+//                // Do any additional setup after loading the view.
+//                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+//                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+//            }
+            
         }
-        
-        //It makes better UX
-        changeaffected.removeAll()
-        currentindex.section = currentindex.section + 1
-        currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
-        getIndexlabel()
-        cursor = currentindexstr
-        let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-        changeaffected.append(currentUpdate)
-        self.myCollectionView.reloadData()
-        
-        stringboxText = element
         
     }
     
@@ -5055,3 +4924,4 @@ extension UIView {
         }
     }
 }
+
