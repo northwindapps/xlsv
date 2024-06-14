@@ -860,9 +860,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 // It's an iPad
                 datainputview = Datainputview(frame: CGRect(x:Int(60),y:Int(SCREENSIZE - KEYBOARDLOCATION - 160.0), width: 642,height: 160))
-                datainputview.upArrow.addTarget(self, action: #selector(moveUp), for: UIControl.Event.touchUpInside)
                 datainputview.downArrow.addTarget(self, action: #selector(moveDown), for: UIControl.Event.touchUpInside)
-                datainputview.leftArrow.addTarget(self, action: #selector(moveLeft), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(moveRight), for: UIControl.Event.touchUpInside)
                 
                 
@@ -2723,13 +2721,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func autoComplete(src:String)->String{
         let dotdot = src.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "→", with: "")
-        let ary = dotdot.components(separatedBy: "...")
+        let ary = dotdot.components(separatedBy: "…")
         if ary.count > 1{
             if Int(ary[0]) != nil && Int(ary[1]) != nil{
-                if Int(ary[0])! < Int(ary[1])!{
+                if (Int(ary[0]) != nil) && Int(ary[1])! > 0{
                     var product = ""
-                    for i in Int(ary[0])! ..< Int(ary[1])!+1{
-                        product = product + String(i) + ":"
+                    var cnt = Int(ary[0])!
+                    for i in 0 ..< Int(ary[1])!{
+                        product = product + String(cnt) + ":"
+                        cnt += 1
                     }
                     
                     if down_bool == true {
@@ -3143,6 +3143,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
+                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    down_bool = false
                 }
                 
                 if right_bool{
@@ -3164,12 +3166,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
+                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    right_bool = false
                 }
                 break
                 
                 
             case .pad:
-                
                 let padAry = element.components(separatedBy: ":")
                 
                 if down_bool {
@@ -3191,6 +3194,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
+                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    down_bool = false
                 }
                 
                 
@@ -3214,6 +3219,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
+                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    right_bool = false
                 }
                 
                 break
@@ -3224,13 +3231,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 excelEntry(srcString: element, cellId: alphabet + String(IP_s))
                 break
             }
-            
             pasteboard.string = clipboard
             //It makes better UX
             changeaffected.removeAll()
-            currentindex.section = currentindex.section + 1
-            currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
-            cursor = currentindexstr
             let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
             changeaffected.append(currentUpdate)
             self.myCollectionView.reloadData()
@@ -3250,14 +3253,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 calculatormode_update_main()
             }
             
-            //
             excelEntry(srcString: element,cellId: getIndexlabel())
             
             //It makes better UX
             changeaffected.removeAll()
-            currentindex.section = currentindex.section + 1
-            currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
-            cursor = currentindexstr
             let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
             changeaffected.append(currentUpdate)
             self.myCollectionView.reloadData()
@@ -3536,18 +3535,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func replace(){
         changeaffected.removeAll()
         search_text = customview3.searchfield.text!
+        //complete
         if customview3.mcselector.selectedSegmentIndex == 0 {
             for i in 0..<content.count {
                 if content[i] == search_text{
                     content[i] = customview3.replacefield.text!
                     changeaffected.append(location[i])
+                    //TODO update sharedstring
                 }
             }
+        //partly
         }else {
             for i in 0..<content.count {
                 if content[i].contains(search_text){
                     content[i] = content[i].replacingOccurrences(of: search_text, with: customview3.replacefield.text!)
                     changeaffected.append(location[i])
+                    //TODO update sharedstring
                 }
             }
         }
@@ -4042,10 +4045,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         up_bool = false
         right_bool = false
         left_bool = false
-        datainputview.upArrow.setImage(UIImage(named: "upArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
         datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.leftArrow.setImage(UIImage(named: "leftArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        
         if down_bool {
             datainputview.downArrow.setImage(UIImage(named: "downArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text
@@ -4081,9 +4081,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         up_bool = false
         left_bool = false
         datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.upArrow.setImage(UIImage(named: "upArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.leftArrow.setImage(UIImage(named: "leftArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        
         if right_bool {
             datainputview.rightArrow.setImage(UIImage(named: "rightArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text
