@@ -413,7 +413,13 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     }
  
     
-   
+    func resetCellAttrsDictionaryItemZindex(){
+        for (key, cellAttributes) in cellAttrsDictionary {
+            cellAttributes.zIndex = 1
+            cellAttrsDictionary[key] = cellAttributes
+        }
+
+    }
     
     func getExcelColumnName(columnNumber: Int) -> String
     {

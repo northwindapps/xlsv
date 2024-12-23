@@ -181,6 +181,7 @@ class ExcelHelper{
            appd.numFmts.removeAll()
            appd.numFmtIds.removeAll()
            
+           
            //get all worksheets
            if let workbook = try file?.parseWorkbooks().first {
                // Extracting non-nil sheet IDs using compactMap

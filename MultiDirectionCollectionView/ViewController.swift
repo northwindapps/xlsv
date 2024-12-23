@@ -235,7 +235,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
         
-        
+        //Render
         if collectionView === myCollectionView{
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! CustomCollectionViewCell
             
@@ -787,17 +787,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
             print("go to file view")
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-            targetViewController.idx = Int(appd.sheetNameIds[indexPath.item])
+           
+            let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
             print(indexPath.item)
             appd.wsSheetIndex = indexPath.item + 1
-            targetViewController.modalPresentationStyle = .fullScreen
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
 //                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: sheetIdx)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                     //testing
+                    
 //                    if Int(appd.sheetNameIds[indexPath.item]) == 1{
 //                        customLayout.INDEX_WIDTH = 50.0
 //                        customLayout.CELL_HEIGHT = 60.0
@@ -807,6 +808,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //                        customLayout.CELL_HEIGHT = 30.0
 //                        customLayout.CELL_WIDTH = 120.0
 //                    }
+                    customLayout.resetCellAttrsDictionaryItemZindex()
                     customLayout.prepare()
                     customLayout.invalidateLayout() // Call the method on the instance
                     self.myCollectionView.reloadData()
@@ -816,6 +818,64 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             }
         }
+    }
+    
+    func loadExcelSheet(idx:Int?)
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if appd.ws_path == "" {
+            self.isExcel = false
+            self.sheetIdx = idx ?? 1
+        }
+        
+        if appd.ws_path != "" {
+            print("yourExcelfile",appd.ws_path)
+            let ehp = ExcelHelper()
+            ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+            // Do any additional setup after loading the view.
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            
+            self.isExcel = true
+            self.sheetIdx = appd.wsSheetIndex
+        }
+        
+        //loadinitialXLSX
+        if let filePath = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"), !appd.isAppStarted {
+            do {
+                let icc = iCloudViewController()
+                icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath))
+                isExcel = true
+                sheetIdx = 1
+                appd.isAppStarted = true
+            } catch {
+                print("Error reading file: \(error)")
+            }
+        }
+        
+        //checkSheet
+        isExcelSheetData(sheetIdx: sheetIdx)
+        initSheetData(sheetIdx: sheetIdx)
+        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        initExcelLocation()
+        
+        
+        localFileNames = appd.sheetNames //sheet1,sheet2
+        FileCollectionView.reloadData()
+        
+        
+        
+        
+        
+        for idx in 0..<COLUMNSIZE {
+            let letters = getExcelColumnName(columnNumber: idx)
+            columnNames.append(letters)
+        }
+        
+        //Finally calculate
+        calculatormode_update_main()
     }
     
 //    xlsx numFmtId
@@ -1569,16 +1629,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         isExcelSheetData(sheetIdx: sheetIdx)
         initSheetData(sheetIdx: sheetIdx)
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
-        //updating locationInExcel(is content already loaded at here?)
-        locationInExcel.removeAll()
-        for i in 0..<location.count{
-            let colStr = location[i].components(separatedBy:",").first
-            if let colInt = Int(colStr ?? ""), let rowStr = location[i].components(separatedBy:",").last{
-                let column = getExcelColumnName(columnNumber: colInt)
-                locationInExcel.append(column + rowStr)
-            }
-        }
+        initExcelLocation()
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(
@@ -1638,6 +1689,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         bannerview.isHidden = true
       print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+    }
+    
+    func initExcelLocation(){
+        //updating locationInExcel(is content already loaded at here?)
+        locationInExcel.removeAll()
+        for i in 0..<location.count{
+            let colStr = location[i].components(separatedBy:",").first
+            if let colInt = Int(colStr ?? ""), let rowStr = location[i].components(separatedBy:",").last{
+                let column = getExcelColumnName(columnNumber: colInt)
+                locationInExcel.append(column + rowStr)
+            }
+        }
     }
     
     
@@ -3427,14 +3490,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         //updating locationInExcel
-        locationInExcel.removeAll()
-        for i in 0..<location.count{
-            let colStr = location[i].components(separatedBy:",").first
-            if let colInt = Int(colStr ?? ""), let rowStr = location[i].components(separatedBy:",").last{
-                let column = getExcelColumnName(columnNumber: colInt)
-                locationInExcel.append(column + rowStr)
-            }
-        }
+        initExcelLocation()
     }
     
     func saveuserD() {
