@@ -431,7 +431,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let predifinedIds = [31]
             let ipstr = String(indexPath.section) + "," + String(indexPath.row)
             let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
-            if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1)){
+            if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1) && appd.cellXfs.count != 0 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0 && appd.excelStyleIdx.count != 0){
                 var c = 0
                 let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
                 let numId = appd.numFmtIds[appd.excelStyleIdx[styleId!]]
@@ -840,19 +840,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             self.isExcel = true
             self.sheetIdx = appd.wsSheetIndex
-        }
-        
-        //loadinitialXLSX
-        if let filePath = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"), !appd.isAppStarted {
-            do {
-                let icc = iCloudViewController()
-                icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath))
-                isExcel = true
-                sheetIdx = 1
-                appd.isAppStarted = true
-            } catch {
-                print("Error reading file: \(error)")
-            }
         }
         
         //checkSheet
@@ -1612,16 +1599,36 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.delegate = self
         orientaion = "P"
         
-        //loadinitialXLSX
-        if let filePath = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"), !appd.isAppStarted {
-            do {
+        if appd.imported_xlsx_file_path == ""{
+            let pathDirectory = getRootDocumentsDirectory()
+            let filePath = pathDirectory.appendingPathComponent("localExcel").appendingPathComponent("initialXLSX.xlsx")
+            let fileExists = FileManager.default.fileExists(atPath: filePath.path)
+            isExcel = true
+            sheetIdx = 1
+            if fileExists{
+                appd.imported_xlsx_file_path=filePath.path
+                //appd.sheetNames
                 let icc = iCloudViewController()
-                icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath))
-                isExcel = true
-                sheetIdx = 1
-                appd.isAppStarted = true
-            } catch {
-                print("Error reading file: \(error)")
+                icc.readExcel(path: filePath.path)
+                //let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                //createxlsxSheet()
+                
+            }
+            if !fileExists {
+                print("File doesn't exist at path: \(filePath.path)")
+                //loadinitialXLSX
+                if let filePath2 = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"){
+                    do {
+                        let icc = iCloudViewController()
+                        icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath2))
+                        //                    appd.imported_xlsx_file_path=filePath.path
+                        //                    icc.readExcel(path: filePath.path)
+                    } catch {
+                        print("Error reading file: \(error)")
+                    }
+                }
             }
         }
         
@@ -1689,6 +1696,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         bannerview.isHidden = true
       print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+    }
+    
+    func getRootDocumentsDirectory() -> URL {
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
     
     func initExcelLocation(){
@@ -3370,7 +3381,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
-            if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
+            //TODO save as a formula
+            //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
                 //update sheet1,or2,or3 or xml each data entry
                 //date object
                 //hh:mm case MAX 24*60*60[s]
@@ -3422,7 +3434,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
                 
                 //storeInput(IPd: IP, elementd: element)
-            }
+            //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
+            //}
             
             if let f_idx = f_location_alphabet.firstIndex(of: getIndexlabelForExcel()), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))

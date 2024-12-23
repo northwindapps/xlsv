@@ -327,9 +327,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     }
     
     func loadInitialXLSX(url: URL) {
-            print("this is url")
-            print(url)
             print(url.absoluteString)
+        
             //g.sheet 未対応
             //csvPath = url.absoluteString
             //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
@@ -352,7 +351,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let fnameArry = url.absoluteString.split(separator: "/")
             let pathDirectory = getRootDocumentsDirectory()
             try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-            let filePath = pathDirectory.appendingPathComponent(String(fnameArry.last!))
+            let filePath = pathDirectory.appendingPathComponent("localExcel").appendingPathComponent(String(fnameArry.last!))
             let fnameA = fnameArry.last!.split(separator: ".")
             excelName = String(fnameA.first!) + "." + String(fnameA.last!)
             if FileManager.default.fileExists(atPath: filePath.path) {
@@ -366,18 +365,28 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             }
             
             do{
-                print("copy file", filePath)
-                try FileManager.default.copyItem(at: url, to: filePath)
+                let destinationDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                        .appendingPathComponent("localExcel")
+                    let destinationURL = destinationDirectory.appendingPathComponent("initialXLSX.xlsx")
+                    
+                    // Ensure the destination directory exists
+                    try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
+                        
+                if FileManager.default.fileExists(atPath: url.path) {
+                    print("file exist at the url",url.path)
+                    try FileManager.default.copyItem(at: url, to: destinationURL)
+                }
             }catch let error{
                 //dump(error)
+                print(error)
             }
             
             let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
             let url2 = URL(fileURLWithPath: path2)
             let filename = String(fnameArry.last!)
-            let fp = url2.appendingPathComponent(filename).path
+            let fp = url2.appendingPathComponent("localExcel").appendingPathComponent(filename).path
             if FileManager.default.fileExists(atPath: fp) {
-                print("yourExcelfile",fp)
+                print("copied yourExcelfile",fp)
             }
             appd.imported_xlsx_file_path=fp
             readExcel(path: fp)

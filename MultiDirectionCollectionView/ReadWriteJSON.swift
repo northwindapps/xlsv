@@ -56,7 +56,7 @@ class ReadWriteJSON {
                     datedata = attr[FileAttributeKey.modificationDate] as! Date //modificationDate
                     
                     deleteJsonFile(title: title)
-                    print("overwritten ")
+                    print("json overwritten ")
                 }
             
         } catch {
