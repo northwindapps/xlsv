@@ -415,7 +415,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     
     func resetCellAttrsDictionaryItemZindex(){
         for (key, cellAttributes) in cellAttrsDictionary {
-            cellAttributes.zIndex = 1
+            cellAttributes.zIndex = 0
             cellAttrsDictionary[key] = cellAttributes
         }
 
