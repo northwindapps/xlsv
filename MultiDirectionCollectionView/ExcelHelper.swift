@@ -1,5 +1,14 @@
 //
 //  ExcelHelper.swift
+//  HWCSV
+//
+//  Created by yano on 2024/12/07.
+//  Copyright © 2024 Credera. All rights reserved.
+//
+
+
+//
+//  ExcelHelper.swift
 //  MultiDirectionCollectionView
 //
 //  Created by yujin on 2024/03/27.
@@ -343,7 +352,7 @@ class ExcelHelper{
                }
                var columnsInAlphabet = [String]()
                for index in 0..<columnsize {
-                   columnsInAlphabet.append(getExcelColumnName(columnNumber: index))
+                   columnsInAlphabet.append(GetExcelColumnName(columnNumber: index))
                }
                
 
@@ -507,34 +516,34 @@ class ExcelHelper{
 
 
 
-    func getExcelColumnName(columnNumber: Int) -> String
+    func GetExcelColumnName(columnNumber: Int) -> String
     {
-       var dividend = columnNumber
-       var columnName = ""
-       var modulo = 0
-       
-       while (dividend > 0)
-       {
-           modulo = (dividend - 1) % 26;
-           columnName = String(65 + modulo) + "," + columnName
-           dividend = Int((dividend - modulo) / 26)
-       }
-       
-       var alphabetsAry = [String]()
-       alphabetsAry = columnName.components(separatedBy: ",")
-       
-       var fstring = ""
-       for i in 0..<alphabetsAry.count {
-           let a:Int! = Int(alphabetsAry[i])
-           if a != nil{
-               let b:UInt8 = UInt8(a)
-               fstring.append(String(UnicodeScalar(b)))
-           }
-           
-           
-       }
-       
-       return fstring
+        var dividend = columnNumber
+        var columnName = ""
+        var modulo = 0
+        
+        while (dividend > 0)
+        {
+            modulo = (dividend - 1) % 26;
+            columnName = String(65 + modulo) + "," + columnName
+            dividend = Int((dividend - modulo) / 26)
+        }
+        
+        var alphabetsAry = [String]()
+        alphabetsAry = columnName.components(separatedBy: ",")
+        
+        var fstring = ""
+        for i in 0..<alphabetsAry.count {
+            let a:Int! = Int(alphabetsAry[i])
+            if a != nil{
+                let b:UInt8 = UInt8(a)
+                fstring.append(String(UnicodeScalar(b)))
+            }
+            
+            
+        }
+        
+        return fstring
     }
 
     //https://stackoverflow.com/questions/32851720/how-to-remove-special-characters-from-string-in-swift-2
@@ -589,8 +598,295 @@ class ExcelHelper{
         // Return the integer value (A=1, B=2, ..., Z=26)
         return Int(asciiValue - 64)
     }
+    
+    func excel_sum(src:String,cursor:String,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
+        //merge2array
+        let jc = fc + lc
+        let jl = fl + ll
+        let jle = fle + lle
+        let jr = fr + lr
+        
+        //SUM(A12:D50)
+        let rangeString = src.replacingOccurrences(of: "SUM(", with: "").replacingOccurrences(of: ")", with: "").replacingOccurrences(of: "=", with: "")
+        
+        let rangeComponents = rangeString.split(separator: ":")
+        guard rangeComponents.count == 2 else {
+            return "error"
+        }
+        
+        let startCell = String(rangeComponents[0])
+        let endCell = String(rangeComponents[1])
+        
+        //check if cursor inside the range first
+        if isCellInsideRange(cell: cursor, startCell: startCell, endCell: endCell) {
+            //print("\(cursor) is inside the range col,row")
+            return "error"
+        }
+        
+        if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
+            print("invalid inputs")
+            return "error"
+        }
+        
+        var sum = 0.0
+        var cnt = 0
+        for (i, cell) in jl.enumerated() {
+            let colnumber = cell.components(separatedBy: ",")[0]
+            let rownumber = cell.components(separatedBy: ",")[1]
+            let colintnumber = Int(colnumber)
+            let letters = GetExcelColumnName(columnNumber: colintnumber!)
+            if isCellInsideRange(cell: cell, startCell: startCell, endCell: endCell) {
+                let index = "\(letters)" + rownumber
+                //print("\(index) is inside the range col,row")
+                if jr[i] == "error"{
+                    return "error"
+                }
+                if Double(jr[i]) != nil{
+                    sum += Double(jr[i])!
+                    cnt += 1
+                }
+            } else {
+                //print("\(cell) is outside the range col,row")
+            }
+        }
+        
+        if cnt == 0{
+            return "error"
+        }
+        
+        return String(sum)
+        
+    }
+    
+    func excel_average(src:String,cursor:String,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
+        //merge2array
+        let jc = fc + lc
+        let jl = fl + ll
+        let jle = fle + lle
+        let jr = fr + lr
+        
+        //SUM(A12:D50)
+        let rangeString = src.replacingOccurrences(of: "AVERAGE(", with: "").replacingOccurrences(of: ")", with: "").replacingOccurrences(of: "=", with: "")
+        
+        let rangeComponents = rangeString.split(separator: ":")
+        guard rangeComponents.count == 2 else {
+            return "error"
+        }
+        
+        let startCell = String(rangeComponents[0])
+        let endCell = String(rangeComponents[1])
+        
+        //check if cursor inside the range first
+        if isCellInsideRange(cell: cursor, startCell: startCell, endCell: endCell) {
+            //print("\(cursor) is inside the range col,row")
+            return "error"
+        }
+        
+        if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
+            print("invalid inputs")
+            return "error"
+        }
+        
+        var sum = 0.0
+        var cnt = 0
+        var avg = 0.0
+        for (i, cell) in jl.enumerated() {
+            let colnumber = cell.components(separatedBy: ",")[0]
+            let rownumber = cell.components(separatedBy: ",")[1]
+            let colintnumber = Int(colnumber)
+            let letters = GetExcelColumnName(columnNumber: colintnumber!)
+            if isCellInsideRange(cell: cell, startCell: startCell, endCell: endCell) {
+                let index = "\(letters)" + rownumber
+                //print("\(index) is inside the range col,row")
+                if jr[i] == "error"{
+                    return "error"
+                }
+                if Double(jr[i]) != nil{
+                    sum += Double(jr[i])!
+                    cnt += 1
+                    avg = sum/Double(cnt)
+                    let numberOfPlaces = 5.0
+                    let multiplier = pow(10.0, numberOfPlaces)
+                    var calculated = avg * multiplier
+                    calculated = round(calculated) / multiplier
+                    avg = calculated
+                }
+            } else {
+                //print("\(cell) is outside the range col,row")
+            }
+        }
+        
+        if cnt == 0{
+            return "error"
+        }
+        
+        return String(avg)
+        
+    }
+    
+    func excel_min(src:String,cursor:String,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
+        //merge2array
+        let jc = fc + lc
+        let jl = fl + ll
+        let jle = fle + lle
+        let jr = fr + lr
+        
+        //SUM(A12:D50)
+        let rangeString = src.replacingOccurrences(of: "MIN(", with: "").replacingOccurrences(of: ")", with: "").replacingOccurrences(of: "=", with: "")
+        
+        let rangeComponents = rangeString.split(separator: ":")
+        guard rangeComponents.count == 2 else {
+            return "error"
+        }
+        
+        let startCell = String(rangeComponents[0])
+        let endCell = String(rangeComponents[1])
+        
+        //check if cursor inside the range first
+        if isCellInsideRange(cell: cursor, startCell: startCell, endCell: endCell) {
+            //print("\(cursor) is inside the range col,row")
+            return "error"
+        }
+        
+        if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
+            print("invalid inputs")
+            return "error"
+        }
+        
+        var items = [Double]()
+        for (i, cell) in jl.enumerated() {
+            let colnumber = cell.components(separatedBy: ",")[0]
+            let rownumber = cell.components(separatedBy: ",")[1]
+            let colintnumber = Int(colnumber)
+            let letters = GetExcelColumnName(columnNumber: colintnumber!)
+            if isCellInsideRange(cell: cell, startCell: startCell, endCell: endCell) {
+                let index = "\(letters)" + rownumber
+                //print("\(index) is inside the range col,row")
+                if jr[i] == "error"{
+                    return "error"
+                }
+                if Double(jr[i]) != nil{
+                    items.append(Double(jr[i])!)
+                    items.sort()//0.0,1.41,12.7
+                }
+            } else {
+                //print("\(cell) is outside the range col,row")
+            }
+        }
+        
+        
+        if let firstItem = items.first {
+            return String(firstItem) // Correctly converts the Double to a String
+        }
+        
+        return "error"
+    }
+    
+    func excel_max(src:String,cursor:String,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
+        //merge2array
+        let jc = fc + lc
+        let jl = fl + ll
+        let jle = fle + lle
+        let jr = fr + lr
+        
+        //SUM(A12:D50)
+        let rangeString = src.replacingOccurrences(of: "MAX(", with: "").replacingOccurrences(of: ")", with: "").replacingOccurrences(of: "=", with: "")
+        
+        let rangeComponents = rangeString.split(separator: ":")
+        guard rangeComponents.count == 2 else {
+            return "error"
+        }
+        
+        let startCell = String(rangeComponents[0])
+        let endCell = String(rangeComponents[1])
+        
+        //check if cursor inside the range first
+        if isCellInsideRange(cell: cursor, startCell: startCell, endCell: endCell) {
+            //print("\(cursor) is inside the range col,row")
+            return "error"
+        }
+        
+        if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
+            print("invalid inputs")
+            return "error"
+        }
+        
+        var items = [Double]()
+        for (i, cell) in jl.enumerated() {
+            let colnumber = cell.components(separatedBy: ",")[0]
+            let rownumber = cell.components(separatedBy: ",")[1]
+            let colintnumber = Int(colnumber)
+            let letters = GetExcelColumnName(columnNumber: colintnumber!)
+            if isCellInsideRange(cell: cell, startCell: startCell, endCell: endCell) {
+                let index = "\(letters)" + rownumber
+                //print("\(index) is inside the range col,row")
+                if jr[i] == "error"{
+                    return "error"
+                }
+                if Double(jr[i]) != nil{
+                    items.append(Double(jr[i])!)
+                    items.sort()//0.0,1.41,12.7
+                }
+            } else {
+                //print("\(cell) is outside the range col,row")
+            }
+        }
+        
+        
+        if let lastItem = items.last {
+            return String(lastItem) // Correctly converts the Double to a String
+        }
+        
+        return "error"
+    }
+        
+    // Function to check if a cell is inside a range
+    func isCellInsideRange(cell: String, startCell: String, endCell: String) -> Bool {
+        // Parse the input cell (e.g., "1,2" -> row = 1, column = 2)
+        let cellComponents = cell.split(separator: ",")
+        guard cellComponents.count == 2,
+              let cellRow = Int(cellComponents[1]),
+              let cellColumn = Int(cellComponents[0]) else {
+            return false
+        }
+            
+        // Parse the start and end cells
+        let startColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: startCell)) ?? 0
+        let startRowInt = Int(ExcelHelper().numberOnlyString(text: startCell)) ?? 0
+        let endColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: endCell)) ?? 0
+        let endRowInt = Int(ExcelHelper().numberOnlyString(text: endCell)) ?? 0
+
+        print(startColumnInt,startRowInt)
+        print(endColumnInt,endRowInt)
+        // Check if the cell is within the range
+        return (cellColumn >= (startColumnInt) && cellColumn <= (endColumnInt)) && (cellRow >= (startRowInt) && cellRow <= (endRowInt))
+        
+    }
+    
+    // Function to check if a cell is inside a range
+    func isRangeSyntaxError(cell: String, startCell: String, endCell: String) -> Bool {
+        // Parse the start and end cells
+        let startColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: startCell)) ?? 0
+        let startRowInt = Int(ExcelHelper().numberOnlyString(text: startCell)) ?? 0
+        let endColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: endCell)) ?? 0
+        let endRowInt = Int(ExcelHelper().numberOnlyString(text: endCell)) ?? 0
+
+        print(startColumnInt,startRowInt)
+        print(endColumnInt,endRowInt)
+        // Check if the cell is within the range
+        if (startColumnInt > endColumnInt || startRowInt > endRowInt){
+            return true
+        }
+        if (startColumnInt == 0 || startRowInt == 0){
+            return true
+        }
+        
+        
+        return false
+    }
 
 }
+
 
 
 
