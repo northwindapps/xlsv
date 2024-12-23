@@ -245,11 +245,11 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.cswLocation.removeAll()
             appd.numberofRow = rowcount+1
             appd.numberofColumn = columncount+1
-            isExcel = false
             print("end iCloudController")
             
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-            targetViewController.isExcel = isExcel
+            targetViewController.isExcel = false
+            targetViewController.isCSV = true
             targetViewController.sheetIdx = 1
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
@@ -316,7 +316,8 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         }
             
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-        targetViewController.isExcel = isExcel
+        targetViewController.isExcel = true
+        targetViewController.isCSV = false
         targetViewController.sheetIdx = 1
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
@@ -351,7 +352,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let fnameArry = url.absoluteString.split(separator: "/")
             let pathDirectory = getRootDocumentsDirectory()
             try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-            let filePath = pathDirectory.appendingPathComponent("localExcel").appendingPathComponent(String(fnameArry.last!))
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent(String(fnameArry.last!))
             let fnameA = fnameArry.last!.split(separator: ".")
             excelName = String(fnameA.first!) + "." + String(fnameA.last!)
             if FileManager.default.fileExists(atPath: filePath.path) {
@@ -366,7 +367,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             
             do{
                 let destinationDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                        .appendingPathComponent("localExcel")
+                        .appendingPathComponent("importedExcel")
                     let destinationURL = destinationDirectory.appendingPathComponent("initialXLSX.xlsx")
                     
                     // Ensure the destination directory exists
@@ -384,7 +385,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
             let url2 = URL(fileURLWithPath: path2)
             let filename = String(fnameArry.last!)
-            let fp = url2.appendingPathComponent("localExcel").appendingPathComponent(filename).path
+            let fp = url2.appendingPathComponent("importedExcel").appendingPathComponent(filename).path
             if FileManager.default.fileExists(atPath: fp) {
                 print("copied yourExcelfile",fp)
             }

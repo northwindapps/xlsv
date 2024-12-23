@@ -138,6 +138,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //isExcelFile?
     var isExcel = false
+    var isCSV = false
     var isMail = false
     var sheetIdx = 0
     
@@ -1599,9 +1600,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.delegate = self
         orientaion = "P"
         
-        if appd.imported_xlsx_file_path == ""{
+        if appd.imported_xlsx_file_path == "" && isCSV == false{
             let pathDirectory = getRootDocumentsDirectory()
-            let filePath = pathDirectory.appendingPathComponent("localExcel").appendingPathComponent("initialXLSX.xlsx")
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
             isExcel = true
             sheetIdx = 1
