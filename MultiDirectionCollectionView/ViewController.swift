@@ -1191,7 +1191,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     
-    @objc func localsave(_ sender:UIButton)
+    @objc func loadCreditview(_ sender:UIButton)
     {
         //       postAction()
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "creditView" )
@@ -1729,11 +1729,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         )
         
        
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/6150797968"
-//        bannerview.rootViewController = self
-//        bannerview.load(GADRequest())
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+        bannerview.rootViewController = self
+        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -1929,8 +1929,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
-        customview2.v135Data.addTarget(self, action: #selector(ViewController.old_excelEmail), for: UIControl.Event.touchUpInside)
-        
+        customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
@@ -4685,60 +4684,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         } catch {
             print("Error during file upload to iCloud: \(error.localizedDescription)")
-        }
-    }
-
-    
-    
-    @objc func old_excelEmail() {
-        //get FileTitle
-        let test = ReadWriteJSON()
-        let temp = test.titleJsonFile()
-        old_localFileNames = temp.reversed()
-        noInternet(sheetIdx: 0)
-        calculatormode_update_main()
-        
-        createxlsxSheet()
-//        //save temp content
-        var result = content
-        for idx in 0..<f_calculated.count{
-            if let l_idx = location.index(of: f_location[idx]){
-                result[l_idx] = f_calculated[idx]
-            }
-        }
-        csvexport(result: result)
-        if MFMailComposeViewController.canSendMail() {
-            let today: Date = Date()
-            let dateFormatter: DateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-            var date = dateFormatter.string(from: today)
-            let dateStr = String(date)
-            dateStr.replacingOccurrences(of: ":", with: "_")
-            
-            let mail = MFMailComposeViewController()
-            mail.mailComposeDelegate = self
-            
-            mail.setSubject("from ios")
-            
-            
-            let url1 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            let filePath0 = URL(fileURLWithPath: url1).appendingPathComponent("outputInAppContainer.zip").path //20200307 root directory
-            
-            
-            //print("ViewController" ,filePath)
-            
-            if let fileData = NSData(contentsOfFile: filePath0) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: "XLSV " + dateStr + ".xlsx")
-            }else{
-                print("noContent")
-            }
-            
-            //csv
-            //mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
-            
-            present(mail, animated: true)
-        } else {
-            // show failure alert
         }
     }
     

@@ -32,7 +32,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-5284441033171047~1608917724</string>
+	<string>ca-app-pub-5284441033171047~6023499823</string>
 	<key>GIDClientID</key>
 	<string>705268014001-r4tsu0j2s1hdmf3j1crnu1j4ri7eps0j.apps.googleusercontent.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -48,12 +48,12 @@
 	<true/>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.yumiya.blueframe</key>
+		<key>iCloud.com.yumiya.xlsv2</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>
 			<key>NSUbiquitousContainerName</key>
-			<string>iCloud.com.yumiya.blueframe</string>
+			<string>iCloud.com.yumiya.xlsv2</string>
 			<key>NSUbiquitousContainerSupportedFolderLevels</key>
 			<string>Any</string>
 		</dict>
@@ -257,6 +257,11 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
