@@ -1137,6 +1137,50 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         byproduct = mailString
         data = mailString.data(using: String.Encoding.utf8.rawValue, allowLossyConversion: false)
         
+        //save on a temo folder
+        saveAsCSV(mailString: byproduct! as String, fileName: "tempCSV")
+        
+    }
+    
+    func saveAsCSV(mailString: String, fileName: String) {
+        // Convert the string to data
+        guard let data = mailString.data(using: .utf8) else {
+            print("Failed to convert string to data.")
+            return
+        }
+        
+        let fileManager = FileManager.default
+            
+        // Get the path to save the file
+        let pathDirectory = getRootDocumentsDirectory()
+        let folderPath = pathDirectory.appendingPathComponent("importedCSV")
+        let filePath = pathDirectory.appendingPathComponent("importedCSV").appendingPathComponent("\(fileName).csv")
+        
+        //is the folder created already?
+        if !fileManager.fileExists(atPath: folderPath.path) {
+            do {
+                try fileManager.createDirectory(at: folderPath, withIntermediateDirectories: true, attributes: nil)
+                print("Folder created successfully at \(folderPath.path)")
+            } catch {
+                print("An error occurred while creating the folder: \(error.localizedDescription)")
+                return
+            }
+        }
+        
+        
+        
+        
+        do {
+            if fileManager.fileExists(atPath:filePath.path) {
+                try fileManager.removeItem(at: filePath)
+            }
+            
+            // Write the data to the file
+            try data.write(to: filePath, options: .atomic)
+            print("CSV file saved successfully at \(filePath.path)")
+        } catch {
+            print("An error occurred while saving the CSV file: \(error.localizedDescription)")
+        }
     }
     
     
@@ -1998,35 +2042,60 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
         alert.addTextField()
         
-        //
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        if isExcel{
+            //
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            
+            alert.textFields?[0].text = (url?.pathExtension == "xlsx") ? url?.lastPathComponent : "can't find an xlsx file"
+            
+            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+                let name = alert.textFields![0].text
+                if name!.count > 0 {
+                    if let url2 = url{
+                        self.uploadFileToICloud(url: url2,filename: name!)
+                    }
+                }
+            })
+            
+            alert.addAction(confirmAction)
+            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+            
+            self.present(alert, animated: true)
+            self.customview2.removeFromSuperview()
+        }
         
-      
-        alert.textFields?[0].text = (url?.pathExtension == "xlsx") ? url?.lastPathComponent : "can't find an xlsx file"
-
-    
-        
-        
-        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-            let name = alert.textFields![0].text
-            if name!.count > 0 {
-                if let url2 = url{
-                    self.uploadFileToICloud(url: url2,filename: name!)
+        if isCSV{
+            //
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            //csv
+            //save temp content
+            var result = content
+            for idx in 0..<f_calculated.count{
+                if let l_idx = location.index(of: f_location[idx]){
+                    result[l_idx] = f_calculated[idx]
                 }
             }
-        })
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
+            csvexport(result: result)
+            
+            alert.textFields?[0].text = "tempCSV.csv"
+            
+            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+                let name = alert.textFields![0].text
+                if name!.count > 0 {
+                    self.uploadFileToICloudCSV(filename: name!)
+                }
+            })
+            
+            alert.addAction(confirmAction)
+            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+            
+            self.present(alert, animated: true)
+            self.customview2.removeFromSuperview()
+        }
     }
     
     
@@ -4583,6 +4652,42 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
            
         }
     }
+    
+    func uploadFileToICloudCSV(filename: String) {
+        let fileManager = FileManager.default
+        
+        // Get the path to the local file
+        let pathDirectory = getRootDocumentsDirectory()
+        let filePath = pathDirectory.appendingPathComponent("importedCSV").appendingPathComponent("tempCSV.csv")
+        
+        guard fileManager.fileExists(atPath: filePath.path) else {
+            print("Local file does not exist at: \(filePath.path)")
+            return
+        }
+        
+        guard let containerUrl = fileManager.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") else {
+            print("iCloud container URL is not available.")
+            return
+        }
+        
+        let fileUrl = containerUrl.appendingPathComponent(filename.replacingOccurrences(of: ".csv", with: "") + ".csv")
+        
+        do {
+            // Remove the file in iCloud if it already exists
+            if fileManager.fileExists(atPath: fileUrl.path) {
+                try fileManager.removeItem(at: fileUrl)
+                print("Existing file in iCloud removed at: \(fileUrl.path)")
+            }
+            
+            // Copy the file to iCloud Drive
+            try fileManager.copyItem(at: filePath, to: fileUrl)
+            print("File successfully uploaded to iCloud Drive at: \(fileUrl.path)")
+            
+        } catch {
+            print("Error during file upload to iCloud: \(error.localizedDescription)")
+        }
+    }
+
     
     
     @objc func old_excelEmail() {
