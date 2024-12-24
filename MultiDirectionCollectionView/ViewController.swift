@@ -1285,6 +1285,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             }
             
+            //delete local excel
+            let pathDirectory = self.getRootDocumentsDirectory()
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            let fileManager = FileManager.default
+            do {
+                if fileManager.fileExists(atPath: filePath.path) {
+                    try fileManager.removeItem(at: filePath)
+                    print("File deleted successfully.")
+                } else {
+                    print("File does not exist.")
+                }
+            } catch {
+                print("An error occurred while deleting the file: \(error.localizedDescription)")
+            }
+            
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "iCloud" )//Landscape
             targetViewController.modalPresentationStyle = .fullScreen
             self.present( targetViewController, animated: true, completion: nil)
@@ -1302,7 +1317,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func resetSheet(_ sender:UIButton){
         
-        var message = "Current data will be lost. Is that ok?"
+        var message = "Any unsaved data will be lost. Be sure to export is before resetting."
         var yes = "OK"
         var no = "No"
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
@@ -1401,9 +1416,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.ws_path = ""
             appd.imported_xlsx_file_path = ""
             appd.isAppStarted = false
-            
+        
             let sheet1Json = ReadWriteJSON()
             sheet1Json.deleteJsonFile(title: "csv_sheet1")
+            
+            //delete local excel
+            let pathDirectory = self.getRootDocumentsDirectory()
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            let fileManager = FileManager.default
+            do {
+                if fileManager.fileExists(atPath: filePath.path) {
+                    try fileManager.removeItem(at: filePath)
+                    print("File deleted successfully.")
+                } else {
+                    print("File does not exist.")
+                }
+            } catch {
+                print("An error occurred while deleting the file: \(error.localizedDescription)")
+            }
             
             self.customview2.removeFromSuperview()
             
@@ -3348,28 +3378,34 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             return
         }
         
-        if checkInput.count > 0{
-            storeInput(IPd: IP, elementd: element)
-            
-            if element.hasPrefix("="){
-                f_content.removeAll()
-                f_calculated.removeAll()
-                f_location_alphabet.removeAll()
-                f_location.removeAll()
-                calculatormode_update_main()
-            }
-            
-            excelEntry(srcString: element,cellId: getIndexlabel())
-            
-            //It makes better UX
-            changeaffected.removeAll()
-            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-            changeaffected.append(currentUpdate)
-            self.myCollectionView.reloadData()
-            
-            stringboxText = element
-            return
+        
+        //it take care of empty string
+        storeInput(IPd: IP, elementd: element)
+        
+        if element.hasPrefix("="){
+            f_content.removeAll()
+            f_calculated.removeAll()
+            f_location_alphabet.removeAll()
+            f_location.removeAll()
+            calculatormode_update_main()
         }
+        
+        //always excel, no such thing as csv case
+        if element == ""{
+            //TODO want to modify xml
+            element = " "
+        }
+        excelEntry(srcString: element,cellId: getIndexlabel())
+        
+        //It makes better UX
+        changeaffected.removeAll()
+        let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+        changeaffected.append(currentUpdate)
+        self.myCollectionView.reloadData()
+        
+        stringboxText = element
+        return
+        //}
     }
     
     func excelEntry(srcString:String,cellId:String)
