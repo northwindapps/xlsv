@@ -11,6 +11,7 @@
             <connections>
                 <outlet property="back" destination="Eit-4b-Vlp" id="9D2-js-QfO"/>
                 <outlet property="calcAll" destination="AkM-DE-7L6" id="czm-fy-c31"/>
+                <outlet property="columnButton" destination="Dcp-OC-JMn" id="ckA-OU-h31"/>
                 <outlet property="deletebutton" destination="zd3-md-7JL" id="5e2-z6-kvI"/>
                 <outlet property="emailButton" destination="TPE-jL-3nQ" id="Kol-iJ-59x"/>
                 <outlet property="export" destination="okp-xm-cxi" id="cRd-0L-WD1"/>
@@ -18,6 +19,7 @@
                 <outlet property="localSave" destination="lCK-kP-XA0" id="hWS-Dm-mRM"/>
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
                 <outlet property="resetStyling" destination="MuS-sR-VDI" id="vq5-oy-HyN"/>
+                <outlet property="rowButton" destination="bhr-93-fUG" id="aos-sB-kl1"/>
                 <outlet property="savebutton" destination="kVy-GU-E7z" id="SgP-G3-RI9"/>
                 <outlet property="xlsxSheetExportOniCloudDrive" destination="0dO-3H-IDI" id="LK6-yS-45l"/>
             </connections>
@@ -28,7 +30,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
-                    <rect key="frame" x="138" y="102" width="140" height="25"/>
+                    <rect key="frame" x="156" y="79" width="123" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="New data">
@@ -36,25 +38,25 @@
                     </state>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x2D-Hd-mUz">
-                    <rect key="frame" x="147" y="10" width="124" height="25"/>
+                    <rect key="frame" x="156" y="10" width="115" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Import"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MuS-sR-VDI">
-                    <rect key="frame" x="147" y="149" width="126" height="27"/>
+                    <rect key="frame" x="150" y="121" width="123" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Settings"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Eit-4b-Vlp">
-                    <rect key="frame" x="43" y="251" width="72" height="29"/>
+                    <rect key="frame" x="43" y="267" width="72" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="13"/>
                     <state key="normal" title="↩︎"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="0dO-3H-IDI">
-                    <rect key="frame" x="145" y="56" width="128" height="30"/>
+                    <rect key="frame" x="156" y="41" width="117" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Export"/>
@@ -66,19 +68,19 @@
                     <state key="normal" title="Search"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AkM-DE-7L6">
-                    <rect key="frame" x="8" y="59" width="143" height="25"/>
+                    <rect key="frame" x="5" y="43" width="134" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Text style"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="TPE-jL-3nQ">
-                    <rect key="frame" x="8" y="102" width="143" height="30"/>
+                    <rect key="frame" x="8" y="79" width="143" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Email"/>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lCK-kP-XA0">
-                    <rect key="frame" x="145" y="201" width="126" height="25"/>
+                    <rect key="frame" x="156" y="163" width="119" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Tutorial">
@@ -86,7 +88,7 @@
                     </state>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zd3-md-7JL">
-                    <rect key="frame" x="8" y="217" width="143" height="26"/>
+                    <rect key="frame" x="9" y="240" width="143" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
@@ -95,11 +97,25 @@
                     </state>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kVy-GU-E7z">
-                    <rect key="frame" x="13" y="145" width="132" height="35"/>
+                    <rect key="frame" x="10" y="117" width="132" height="35"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                     <state key="normal" title="Local Save"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Dcp-OC-JMn">
+                    <rect key="frame" x="10" y="171" width="143" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Column"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bhr-93-fUG">
+                    <rect key="frame" x="9" y="205" width="143" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Row"/>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

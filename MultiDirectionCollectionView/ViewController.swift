@@ -1774,7 +1774,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // Perform your double-tap action here
         }
         
-        selection_bool = true
+        selection_bool = !selection_bool
         myCollectionView.reloadData()
     }
     
@@ -1814,136 +1814,121 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let startRow = indexPath.section
         let startCol = indexPath.item
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
-        //existing content and it starts with "="
-        if lIndex != -1 && content[lIndex].hasPrefix("="){
-            let startContent = content[lIndex]
-            var extractedReferences = extractExcelCellReferences(from: startContent)
-            
-            switch gesture.state {
-            case .began:
-                print("start")
-                // Change background color to indicate dragging started
-                cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
-                break
-                
-            case .changed:
-                let locationCG = gesture.location(in: myCollectionView)
-                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                        cell2.label2.backgroundColor = UIColor.systemBlue
-                    }
-                }
-                break
-                
-            case .ended, .cancelled:
-                let locationCG = gesture.location(in: myCollectionView)
-                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                        cell2.label2.backgroundColor = UIColor.green
-                    }
-                    let newRow = newIndexPath.section
-                    let newCol = newIndexPath.item
-                    //horizontal scroll
-                    let colHeader = 1
-                    if newRow == startRow && (newCol > startCol){
-                        for i in 1...newCol-startCol {
-                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: false, incrementVolume: i)
-                            
-                            incrementedRowCells = incrementedRowCells.map { cell in
-                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
-                                return cell[..<midpoint] + "_" + cell[midpoint...]
-                            }
-                            print(extractedReferences)
-                            print(incrementedRowCells)
-                            
-                            let targetlocation = String(startCol+i) + "," + String(startRow)
-                            var newcontent = startContent
-                            for (j,each) in extractedReferences.enumerated() {
-                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
-                            }
-                            
-                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
-                            //input(defaultstr: targetlocation, defaultelement: newcontent)
-                            
-                            //save
-                            saveuserF()
-                            saveuserD()
-                            
-//                            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-//                                print("saved")
-//                                saveAsLocalJson(filename: localFileName[selectedSheet])
+        //existing content and it starts with "=" TODO 
+//        if lIndex != -1 && content[lIndex].hasPrefix("="){
+//            let startContent = content[lIndex]
+//            var extractedReferences = extractExcelCellReferences(from: startContent)
+//            
+//            switch gesture.state {
+//            case .began:
+//                print("start")
+//                // Change background color to indicate dragging started
+//                cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
+//                break
+//                
+//            case .changed:
+//                let locationCG = gesture.location(in: myCollectionView)
+//                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+//                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+//                        cell2.label2.backgroundColor = UIColor.systemBlue
+//                    }
+//                }
+//                break
+//                
+//            case .ended, .cancelled:
+//                let locationCG = gesture.location(in: myCollectionView)
+//                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+//                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+//                        cell2.label2.backgroundColor = UIColor.green
+//                    }
+//                    let newRow = newIndexPath.section
+//                    let newCol = newIndexPath.item
+//                    //horizontal scroll
+//                    let colHeader = 1
+//                    if newRow == startRow && (newCol > startCol){
+//                        for i in 1...newCol-startCol {
+//                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: false, incrementVolume: i)
+//                            
+//                            incrementedRowCells = incrementedRowCells.map { cell in
+//                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
+//                                return cell[..<midpoint] + "_" + cell[midpoint...]
 //                            }
-                            selection_bool = false
-                        }
-                        break
-                    }
-                    
-                    
-                    //vertical scroll
-                    if newCol == startCol && (newRow > startRow){
-                        for i in 1...newRow-startRow {
-                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: true, incrementVolume: i)
-                            
-                            incrementedRowCells = incrementedRowCells.map { cell in
-                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
-                                return cell[..<midpoint] + "_" + cell[midpoint...]
-                            }
-                            print(extractedReferences)
-                            print(incrementedRowCells)
-                            
-                            let targetlocation = String(startCol) + "," + String(startRow+i)
-                            var newcontent = startContent
-                            for (j,each) in extractedReferences.enumerated() {
-                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
-                            }
-                            
-                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
-                            //input(defaultstr: targetlocation, defaultelement: newcontent)
-                            
-                            //save
-                            saveuserF()
-                            saveuserD()
-                            
-//                            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-//                                print("saved")
-//                                saveAsLocalJson(filename: localFileName[selectedSheet])
+//                            print(extractedReferences)
+//                            print(incrementedRowCells)
+//                            
+//                            let targetlocation = String(startCol+i) + "," + String(startRow)
+//                            var newcontent = startContent
+//                            for (j,each) in extractedReferences.enumerated() {
+//                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
 //                            }
-                           
-                            selection_bool = false
-                        }
-                        break
-                    }
-                }
-                // Restore the original background color
-                print("ended")
-                myCollectionView.reloadData()
-                break
-                
-                // Optionally handle reordering logic here (see earlier example)
-                
-            default:
-                break
-            }
-            return
-        }
-        
-//        //content exists and maybe it's an string content or value
-//        if lIndex != -1{
-//
+//                            
+//                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
+//                            //input(defaultstr: targetlocation, defaultelement: newcontent)
+//                            
+//                            //save
+//                            saveuserF()
+//                            saveuserD()
+//                        
+//                            selection_bool = false
+//                        }
+//                        break
+//                    }
+//                    
+//                    
+//                    //vertical scroll
+//                    if newCol == startCol && (newRow > startRow){
+//                        for i in 1...newRow-startRow {
+//                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: true, incrementVolume: i)
+//                            
+//                            incrementedRowCells = incrementedRowCells.map { cell in
+//                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
+//                                return cell[..<midpoint] + "_" + cell[midpoint...]
+//                            }
+//                            print(extractedReferences)
+//                            print(incrementedRowCells)
+//                            
+//                            let targetlocation = String(startCol) + "," + String(startRow+i)
+//                            var newcontent = startContent
+//                            for (j,each) in extractedReferences.enumerated() {
+//                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
+//                            }
+//                            
+//                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
+//                            //input(defaultstr: targetlocation, defaultelement: newcontent)
+//                            
+//                            //save
+//                            saveuserF()
+//                            saveuserD()
+//                           
+//                            selection_bool = false
+//                        }
+//                        break
+//                    }
+//                }
+//                // Restore the original background color
+//                print("ended")
+//                myCollectionView.reloadData()
+//                break
+//                
+//                // Optionally handle reordering logic here (see earlier example)
+//                
+//            default:
+//                break
+//            }
+//            return
 //        }
-//
-//        //touched empty cell
-//        if lIndex == -1{
+        
         switch gesture.state {
         case .began:
             print("start")
             tempRangeSelected = []
             // Change background color to indicate dragging started
-            cell.label2.backgroundColor = UIColor.systemGray // Change the color dynamically
+            cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
                 if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                    cell2.label2.backgroundColor = UIColor.systemGray
+                    //cell2.label2.layer.borderWidth = 1.0
+                    cell2.label2.backgroundColor = UIColor.systemBlue
                     if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
                         tempRangeSelected.append(newIndexPath)
                     }
@@ -1955,7 +1940,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
                 if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                    cell2.label2.backgroundColor = UIColor.systemGray
+                    //cell2.label2.layer.borderWidth = 1.0
+                    cell2.label2.backgroundColor = UIColor.systemBlue
                     if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
                         tempRangeSelected.append(newIndexPath)
                     }
@@ -2041,6 +2027,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localLoad.isHidden = true
         customview2.localSave.isHidden = true
         customview2.reset.isHidden = true
+        //copy file to local
+        customview2.savebutton.isHidden = true
         
         customview2.resetStyling.isHidden = true
         //customview2.savebutton.isHidden = true
@@ -2114,24 +2102,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 saveAsLocalJson(filename: "csv_sheet1")
             }
             
-            
-            
-//            let locationIdx = location.firstIndex(of: String(column)+","+String(row))
-//            if locationIdx != nil && content[locationIdx!] != ""{
-//                datainputview.stringbox.text = content[locationIdx!]
-//            }
-            
-            
-           
-            
-            
             //excel
             changeaffected.removeAll()
             
             //data input
             if j != nil{
                 excelIndice.append(locationInExcel[j!])
-                //inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
             }
             
             if j != nil && location.count > j!{
@@ -2367,6 +2343,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
         customview2.savebutton.addTarget(self, action: #selector(ViewController.localSave), for: UIControl.Event.touchUpInside)
+        
+        customview2.deletebutton.isHidden = true
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
@@ -4065,30 +4043,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 element = ""
             }
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka)
-                
-                //storeInput(IPd: IP, elementd: element)
-            //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
-            //}
             
             if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             }
-            
-            
-            //xml files update. does it needed? necessary? it slows speed
-//            if appd.imported_xlsx_file_path != "" {
-//                print("yourExcelfile",appd.imported_xlsx_file_path)
-//                let ehp = ExcelHelper()
-//                ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
-//                // Do any additional setup after loading the view.
-//                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-//                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//            }
-            
         }
-        
     }
 
     

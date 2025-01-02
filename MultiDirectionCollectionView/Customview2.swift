@@ -27,6 +27,8 @@ class Customview2: UIView {
     @IBOutlet weak var savebutton: UIButton!
     @IBOutlet weak var deletebutton: UIButton!
     
+    @IBOutlet weak var columnButton: UIButton!
+    @IBOutlet weak var rowButton: UIButton!
     @IBOutlet weak var v135Data: UIButton!
     
     @IBOutlet weak var emailButton: UIButton!
