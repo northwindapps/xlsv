@@ -803,15 +803,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func loadExcelSheet(idx:Int?)
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if appd.ws_path == "" {
+        if appd.imported_xlsx_file_path == "" {
             self.isExcel = false
             self.sheetIdx = idx ?? 1
         }
         
-        if appd.ws_path != "" {
-            print("yourExcelfile",appd.ws_path)
+        if appd.imported_xlsx_file_path != "" {
+            print("yourExcelfile",appd.imported_xlsx_file_path)
             let ehp = ExcelHelper()
-            ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
             // Do any additional setup after loading the view.
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -1438,7 +1438,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             appd.sheetNames = [String]()
             appd.sheetNameIds = [String]()
-            appd.ws_path = ""
+            appd.imported_xlsx_file_path = ""
             appd.imported_xlsx_file_path = ""
             appd.isAppStarted = false
         
@@ -1758,7 +1758,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
             print("File replaced successfully at path: \(overWrittenfilePath.path)")
             appd.imported_xlsx_file_path = overWrittenfilePath.path
-            appd.ws_path = overWrittenfilePath.path
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
         } catch {
             print("Error replacing file: \(error.localizedDescription)")
         }
@@ -3987,10 +3987,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             //xml files update. does it needed? necessary? it slows speed
-//            if appd.ws_path != "" {
-//                print("yourExcelfile",appd.ws_path)
+//            if appd.imported_xlsx_file_path != "" {
+//                print("yourExcelfile",appd.imported_xlsx_file_path)
 //                let ehp = ExcelHelper()
-//                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+//                ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
 //                // Do any additional setup after loading the view.
 //                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
 //                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -4076,10 +4076,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             //xml files update. does it needed? necessary? it slows speed
-//            if appd.ws_path != "" {
-//                print("yourExcelfile",appd.ws_path)
+//            if appd.imported_xlsx_file_path != "" {
+//                print("yourExcelfile",appd.imported_xlsx_file_path)
 //                let ehp = ExcelHelper()
-//                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+//                ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
 //                // Do any additional setup after loading the view.
 //                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
 //                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate

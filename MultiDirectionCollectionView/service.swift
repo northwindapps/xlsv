@@ -345,6 +345,7 @@ class Service {
                             // Replace the match with a self-closing tag
                             let replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                             xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                            continue
                         }
                     }
                 }
@@ -365,6 +366,7 @@ class Service {
                             // Replace the match with a self-closing tag
                             let replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
                             xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                            continue
                         }
                     }
                 }

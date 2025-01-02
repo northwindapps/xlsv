@@ -37,7 +37,7 @@ override func didReceiveMemoryWarning() {
 func showAnimate()
 {
     let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-    if appd.ws_path == "" {
+    if appd.imported_xlsx_file_path == "" {
         let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
         next.modalPresentationStyle = .fullScreen
         self.present(next,animated: true, completion: nil)
@@ -52,10 +52,10 @@ func showAnimate()
         return
     }
     
-    if appd.ws_path != "" {
-        print("yourExcelfile",appd.ws_path)
+    if appd.imported_xlsx_file_path != "" {
+        print("yourExcelfile",appd.imported_xlsx_file_path)
         let ehp = ExcelHelper()
-        ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+        ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
         // Do any additional setup after loading the view.
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate

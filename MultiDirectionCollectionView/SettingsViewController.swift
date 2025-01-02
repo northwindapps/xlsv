@@ -66,7 +66,7 @@ class SettingsViewController: UIViewController,UITextFieldDelegate {
     func showAnimate() -> Bool
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if appd.ws_path == "" {
+        if appd.imported_xlsx_file_path == "" {
             let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
             next.modalPresentationStyle = .fullScreen
             self.present(next,animated: true, completion: nil)

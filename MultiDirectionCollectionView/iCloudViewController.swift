@@ -59,7 +59,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         super.viewDidLoad()
         Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(self.timerUpdate), userInfo: nil, repeats: false)
-        appd.ws_path = ""
         appd.wsIndex = 1
         appd.imported_xlsx_file_path=""
         // Do any additional setup after loading the view.
@@ -411,7 +410,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd.sheetNames = [String]()
         appd.diff_start_index.removeAll()
         appd.diff_end_index.removeAll()
-        appd.ws_path = ""
         appd.wsIndex = 1
         appd.isAppStarted = false
         
@@ -573,7 +571,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.ws_path = path
             appd.wsIndex = wsIndex
             let file = XLSXFile(filepath: path)
             appd.sheetNameIds = [String]()

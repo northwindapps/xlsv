@@ -50,7 +50,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var diff_start_index = [String]()
     var diff_end_index = [String]()
     var cellIndex = IndexPath()
-    var ws_path = ""
     var wsIndex = 1
     var wsSheetIndex = 1
     var imported_xlsx_file_path=""

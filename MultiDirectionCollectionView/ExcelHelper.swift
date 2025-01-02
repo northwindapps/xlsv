@@ -162,7 +162,6 @@ class ExcelHelper{
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-           appd.ws_path = path
            let file = XLSXFile(filepath: path)
            appd.sheetNameIds = [String]()
            appd.sheetNames = [String]()
