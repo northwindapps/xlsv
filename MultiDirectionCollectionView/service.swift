@@ -318,6 +318,66 @@ class Service {
         return nil
     }
     
+    func testDeleteStringBulk(url: URL? = nil, index: [String]? = nil) -> String? {
+        guard let url2 = url, let indices = index else { return nil }
+        
+        do {
+            // Read the XML data
+            let xmlData = try Data(contentsOf: url2)
+            var xmlString = String(data: xmlData, encoding: .utf8)
+            
+            for singleIndex in indices {
+                // Define the regular expression pattern for the current index
+                //let pattern = "<c[^>]*r=\"\(singleIndex)\"[^>]*>(.*?)</c>"
+                let pattern = "<c[^>]*r=\"\(singleIndex)(?!\\d)\"[^>]*>(.*?)</c>"
+                guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                    fatalError("Failed to create regular expression")
+                }
+                
+                // Find matches in the XML string
+                let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+                if let match = regex.firstMatch(in: xmlString!, range: range) {
+                    if let matchRange = Range(match.range, in: xmlString!) {
+                        let matchingSubstring = xmlString![matchRange].description
+                        
+                        //matchingSubstring="<c s=\"1\" r=\"B10\"/><c r=\"C10\" t=\"s\"><v>9</v></c>"
+                        if !matchingSubstring.contains("/><c"){
+                            // Replace the match with a self-closing tag
+                            let replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                            xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                        }
+                    }
+                }
+                
+                // Define the second pattern
+                let pattern2 = "<c[^>]*r=\"\(singleIndex)(?!\\d)\"[^>]*>.*?</c>"
+                guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
+                    fatalError("Failed to create regular expression")
+                }
+                
+                // Find matches in the XML string for the second pattern
+                let range2 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
+                if let match2 = regex2.firstMatch(in: xmlString!, range: range2) {
+                    if let matchRange2 = Range(match2.range, in: xmlString!) {
+                        let matchingSubstring = xmlString![matchRange2].description
+                        
+                        if !matchingSubstring.contains("/><c"){
+                            // Replace the match with a self-closing tag
+                            let replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
+                            xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
+                        }
+                    }
+                }
+            }
+            
+            return xmlString
+        } catch {
+            print("Error reading or processing file: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    
     //making now
     func testUpdateString(url:URL? = nil, vIndex:String?, index:String?) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -1788,7 +1848,7 @@ class Service {
     }
     
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil) -> URL? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = []) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -1887,7 +1947,6 @@ class Service {
                 
                 
                 let oldAry = testStringUniqueAry(url: shardStringXMLURL)
-                
                 if input.count > 0{
                     var check = false
                     //sharedString
@@ -1913,21 +1972,30 @@ class Service {
                     }
                         
                 }else{
-                    //delete
-                    let replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString)//A3
+                    var replacedWithNewString = ""
+                    if bulkAry.count == 0{
+                        //delete
+                        replacedWithNewString = testDeleteString(url:worksheetXMLURL, index: cellIdxString) ?? ""//A3
+                    }
+                    
+                    if bulkAry.count > 0{
+                        replacedWithNewString = testDeleteStringBulk(url:worksheetXMLURL, index: bulkAry) ?? ""//A3
+                    }
+                    
                     // Write the modified XML data back to the file
                     if(replacedWithNewString != nil && replacedWithNewString != ""){
-                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        do {
+                            try replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            print("File written successfully to \(worksheetXMLURL.path)")
+                        } catch {
+                            print("Failed to write file: \(error.localizedDescription)")
+                        }
                     }
                 }
                     
                 let newAry = testStringUniqueAry(url: shardStringXMLURL)
-                
                 let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
-                
-                
-                
-              
+
                 
                 let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                 var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)

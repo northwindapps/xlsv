@@ -1758,6 +1758,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
             print("File replaced successfully at path: \(overWrittenfilePath.path)")
             appd.imported_xlsx_file_path = overWrittenfilePath.path
+            appd.ws_path = overWrittenfilePath.path
         } catch {
             print("Error replacing file: \(error.localizedDescription)")
         }
@@ -2103,6 +2104,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func clearSelectedCellContent(){
+        var excelIndice = [String]()
         for (i,each) in tempRangeSelected.enumerated() {
             let column = each.item
             let row = each.section
@@ -2111,6 +2113,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 print("saved")
                 saveAsLocalJson(filename: "csv_sheet1")
             }
+            
+            
             
 //            let locationIdx = location.firstIndex(of: String(column)+","+String(row))
 //            if locationIdx != nil && content[locationIdx!] != ""{
@@ -2126,8 +2130,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //data input
             if j != nil{
-                
-                inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
+                excelIndice.append(locationInExcel[j!])
+                //inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
             }
             
             if j != nil && location.count > j!{
@@ -2145,6 +2149,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 f_location_alphabet.remove(at:k!)
                 f_location.remove(at:k!)
             }
+        }
+           
+//        inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
+        if excelIndice.count > 0{
+            excelEntryBulk(srcString: " ", cellId: excelIndice[0], bka:excelIndice)
         }
      
         calculatormode_update_main()
@@ -3904,195 +3913,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //}
     }
     
-    @objc func inputBalk(src:String,idx:String,excelIdx:String){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.collectionViewCellSizeChanged = 0
-        let pasteboard = UIPasteboard.general
-        pasteboard.string = ""
-        
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
-        var element = src
-        let original_element = element
-        
-        //add more complicated functionality
-        if autoComplete(src: element).count > 1 {
-            element = autoComplete(src: element)
-        }
-        
-        
-        //let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
-        let IP = idx
-        let t_item = IP.components(separatedBy: ",")[0]
-        let t_section = IP.components(separatedBy: ",")[1]
-        
-        let IP_i = Int(t_item)!
-        let IP_s = Int(t_section)!
-        var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
-        
-        var collocation = -1
-        if element.contains("→"){
-            let checkAlpha = alphabetOnlyString(text: element)
-            if columnNames.index(of: checkAlpha) != nil {
-                collocation = columnNames.index(of: checkAlpha)!
-                checkInput = checkInput.replacingOccurrences(of: checkAlpha, with: String(collocation))
-            }
-        }
-        
-        if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
-            
-            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
-            //20200502
-            switch UIDevice.current.userInterfaceIdiom {
-            case .phone:
-                //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
-                let padAry = element.components(separatedBy: ":")
-                
-                if down_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s+idx)
-                        if IP_s+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
-                        }
-                    }
-                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    down_bool = false
-                }
-                
-                if right_bool{
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i+idx) + "," + String(IP_s)
-                        if IP_i+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
-                        }
-                    }
-                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    right_bool = false
-                }
-                break
-                
-                
-            case .pad:
-                let padAry = element.components(separatedBy: ":")
-                
-                if down_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s+idx)
-                        if IP_s+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
-                        }
-                    }
-                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    down_bool = false
-                }
-                
-                
-                
-                if right_bool{
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i+idx) + "," + String(IP_s)
-                        if IP_i+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
-                        }
-                    }
-                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    right_bool = false
-                }
-                
-                break
-                
-            default:
-                storeInput(IPd: IP, elementd: element)
-                excelEntry(srcString: element, cellId: excelIdx)
-                break
-            }
-            pasteboard.string = clipboard
-            //It makes better UX
-            changeaffected.removeAll()
-            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-            changeaffected.append(currentUpdate)
-            self.myCollectionView.reloadData()
-            
-            stringboxText = element
-            return
-        }
-        
-        
-        //it take care of empty string
-        storeInput(IPd: IP, elementd: element)
-        
-        if element.hasPrefix("="){
-            f_content.removeAll()
-            f_calculated.removeAll()
-            f_location_alphabet.removeAll()
-            f_location.removeAll()
-            calculatormode_update_main()
-        }
-        
-        //always excel, no such thing as csv case
-        if element == ""{
-            //TODO want to modify xml
-            element = " "
-        }
-        excelEntryBulk(srcString: element,cellId: excelIdx)
-        
-        //It makes better UX
-        changeaffected.removeAll()
-        self.myCollectionView.reloadData()
-        
-        stringboxText = element
-        return
-        //}
-    }
-    
     func excelEntry(srcString:String,cellId:String)
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -4152,8 +3972,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     
                 }
                 
-                
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
+            if element == " "{
+                element = ""
+            }
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
                 
                 //storeInput(IPd: IP, elementd: element)
             //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
@@ -4180,7 +4002,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    func excelEntryBulk(srcString:String,cellId:String)
+    func excelEntryBulk(srcString:String,cellId:String,bka:[String] = [])
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
@@ -4239,8 +4061,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     
                 }
                 
-                
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
+            if element == " "{
+                element = ""
+            }
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka)
                 
                 //storeInput(IPd: IP, elementd: element)
             //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
