@@ -2038,6 +2038,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
+        customview2.rowButton.addTarget(self, action: #selector(rowOperation), for: UIControl.Event.touchUpInside)
+        
+        customview2.columnButton.addTarget(self, action: #selector(columnOperation), for: UIControl.Event.touchUpInside)
+        
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
@@ -2089,6 +2093,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.xlsxSheetExportOniCloudDrive.isHidden = true
         
         self.view.addSubview(customview2)
+    }
+    
+    @objc func rowOperation(){
+        print(tempRangeSelected)
+        for (i,each) in tempRangeSelected.enumerated(){
+            
+        }
+    }
+    
+    @objc func columnOperation(){
+        print(tempRangeSelected)
+        for (i,each) in tempRangeSelected.enumerated(){
+            
+        }
     }
     
     @objc func clearSelectedCellContent(){
