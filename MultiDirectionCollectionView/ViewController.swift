@@ -105,6 +105,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var right_bool = false
     var left_bool = false
     
+    var selection_bool = false
     
     
     @IBOutlet weak var label: UILabel!
@@ -142,7 +143,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var isMail = false
     var sheetIdx = 0
     
-    
+    //RangeSelection reset at the start
+    var tempRangeSelected = [IndexPath]()
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -244,6 +246,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
             cell.label2?.numberOfLines = 0
             
+            removePanGestureRecognizerFromCell(cell)
             
             //content
             if location.contains(String(indexPath.item)+","+String(indexPath.section)){
@@ -283,6 +286,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.textAlignment = .center
             }
             
+            if selection_bool {
+                //number or fx only
+                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+                cell.addGestureRecognizer(panGesture)
+            }
             
             
             //Border
@@ -635,6 +643,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
+    // Method to remove the pan gesture recognizer from a cell
+    func removePanGestureRecognizerFromCell(_ cell: UICollectionViewCell) {
+        if let gestureRecognizers = cell.gestureRecognizers {
+            for recognizer in gestureRecognizers {
+                if recognizer is UIPanGestureRecognizer {
+                    cell.removeGestureRecognizer(recognizer)
+                }
+            }
+        }
+    }
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         
         return 0
@@ -689,46 +708,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             getIndexlabel()
             cursor = currentindexstr
             
-//            if getRefmode == true {
-//                if changeaffected.contains(currentindexstr){
-//
-//                }else{
-//                    changeaffected.append(currentindexstr)
-//                    let number = currentindexstr .components(separatedBy: ",")[0]
-//                    let number2 = currentindexstr .components(separatedBy: ",")[1]
-//                    let intnumber = Int(number)
-//                    let alphabets = getExcelColumnName(columnNumber: intnumber!)
-//                    datainputview.stringbox.text =  datainputview.stringbox.text + String(alphabets + number2) + "+"//E5
-//                    stringboxText = datainputview.stringbox.text
-//                    sum_str = "="
-//                    sum_str = sum_str + stringboxText
-//                    sum_str = String(sum_str.dropLast())
-//                    myCollectionView.reloadData()
-//                }
-//
-//            }else if pastemode == true{
-//
-//                if indexPath.item == 0{
-//
-//
-//
-//                }else if indexPath.section == 0{
-//
-//
-//                }else{
-//
-//                    if location.index(of: currentindexstr) != nil{
-//                        let i = location.index(of: currentindexstr)
-//                        location.remove(at: i!)
-//                        content.remove(at: i!)
-//                        tcolor.remove(at: i!)
-//                        bgcolor.remove(at: i!)
-//                        textsize.remove(at: i!)
-//
-//                    }
-//                    myCollectionView.reloadData()
-//                }
-//            }else{
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 appd.collectionViewCellSizeChanged = 0
                 
@@ -1186,6 +1165,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func back2(_ sender:UIButton)
     {
+        selection_bool = false
+        myCollectionView.reloadData()
         self.customview2.removeFromSuperview()
     }
     
@@ -1729,11 +1710,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         )
         
        
-        bannerview.isHidden = true
-        bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-        bannerview.rootViewController = self
-        bannerview.load(GADRequest())
+//        bannerview.isHidden = true
+//        bannerview.delegate = self
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+//        bannerview.rootViewController = self
+//        bannerview.load(GADRequest())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -1760,7 +1741,435 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.myCollectionView.collectionViewLayout.invalidateLayout()
             self.myCollectionView.reloadData()
         }
+        
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+        doubleTapGesture.numberOfTapsRequired = 2
+        myCollectionView.addGestureRecognizer(doubleTapGesture)
     }
+    
+    //
+    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: myCollectionView)
+        
+        if let indexPath = myCollectionView.indexPathForItem(at: location) {
+            print("Double-tapped cell at \(indexPath)")
+            // Perform your double-tap action here
+        }
+        
+        selection_bool = true
+        myCollectionView.reloadData()
+    }
+    
+    @objc private func handleSingleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: myCollectionView)
+        
+        if let indexPath = myCollectionView.indexPathForItem(at: location) {
+            print("Single-tapped cell at \(indexPath)")
+            // Perform your single-tap action here
+        }
+    }
+    
+    func extractExcelCellReferences(from expression: String) -> [String] {
+        // Define a regular expression for Excel cell references
+        let regexPattern = "[A-Za-z]+\\d+"
+        
+        // Compile the regex pattern
+        let regex = try! NSRegularExpression(pattern: regexPattern, options: [])
+        
+        // Extract matches from the input expression
+        let matches = regex.matches(in: expression, options: [], range: NSRange(location: 0, length: expression.utf16.count))
+        
+        // Convert matches into strings
+        return matches.compactMap { match in
+            if let range = Range(match.range, in: expression) {
+                return String(expression[range])
+            }
+            return nil
+        }
+    }
+    
+    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard let cell = gesture.view as? CustomCollectionViewCell,
+                //touched cell index not selected index
+                let indexPath = myCollectionView.indexPath(for: cell)
+        else { return }
+        let startRow = indexPath.section
+        let startCol = indexPath.item
+        let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
+        //existing content and it starts with "="
+        if lIndex != -1 && content[lIndex].hasPrefix("="){
+            let startContent = content[lIndex]
+            var extractedReferences = extractExcelCellReferences(from: startContent)
+            
+            switch gesture.state {
+            case .began:
+                print("start")
+                // Change background color to indicate dragging started
+                cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
+                break
+                
+            case .changed:
+                let locationCG = gesture.location(in: myCollectionView)
+                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+                        cell2.label2.backgroundColor = UIColor.systemBlue
+                    }
+                }
+                break
+                
+            case .ended, .cancelled:
+                let locationCG = gesture.location(in: myCollectionView)
+                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+                        cell2.label2.backgroundColor = UIColor.green
+                    }
+                    let newRow = newIndexPath.section
+                    let newCol = newIndexPath.item
+                    //horizontal scroll
+                    let colHeader = 1
+                    if newRow == startRow && (newCol > startCol){
+                        for i in 1...newCol-startCol {
+                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: false, incrementVolume: i)
+                            
+                            incrementedRowCells = incrementedRowCells.map { cell in
+                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
+                                return cell[..<midpoint] + "_" + cell[midpoint...]
+                            }
+                            print(extractedReferences)
+                            print(incrementedRowCells)
+                            
+                            let targetlocation = String(startCol+i) + "," + String(startRow)
+                            var newcontent = startContent
+                            for (j,each) in extractedReferences.enumerated() {
+                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
+                            }
+                            
+                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
+                            //input(defaultstr: targetlocation, defaultelement: newcontent)
+                            
+                            //save
+                            saveuserF()
+                            saveuserD()
+                            
+//                            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
+//                                print("saved")
+//                                saveAsLocalJson(filename: localFileName[selectedSheet])
+//                            }
+                            selection_bool = false
+                        }
+                        break
+                    }
+                    
+                    
+                    //vertical scroll
+                    if newCol == startCol && (newRow > startRow){
+                        for i in 1...newRow-startRow {
+                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: true, incrementVolume: i)
+                            
+                            incrementedRowCells = incrementedRowCells.map { cell in
+                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
+                                return cell[..<midpoint] + "_" + cell[midpoint...]
+                            }
+                            print(extractedReferences)
+                            print(incrementedRowCells)
+                            
+                            let targetlocation = String(startCol) + "," + String(startRow+i)
+                            var newcontent = startContent
+                            for (j,each) in extractedReferences.enumerated() {
+                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
+                            }
+                            
+                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
+                            //input(defaultstr: targetlocation, defaultelement: newcontent)
+                            
+                            //save
+                            saveuserF()
+                            saveuserD()
+                            
+//                            if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
+//                                print("saved")
+//                                saveAsLocalJson(filename: localFileName[selectedSheet])
+//                            }
+                           
+                            selection_bool = false
+                        }
+                        break
+                    }
+                }
+                // Restore the original background color
+                print("ended")
+                myCollectionView.reloadData()
+                break
+                
+                // Optionally handle reordering logic here (see earlier example)
+                
+            default:
+                break
+            }
+            return
+        }
+        
+//        //content exists and maybe it's an string content or value
+//        if lIndex != -1{
+//
+//        }
+//
+//        //touched empty cell
+//        if lIndex == -1{
+        switch gesture.state {
+        case .began:
+            print("start")
+            tempRangeSelected = []
+            // Change background color to indicate dragging started
+            cell.label2.backgroundColor = UIColor.systemGray // Change the color dynamically
+            let locationCG = gesture.location(in: myCollectionView)
+            if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+                    cell2.label2.backgroundColor = UIColor.systemGray
+                    if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
+                        tempRangeSelected.append(newIndexPath)
+                    }
+                }
+            }
+            break
+            
+        case .changed:
+            let locationCG = gesture.location(in: myCollectionView)
+            if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
+                    cell2.label2.backgroundColor = UIColor.systemGray
+                    if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
+                        tempRangeSelected.append(newIndexPath)
+                    }
+                }
+            }
+            break
+            
+        case .ended, .cancelled:
+            let locationCG = gesture.location(in: myCollectionView)
+            if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                tempRangeSelected.append(newIndexPath)
+            }
+            print("selected",tempRangeSelected)
+            // Restore the original background color
+            print("ended")
+            panGestureShow2()
+            
+            //myCollectionView.reloadData()
+            break
+            
+            // Optionally handle reordering logic here (see earlier example)
+            
+        default:
+            break
+        }
+        
+//        }
+    }
+    
+    func panGestureShow2() {
+        
+        if customview2 != nil{
+            
+            customview2.removeFromSuperview()
+        }
+        
+        switch tag_int {
+        case 0:
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            break
+        case 1:
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            break
+        case 2:
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            break
+        case 3:
+            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 180,height: 370))
+            break
+        case 4:
+            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 180,height: 370))
+            break
+        case 5:
+            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 180,height: 370))
+            break
+            
+            
+            
+            
+            
+        default:
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            break
+            
+        }
+        
+        
+        
+        
+        customview2.layer.borderWidth = 1
+        
+        customview2.layer.cornerRadius = 8;
+        
+        
+        customview2.layer.borderColor = UIColor.black.cgColor
+        
+        
+        customview2.export.isHidden = true
+        
+        customview2.calcAll.isHidden = true
+        customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
+        
+        customview2.localLoad.isHidden = true
+        customview2.localSave.isHidden = true
+        customview2.reset.isHidden = true
+        
+        customview2.resetStyling.isHidden = true
+        //customview2.savebutton.isHidden = true
+        //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
+        
+        customview2.emailButton.isHidden = true
+        
+        customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
+        
+        
+        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+        
+        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
+        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
+        
+        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
+        if locationstr.contains( "ja")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
+            
+        }else if locationstr.contains( "fr")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
+            
+        }else if locationstr.contains( "zh"){
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
+            
+        }else if locationstr.contains( "de")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+            
+        }else if locationstr.contains( "it")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
+            
+        }else if locationstr.contains( "ru")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
+            
+            
+        }else if locationstr.contains("sv")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
+            
+        }else if locationstr.contains("da")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
+            
+        }else if locationstr.contains("ar")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
+            
+        }else if locationstr.contains("es")
+        {
+            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
+            
+        }
+        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
+        
+        self.view.addSubview(customview2)
+    }
+    
+    @objc func clearSelectedCellContent(){
+        for (i,each) in tempRangeSelected.enumerated() {
+            let column = each.item
+            let row = each.section
+            let j = location.firstIndex(of: String(column)+","+String(row))
+            if !isExcel{
+                print("saved")
+                saveAsLocalJson(filename: "csv_sheet1")
+            }
+            
+//            let locationIdx = location.firstIndex(of: String(column)+","+String(row))
+//            if locationIdx != nil && content[locationIdx!] != ""{
+//                datainputview.stringbox.text = content[locationIdx!]
+//            }
+            
+            
+           
+            
+            
+            //excel
+            changeaffected.removeAll()
+            
+            //data input
+            if j != nil{
+                
+                inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
+            }
+            
+            if j != nil && location.count > j!{
+                location.remove(at:j!)
+                locationInExcel.remove(at:j!)
+                content.remove(at:j!)
+                tcolor.remove(at:j!)
+                textsize.remove(at:j!)
+                bgcolor.remove(at:j!)
+            }
+            
+            let k = f_location.firstIndex(of: String(column)+","+String(row))
+            if k != nil && f_calculated.count > k!{
+                f_calculated.remove(at:k!)
+                f_location_alphabet.remove(at:k!)
+                f_location.remove(at:k!)
+            }
+        }
+     
+        calculatormode_update_main()
+        myCollectionView.reloadData()
+    }
+    
+    // Function to increment the row of an Excel-style cell reference by a given volume
+    func incrementRow(for cell: String, incrementVolume: Int) -> String {
+        let parsedCol = ExcelHelper().alphabetOnlyString(text:cell)
+        let rowNumber = ExcelHelper().numberOnlyString(text: cell)
+        return parsedCol + String((Int(rowNumber) ?? 0)+incrementVolume)
+    }
+
+    // Function to increment the column of an Excel-style cell reference by a given volume
+    func incrementColumn(for cell: String, incrementVolume: Int) -> String {
+        let parsedCol = ExcelHelper().alphabetOnlyString(text:cell)
+        let rowNumber = ExcelHelper().numberOnlyString(text: cell)
+        // Convert the column letters to an integer, increment, and convert back to letters
+        let incrementedColumn = incrementColumnLetters(parsedCol, incrementVolume: incrementVolume)
+        return incrementedColumn + rowNumber
+    }
+
+    // Function to handle column incrementation by a given volume (e.g., "A" -> "B", "Z" -> "AA", etc.)
+    func incrementColumnLetters(_ column: String, incrementVolume: Int) -> String {
+        let parsedIntCol = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text:column)) ?? 0
+        let letters = GetExcelColumnName(columnNumber: parsedIntCol+incrementVolume)
+        let number = ExcelHelper().numberOnlyString(text: column)
+        return letters+number
+    }
+
+    // Function to increment an array of cell references by a given volume, either in rows or columns
+    func incrementCells(in cells: [String], isIncrementRow: Bool, incrementVolume: Int) -> [String] {
+        return cells.map { cell in
+            if isIncrementRow {
+                return incrementRow(for: cell, incrementVolume: incrementVolume)
+            } else {
+                return incrementColumn(for: cell, incrementVolume: incrementVolume)
+            }
+        }
+    }
+
+
     
     //the end of viewdidload
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
@@ -3476,6 +3885,195 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //}
     }
     
+    @objc func inputBalk(src:String,idx:String,excelIdx:String){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.collectionViewCellSizeChanged = 0
+        let pasteboard = UIPasteboard.general
+        pasteboard.string = ""
+        
+        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        
+        var element = src
+        let original_element = element
+        
+        //add more complicated functionality
+        if autoComplete(src: element).count > 1 {
+            element = autoComplete(src: element)
+        }
+        
+        
+        //let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let IP = idx
+        let t_item = IP.components(separatedBy: ",")[0]
+        let t_section = IP.components(separatedBy: ",")[1]
+        
+        let IP_i = Int(t_item)!
+        let IP_s = Int(t_section)!
+        var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        
+        var collocation = -1
+        if element.contains("→"){
+            let checkAlpha = alphabetOnlyString(text: element)
+            if columnNames.index(of: checkAlpha) != nil {
+                collocation = columnNames.index(of: checkAlpha)!
+                checkInput = checkInput.replacingOccurrences(of: checkAlpha, with: String(collocation))
+            }
+        }
+        
+        if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
+            
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
+            //20200502
+            switch UIDevice.current.userInterfaceIdiom {
+            case .phone:
+                //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
+                let padAry = element.components(separatedBy: ":")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
+                        }
+                    }
+                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    down_bool = false
+                }
+                
+                if right_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i+idx) + "," + String(IP_s)
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
+                        }
+                    }
+                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    right_bool = false
+                }
+                break
+                
+                
+            case .pad:
+                let padAry = element.components(separatedBy: ":")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
+                        }
+                    }
+                    datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    down_bool = false
+                }
+                
+                
+                
+                if right_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i+idx) + "," + String(IP_s)
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
+                        }
+                    }
+                    datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    right_bool = false
+                }
+                
+                break
+                
+            default:
+                storeInput(IPd: IP, elementd: element)
+                excelEntry(srcString: element, cellId: excelIdx)
+                break
+            }
+            pasteboard.string = clipboard
+            //It makes better UX
+            changeaffected.removeAll()
+            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+            changeaffected.append(currentUpdate)
+            self.myCollectionView.reloadData()
+            
+            stringboxText = element
+            return
+        }
+        
+        
+        //it take care of empty string
+        storeInput(IPd: IP, elementd: element)
+        
+        if element.hasPrefix("="){
+            f_content.removeAll()
+            f_calculated.removeAll()
+            f_location_alphabet.removeAll()
+            f_location.removeAll()
+            calculatormode_update_main()
+        }
+        
+        //always excel, no such thing as csv case
+        if element == ""{
+            //TODO want to modify xml
+            element = " "
+        }
+        excelEntryBulk(srcString: element,cellId: excelIdx)
+        
+        //It makes better UX
+        changeaffected.removeAll()
+        self.myCollectionView.reloadData()
+        
+        stringboxText = element
+        return
+        //}
+    }
+    
     func excelEntry(srcString:String,cellId:String)
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -3562,6 +4160,94 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
     }
+    
+    func excelEntryBulk(srcString:String,cellId:String)
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        var element = srcString
+        if isExcel && srcString.count > 0{
+            //excel work
+            var numFmt = 0
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
+            //TODO save as a formula
+            //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
+                //update sheet1,or2,or3 or xml each data entry
+                //date object
+                //hh:mm case MAX 24*60*60[s]
+                let hhmm = element.components(separatedBy: ":")
+                if hhmm.count == 2, let hh = Decimal(string: hhmm[0]), let mm = Decimal(string: hhmm[1]) {
+                    // Ensure hhmm array has two elements and both are successfully converted to Decimal
+                    
+                    // Calculate total number of seconds in a day
+                    let max = Decimal(24) * Decimal(60) * Decimal(60)
+                    
+                    // Calculate total number of seconds from HH:MM format
+                    let divid = hh * Decimal(60) * Decimal(60) + mm * Decimal(60)
+                    
+                    // Calculate the fraction representing the time
+                    element = String(describing: divid / max)
+                    numFmt = 20
+                }
+                
+                //date conversion
+                let dateString = element
+                // Create a DateFormatter to parse the date string
+                let dateFormatter = DateFormatter()
+                
+                // Create a DateFormatter to parse the date string
+                let dateFormatter2 = DateFormatter()
+                dateFormatter2.dateFormat = "MM/dd/yyyy"
+                
+                // Parse the date string
+                if let date = dateFormatter2.date(from: dateString) {
+                    // Define the Excel base date (January 1, 1900)
+                    let excelBaseDate = DateComponents(year: 1899, month: 12, day: 30)
+                    let calendar = Calendar(identifier: .gregorian)
+                    let excelBaseDateTimeInterval = calendar.date(from: excelBaseDate)!.timeIntervalSinceReferenceDate
+                    
+                    // Calculate the time interval between the given date and the Excel base date
+                    let dateTimeInterval = date.timeIntervalSinceReferenceDate
+                    let excelDateTimeInterval = dateTimeInterval - excelBaseDateTimeInterval
+                    
+                    // Calculate the corresponding serial number
+                    let serialNumber = Int(excelDateTimeInterval / (24 * 60 * 60))
+                    
+                    print("Excel serial number:", serialNumber) // Output: 39448
+                    element = String(serialNumber)
+                    numFmt = 14
+                    
+                }
+                
+                
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
+                
+                //storeInput(IPd: IP, elementd: element)
+            //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
+            //}
+            
+            if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+            }
+            
+            
+            //xml files update. does it needed? necessary? it slows speed
+//            if appd.ws_path != "" {
+//                print("yourExcelfile",appd.ws_path)
+//                let ehp = ExcelHelper()
+//                ehp.readExcel2(path: appd.ws_path, wsIndex: appd.wsSheetIndex)
+//                // Do any additional setup after loading the view.
+//                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+//                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+//            }
+            
+        }
+        
+    }
+
     
     func storeInput(IPd:String, elementd:String)
     {
@@ -4237,7 +4923,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if let keyboardFrame: NSValue = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
-            UIView.animate(withDuration: 0.3) {
+            UIView.animate(withDuration: 0.9) {
                 if self.KEYBOARDLOCATION < 1.0{
                     self.KEYBOARDLOCATION = keyboardHeight
                 }
