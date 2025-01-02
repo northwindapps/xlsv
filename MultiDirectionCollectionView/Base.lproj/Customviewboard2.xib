@@ -18,6 +18,7 @@
                 <outlet property="localSave" destination="lCK-kP-XA0" id="hWS-Dm-mRM"/>
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
                 <outlet property="resetStyling" destination="MuS-sR-VDI" id="vq5-oy-HyN"/>
+                <outlet property="savebutton" destination="kVy-GU-E7z" id="SgP-G3-RI9"/>
                 <outlet property="xlsxSheetExportOniCloudDrive" destination="0dO-3H-IDI" id="LK6-yS-45l"/>
             </connections>
         </placeholder>
@@ -92,6 +93,13 @@
                     <state key="normal" title="Delete">
                         <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </state>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kVy-GU-E7z">
+                    <rect key="frame" x="13" y="145" width="132" height="35"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Local Save"/>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

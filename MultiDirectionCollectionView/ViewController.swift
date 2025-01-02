@@ -1747,6 +1747,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.addGestureRecognizer(doubleTapGesture)
     }
     
+    @objc private func localSave(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let pathDirectory = getRootDocumentsDirectory()
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        
+        let overWritingfilePath = appd.imported_xlsx_file_path
+        do {
+            let fileManager = FileManager.default
+            try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
+            print("File replaced successfully at path: \(overWrittenfilePath.path)")
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
+        } catch {
+            print("Error replacing file: \(error.localizedDescription)")
+        }
+
+    }
+    
     //
     @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: myCollectionView)
@@ -2339,6 +2356,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
+        
+        customview2.savebutton.addTarget(self, action: #selector(ViewController.localSave), for: UIControl.Event.touchUpInside)
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
