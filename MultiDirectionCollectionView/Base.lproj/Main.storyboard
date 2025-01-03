@@ -459,7 +459,6 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                     <navigationItem key="navigationItem" id="q2Y-DL-6B5"/>
                     <connections>
                         <outlet property="FileCollectionView" destination="tiV-cz-if5" id="iwe-e3-0gg"/>
-                        <outlet property="bannerview" destination="G1f-VI-PIW" id="kkO-kE-1vZ"/>
                         <outlet property="fileTitle" destination="1gf-SZ-xET" id="lyS-9a-Iq8"/>
                         <outlet property="hiddenTextField" destination="pFc-Pl-Cdc" id="Uqm-81-KoN"/>
                         <outlet property="label" destination="WnQ-sZ-xLK" id="KaW-RC-Ngk"/>

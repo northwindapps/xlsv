@@ -13,7 +13,7 @@ import CoreData
 import Zip
 import SSZipArchive
 import CoreFoundation
-import GoogleMobileAds
+//import GoogleMobileAds
 
 let reuseIdentifier = "customCell"
 var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
@@ -22,9 +22,9 @@ var SCREENSIZE = ScreenSize.SCREEN_HEIGHT
 var otherclass = colorclass()
 
 
-class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate,GADBannerViewDelegate{
+class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
     
-    @IBOutlet weak var bannerview: GADBannerView!
+//    @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
     
@@ -2020,6 +2020,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         customview2.export.isHidden = true
+        customview2.columnButton.isHidden = true
+        customview2.rowButton.isHidden = true
         
         customview2.calcAll.isHidden = true
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
@@ -2192,15 +2194,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     
     //the end of viewdidload
-    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-        bannerview.isHidden = false
-      print("bannerViewDidReceiveAd")
-    }
-
-    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
-        bannerview.isHidden = true
-      print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
-    }
+//    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+//        bannerview.isHidden = false
+//      print("bannerViewDidReceiveAd")
+//    }
+//
+//    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+//        bannerview.isHidden = true
+//      print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+//    }
     
     func getRootDocumentsDirectory() -> URL {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -2363,6 +2365,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.savebutton.addTarget(self, action: #selector(ViewController.localSave), for: UIControl.Event.touchUpInside)
         
         customview2.deletebutton.isHidden = true
+        customview2.columnButton.isHidden = true
+        customview2.rowButton.isHidden = true
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         

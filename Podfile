@@ -6,7 +6,7 @@ target 'MultiDirectionCollectionView' do
   use_frameworks!
   pod 'SSZipArchive'
   pod 'CoreXLSX', '~> 0.14.1'
-  pod 'Google-Mobile-Ads-SDK'
+  # pod 'Google-Mobile-Ads-SDK'
   pod 'Zip', '~> 2.1'
 #  Maybe set on this next version
 #  pod 'GoogleAPIClientForREST', '~> 3.5'

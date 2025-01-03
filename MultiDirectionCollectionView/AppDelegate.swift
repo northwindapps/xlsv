@@ -7,7 +7,7 @@
 
 
 import UIKit
-import GoogleMobileAds
+//import GoogleMobileAds
 //import GoogleSignIn
 
 @UIApplicationMain
