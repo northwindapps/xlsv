@@ -1807,6 +1807,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        tempRangeSelected = []
         guard let cell = gesture.view as? CustomCollectionViewCell,
                 //touched cell index not selected index
                 let indexPath = myCollectionView.indexPath(for: cell)
@@ -1814,7 +1815,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let startRow = indexPath.section
         let startCol = indexPath.item
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
-        //existing content and it starts with "=" TODO 
+        
+       
+        tempRangeSelected.append(indexPath)
+        //existing content and it starts with "=" TODO
 //        if lIndex != -1 && content[lIndex].hasPrefix("="){
 //            let startContent = content[lIndex]
 //            var extractedReferences = extractExcelCellReferences(from: startContent)
@@ -1921,7 +1925,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         switch gesture.state {
         case .began:
             print("start")
-            tempRangeSelected = []
             // Change background color to indicate dragging started
             cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
             let locationCG = gesture.location(in: myCollectionView)
@@ -2103,13 +2106,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func rowOperation(){
-        print(tempRangeSelected)
+        //print(tempRangeSelected)
+        var rowItems = [Int]()
         for (i,each) in tempRangeSelected.enumerated(){
-            
+            let colInt = each.item
+            let rowInt = each.section
+            print("rowIntNew",rowInt)
+            rowItems.append(rowInt)
         }
+        print("rowInt",(rowItems.max() ?? 0)-(rowItems.min() ?? 0)+1)
+        let rowMin = rowItems.min() ?? 0
+        let rowMax = rowItems.max() ?? 0
+        let diffRow = (rowItems.max() ?? 0)-(rowItems.min() ?? 0)+1
         
-        //excelEntryBulk(srcString: " ", cellId: excelIndice[0], bka:excelIndice)
         
+        //excelRowShift(ovwritten: [], ovwriting: [])
     }
     
     @objc func columnOperation(){
@@ -4083,15 +4094,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    func excelRowShift(srcString:String,cellId:String,bka:[String] = [])
+    //rowOperation
+    func excelRowShift(ovwritten:[String], ovwriting:[String])
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        var element = srcString
         if isExcel {
             var numFmt = 0
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
-            _ = serviceInstance.testRowShiftBox(fp: <#T##String#>, url: nil, cellIdxString: <#T##String#>, bulkAry: <#T##[String]#>)
+            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+            _ = serviceInstance.testRowShiftBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             
         }
     }

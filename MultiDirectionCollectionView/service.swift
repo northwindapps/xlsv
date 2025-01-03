@@ -922,7 +922,7 @@ class Service {
     }
     
     //making now
-    func testUpdateRow(url:URL? = nil, index:String?) -> String?{
+    func testUpdateRow(url:URL? = nil, index:String?, overWrittenIndice:[String],overWritingIndice:[String]) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if let url2 = url{
             //get style id
@@ -2244,7 +2244,7 @@ class Service {
         return nil
     }
     
-    func testRowShiftBox(fp: String = "", url: URL? = nil,  cellIdxString:String = "", bulkAry:[String] = []) -> URL? {
+    func testRowShiftBox(fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -2316,23 +2316,14 @@ class Service {
                     let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
                     
-                    
-                    
                     var check = false
+                    //rowOperation
+                    let replacedWithNewString = testUpdateRow(url:worksheetXMLURL,index: cellIdxString,overWrittenIndice: [],overWritingIndice: [])//A3
                     
-                    
-                    let replacedWithNewString = testUpdateRow(url:worksheetXMLURL,index: cellIdxString)//A3
                     // Write the modified XML data back to the file
                     if(!check && replacedWithNewString != nil && replacedWithNewString != ""){
                         try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                        
-                        
                     }
-                    
-                    
-                    
-                    
-                    
                     
                     let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                     var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
@@ -2370,8 +2361,6 @@ class Service {
                     print("Done: ", files)
                     
                     return nil
-                    
-                    
                     
                 } else {
                     // Handle the case where the specified path doesn't exist
