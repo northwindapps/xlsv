@@ -3,46 +3,46 @@
 "7Jx-uM-Rwn.normalTitle" = "×";
 
 /* Class = "UILabel"; text = "Input Examples"; ObjectID = "8Lg-DQ-Gmz"; */
-"8Lg-DQ-Gmz.text" = "Примеры ввода";
+"8Lg-DQ-Gmz.text" = "Input Examples";
 
-/* Class = "UILabel"; text = "=IMDIV(A3,A4)"; ObjectID = "8Vo-iq-EnK"; */
-"8Vo-iq-EnK.text" = "=IMDIV(A3,A4)";
+/* Class = "UILabel"; text = "1...31↓"; ObjectID = "8Vo-iq-EnK"; */
+"8Vo-iq-EnK.text" = "1...31↓";
 
-/* Class = "UILabel"; text = "=IMPRODUCT(A3,A4)"; ObjectID = "DT7-QR-uC6"; */
-"DT7-QR-uC6.text" = "=IMPRODUCT(A3,A4)";
+/* Class = "UILabel"; text = "=AVERAGE(A3:A10)"; ObjectID = "DT7-QR-uC6"; */
+"DT7-QR-uC6.text" = "=AVERAGE(A3:A10)";
 
 /* Class = "UILabel"; text = "=sqrt(3)"; ObjectID = "FZP-xt-mUa"; */
 "FZP-xt-mUa.text" = "=sqrt(3)";
 
-/* Class = "UILabel"; text = "=IMSUB(A3,A4)"; ObjectID = "Mlz-AQ-loT"; */
-"Mlz-AQ-loT.text" = "=IMSUB(A3,A4)";
+/* Class = "UILabel"; text = "=A1+A2+A3"; ObjectID = "Mlz-AQ-loT"; */
+"Mlz-AQ-loT.text" = "=A1+A2+A3";
 
-/* Class = "UILabel"; text = "=acos(pi/3)"; ObjectID = "Pvl-yp-y1t"; */
-"Pvl-yp-y1t.text" = "=acos(pi/3)";
+/* Class = "UILabel"; text = "=acos(60)"; ObjectID = "Pvl-yp-y1t"; */
+"Pvl-yp-y1t.text" = "=acos(60)";
+
+/* Class = "UILabel"; text = "=MAX(A1:A10)"; ObjectID = "Pyh-Ci-Wuo"; */
+"Pyh-Ci-Wuo.text" = "=MAX(A1:A10)";
 
 /* Class = "UILabel"; text = "=log(e)"; ObjectID = "R7x-UJ-uZD"; */
 "R7x-UJ-uZD.text" = "=log(e)";
 
-/* Class = "UILabel"; text = "=sin(pi/2)"; ObjectID = "SqU-Rw-1ly"; */
-"SqU-Rw-1ly.text" = "=sin(pi/2)";
+/* Class = "UILabel"; text = "=sin(30)"; ObjectID = "SqU-Rw-1ly"; */
+"SqU-Rw-1ly.text" = "=sin(30)";
 
-/* Class = "UILabel"; text = "=IMARGUMENT(A3)"; ObjectID = "Y98-oY-ayc"; */
-"Y98-oY-ayc.text" = "=IMARGUMENT(A3)";
+/* Class = "UILabel"; text = "NOTICE: This app processes formula expressions as strings when exporting data to an Excel file."; ObjectID = "Uea-Cx-cFU"; */
+"Uea-Cx-cFU.text" = "NOTICE: This app processes formula expressions as strings when exporting data to an Excel file.";
 
-/* Class = "UILabel"; text = "=A1+A2+A3"; ObjectID = "a9t-Mx-T00"; */
-"a9t-Mx-T00.text" = "=A1+A2+A3";
+/* Class = "UILabel"; text = "=MIN(A1:A10)"; ObjectID = "Y98-oY-ayc"; */
+"Y98-oY-ayc.text" = "=MIN(A1:A10)";
 
 /* Class = "UILabel"; text = "=logd(100)"; ObjectID = "dqf-uk-fBG"; */
 "dqf-uk-fBG.text" = "=logd(100)";
 
-/* Class = "UILabel"; text = "=COMPLEX(sqrt(3),1)"; ObjectID = "epI-lm-bQa"; */
-"epI-lm-bQa.text" = "=COMPLEX(sqrt(3),1)";
+/* Class = "UILabel"; text = "=SUM(A1:A7)"; ObjectID = "epI-lm-bQa"; */
+"epI-lm-bQa.text" = "=SUM(A1:A7)";
 
 /* Class = "UILabel"; text = "=e^(5)"; ObjectID = "lKn-Uh-Xdf"; */
 "lKn-Uh-Xdf.text" = "=e^(5)";
 
-/* Class = "UILabel"; text = "dog:cat:raccoon →"; ObjectID = "ucd-dI-lW7"; */
-"ucd-dI-lW7.text" = "Собака:Кошка:Корова→";
-
-/* Class = "UILabel"; text = "=IMSUM(A3,A4)"; ObjectID = "vCQ-3w-Afp"; */
-"vCQ-3w-Afp.text" = "=IMSUM(A3,A4)";
+/* Class = "UILabel"; text = "dog:cat:raccoon → (This fills 3 cells in a row.)"; ObjectID = "vCQ-3w-Afp"; */
+"vCQ-3w-Afp.text" = "dog:cat:raccoon → (This fills 3 cells in a row.)";

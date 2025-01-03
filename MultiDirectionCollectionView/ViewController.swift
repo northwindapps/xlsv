@@ -2059,12 +2059,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
             
+            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
+            customview2.deletebutton.setTitle("Supprimer", for: .normal)
+            
         }else if locationstr.contains( "zh"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
             
         }else if locationstr.contains( "de")
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
+            customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
         {
@@ -2378,16 +2383,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
             
-        }else if locationstr.contains( "fr")
-        {
+        }else if locationstr.contains( "fr"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
+            
+            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
+            customview2.deletebutton.setTitle("Supprimer", for: .normal)
             
         }else if locationstr.contains( "zh"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
             
-        }else if locationstr.contains( "de")
-        {
+        }else if locationstr.contains( "de"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
+            customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
         {
@@ -4412,7 +4420,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     let result = cs.execute(expression:tempStr) ?? ""
                     if Double(result) != nil{
                         //http://swift-salaryman.com/round.php
-                        let numberOfPlaces = 5.0
+                        let numberOfPlaces = 10.0
                         let multiplier = pow(10.0, numberOfPlaces)
                         var calculated = Double(result)! * multiplier
                         calculated = round(calculated) / multiplier

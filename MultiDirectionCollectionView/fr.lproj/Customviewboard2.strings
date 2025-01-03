@@ -15,16 +15,16 @@
 "aoq-1E-NEa.normalTitle" = "enregistrer";
 
 /* Class = "UIButton"; normalTitle = "Delete"; ObjectID = "kTF-3y-sIv"; */
-"kTF-3y-sIv.normalTitle" = "supprimer";
+"kTF-3y-sIv.normalTitle" = "Supprimer";
 
 /* Class = "UIButton"; normalTitle = "Tutorial"; ObjectID = "lCK-kP-XA0"; */
-"lCK-kP-XA0.normalTitle" = "didacticiel";
+"lCK-kP-XA0.normalTitle" = "Didacticiel";
 
 /* Class = "UIButton"; normalTitle = "Search"; ObjectID = "okp-xm-cxi"; */
-"okp-xm-cxi.normalTitle" = "recherche";
+"okp-xm-cxi.normalTitle" = "Recherche";
 
 /* Class = "UIButton"; normalTitle = "New data"; ObjectID = "pcP-NY-tUo"; */
-"pcP-NY-tUo.normalTitle" = "nouveau fichier";
+"pcP-NY-tUo.normalTitle" = "Nouveau fichier";
 
 /* Class = "UIButton"; normalTitle = "Import"; ObjectID = "x2D-Hd-mUz"; */
-"x2D-Hd-mUz.normalTitle" = "importation";
+"x2D-Hd-mUz.normalTitle" = "Importation";
