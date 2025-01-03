@@ -2107,6 +2107,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         for (i,each) in tempRangeSelected.enumerated(){
             
         }
+        
+        //excelEntryBulk(srcString: " ", cellId: excelIndice[0], bka:excelIndice)
+        
     }
     
     @objc func columnOperation(){
@@ -4077,6 +4080,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             }
+        }
+    }
+    
+    func excelRowShift(srcString:String,cellId:String,bka:[String] = [])
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        var element = srcString
+        if isExcel {
+            var numFmt = 0
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            _ = serviceInstance.testRowShiftBox(fp: <#T##String#>, url: nil, cellIdxString: <#T##String#>, bulkAry: <#T##[String]#>)
+            
         }
     }
 
