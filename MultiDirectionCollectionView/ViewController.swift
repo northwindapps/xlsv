@@ -1807,7 +1807,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        tempRangeSelected = []
         guard let cell = gesture.view as? CustomCollectionViewCell,
                 //touched cell index not selected index
                 let indexPath = myCollectionView.indexPath(for: cell)
@@ -1817,7 +1816,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
         
        
-        tempRangeSelected.append(indexPath)
         //existing content and it starts with "=" TODO
 //        if lIndex != -1 && content[lIndex].hasPrefix("="){
 //            let startContent = content[lIndex]
@@ -1925,6 +1923,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         switch gesture.state {
         case .began:
             print("start")
+            tempRangeSelected = []
+            tempRangeSelected.append(indexPath)
             // Change background color to indicate dragging started
             cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
             let locationCG = gesture.location(in: myCollectionView)
@@ -2023,8 +2023,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         customview2.export.isHidden = true
-        customview2.columnButton.isHidden = true
-        customview2.rowButton.isHidden = true
+//        customview2.columnButton.isHidden = true
+//        customview2.rowButton.isHidden = true
         
         customview2.calcAll.isHidden = true
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
@@ -2108,19 +2108,30 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func rowOperation(){
         //print(tempRangeSelected)
         var rowItems = [Int]()
+        var old = [String]()
+        var new = [String]()
         for (i,each) in tempRangeSelected.enumerated(){
             let colInt = each.item
             let rowInt = each.section
             print("rowIntNew",rowInt)
             rowItems.append(rowInt)
         }
-        print("rowInt",(rowItems.max() ?? 0)-(rowItems.min() ?? 0)+1)
+        print("rowInt",(rowItems.max() ?? 0)-(rowItems.min() ?? 0))
         let rowMin = rowItems.min() ?? 0
         let rowMax = rowItems.max() ?? 0
-        let diffRow = (rowItems.max() ?? 0)-(rowItems.min() ?? 0)+1
+        let diffRow = (rowItems.max() ?? 0)-(rowItems.min() ?? 0) + 1
         
-        
-        //excelRowShift(ovwritten: [], ovwriting: [])
+        for (i,each) in locationInExcel.enumerated(){
+            let rowNumber = ExcelHelper().numberOnlyString(text: each)
+            let rowAlphabet = ExcelHelper().alphabetOnlyString(text: each)
+            if Int(rowNumber)! >= rowMin{
+                old.append(each)
+                new.append(rowAlphabet + "!____!" + String(Int(rowNumber)! + diffRow))
+            }
+        }
+        print("old",old)
+        print("new",new)
+        excelRowIncrement(ovwritten:old, ovwriting:new)
     }
     
     @objc func columnOperation(){
@@ -4095,7 +4106,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     //rowOperation
-    func excelRowShift(ovwritten:[String], ovwriting:[String])
+    func excelRowIncrement(ovwritten:[String], ovwriting:[String])
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
@@ -4103,7 +4114,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testRowShiftBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            _ = serviceInstance.testRowShiftBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,ovwritten: ovwritten ,ovwriting: ovwriting)
             
         }
     }

@@ -921,191 +921,39 @@ class Service {
         return nil
     }
     
-    //making now
+    //making row
     func testUpdateRow(url:URL? = nil, index:String?, overWrittenIndice:[String],overWritingIndice:[String]) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if let url2 = url{
-            //get style id
-            var styleIdx = -1
-            let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
-            
-            if (slocatinIdx != nil){
-                styleIdx = appd.excelStyleIdx[slocatinIdx!]
-            }
-            
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
             // Set XMLParserDelegate
             let delegate = CustomXMLParserDelegate()
             parser.delegate = delegate
             
-            
-            var patternFound = false
-            // Start parsing
-            if parser.parse() {
-                // Retrieve the extracted part
-                let extractedPart = delegate.extractedPart
-                //print(extractedPart)
-            }
-            
+          
             //regular expression
             var xmlString = try? String(contentsOf: url2)
             let backUpXmlString = xmlString
+            
+            for (i,each) in overWritingIndice.enumerated(){
+                xmlString = xmlString?.replacingOccurrences(of: overWrittenIndice[i], with: each)
+            }
+            
+            xmlString = xmlString?.replacingOccurrences(of: "!____!", with: "")
+                    
             var xml = XMLHash.parse(xmlString!)
-            
-            let pattern4 = "<c[^>]*r=\"\(String(index!))\"[^>]*/>"
-            
-            // Create the regular expression object
-            guard let regex4 = try? NSRegularExpression(pattern: pattern4, options: []) else {
-                fatalError("Failed to create regular expression")
+            //TODO Row Delete?
+            let validator = XMLValidator()
+            if validator.validateXML(xmlString: xmlString!) {
+                print("XML is valid.")
+                return xmlString
+            } else {
+                print("XML is not valid.")
+                //print(xmlString)
+                return backUpXmlString
             }
-            
-            // Find matches in the XML string
-            let range4 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches4 = regex4.matches(in: xmlString!, range: range4)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches4.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            
-            
-            
-            // Define the regular expression pattern D3
-            let pattern3 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"//"<c r=\"\(String(index!))\".*?/>"
-            //#"<c\s+r="B1".*?</c>"#
-            
-            // Create the regular expression object
-            guard let regex3 = try? NSRegularExpression(pattern: pattern3, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range3 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches3 = regex3.matches(in: xmlString!, range: range3)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches3.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    
-                    
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            
-            // Define the regular expression pattern D3
-            //let pattern = "<c.*?r=\"\(String(index!))\".*?>(.*?)</c>"
-            //#"<c\s+r="B1".*?</c>"#
-            let pattern = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
-            
-            
-            // Create the regular expression object
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches = regex.matches(in: xmlString!, range: range)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches.first{
-                //if let match = matches.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
-                    
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                    }
-                    
-                    
-                    
-                    //                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
-            
-            
-            // Create the regular expression object
-            guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range2 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches2 = regex2.matches(in: xmlString!, range: range2)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            for match in matches2{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
-                    
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                    }
-                    
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
+        
         }
             
         return nil
@@ -2318,7 +2166,7 @@ class Service {
                     
                     var check = false
                     //rowOperation
-                    let replacedWithNewString = testUpdateRow(url:worksheetXMLURL,index: cellIdxString,overWrittenIndice: [],overWritingIndice: [])//A3
+                    let replacedWithNewString = testUpdateRow(url:worksheetXMLURL,index: cellIdxString,overWrittenIndice: ovwritten,overWritingIndice: ovwriting)//A3
                     
                     // Write the modified XML data back to the file
                     if(!check && replacedWithNewString != nil && replacedWithNewString != ""){
@@ -2366,11 +2214,7 @@ class Service {
                     // Handle the case where the specified path doesn't exist
                     print("File or directory does not exist at path: \(fp)")
                 }
-                
             }
-        
-            
-            
         } catch {
             print("Error: \(error)")
         }
