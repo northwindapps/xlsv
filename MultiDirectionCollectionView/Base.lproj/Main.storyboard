@@ -468,7 +468,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Mvo-5o-ub7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2254" y="-7560"/>
+            <point key="canvasLocation" x="-1425" y="-7666"/>
         </scene>
         <!--Loading View Controller-->
         <scene sceneID="NoG-iL-Wf5">

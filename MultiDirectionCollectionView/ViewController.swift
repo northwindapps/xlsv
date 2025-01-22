@@ -146,6 +146,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //RangeSelection reset at the start
     var tempRangeSelected = [IndexPath]()
     
+    //
+    var localFileName = [String]()
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -1064,6 +1067,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
     }
+    
     @objc func csvexport(result:[String])
     {
         
@@ -2286,11 +2290,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {   //delegate method
         print("return")
         textField.resignFirstResponder()
-        
-        
-        
-        
-        
         return true
     }
     
@@ -2449,6 +2448,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }
         customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
+//        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
     }
@@ -2567,7 +2567,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    
+    //create excel todo
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         readAllJsonFiles()
@@ -2606,17 +2606,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //COMPLEX NUMBER NEEDS SOME WORK TO BE DONE TO IT 1+j4 -> 1+4j
         
         
-        
-        //Is this really needed? What is it doing here?
-        //        var formulaParts = [String]()
-        //        print("parts")
-        //        for i in 0..<export_content.count {
-        //            if export_content[i].contains("=") {
-        //                formulaParts.append(export_content[i])
-        //                print(export_content[i])
-        //            }
-        //        }
-        
         //Don't match
         //        if formulaParts.count == export_formula_result.count {
         for i in 0..<export_content.count {
@@ -2636,11 +2625,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 export_formula_location.append("nil")
             }
         }
-        //        }else{
-        //            for i in 0..<export_content.count {
-        //                export_formula_location.append("nil")
-        //            }
-        //        }
         
         var location_in_alphabet = [String]()
         for i in 0..<export_location.count {
@@ -2664,12 +2648,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         sleep(7)
         if customview2 != nil{
-            
             customview2.removeFromSuperview()
         }
-        
-        
     }
+    
     @objc func filterEmptyContent(){
         var filterContent = [String]()
         var filterLocation = [String]()
@@ -2737,6 +2719,214 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let test = ReadWriteJSON()
         test.deleteJsonFile(title: filename)
+    }
+    
+    @objc func saveJSONAction(_ sender:UIButton){
+        
+        var message = "Do you save this file?"
+        var yes = "OK"
+        var no = "No"
+        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+        
+        if locationstr.contains( "ja")
+        {
+            message = "このファイルを保存しますか？"
+            yes = "はい"
+            no = "いいえ"
+        }else if locationstr.contains( "fr")
+        {
+            message = "Enregistrez-vous ce fichier?"
+            yes = "oui"
+            no = "non"
+        }else if locationstr.contains( "zh"){
+            
+            message = "您保存此文件吗？"
+            yes = "是"
+            no = "否"
+        }else if locationstr.contains( "de")
+        {
+            
+            message = "Speichern Sie diese Datei?"
+            yes = "ja"
+            no = "nein"
+        }else if locationstr.contains( "it")
+        {
+            
+            message = "Salvi questo file?"
+            yes = "si"
+            no = "no"
+        }else if locationstr.contains( "ru")
+        {
+            
+            message = "Вы сохраняете этот файл?"
+            yes = "да"
+            no = "нет"
+        }else if locationstr.contains("sv")
+        {
+            message = "Sparar du den här filen?"
+            yes = "ja"
+            no = "nej"
+        }else if locationstr.contains("da")
+        {
+            message = "Gemmer du denne fil?"
+            yes = "ja"
+            no = "nej"
+        }else if locationstr.contains("ar")
+        {
+            message = "هل تحفظ هذا الملف؟"
+            yes = "نعم"
+            no = "لا"
+            
+        }else if locationstr.contains("es")
+        {
+            message = "¿Guarda este archivo?"
+            yes = "si"
+            no = "no"
+        }else{
+            
+        }
+        
+        
+        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
+        alert.addTextField()
+        
+        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
+            alert.textFields![0].text = localFileName[selectedSheet]
+        }
+        
+        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+            let name = alert.textFields![0].text
+            
+            if name!.count > 0 {
+                self.saveAsLocalJson(filename:name!.replacingOccurrences(of: " ", with: "_"))
+            }
+            
+            let test = ReadWriteJSON()
+            let temp = test.titleJsonFile()
+            
+            self.localFileName = temp.reversed()
+            
+            self.FileCollectionView.reloadData()
+            
+            self.customview2.removeFromSuperview()
+            
+            self.fileTitle.text = name!.replacingOccurrences(of: " ", with: "_")
+            
+        })
+        
+        alert.addAction(confirmAction)
+        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+        
+        self.present(alert, animated: true)
+        
+        
+        
+        self.customview2.removeFromSuperview()
+        
+    }
+    
+    @objc func deleteJSONAction(_ sender:UIButton){
+        
+        var message = "Do you delete this file?"
+        var yes = "OK"
+        var no = "No"
+        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+        
+        if locationstr.contains( "ja")
+        {
+            message = "このファイルを削除しますか？"
+            yes = "はい"
+            no = "いいえ"
+        }else if locationstr.contains( "fr")
+        {
+            message = "Supprimez-vous ce fichier?"
+            yes = "oui"
+            no = "non"
+        }else if locationstr.contains( "zh"){
+            
+            message = "是否删除此文件？"
+            yes = "是"
+            no = "否"
+        }else if locationstr.contains( "de")
+        {
+            
+            message = "Löschen Sie diese Datei?"
+            yes = "ja"
+            no = "nein"
+        }else if locationstr.contains( "it")
+        {
+            
+            message = "Elimina questo file?"
+            yes = "si"
+            no = "no"
+        }else if locationstr.contains( "ru")
+        {
+            
+            message = "Вы удаляете этот файл?"
+            yes = "да"
+            no = "нет"
+        }else if locationstr.contains("sv")
+        {
+            message = "Tar du bort den här filen?"
+            yes = "ja"
+            no = "nej"
+        }else if locationstr.contains("da")
+        {
+            message = "Slet du denne fil?"
+            yes = "ja"
+            no = "nej"
+        }else if locationstr.contains("ar")
+        {
+            message = "هل تحذف هذا الملف؟"
+            yes = "نعم"
+            no = "لا"
+            
+        }else if locationstr.contains("es")
+        {
+            message = "¿Eliminas este archivo?"
+            yes = "si"
+            no = "no"
+        }else{
+            
+        }
+        
+        
+        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
+        alert.addTextField()
+        
+        
+//        if  selectedSheet >= 0 && localFileName.count > 0 {
+        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
+            alert.textFields![0].text = localFileName[selectedSheet]
+        }
+        
+        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+            let name = alert.textFields![0].text
+            
+            self.deleteLocalJson(filename:name!)
+            
+            let test = ReadWriteJSON()
+            let temp = test.titleJsonFile()
+            
+            self.localFileName = temp.reversed()
+            
+            self.FileCollectionView.reloadData()
+            
+            self.customview2.removeFromSuperview()
+            
+            self.fileTitle.text = ""
+            
+        })
+        
+        alert.addAction(confirmAction)
+        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+        
+        self.present(alert, animated: true)
+        
+        
+        
+        self.customview2.removeFromSuperview()
+        
     }
     
     @objc func fontediting() {
@@ -3943,7 +4133,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         stringboxText = element
         return
-        //}
     }
     
     func excelEntry(srcString:String,cellId:String)
@@ -4009,28 +4198,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 element = ""
             }
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
-                
-                //storeInput(IPd: IP, elementd: element)
-            //imported_xlsx_file_path    String    "/var/mobile/Containers/Data/Application/7ED12A3A-152F-4BAC-A0D4-CB7CC9B08146/Documents/importedExcel/initialXLSX.xlsx"
-            //}
             
             if let f_idx = f_location_alphabet.firstIndex(of: getIndexlabelForExcel()), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             }
-            
-            
-            //xml files update. does it needed? necessary? it slows speed
-//            if appd.imported_xlsx_file_path != "" {
-//                print("yourExcelfile",appd.imported_xlsx_file_path)
-//                let ehp = ExcelHelper()
-//                ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
-//                // Do any additional setup after loading the view.
-//                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-//                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-//            }
-            
         }
         
     }
@@ -5064,8 +5235,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if localFileNames.count == 0 {
             let newfile = "csv_sheet1"
-            
-            
             saveAsLocalJson(filename: newfile)
         }
         
