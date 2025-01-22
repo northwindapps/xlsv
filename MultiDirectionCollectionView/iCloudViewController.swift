@@ -451,10 +451,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     
     func readExcel(path:String, wsIndex:Int = 1){
         let excelFunctions = [
-            "SUM",
-            "AVERAGE",
-            "MIN",
-            "MAX",
+            //"SUM",
+            //"AVERAGE",
+            //"MIN",
+            //"MAX",
             "COUNT",
             "COUNTA",
             "PRODUCT",
@@ -497,7 +497,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             "PV",
             "RATE",
             "NPV",
-            "AVERAGE",
             "MEDIAN",
             "MODE",
             "STDEV",
@@ -590,8 +589,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.numFmts.removeAll()
             appd.numFmtIds.removeAll()
             
-            
-            
             //get all worksheets
             if let workbook = try file?.parseWorkbooks().first {
                 // Extracting non-nil sheet IDs using compactMap
@@ -602,9 +599,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 print("Sheet Names:", sheetNames)
                 appd.sheetNames = sheetNames
             }
-            
-            
-
             
             //appd.ws_total_pages = sheetsNumber
             //only show first page.

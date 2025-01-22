@@ -42,10 +42,10 @@ class ExcelHelper{
 
     func readExcel2(path:String, wsIndex:Int){
         let excelFunctions = [
-            "SUM",
-            "AVERAGE",
-            "MIN",
-            "MAX",
+            //"SUM",
+            //"AVERAGE",
+            //"MIN",
+            //"MAX",
             "COUNT",
             "COUNTA",
             "PRODUCT",
@@ -88,7 +88,6 @@ class ExcelHelper{
             "PV",
             "RATE",
             "NPV",
-            "AVERAGE",
             "MEDIAN",
             "MODE",
             "STDEV",

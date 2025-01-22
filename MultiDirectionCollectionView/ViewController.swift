@@ -694,13 +694,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.stringbox.text = content[locationIdx!]
             }
             
+            myCollectionView.reloadData()
             return false
         }
         return true
     }
     
     
-    //Touch cell
+    //Touch cell touch
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView === myCollectionView{
             //reset change history
@@ -780,17 +781,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.loadExcelSheet(idx: sheetIdx)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                    //testing
-                    
-//                    if Int(appd.sheetNameIds[indexPath.item]) == 1{
-//                        customLayout.INDEX_WIDTH = 50.0
-//                        customLayout.CELL_HEIGHT = 60.0
-//                        customLayout.CELL_WIDTH = 240.0
-//                    }else{
-//                        customLayout.INDEX_WIDTH = 50.0
-//                        customLayout.CELL_HEIGHT = 30.0
-//                        customLayout.CELL_WIDTH = 120.0
-//                    }
                     customLayout.resetCellAttrsDictionaryItemZindex()
                     customLayout.prepare()
                     customLayout.invalidateLayout() // Call the method on the instance
@@ -4100,7 +4090,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             changeaffected.removeAll()
             let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
             changeaffected.append(currentUpdate)
-            self.myCollectionView.reloadData()
             
             stringboxText = element
             return
@@ -4110,13 +4099,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //it take care of empty string
         storeInput(IPd: IP, elementd: element)
         
-        if element.hasPrefix("="){
-            f_content.removeAll()
-            f_calculated.removeAll()
-            f_location_alphabet.removeAll()
-            f_location.removeAll()
-            calculatormode_update_main()
-        }
+        //if element.hasPrefix("="){
+        f_content.removeAll()
+        f_calculated.removeAll()
+        f_location_alphabet.removeAll()
+        f_location.removeAll()
+        calculatormode_update_main()
+
         
         //always excel, no such thing as csv case
         if element == ""{
@@ -4129,8 +4118,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         changeaffected.removeAll()
         let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
         changeaffected.append(currentUpdate)
-        self.myCollectionView.reloadData()
-        
         stringboxText = element
         return
     }
@@ -4197,10 +4184,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if element == " "{
                 element = ""
             }
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt)
+            let f_idx = f_location_alphabet.firstIndex(of: getIndexlabelForExcel())
+            var calculated = ""
+            if (f_idx != nil){
+                calculated = f_calculated[f_idx!]
+            }
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated)
             
-            if let f_idx = f_location_alphabet.firstIndex(of: getIndexlabelForExcel()), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+            if (f_idx != nil), element.hasPrefix("=") && f_calculated.count>f_idx! && f_content.count > f_idx! && f_calculated[f_idx!] != "error"{
+                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx!], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             }
         }
         
