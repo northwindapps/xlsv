@@ -723,7 +723,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                                 //normal values
                                 formulaCheck.append(valueContent!)
                             }else{
-                                let containsItem = excelFunctions.contains { formulaContent!.contains($0) }
+                                let containsItem = excelFunctions.contains { formulaContent! == $0 }
                                 if !containsItem{
                                     formulaCheck.append("=" + formulaContent!)
                                 }

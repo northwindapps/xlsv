@@ -315,7 +315,7 @@ class ExcelHelper{
                            if formulaContent == nil {
                                formulaCheck.append(valueContent!)
                            }else{
-                               let containsItem = excelFunctions.contains { formulaContent!.contains($0) }
+                               let containsItem = excelFunctions.contains { formulaContent! == $0 }
                                if !containsItem{
                                    formulaCheck.append("=" + formulaContent!)
                                }

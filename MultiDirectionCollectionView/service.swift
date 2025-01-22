@@ -295,15 +295,7 @@ class Service {
             if let match = matches2.first{
                 if let matchRange = Range(match.range, in: xmlString!) {
                     let matchingSubstring = xmlString![matchRange].description
-
-//                    var replacing0 = matchingSubstring.components(separatedBy: "><v>").first! + "/>"
-//                    
-//                    var replaced = xmlString
-//                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-//                    if cCnt == 2{
-//                        replaced = xmlString?.replacingOccurrences(of: matchingSubstring, with: replacing0)
-//                    }
-//                    return replaced
+                    //<c>...</c> check if the ms has this structure.
                     return xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
                 }
             }
@@ -1591,7 +1583,7 @@ class Service {
                     if (fString != nil){
                         functionstr = "<f>\(fString!)</f>"
                     }
-                    if (functionstr == ""){
+                    if (fString == nil){
                         functionstr = "<f>\(String(vIndex!).replacingOccurrences(of: "=", with: ""))</f>"
                     }
                     
@@ -1602,10 +1594,7 @@ class Service {
                     }
                     
                     //"<c r=\"D14\" s=\"54\"><v>0.375</v></c><c r=\"E14\" s=\"55\"><v>0.75</v></c><c r=\"F14\" s=\"56\"><v>0.5</v></c><c r=\"G14\" s=\"57\"><v>0.54166666666666663</v></c><c r=\"H14\" s=\"56\"/>"
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
@@ -1642,7 +1631,7 @@ class Service {
                     if (fString != nil){
                         functionstr = "<f>\(fString!)</f>"
                     }
-                    if (functionstr == ""){
+                    if (fString == nil){
                         functionstr = "<f>\(String(vIndex!).replacingOccurrences(of: "=", with: ""))</f>"
                     }
                     //<c r="B4"><f>SUM(A1:A7)</f><v>8</v></c>
@@ -1654,10 +1643,7 @@ class Service {
                     
                     //"<c r=\"D14\" s=\"54\"><v>0.375</v></c><c r=\"E14\" s=\"55\"><v>0.75</v></c><c r=\"F14\" s=\"56\"><v>0.5</v></c><c r=\"G14\" s=\"57\"><v>0.54166666666666663</v></c><c r=\"H14\" s=\"56\"/>"
                     
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
+                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
                     
                     let validator = XMLValidator()
                     if validator.validateXML(xmlString: xmlString!) {
@@ -1705,7 +1691,7 @@ class Service {
                     if (fString != nil){
                         functionstr = "<f>\(fString!)</f>"
                     }
-                    if (functionstr == ""){
+                    if (fString == nil){
                         functionstr = "<f>\(String(vIndex!).replacingOccurrences(of: "=", with: ""))</f>"
                     }
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(calculated)</v></c>"
@@ -1761,7 +1747,7 @@ class Service {
                     if (fString != nil){
                         functionstr = "<f>\(fString!)</f>"
                     }
-                    if (functionstr == ""){
+                    if (fString == nil){
                         functionstr = "<f>\(String(vIndex!).replacingOccurrences(of: "=", with: ""))</f>"
                     }
                     var newElement = "<c r=\"\(String(index!))\" s=\"\(String(sValueId!))\">\(functionstr)<v>\(calculated)</v></c>"
@@ -1796,7 +1782,7 @@ class Service {
                 if (fString != nil){
                     functionstr = "<f>\(fString!)</f>"
                 }
-                if (functionstr == ""){
+                if (fString == nil){
                     functionstr = "<f>\(String(vIndex!).replacingOccurrences(of: "=", with: ""))</f>"
                 }
                 let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
