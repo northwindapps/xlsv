@@ -1991,6 +1991,77 @@ class Service {
         return nil
     }
     
+    func testDeleteRows(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil, calculated:String = "", rowRange:[Int] = []) -> String?{
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        //get style id
+        var styleIdx = -1
+        let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
+        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
+        
+        if (slocatinIdx != nil){
+            styleIdx = appd.excelStyleIdx[slocatinIdx!]
+        }
+        
+        
+        if let url2 = url{
+            let xmlData = try? Data(contentsOf: url2)
+            let parser = XMLParser(data: xmlData!)
+            // Set XMLParserDelegate
+            let delegate = CustomXMLParserDelegate()
+            parser.delegate = delegate
+            
+            
+            var patternFound = false
+            // Start parsing
+            if parser.parse() {
+                // Retrieve the extracted part
+                let extractedPart = delegate.extractedPart
+                //print(extractedPart)
+            }
+            
+            //regular expression
+            var xmlString = try? String(contentsOf: url2)
+            let backUpXmlString = xmlString
+            var xml = XMLHash.parse(xmlString!)
+                    
+            //TODO DELETE ROW
+            for(i,each) in rowRange.enumerated(){
+                // Retrieve all row tags
+                let patternRow = "<row r=\"\(each)\".*?>(.*?)</row>"
+                guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
+                    fatalError("Failed to create regular expression")
+                }
+                
+                // Find all matches in the XML snippet
+                let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
+                
+                var targetRowTag = ""
+                for match in matchesRow {
+                    // Extract the row number from the match
+                    let nsRange = match.range(at: 1) // Use the capture group index
+                    if let range = Range(nsRange, in: xmlString!) {
+                        if let matchRange = Range(match.range, in: xmlString!) {
+                            targetRowTag = String(xmlString![matchRange]).description
+                            //assume this case targetRowTag    String    "<row r=\"9\"><c s=\"1\" r=\"B9\"><v>2</v></c></row>"
+                            let bkString = xmlString
+                            xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: xmlString!) {
+                                print("XML is valid.")
+                            } else {
+                                print("XML is not valid.")
+                                xmlString = bkString
+                            }
+                        }
+                    }
+                }
+            }
+            //TODO decrease other rowNums
+            return xmlString
+        }
+        return nil
+    }
+    
     func testStringOldUniqueCount(url:URL? = nil){
         if let url2 = url{
             var xmlString = try? String(contentsOf: url2)
@@ -2484,6 +2555,139 @@ class Service {
                 let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
 
                 
+                let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                    for file in sheetFiles {
+                        print("Found .xml file:", file.lastPathComponent)
+                    }
+                print("sheetFiles: ", sheetXMLFiles)
+                
+                
+                //ready to zip
+                var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                let fpURL = URL(fileURLWithPath: fp)
+                let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                //appendingPathComponent("imported2.xlsx")
+                let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                // Check if the destination file exists
+                if FileManager.default.fileExists(atPath: fpURL.path) {
+                    // If it exists, remove it
+                    try FileManager.default.removeItem(at: fpURL)
+                }
+                //overwrite or update xlsx
+                let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                   }
+                }
+                
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Done: ", files)
+                
+                return nil
+
+                
+            } else {
+                // Handle the case where the specified path doesn't exist
+                print("File or directory does not exist at path: \(fp)")
+            }
+            
+        } else {
+            print("Document directory not found.")
+        }
+            
+            
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        return nil
+    }
+    
+    func testRowsDeleteBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, bulkAry:[String] = [], calculated:String = "", rowRange:[Int] = []) -> URL? {
+        do {
+            // Get the sandbox directory for documents
+            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+            let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+            //
+            if FileManager.default.fileExists(atPath: fp) {
+                        // The specified path exists, continue with your code
+                        print("File or directory exists at path: \(fp)")
+                let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                        
+                // Check if the subdirectory already exists
+                if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                    // Create the subdirectory
+                    try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                    print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                } else {
+                    // Subdirectory already exists
+                    print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                    var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                       }
+                    }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory is now empty",files)
+                }
+                
+                // Construct the URL for the destination file
+                let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+               
+                // Check if the file already exists at the destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                    // Remove destination file if it already exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                } else {
+                    // Move the file to the subdirectory
+                    try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                    print("File moved successfully to: \(destinationURL.path)")
+                }
+                
+                do {
+                    //unzip
+                    let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                    print("File unzipped successfully.")
+                } catch {
+                    print("Error unzipping file: \(error)")
+                }
+                
+                do {
+                    //delete imported2.zip or imported2.xlsx
+                    try FileManager.default.removeItem(at: destinationURL)
+                    print("Deleted zip file:", destinationURL)
+                } catch {
+                    print("Error deleting file:", error)
+                }
+                
+                //value and string update test
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
+                
+                let replacedWithNewString = testDeleteRows(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString, calculated: calculated,rowRange: rowRange) ?? ""//A3
+                // Write the modified XML data back to the file
+                if(replacedWithNewString != ""){
+                    try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                }
+                    
                 let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                 var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
                 let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
