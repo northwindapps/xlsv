@@ -4265,10 +4265,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testRowsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange)
+            _ = serviceInstance.testRowsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             appd.collectionViewCellSizeChanged = 1
             appd.cswLocation.removeAll()
             appd.customSizedWidth.removeAll()

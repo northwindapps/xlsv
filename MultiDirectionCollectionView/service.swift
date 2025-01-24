@@ -1991,7 +1991,17 @@ class Service {
         return nil
     }
     
-    func testDeleteRows(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil, calculated:String = "", rowRange:[Int] = []) -> String?{
+    func alphabetOnlyString(text: String) -> String {
+       let okayChars = Set("ABCDEFGHIJKLKMNOPQRSTUVWXYZ")
+       return text.filter {okayChars.contains($0) }
+    }
+
+    func numberOnlyString(text: String) -> String {
+       let okayChars = Set("1234567890")
+       return text.filter {okayChars.contains($0) }
+    }
+    
+    func testDeleteRows(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil, calculated:String = "", rowRange:[Int] = [], locationInExcel:[String] = []) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //get style id
         var styleIdx = -1
@@ -2001,6 +2011,7 @@ class Service {
         if (slocatinIdx != nil){
             styleIdx = appd.excelStyleIdx[slocatinIdx!]
         }
+        
         
         
         if let url2 = url{
@@ -2020,6 +2031,7 @@ class Service {
             }
             
             //regular expression
+            let rowNumber = appd.DEFAULT_ROW_NUMBER
             var xmlString = try? String(contentsOf: url2)
             let backUpXmlString = xmlString
             var xml = XMLHash.parse(xmlString!)
@@ -2056,7 +2068,59 @@ class Service {
                     }
                 }
             }
+            
             //TODO decrease other rowNums
+            for i in 0..<rowNumber {
+                if i > rowRange.max()! && i-rowRange.count > 0{
+                    //
+                    var rowNumAry = [Int]()
+                    var lettersAry = [String]()
+                    var fullAddressAry = [String]()
+                    for j in 0..<locationInExcel.count {
+                        if numberOnlyString(text: locationInExcel[j]) == String(i){
+                            rowNumAry.append(Int(numberOnlyString(text: locationInExcel[j]))!)
+                            lettersAry.append(alphabetOnlyString(text: locationInExcel[j]))
+                            fullAddressAry.append(locationInExcel[j])
+                        }
+                    }
+                    // Retrieve all row tags
+                    let patternRow = "<row r=\"\(i)\".*?>(.*?)</row>"
+                    guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
+                        fatalError("Failed to create regular expression")
+                    }
+                    
+                    // Find all matches in the XML snippet
+                    let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
+                    
+                    var targetRowTag = ""
+                    for match in matchesRow {
+                        // Extract the row number from the match
+                        let nsRange = match.range(at: 1) // Use the capture group index
+                        if let range = Range(nsRange, in: xmlString!) {
+                            if let matchRange = Range(match.range, in: xmlString!) {
+                                targetRowTag = String(xmlString![matchRange]).description
+                                //assume this case targetRowTag    String    "<row r=\"9\"><c s=\"1\" r=\"B9\"><v>2</v></c></row>"
+                                let bkString = xmlString
+                                let presentRow = "r=\"\(i)\""
+                                let newRow = "r=\"\(i-rowRange.count)\""
+                                xmlString = xmlString?.replacingOccurrences(of: presentRow, with: newRow)
+                                
+                                for k in 0..<fullAddressAry.count{
+                                    xmlString = xmlString?.replacingOccurrences(of: fullAddressAry[k], with: lettersAry[k] + String(rowNumAry[k]-rowRange.count))
+                                }
+                                //xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                                let validator = XMLValidator()
+                                if validator.validateXML(xmlString: xmlString!) {
+                                    print("XML is valid.")
+                                } else {
+                                    print("XML is not valid.")
+                                    xmlString = bkString
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             return xmlString
         }
         return nil
@@ -2610,7 +2674,7 @@ class Service {
         return nil
     }
     
-    func testRowsDeleteBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, bulkAry:[String] = [], calculated:String = "", rowRange:[Int] = []) -> URL? {
+    func testRowsDeleteBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, bulkAry:[String] = [], calculated:String = "", rowRange:[Int] = [], locationInExcel:[String] = []) -> URL? {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -2682,7 +2746,7 @@ class Service {
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
                 
-                let replacedWithNewString = testDeleteRows(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString, calculated: calculated,rowRange: rowRange) ?? ""//A3
+                let replacedWithNewString = testDeleteRows(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString, calculated: calculated,rowRange: rowRange, locationInExcel:locationInExcel) ?? ""//A3
                 // Write the modified XML data back to the file
                 if(replacedWithNewString != ""){
                     try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
