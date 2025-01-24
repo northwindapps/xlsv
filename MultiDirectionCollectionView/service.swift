@@ -2007,13 +2007,9 @@ class Service {
         var styleIdx = -1
         let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
         var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
-        
         if (slocatinIdx != nil){
             styleIdx = appd.excelStyleIdx[slocatinIdx!]
         }
-        
-        
-        
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)
@@ -2068,7 +2064,7 @@ class Service {
                     }
                 }
             }
-            
+            print("locationInExcel",locationInExcel)
             //TODO decrease other rowNums
             for i in 0..<rowNumber {
                 if i-rowRange.count > 0 && i >= rowRange.min()!{
@@ -2104,12 +2100,12 @@ class Service {
                                     let bkString = xmlString
                                     var newTargetRowTag = targetRowTag
                                     let presentRow = "r=\"\(i)\""
-                                    let newRow = "r=\"\(i-rowRange.count)\""
+                                    let newRow = "r=\"____\(i-rowRange.count)\""
                                     newTargetRowTag = newTargetRowTag.replacingOccurrences(of: presentRow, with: newRow)
                                     
                                     for k in 0..<fullAddressAry.count{
                                         let presentRow = "r=\"\(fullAddressAry[k])\""
-                                        let newRow = "r=\"\(lettersAry[k])\(rowNumAry[k]-rowRange.count)\""
+                                        let newRow = "r=\"____\(lettersAry[k])\(rowNumAry[k]-rowRange.count)\""
                                         newTargetRowTag = newTargetRowTag.replacingOccurrences(of: presentRow, with: newRow)
                                     }
                                     xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
@@ -2126,6 +2122,7 @@ class Service {
                     }
                 }
             }
+            xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
             print("deleted\(xmlString)")
             return xmlString
         }
@@ -2142,8 +2139,6 @@ class Service {
         if (slocatinIdx != nil){
             styleIdx = appd.excelStyleIdx[slocatinIdx!]
         }
-        
-        
         
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
@@ -2169,7 +2164,7 @@ class Service {
             
             //TODO increase rowNums
             for i in 0..<rowNumber {
-                if i >= rowRange.min()! {
+                if i >= rowRange.min() ?? -1 {
                     //
                     var rowNumAry = [Int]()
                     var lettersAry = [String]()
@@ -2202,14 +2197,13 @@ class Service {
                                     //assume this case targetRowTag    String    "<row r=\"9\"><c s=\"1\" r=\"B9\"><v>2</v></c></row>"
                                     let bkString = xmlString
                                     let presentRow = "r=\"\(i)\""
-                                    let newRow = "r=\"\(i+rowRange.count)\""
+                                    let newRow = "r=\"____\(i+rowRange.count)\""
                                     xmlString = xmlString?.replacingOccurrences(of: presentRow, with: newRow)
                                     for k in 0..<fullAddressAry.count{
                                         let presentRow = "r=\"\(fullAddressAry[k])\""
-                                        let newRow = "r=\"\(lettersAry[k])\(rowNumAry[k]+rowRange.count)\""
+                                        let newRow = "r=\"____\(lettersAry[k])\(rowNumAry[k]+rowRange.count)\""
                                         xmlString = xmlString?.replacingOccurrences(of: presentRow, with: newRow)
                                     }
-                                    //xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
                                     let validator = XMLValidator()
                                     if validator.validateXML(xmlString: xmlString!) {
                                         print("XML is valid.")
@@ -2223,6 +2217,7 @@ class Service {
                     }
                 }
             }
+            xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
             print("added\(xmlString)")
             return xmlString
         }
