@@ -2040,6 +2040,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.rowButton.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
         
+        customview2.insertRow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
+        
         customview2.columnButton.addTarget(self, action: #selector(columnOperation), for: UIControl.Event.touchUpInside)
         
         
@@ -2114,7 +2116,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         print("rowIntNew",rowItems)
         excelRowsDelete(rowRange: rowItems)
-        
+        tempRangeSelected = []
+    }
+    
+    @objc func rowInsertOperation(){
+        var rowItems = [Int]()
+        var old = [String]()
+        var new = [String]()
+        for (i,each) in tempRangeSelected.enumerated(){
+            let colInt = each.item
+            let rowInt = each.section
+            if !rowItems.contains(rowInt){
+                rowItems.append(rowInt)
+            }
+        }
+        print("rowIntNew",rowItems)
+        excelRowsAdd(rowRange: rowItems)
+        tempRangeSelected = []
     }
     
     @objc func columnOperation(){
@@ -4266,6 +4284,55 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
             _ = serviceInstance.testRowsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
+            
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
+            
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+        
+            print("go to file view")
+           
+           
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+//                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                // Assuming `collectionView` is your UICollectionView instance
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.resetCellAttrsDictionaryItemZindex()
+                    customLayout.prepare()
+                    customLayout.invalidateLayout() // Call the method on the instance
+                    self.myCollectionView.reloadData()
+                } else {
+                    print("CustomCollectionViewLayout is not set as the current layout")
+                }
+                
+            }
+        }
+    }
+    
+    //excelRowsAdd
+    func excelRowsAdd(rowRange:[Int] = [])
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if isExcel {
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+            _ = serviceInstance.testRowsAddBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1
