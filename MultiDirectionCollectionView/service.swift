@@ -2223,43 +2223,6 @@ class Service {
                     }
                 }
             }
-            //one more task
-            // Retrieve all row tags
-//            var newString = ""
-//            for (i,each) in rowRange.enumerated(){
-//                newString += "<row r=\"\(each)\"></row>"
-//            }
-//            if rowRange.min()! > 1 {
-//                let patternRow = "<row r=\"\(rowRange.min()!-1)\".*?>(.*?)</row>"
-//                guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
-//                    fatalError("Failed to create regular expression")
-//                }
-//                
-//                // Find all matches in the XML snippet
-//                let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
-//                
-//                var targetRowTag = ""
-//                for match in matchesRow {
-//                    // Extract the row number from the match
-//                    let nsRange = match.range(at: 1) // Use the capture group index
-//                    if let range = Range(nsRange, in: xmlString!) {
-//                        if let matchRange = Range(match.range, in: xmlString!) {
-//                            targetRowTag = String(xmlString![matchRange]).description
-//                            //assume this case targetRowTag    String    "<row r=\"9\"><c s=\"1\" r=\"B9\"><v>2</v></c></row>"
-//                            let bkString = xmlString
-//                            newString = targetRowTag + newString
-//                            xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newString)
-//                            let validator = XMLValidator()
-//                            if validator.validateXML(xmlString: xmlString!) {
-//                                print("XML is valid.")
-//                            } else {
-//                                print("XML is not valid.")
-//                                xmlString = bkString
-//                            }
-//                        }
-//                    }
-//                }
-//            }
             print("added\(xmlString)")
             return xmlString
         }

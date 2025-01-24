@@ -2035,6 +2035,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.isHidden = true
+        customview2.columnButton.isHidden = true
         
         customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
@@ -2393,7 +2394,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.deletebutton.isHidden = true
         customview2.columnButton.isHidden = true
         customview2.rowButton.isHidden = true
-        
+        customview2.insertRow.isHidden = true
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
         customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
@@ -4372,21 +4373,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
     }
-    
-    //rowOperation
-    func excelRowIncrement(ovwritten:[String], ovwriting:[String])
-    {
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if isExcel {
-            var numFmt = 0
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
-            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testRowShiftBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,ovwritten: ovwritten ,ovwriting: ovwriting)
-            
-        }
-    }
-
     
     func storeInput(IPd:String, elementd:String)
     {
