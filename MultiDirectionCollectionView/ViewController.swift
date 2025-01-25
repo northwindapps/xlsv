@@ -2018,8 +2018,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         customview2.export.isHidden = true
-//        customview2.columnButton.isHidden = true
-//        customview2.rowButton.isHidden = true
         
         customview2.calcAll.isHidden = true
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
@@ -2035,7 +2033,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.isHidden = true
-        customview2.columnButton.isHidden = true
+//        customview2.columnButton.isHidden = true
         
         customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
@@ -2043,7 +2041,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.insertRow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
         
-        customview2.columnButton.addTarget(self, action: #selector(columnOperation), for: UIControl.Event.touchUpInside)
+        customview2.columnButton.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
         
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
@@ -2135,12 +2133,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         excelRowsAdd(rowRange: rowItems)
         tempRangeSelected = []
     }
+
     
-    @objc func columnOperation(){
-        print(tempRangeSelected)
+    @objc func columnInsertOperation(){
+        var colItems = [Int]()
+        var new = [String]()
         for (i,each) in tempRangeSelected.enumerated(){
-            
+            let colInt = each.item
+            let rowInt = each.section
+            if !colItems.contains(colInt){
+                colItems.append(colInt)
+            }
         }
+        print("colIntNew",colItems)
+        excelColsAdd(colRange:colItems)
+        tempRangeSelected = []
     }
     
     @objc func clearSelectedCellContent(){
@@ -4334,6 +4341,55 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
             _ = serviceInstance.testRowsAddBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
+            
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
+            
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+        
+            print("go to file view")
+           
+           
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+//                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                // Assuming `collectionView` is your UICollectionView instance
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.resetCellAttrsDictionaryItemZindex()
+                    customLayout.prepare()
+                    customLayout.invalidateLayout() // Call the method on the instance
+                    self.myCollectionView.reloadData()
+                } else {
+                    print("CustomCollectionViewLayout is not set as the current layout")
+                }
+                
+            }
+        }
+    }
+    
+    //excelRowsAdd
+    func excelColsAdd(colRange:[Int] = [])
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if isExcel {
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+            _ = serviceInstance.testColsAddBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1

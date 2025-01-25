@@ -482,7 +482,7 @@ class ExcelHelper{
                last = columnToNumber(srcAry[i])!
            }
        }
-       return last
+       return last + 1 //consider cell 0,0
     }
 
 
