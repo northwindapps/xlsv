@@ -2269,7 +2269,7 @@ class Service {
                 let colIdx = newExcelColList.firstIndex(of: lettersAry[i])!
                 let newAddress = newExcelColList[colIdx+colRange.count] + String(rowInt)
                 let newCol = "r=____\"\(newAddress)\""
-                if colIdx >= startCol+1{
+                if colIdx >= startCol{
                     xmlString = xmlString?.replacingOccurrences(of: presentCol, with: newCol)
                 }
             }
