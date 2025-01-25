@@ -2414,6 +2414,7 @@ class Service {
                         fullAddressAry.append(locationInExcel[j])
                     }
                 }
+                //take care other cells
                 for (k,each) in fullAddressAry.enumerated(){
                     // Retrieve all row tags
 //                    let patternRow = "<c r=\"\(each)\".*?>(.*?)</c>"
@@ -2440,10 +2441,11 @@ class Service {
                                 let letterKIdx = newExcelColList.firstIndex(of: lettersAry[k]) ?? -1
                                 let newAddress = GetExcelColumnName(columnNumber:letterKIdx-colRange.count) + String(rowNumAry[k])
                                 let newRow = "r=\"____\(newAddress)\""
-                                if letterKIdx > 0{
+                                if letterKIdx > 0 && GetExcelColumnName(columnNumber:letterKIdx-colRange.count) != ""{
                                     newTargetRowTag = newTargetRowTag.replacingOccurrences(of: presentRow, with: newRow)
+                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
                                 }
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
+                                
                                 let validator = XMLValidator()
                                 if validator.validateXML(xmlString: xmlString!) {
                                     print("XML is valid.")
