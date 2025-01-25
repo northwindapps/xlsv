@@ -2252,15 +2252,6 @@ class Service {
             }
         }
         
-        //get style id
-        var styleIdx = -1
-        let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
-        var sValueId = appd.numFmtIds.lastIndex(of: numFmtId ?? 0)
-        
-        if (slocatinIdx != nil){
-            styleIdx = appd.excelStyleIdx[slocatinIdx!]
-        }
-        
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
             let parser = XMLParser(data: xmlData!)

@@ -216,7 +216,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 columnsize = 1
             }
             
-            COLUMNSIZE = columnsize
+            COLUMNSIZE = columnsize// + 1
             
             appd.numberofColumn = columnsize
             

@@ -825,7 +825,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                                            "fontcolor": fontColor,
                                            "bgcolor": bgColor,
                                            "rowsize": rowsize,
-                                           "columnsize": columnsize,
+                                           "columnsize": columnsize+1,
                                            "customcellWidth":[String](),
                                            "customcellHeight": [String](),
                                            "ccwLocation": [String](),
