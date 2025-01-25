@@ -2003,6 +2003,9 @@ class Service {
     
     func testDeleteRows(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil, calculated:String = "", rowRange:[Int] = [], locationInExcel:[String] = []) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if rowRange.count == 0{
+            return nil
+        }
         //get style id
         var styleIdx = -1
         let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
@@ -2337,65 +2340,64 @@ class Service {
                 // Retrieve all row tags
                 //<c s=\"1\" r=\"B9\"><v>2</v></c>
 //                let patternRow = "<c r=\"\(each)\".*?>(.*?)</c>"
-                let patternRow = #"<c\s+([^>]*)>.*?</c>"#
-
+//                let patternRow = #"<c\s+([^>]*)>.*?</c>"#
+                let patternRow = #"<c[^>]*>.*?</c>"#
                 guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
                     fatalError("Failed to create regular expression")
                 }
                 
-                // Find all matches in the XML snippet
-                let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
-                
                 var targetRowTag = ""
-                for match in matchesRow {
-                    // Extract the row number from the match
-                    let nsRange = match.range(at: 1) // Use the capture group index
-                    if let range = Range(nsRange, in: xmlString!) {
-                        if let matchRange = Range(match.range, in: xmlString!) {
-                            targetRowTag = String(xmlString![matchRange]).description
-                            //assume this case targetRowTag    String    "<c s=\"1\" r=\"B9\"><v>2</v></c>"
-                            var deleteCols = [String]()
-                            let bkString = xmlString
-                            for m in 0..<colRange.count{
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"1"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"2"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"3"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"4"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"5"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"6"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"7"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"8"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
-                                if targetRowTag.contains(GetExcelColumnName(columnNumber: colRange[m])+"9"){
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                                }
+                if let regex = try? NSRegularExpression(pattern: patternRow, options: []) {
+                    let range = NSRange(xmlString!.startIndex..., in: xmlString!)
+                    let matches = regex.matches(in: xmlString!, options: [], range: range)
+                    
+                    for match in matches {
+                        targetRowTag = (xmlString! as NSString).substring(with: match.range)
+                        //assume this case targetRowTag    String    "<c s=\"1\" r=\"B9\"><v>2</v></c>"
+                        var deleteCols = [String]()
+                        let bkString = xmlString
+                        
+                        for m in 0..<colRange.count{
+//                            targetRowTag    String    "<c s=\"1\" r=\"B2\"><v>1</v></c>"
+                            let selectedColLetter = GetExcelColumnName(columnNumber: colRange[m])
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"1")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
                             }
-                            
-                            
-                            
-                            
-                            let validator = XMLValidator()
-                            if validator.validateXML(xmlString: xmlString!) {
-                                print("XML is valid.")
-                            } else {
-                                print("XML is not valid.")
-                                xmlString = bkString
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"2")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
                             }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"3")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"4")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"5")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"6")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"7")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"8")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                            if targetRowTag.contains("r=\"\(selectedColLetter+"9")\""){
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+                            }
+                        }
+                        
+                        
+                        
+                        
+                        let validator = XMLValidator()
+                        if validator.validateXML(xmlString: xmlString!) {
+                            print("XML is valid.")
+                        } else {
+                            print("XML is not valid.")
+                            xmlString = bkString
                         }
                     }
                 }
@@ -2418,41 +2420,38 @@ class Service {
                 for (k,each) in fullAddressAry.enumerated(){
                     // Retrieve all row tags
 //                    let patternRow = "<c r=\"\(each)\".*?>(.*?)</c>"
-                    let patternRow = #"<c\s+([^>]*)>.*?</c>"#
-
+//                    let patternRow = #"<c\s+([^>]*)>.*?</c>"#
+                    let patternRow = #"<c[^>]*>.*?</c>"#
                     guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
                         fatalError("Failed to create regular expression")
                     }
-                    
-                    // Find all matches in the XML snippet
-                    let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
-                    
                     var targetRowTag = ""
-                    for match in matchesRow {
-                        // Extract the row number from the match
-                        let nsRange = match.range(at: 1) // Use the capture group index
-                        if let range = Range(nsRange, in: xmlString!) {
-                            if let matchRange = Range(match.range, in: xmlString!) {
-                                targetRowTag = String(xmlString![matchRange]).description
-                                //assume this case targetRowTag    String    "<c s=\"1\" r=\"B9\"><v>2</v></c>"
-                                let bkString = xmlString
-                                var newTargetRowTag = targetRowTag
-                                let presentRow = "r=\"\(each)\""
-                                let letterKIdx = newExcelColList.firstIndex(of: lettersAry[k]) ?? -1
-                                let newAddress = GetExcelColumnName(columnNumber:letterKIdx-colRange.count) + String(rowNumAry[k])
-                                let newRow = "r=\"____\(newAddress)\""
-                                if letterKIdx > 0 && GetExcelColumnName(columnNumber:letterKIdx-colRange.count) != ""{
-                                    newTargetRowTag = newTargetRowTag.replacingOccurrences(of: presentRow, with: newRow)
-                                    xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
-                                }
-                                
-                                let validator = XMLValidator()
-                                if validator.validateXML(xmlString: xmlString!) {
-                                    print("XML is valid.")
-                                } else {
-                                    print("XML is not valid.")
-                                    xmlString = bkString
-                                }
+                    if let regex = try? NSRegularExpression(pattern: patternRow, options: []) {
+                        let range = NSRange(xmlString!.startIndex..., in: xmlString!)
+                        let matches = regex.matches(in: xmlString!, options: [], range: range)
+                        for match in matches {
+                            targetRowTag = (xmlString! as NSString).substring(with: match.range)
+                            if !targetRowTag.hasSuffix("</c>") || !targetRowTag.hasPrefix("<c") || !targetRowTag.contains(each){
+                                continue
+                            }
+                            //assume this case targetRowTag    String    "<c s=\"1\" r=\"B9\"><v>2</v></c>"
+                            let bkString = xmlString
+                            var newTargetRowTag = targetRowTag
+                            let presentRow = "r=\"\(each)\""
+                            let letterKIdx = newExcelColList.firstIndex(of: lettersAry[k]) ?? -1
+                            let newAddress = GetExcelColumnName(columnNumber:letterKIdx-colRange.count) + String(rowNumAry[k])
+                            let newRow = "r=\"____\(newAddress)\""
+                            if letterKIdx > 0 && GetExcelColumnName(columnNumber:letterKIdx-colRange.count) != ""{
+                                newTargetRowTag = newTargetRowTag.replacingOccurrences(of: presentRow, with: newRow)
+                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
+                            }
+                            
+                            let validator = XMLValidator()
+                            if validator.validateXML(xmlString: xmlString!) {
+                                print("XML is valid.")
+                            } else {
+                                print("XML is not valid.")
+                                xmlString = bkString
                             }
                         }
                     }
