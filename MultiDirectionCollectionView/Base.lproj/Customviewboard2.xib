@@ -13,6 +13,7 @@
                 <outlet property="back" destination="Eit-4b-Vlp" id="9D2-js-QfO"/>
                 <outlet property="calcAll" destination="AkM-DE-7L6" id="czm-fy-c31"/>
                 <outlet property="columnButton" destination="Dcp-OC-JMn" id="ckA-OU-h31"/>
+                <outlet property="deleteColumn" destination="JkY-G6-pak" id="Sh6-zb-vyF"/>
                 <outlet property="deletebutton" destination="zd3-md-7JL" id="5e2-z6-kvI"/>
                 <outlet property="emailButton" destination="TPE-jL-3nQ" id="Kol-iJ-59x"/>
                 <outlet property="export" destination="okp-xm-cxi" id="cRd-0L-WD1"/>
@@ -128,6 +129,15 @@
                     <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                     <state key="normal" title="Insert Row">
                         <color key="titleColor" systemColor="tintColor"/>
+                    </state>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JkY-G6-pak">
+                    <rect key="frame" x="5" y="147" width="143" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Delete Column">
+                        <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </state>
                 </button>
             </subviews>
