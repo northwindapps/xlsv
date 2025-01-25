@@ -2177,7 +2177,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
         print("colIntNew",colItems)
-        excelColsAdd(colRange:colItems)
+        excelColsDelete(colRange:colItems)
         tempRangeSelected = []
     }
     
