@@ -695,7 +695,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.stringbox.text = content[locationIdx!]
             }
             
-            myCollectionView.reloadData()
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                // Assuming `collectionView` is your UICollectionView instance
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.resetCellAttrsDictionaryItemZindex()
+                    customLayout.prepare()
+                    customLayout.invalidateLayout() // Call the method on the instance
+                    self.myCollectionView.reloadData()
+                } else {
+                    print("CustomCollectionViewLayout is not set as the current layout")
+                }
+                
+            }
             return false
         }
         return true
@@ -4365,7 +4379,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
-//                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
