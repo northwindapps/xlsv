@@ -3574,6 +3574,216 @@ class Service {
         return nil
     }
     
+    func testAddSheetBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, filename: String = "") -> URL? {
+        do {
+            // Get the sandbox directory for documents
+            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+            let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+            //
+            if FileManager.default.fileExists(atPath: fp) {
+                        // The specified path exists, continue with your code
+                        print("File or directory exists at path: \(fp)")
+                let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                        
+                // Check if the subdirectory already exists
+                if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                    // Create the subdirectory
+                    try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                    print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                } else {
+                    // Subdirectory already exists
+                    print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                    var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                       }
+                    }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory is now empty",files)
+                }
+                
+                // Construct the URL for the destination file
+                let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+               
+                // Check if the file already exists at the destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                    // Remove destination file if it already exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                } else {
+                    // Move the file to the subdirectory
+                    try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                    print("File moved successfully to: \(destinationURL.path)")
+                }
+                
+                do {
+                    //unzip
+                    let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                    print("File unzipped successfully.")
+                } catch {
+                    print("Error unzipping file: \(error)")
+                }
+                
+                do {
+                    //delete imported2.zip or imported2.xlsx
+                    try FileManager.default.removeItem(at: destinationURL)
+                    print("Deleted zip file:", destinationURL)
+                } catch {
+                    print("Error deleting file:", error)
+                }
+                
+                var code = ""
+                let randamChar = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"]
+                
+                for _ in 0..<8 {
+                    let idx = Int.random(in: 0..<16)
+                    code.append(randamChar[idx])
+                }
+                
+                
+                //create new sheet
+                var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-000000000000}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
+
+                
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                
+                
+                    
+                let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                var dup = false
+                for each in sheetFiles{
+                    let checkXmlString = try? String(contentsOf: each)
+                    let count = (checkXmlString?.components(separatedBy: code).count ?? 0)
+                    if (count>0){
+                        dup = true
+                        break
+                    }
+                }
+                if dup{
+                    var code2 = ""
+                    for _ in 0..<8 {
+                        let idx = Int.random(in: 0..<16)
+                        code2.append(randamChar[idx])
+                    }
+                    
+                    
+                    //create new sheet
+                    var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-0000" + code2 + "}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
+
+                }
+                
+                print("sheetFiles: ", sheetXMLFiles.count)
+                
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(sheetXMLFiles.count+1) + ".xml")
+                
+                try? sheetContent.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                
+                //xl/_res/workbook
+                let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
+                
+                var xmlString = try? String(contentsOf: _relsDirectoryURL)
+                
+                let count = (xmlString?.components(separatedBy: "rId").count ?? 0) - 1
+                
+                for c in 0..<count{
+                    if c > sheetXMLFiles.count{
+                        xmlString = xmlString?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+                    }
+                }
+                
+                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
+                
+                let relContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(sheetXMLFiles.count+1) + ".xml\"/></Relationships>"
+                
+                try? xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent).write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
+                
+                
+                //
+                let reRelsContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties\" Target=\"docProps/core.xml\"/></Relationships>"
+                
+                let reRelsDirectoryURL = subdirectoryURL.appendingPathComponent("_rels").appendingPathComponent(".rels")
+                
+                var xmlString2 = try? String(contentsOf: reRelsDirectoryURL)
+                let count2 = (xmlString2?.components(separatedBy: "rId").count ?? 0) - 1
+                for c in 0..<count2{
+                    if c > sheetXMLFiles.count{
+                        xmlString2 = xmlString2?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+                    }
+                }
+                xmlString2 = xmlString2?.replacingOccurrences(of: "____", with: "")
+                try? xmlString2?.replacingOccurrences(of: "</Relationships>", with: reRelsContent).write(to: reRelsDirectoryURL, atomically: true, encoding: .utf8)
+                
+                let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
+                
+                var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
+                let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
+                for c in 0..<count3{
+                    if c > sheetXMLFiles.count{
+                        xmlString3 = xmlString3?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+                    }
+                }
+                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
+                let newBook = "<sheet name=\"Sheet" + String(sheetXMLFiles.count+1) + "\" sheetId=\"" + String(sheetXMLFiles.count+1) + "\" r:id=\"rId" + String(sheetXMLFiles.count+1) + "\"/></sheets>"
+                try? xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook).write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                
+                //ready to zip
+                var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                let fpURL = URL(fileURLWithPath: fp)
+                let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                //appendingPathComponent("imported2.xlsx")
+                let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                // Check if the destination file exists
+                if FileManager.default.fileExists(atPath: fpURL.path) {
+                    // If it exists, remove it
+                    try FileManager.default.removeItem(at: fpURL)
+                }
+                //overwrite or update xlsx
+                let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                   }
+                }
+                
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Done: ", files)
+                
+                return nil
+
+                
+            } else {
+                // Handle the case where the specified path doesn't exist
+                print("File or directory does not exist at path: \(fp)")
+            }
+            
+        } else {
+            print("Document directory not found.")
+        }
+            
+            
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        return nil
+    }
+    
     //TODO implement it
     func testReplaceStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil) -> URL? {
         do {

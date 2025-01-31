@@ -2485,7 +2485,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }
         customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
-//        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
+        customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
     }
@@ -2607,83 +2607,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //create excel todo
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        readAllJsonFiles()
-        
-        sleep(3)
-        
-        var jsonFiles = [String]()
-        var export_content = [String]()
-        var export_location = [String]()
-        var export_formula_result = [String]()
-        var export_formula_location = [String]()
-        var export_input_order = [String]()
-        var export_sheet_idx = [Int]()
-        
-        
-        //get FileTitle
-        let RJ = ReadWriteJSON()
-        
-        
-        for i in 0..<old_localFileNames.count {
-            var content = [String]()
-            var location = [String]()
-            var FR = [String]()
-            var IO = [String]()
-            (content,location,FR,IO) = RJ.old_readJsonForSheet(title: old_localFileNames[i])
-            export_content.append(contentsOf: content)
-            export_location.append(contentsOf: location)
-            export_formula_result.append(contentsOf: FR)
-            export_input_order.append(contentsOf: IO)
-            
-            for j in 0..<content.count {
-                export_sheet_idx.append(i+1)
-            }
-        }
-        
-        //COMPLEX NUMBER NEEDS SOME WORK TO BE DONE TO IT 1+j4 -> 1+4j
-        
-        
-        //Don't match
-        //        if formulaParts.count == export_formula_result.count {
-        for i in 0..<export_content.count {
-            if export_content[i].contains("=") {
-                //EXCEL CONSTANT PI() LOG10  EXP(
-                export_content[i] = excelFormulaExpression(src:export_content[i])
-                export_formula_location.append(export_content[i].replacingOccurrences(of: "=", with: ""))
-                if export_formula_result.count != 0{
-                    export_content[i] = export_formula_result[0]
-                    export_formula_result.removeFirst()
-                }else{
-                    export_formula_location.append("nil")
-                }
-                
-                
-            }else{
-                export_formula_location.append("nil")
-            }
-        }
-        
-        var location_in_alphabet = [String]()
-        for i in 0..<export_location.count {
-            
-            let locationAry = export_location[i].components(separatedBy: ",")
-            let alphabetLetter = getExcelColumnName(columnNumber: Int(locationAry[0])!)
-            location_in_alphabet.append(String(alphabetLetter) + locationAry[1])
-            
-        }
-        
-        export_location = location_in_alphabet
-        
-        let today: Date = Date()
-        let dateFormatter: DateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-        let date = dateFormatter.string(from: today)
-        let dateStr = String(date).replacingOccurrences(of: ":", with: "_")
-        
-        let serviceInstance = Service(imp_sheetNumber: jsonFiles.count, imp_stringContents: export_content, imp_locations: export_location, imp_idx: export_sheet_idx, imp_fileName: "XLSV " + dateStr + ".xlsx",imp_formula:export_formula_location)
-        serviceInstance.export()
-        
-        sleep(7)
+        excelAddSheet()
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
@@ -4469,6 +4393,54 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
             _ = serviceInstance.testColsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
+            
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
+            
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+        
+            print("go to file view")
+           
+           
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+//                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                // Assuming `collectionView` is your UICollectionView instance
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.resetCellAttrsDictionaryItemZindex()
+                    customLayout.prepare()
+                    customLayout.invalidateLayout() // Call the method on the instance
+                    self.myCollectionView.reloadData()
+                } else {
+                    print("CustomCollectionViewLayout is not set as the current layout")
+                }
+                
+            }
+        }
+    }
+    
+    func excelAddSheet(filename:String = "")
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if isExcel {
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+            _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1

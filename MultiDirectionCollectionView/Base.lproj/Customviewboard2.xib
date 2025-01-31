@@ -10,6 +10,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Customview2" customModule="XLSV" customModuleProvider="target">
             <connections>
+                <outlet property="addNewSheet" destination="uTJ-V1-clN" id="eUU-DA-qTi"/>
                 <outlet property="back" destination="Eit-4b-Vlp" id="9D2-js-QfO"/>
                 <outlet property="calcAll" destination="AkM-DE-7L6" id="czm-fy-c31"/>
                 <outlet property="columnButton" destination="Dcp-OC-JMn" id="ckA-OU-h31"/>
@@ -33,10 +34,10 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
-                    <rect key="frame" x="156" y="79" width="123" height="25"/>
+                    <rect key="frame" x="156" y="78" width="123" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="New data">
+                    <state key="normal" title="New Data">
                         <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     </state>
                 </button>
@@ -139,6 +140,12 @@
                     <state key="normal" title="Delete Column">
                         <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </state>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uTJ-V1-clN">
+                    <rect key="frame" x="5" y="78" width="134" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="New Sheet"/>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
