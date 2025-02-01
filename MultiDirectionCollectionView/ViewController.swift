@@ -4524,8 +4524,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
             alert.addTextField()
             
+            alert.textFields?[0].text = localFileNames[currentFileNameCollectionViewIdx.item]
             
             let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+                
                 var name = alert.textFields?[0].text
                 
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
