@@ -2839,7 +2839,7 @@ class Service {
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
-            let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+
             //
             if FileManager.default.fileExists(atPath: fp) {
                         // The specified path exists, continue with your code

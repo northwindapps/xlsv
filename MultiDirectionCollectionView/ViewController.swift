@@ -698,6 +698,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                print("wsSheetIndex",appd.wsSheetIndex)
+                //let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
@@ -788,8 +790,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
             currentFileNameCollectionViewIdx = indexPath
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
-            print(indexPath.item)
-            appd.wsSheetIndex = indexPath.item + 1
+            print(currentFileNameCollectionViewIdx.item)
+//            appd.wsSheetIndex = indexPath.item + 1
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
 //                self.present(targetViewController, animated: true, completion: nil)
@@ -2612,8 +2614,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
-        ...
-        FileCollectionView.reloadData()
+//        self.loadExcelSheet(idx:Int(appd.sheetNameIds[0]) )
     }
     
     @objc func filterEmptyContent(){
@@ -3911,6 +3912,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func input(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.collectionViewCellSizeChanged = 0
+        let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+        appd.wsSheetIndex = sheetIdx!
+        print("wsSheetIndex",appd.wsSheetIndex)
+        
         let pasteboard = UIPasteboard.general
         pasteboard.string = ""
         
@@ -4540,6 +4545,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if name == ""{
                     name = dateFormatter.string(from: today)
                 }
+                print("before",appd.sheetNameIds)
+                print("before",appd.sheetNames)
                 _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: name!)
                 
                 //sheet cell get touched
@@ -4559,28 +4566,32 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.stringboxText = ""
             
                 print("go to file view")
-               
-               
                 
-                // Present the target view controller after LoadingFileController's view has appeared
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" ) as! LoadingViewController//Landscape
+                targetViewController.modalPresentationStyle = .fullScreen
+                
                 DispatchQueue.main.async {
-    //                self.present(targetViewController, animated: true, completion: nil)
-                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!))
-                    // Assuming `collectionView` is your UICollectionView instance
-                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                        customLayout.resetCellAttrsDictionaryItemZindex()
-                        customLayout.prepare()
-                        customLayout.invalidateLayout() // Call the method on the instance
-                        self.myCollectionView.reloadData()
-                        self.FileCollectionView.reloadData()
-                    } else {
-                        print("CustomCollectionViewLayout is not set as the current layout")
+                    print("after",appd.sheetNameIds)
+                    print("after",appd.sheetNames)
+                    print("after",appd.wsSheetIndex)
+                    let test = ReadWriteJSON()
+                    test.deleteJsonFile(title: "sheet" + String(appd.wsSheetIndex) + ".xml")
+                    appd.wsDeletedSheets.append(String(appd.wsSheetIndex))
+                    for (i,each) in appd.sheetNameIds.enumerated(){
+                        let hit = appd.wsDeletedSheets.firstIndex(of: each)
+                        if hit == nil{
+                            appd.wsSheetIndex = Int(each)!
+                        }
                     }
-                    
+    //                self.present(targetViewController, animated: true, completion: nil)
+//                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!)) not working
+                    // Assuming `collectionView` is your UICollectionView instance
+                    //self.present(targetViewController, animated: true, completion: nil)
+                    //elf.FileCollectionView.deleteItems(at: [self.currentFileNameCollectionViewIdx])
                 }
-                
                
-                self.customview2.removeFromSuperview()
+                // Present the target view controller after LoadingFileController's view has appeared
+                //self.customview2.removeFromSuperview()
                 
             })
             

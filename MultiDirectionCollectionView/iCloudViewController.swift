@@ -299,7 +299,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             //createxlsxSheet()
             
-            //replaceLocalFileWithImportedOne()
+            replaceLocalFileWithImportedOne()
         
             print("end iCloudController")
             
