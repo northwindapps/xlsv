@@ -301,29 +301,47 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             //createxlsxSheet()
             
+            replaceLocalFileWithImportedOne()
         
-        print("end iCloudController")
-        
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-        targetViewController.isExcel = isExcel
-        targetViewController.sheetIdx = 1
-        targetViewController.modalPresentationStyle = .fullScreen
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
-        }
-            return
-        }
+            print("end iCloudController")
             
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-        targetViewController.isExcel = true
-        targetViewController.isCSV = false
-        targetViewController.sheetIdx = 1
-        targetViewController.modalPresentationStyle = .fullScreen
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = isExcel
+            targetViewController.sheetIdx = 1
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
+            }
+                return
+            }
+                
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = true
+            targetViewController.isCSV = false
+            targetViewController.sheetIdx = 1
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
         }
         
         
+    }
+    
+    func replaceLocalFileWithImportedOne(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let pathDirectory = getRootDocumentsDirectory()
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        
+        let overWritingfilePath = appd.imported_xlsx_file_path
+        do {
+            let fileManager = FileManager.default
+            try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
+            print("File replaced successfully at path: \(overWrittenfilePath.path)")
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
+        } catch {
+            print("Error replacing file: \(error.localizedDescription)")
+        }
+
     }
     
     func loadInitialXLSX(url: URL) {

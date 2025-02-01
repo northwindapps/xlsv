@@ -15,6 +15,7 @@
                 <outlet property="calcAll" destination="AkM-DE-7L6" id="czm-fy-c31"/>
                 <outlet property="columnButton" destination="Dcp-OC-JMn" id="ckA-OU-h31"/>
                 <outlet property="deleteColumn" destination="JkY-G6-pak" id="Sh6-zb-vyF"/>
+                <outlet property="deleteSheet" destination="kVy-GU-E7z" id="QJV-OG-LmK"/>
                 <outlet property="deletebutton" destination="zd3-md-7JL" id="5e2-z6-kvI"/>
                 <outlet property="emailButton" destination="TPE-jL-3nQ" id="Kol-iJ-59x"/>
                 <outlet property="export" destination="okp-xm-cxi" id="cRd-0L-WD1"/>
@@ -24,7 +25,6 @@
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
                 <outlet property="resetStyling" destination="MuS-sR-VDI" id="vq5-oy-HyN"/>
                 <outlet property="rowButton" destination="bhr-93-fUG" id="QCA-sh-1LD"/>
-                <outlet property="savebutton" destination="kVy-GU-E7z" id="SgP-G3-RI9"/>
                 <outlet property="xlsxSheetExportOniCloudDrive" destination="0dO-3H-IDI" id="LK6-yS-45l"/>
             </connections>
         </placeholder>
@@ -33,14 +33,6 @@
             <rect key="frame" x="0.0" y="0.0" width="285" height="288"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
-                    <rect key="frame" x="156" y="78" width="123" height="27"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="New Data">
-                        <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    </state>
-                </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x2D-Hd-mUz">
                     <rect key="frame" x="156" y="10" width="115" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -101,11 +93,13 @@
                     </state>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="kVy-GU-E7z">
-                    <rect key="frame" x="148" y="112" width="132" height="35"/>
+                    <rect key="frame" x="147" y="74" width="132" height="35"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Local Save"/>
+                    <state key="normal" title="Delete Sheet">
+                        <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Dcp-OC-JMn">
                     <rect key="frame" x="5" y="121" width="143" height="18"/>
@@ -146,6 +140,14 @@
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="New Sheet"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
+                    <rect key="frame" x="152" y="117" width="123" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="New Data">
+                        <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    </state>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

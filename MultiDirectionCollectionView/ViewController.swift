@@ -1767,7 +1767,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
             print("File replaced successfully at path: \(overWrittenfilePath.path)")
             appd.imported_xlsx_file_path = overWrittenfilePath.path
-            appd.imported_xlsx_file_path = overWrittenfilePath.path
         } catch {
             print("Error replacing file: \(error.localizedDescription)")
         }
@@ -2040,10 +2039,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localSave.isHidden = true
         customview2.reset.isHidden = true
         //copy file to local
-        customview2.savebutton.isHidden = true
-        
+        customview2.deleteSheet.isHidden = true
+        customview2.deletebutton.isHidden = true
+        customview2.addNewSheet.isHidden = true
         customview2.resetStyling.isHidden = true
-        //customview2.savebutton.isHidden = true
+        //customview2.deletebutton.isHidden = true
         //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.isHidden = true
@@ -2074,7 +2074,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
             
-            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
+            customview2.deletebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
             customview2.deletebutton.setTitle("Supprimer", for: .normal)
             
         }else if locationstr.contains( "zh"){
@@ -2083,7 +2083,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else if locationstr.contains( "de")
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
+            customview2.deletebutton.setTitle("Lokal speichern", for: .normal)
             customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
@@ -2427,7 +2427,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
-        customview2.savebutton.addTarget(self, action: #selector(ViewController.localSave), for: UIControl.Event.touchUpInside)
+        customview2.deleteSheet.addTarget(self, action: #selector(ViewController.deletexlsxSheet), for: UIControl.Event.touchUpInside)
         
         customview2.deletebutton.isHidden = true
         customview2.columnButton.isHidden = true
@@ -2447,16 +2447,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else if locationstr.contains( "fr"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
             
-            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
-            customview2.deletebutton.setTitle("Supprimer", for: .normal)
-            
         }else if locationstr.contains( "zh"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
             
         }else if locationstr.contains( "de"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
-            customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
         {
@@ -2608,6 +2603,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         excelAddSheet()
+        if customview2 != nil{
+            customview2.removeFromSuperview()
+        }
+    }
+    
+    @objc func deletexlsxSheet(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        excelDeleteSheet()
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
@@ -4428,7 +4431,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 } else {
                     print("CustomCollectionViewLayout is not set as the current layout")
                 }
-                
             }
         }
     }
@@ -4437,47 +4439,151 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
-            //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-            
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
+            var message = "Set a sheet name."
+            var yes = "OK"
+            var no = "No"
+            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
             
             
-            f_calculated.removeAll()
-            f_content.removeAll()
-            content.removeAll()
-            location.removeAll()
-            f_location_alphabet.removeAll()
+            let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
+            alert.addTextField()
             
-            //print("sheet changed",indexPath.item)
-            stringboxText = ""
-        
-            print("go to file view")
-           
-           
             
-            // Present the target view controller after LoadingFileController's view has appeared
-            DispatchQueue.main.async {
-//                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex)
-                // Assuming `collectionView` is your UICollectionView instance
-                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                    customLayout.resetCellAttrsDictionaryItemZindex()
-                    customLayout.prepare()
-                    customLayout.invalidateLayout() // Call the method on the instance
-                    self.myCollectionView.reloadData()
-                } else {
-                    print("CustomCollectionViewLayout is not set as the current layout")
+            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+                var name = alert.textFields?[0].text
+                
+                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                
+                //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+                let today: Date = Date()
+                let dateFormatter: DateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                if name == ""{
+                    name = dateFormatter.string(from: today)
+                }
+                _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                
+                //sheet cell get touched
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+                
+                
+                self.f_calculated.removeAll()
+                self.f_content.removeAll()
+                self.content.removeAll()
+                self.location.removeAll()
+                self.f_location_alphabet.removeAll()
+                
+                //print("sheet changed",indexPath.item)
+                self.stringboxText = ""
+            
+                print("go to file view")
+               
+               
+                
+                // Present the target view controller after LoadingFileController's view has appeared
+                DispatchQueue.main.async {
+    //                self.present(targetViewController, animated: true, completion: nil)
+                    self.loadExcelSheet(idx: appd.wsSheetIndex)
+                    // Assuming `collectionView` is your UICollectionView instance
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
+                    }
+                    
                 }
                 
-            }
+               
+                self.customview2.removeFromSuperview()
+                
+            })
+            
+            alert.addAction(confirmAction)
+            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+            self.present(alert, animated: true)
+        }
+    }
+    
+    func excelDeleteSheet(filename:String = "")
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if isExcel {
+            var message = "Set a sheet name."
+            var yes = "OK"
+            var no = "No"
+            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+            
+            
+            let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
+            alert.addTextField()
+            
+            
+            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+                var name = alert.textFields?[0].text
+                
+                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                
+                //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
+                let today: Date = Date()
+                let dateFormatter: DateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                if name == ""{
+                    name = dateFormatter.string(from: today)
+                }
+                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                
+                //sheet cell get touched
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+                
+                
+                self.f_calculated.removeAll()
+                self.f_content.removeAll()
+                self.content.removeAll()
+                self.location.removeAll()
+                self.f_location_alphabet.removeAll()
+                
+                //print("sheet changed",indexPath.item)
+                self.stringboxText = ""
+            
+                print("go to file view")
+               
+               
+                
+                // Present the target view controller after LoadingFileController's view has appeared
+                DispatchQueue.main.async {
+    //                self.present(targetViewController, animated: true, completion: nil)
+                    self.loadExcelSheet(idx: appd.wsSheetIndex)
+                    // Assuming `collectionView` is your UICollectionView instance
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
+                    }
+                    
+                }
+                
+               
+                self.customview2.removeFromSuperview()
+                
+            })
+            
+            alert.addAction(confirmAction)
+            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
+            self.present(alert, animated: true)
         }
     }
     
