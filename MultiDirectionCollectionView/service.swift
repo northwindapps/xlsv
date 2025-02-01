@@ -2082,7 +2082,7 @@ class Service {
                             fullAddressAry.append(locationInExcel[j])
                         }
                     }
-                    if rowNumAry.count > 0{ 
+                    if rowNumAry.count > 0{
                         // Retrieve all row tags
                         let patternRow = "<row r=\"\(i)\".*?>(.*?)</row>"
                         guard let regexRow = try? NSRegularExpression(pattern: patternRow, options: []) else{
@@ -2666,8 +2666,8 @@ class Service {
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                     
 //                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
-//                    
-//                    
+//
+//
 //                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
 //                        // Write the modified XML data back to the file
 //                    if(idx != nil && replacedWithNewString != nil){
@@ -3710,20 +3710,6 @@ class Service {
                 try? xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent).write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
                 
                 
-                //
-                let reRelsContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties\" Target=\"docProps/core.xml\"/></Relationships>"
-                
-                let reRelsDirectoryURL = subdirectoryURL.appendingPathComponent("_rels").appendingPathComponent(".rels")
-                
-                var xmlString2 = try? String(contentsOf: reRelsDirectoryURL)
-                let count2 = (xmlString2?.components(separatedBy: "rId").count ?? 0) - 1
-                for c in 0..<count2{
-                    if c > sheetXMLFiles.count{
-                        xmlString2 = xmlString2?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-                    }
-                }
-                xmlString2 = xmlString2?.replacingOccurrences(of: "____", with: "")
-                try? xmlString2?.replacingOccurrences(of: "</Relationships>", with: reRelsContent).write(to: reRelsDirectoryURL, atomically: true, encoding: .utf8)
                 
                 let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
                 
@@ -3784,8 +3770,9 @@ class Service {
         return nil
     }
     
-    func testDeleteSheetBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, filename: String = "") -> URL? {
+    func testDeleteSheetBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, sheetname: String = "") -> URL? {
         do {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
             let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
@@ -3852,101 +3839,65 @@ class Service {
                     print("Error deleting file:", error)
                 }
                 
-                var code = ""
-                let randamChar = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"]
-                
-                for _ in 0..<8 {
-                    let idx = Int.random(in: 0..<16)
-                    code.append(randamChar[idx])
-                }
-                
-                
-                //create new sheet
-                var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-000000000000}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
-
-                
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                
-                
-                    
-                let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
-                var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
-                let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
-                var dup = false
-                for each in sheetFiles{
-                    let checkXmlString = try? String(contentsOf: each)
-                    let count = (checkXmlString?.components(separatedBy: code).count ?? 0)
-                    if (count>0){
-                        dup = true
-                        break
-                    }
-                }
-                if dup{
-                    var code2 = ""
-                    for _ in 0..<8 {
-                        let idx = Int.random(in: 0..<16)
-                        code2.append(randamChar[idx])
-                    }
-                    
-                    
-                    //create new sheet
-                    var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-0000" + code2 + "}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
-
-                }
-                
-                print("sheetFiles: ", sheetXMLFiles.count)
-                
-                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(sheetXMLFiles.count+1) + ".xml")
-                
-                try? sheetContent.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                
-                //xl/_res/workbook
-                let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
-                
-                var xmlString = try? String(contentsOf: _relsDirectoryURL)
-                
-                let count = (xmlString?.components(separatedBy: "rId").count ?? 0) - 1
-                
-                for c in 0..<count{
-                    if c > sheetXMLFiles.count{
-                        xmlString = xmlString?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-                    }
-                }
-                
-                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
-                
-                let relContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(sheetXMLFiles.count+1) + ".xml\"/></Relationships>"
-                
-                try? xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent).write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
-                
-                
-                //
-                let reRelsContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties\" Target=\"docProps/core.xml\"/></Relationships>"
-                
-                let reRelsDirectoryURL = subdirectoryURL.appendingPathComponent("_rels").appendingPathComponent(".rels")
-                
-                var xmlString2 = try? String(contentsOf: reRelsDirectoryURL)
-                let count2 = (xmlString2?.components(separatedBy: "rId").count ?? 0) - 1
-                for c in 0..<count2{
-                    if c > sheetXMLFiles.count{
-                        xmlString2 = xmlString2?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-                    }
-                }
-                xmlString2 = xmlString2?.replacingOccurrences(of: "____", with: "")
-                try? xmlString2?.replacingOccurrences(of: "</Relationships>", with: reRelsContent).write(to: reRelsDirectoryURL, atomically: true, encoding: .utf8)
-                
+                //starts here
+                //workbook
                 let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
-                
                 var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
-                let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
-                for c in 0..<count3{
-                    if c > sheetXMLFiles.count{
-                        xmlString3 = xmlString3?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+                var rIdValue = ""
+                var snippet = ""
+                // Define regex pattern to match the sheet snippet
+                let pattern = "<sheet name=\"\(sheetname)\"[^>]+/>"
+                if let range = xmlString3?.range(of: pattern, options: .regularExpression) {
+                    snippet = String(xmlString3![range])
+                    print("snippet",snippet) // Output: <sheet name="Sheet1" sheetId="1" r:id="rId1"/>
+                    let pattern2 = #"r:id="([^"]+)""#
+                    if let regex2 = try? NSRegularExpression(pattern: pattern2),
+                       let match2 = regex2.firstMatch(in: snippet, range: NSRange(snippet.startIndex..., in: snippet)) {
+                        if let range2 = Range(match2.range(at: 1), in: snippet) {
+                            rIdValue = String(snippet[range2])
+                            print(rIdValue) // Output: rId1
+                        }
+                    } else {
+                        print("r:id not found")
+                    }
+                } else {
+                    print("Sheet not found")
+                }
+                
+                
+                
+                if rIdValue != "" && snippet != ""{
+                    xmlString3 = xmlString3?.replacingOccurrences(of: snippet, with: "")
+                    try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                    
+                    
+                    let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                    
+                    
+                    let rIdValueNumber = numberOnlyString(text: rIdValue)
+                    //print("sheetFiles: ", sheetXMLFiles.count)
+                    //TODO delete the xml file
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(rIdValueNumber)  + ".xml")
+                    try FileManager.default.removeItem(at: worksheetXMLURL)
+                    //Reassign index
+                    //xl/_res/workbook
+                    let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
+                    
+                    var xmlString = try? String(contentsOf: _relsDirectoryURL)
+                    
+                    let relationshipId = rIdValue
+                    let pattern_xlres = "<Relationship Id=\"\(relationshipId)\"[^>]+/>"
+                    
+                    if let range_xlres = xmlString?.range(of: pattern_xlres, options: .regularExpression) {
+                        let snippet_xlres = String(xmlString![range_xlres])
+                        print("snippet_xlres",snippet_xlres )
+                        xmlString = xmlString?.replacingOccurrences(of: snippet_xlres, with: "")
+                        try? xmlString?.write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
+                    } else {
+                        print("Relationship not found")
                     }
                 }
-                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
-                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(sheetXMLFiles.count+1) + "\" r:id=\"rId" + String(sheetXMLFiles.count+1) + "\"/></sheets>"
-                try? xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook).write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                
                 
                 //ready to zip
                 var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)

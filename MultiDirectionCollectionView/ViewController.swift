@@ -148,7 +148,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //
     var localFileName = [String]()
-    var currentFileNameCollectionViewIdx = IndexPath()
+    var currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -4458,7 +4458,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                if name == ""{
+                if name == "" || (self.localFileNames.firstIndex(of: name!) != nil){
                     name = dateFormatter.string(from: today)
                 }
                 _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
@@ -4494,6 +4494,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
                         self.myCollectionView.reloadData()
+                        self.FileCollectionView.reloadData()
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
@@ -4539,7 +4540,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if name == ""{
                     name = dateFormatter.string(from: today)
                 }
-                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: name!)
                 
                 //sheet cell get touched
                 appd.collectionViewCellSizeChanged = 1
