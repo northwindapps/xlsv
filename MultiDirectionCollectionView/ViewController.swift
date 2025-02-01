@@ -2612,6 +2612,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
+        ...
+        FileCollectionView.reloadData()
     }
     
     @objc func filterEmptyContent(){
@@ -4547,7 +4549,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 appd.cshLocation.removeAll()
                 appd.customSizedHeight.removeAll()
                 
-                
                 self.f_calculated.removeAll()
                 self.f_content.removeAll()
                 self.content.removeAll()
@@ -4564,13 +4565,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // Present the target view controller after LoadingFileController's view has appeared
                 DispatchQueue.main.async {
     //                self.present(targetViewController, animated: true, completion: nil)
-                    self.loadExcelSheet(idx: appd.wsSheetIndex)
+                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!))
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
                         self.myCollectionView.reloadData()
+                        self.FileCollectionView.reloadData()
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
@@ -5411,25 +5413,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             
             //the workbook is corrupted?
-            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-                content = sheet1Json.content
-                location = sheet1Json.location
-                textsize = sheet1Json.fontsize
-                bgcolor = sheet1Json.bgcolor
-                tcolor = sheet1Json.fontcolor
-                COLUMNSIZE = sheet1Json.columnsize
-                ROWSIZE = sheet1Json.rowsize
-                appd.customSizedWidth = sheet1Json.customcellWidth
-                appd.customSizedHeight = sheet1Json.customcellHeight
-                appd.cswLocation = sheet1Json.ccwLocation
-                appd.cshLocation = sheet1Json.cchLocation
-                return true
-            }
-            
-            //
-            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-                print("something went wrong. maybe corrupt file.")
-            }
+//            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+//                content = sheet1Json.content
+//                location = sheet1Json.location
+//                textsize = sheet1Json.fontsize
+//                bgcolor = sheet1Json.bgcolor
+//                tcolor = sheet1Json.fontcolor
+//                COLUMNSIZE = sheet1Json.columnsize
+//                ROWSIZE = sheet1Json.rowsize
+//                appd.customSizedWidth = sheet1Json.customcellWidth
+//                appd.customSizedHeight = sheet1Json.customcellHeight
+//                appd.cswLocation = sheet1Json.ccwLocation
+//                appd.cshLocation = sheet1Json.cchLocation
+//                return true
+//            }
+//            
+//            //
+//            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+//                print("something went wrong. maybe corrupt file.")
+//            }
         }else{
             isExcel = false
             let sheet1Json = ReadWriteJSON()

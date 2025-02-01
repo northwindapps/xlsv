@@ -369,6 +369,9 @@ class Service {
             }
             
             let xmlData = try? Data(contentsOf: url2)
+            if xmlData == nil{
+                return nil
+            }
             let parser = XMLParser(data: xmlData!)
             // Set XMLParserDelegate
             let delegate = CustomXMLParserDelegate()
@@ -948,6 +951,9 @@ class Service {
         }
         if let url2 = url{
             let xmlData = try? Data(contentsOf: url2)
+            if xmlData == nil{
+                return nil
+            }
             let parser = XMLParser(data: xmlData!)
             // Set XMLParserDelegate
             let delegate = CustomXMLParserDelegate()

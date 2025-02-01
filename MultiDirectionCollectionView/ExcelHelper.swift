@@ -41,6 +41,7 @@ class ExcelHelper{
     
 
     func readExcel2(path:String, wsIndex:Int){
+        var reIdx = wsIndex
         let excelFunctions = [
             //"SUM",
             //"AVERAGE",
@@ -198,9 +199,13 @@ class ExcelHelper{
            // Filter files with "sheet1.xml" in their file name
            var sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(wsIndex) + ".xml") }
            if sheet1Files == nil{
-               let reIdx = appd.sheetNameIds.firstIndex(of: String(wsIndex))
-               sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(reIdx ?? 0) + ".xml") }
+               let reIdx1 = appd.sheetNameIds.firstIndex(of: String(wsIndex))
+               sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(reIdx1 ?? 0) + ".xml") }
            }
+//           if isSheetDelete{
+//               let reIdx2 = appd.sheetNameIds.first
+//               sheet1Files = paths.filter { $0.hasSuffix("sheet" + reIdx2!  + ".xml") }
+//           }
            if let path = try sheet1Files.first {
                print("path",path)
                //Cleaning instances on table data
