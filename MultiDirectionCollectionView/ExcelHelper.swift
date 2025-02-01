@@ -196,7 +196,11 @@ class ExcelHelper{
            //for path in try file!.parseWorksheetPaths() {
            let paths = try file!.parseWorksheetPaths()
            // Filter files with "sheet1.xml" in their file name
-           let sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(wsIndex) + ".xml") }
+           var sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(wsIndex) + ".xml") }
+           if sheet1Files == nil{
+               let reIdx = appd.sheetNameIds.firstIndex(of: String(wsIndex))
+               sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(reIdx ?? 0) + ".xml") }
+           }
            if let path = try sheet1Files.first {
                print("path",path)
                //Cleaning instances on table data

@@ -249,7 +249,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
             targetViewController.isExcel = false
             targetViewController.isCSV = true
-            targetViewController.sheetIdx = 1
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
                 self.present(targetViewController, animated: true, completion: nil)
@@ -307,7 +306,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
             targetViewController.isExcel = isExcel
-            targetViewController.sheetIdx = 1
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
                 self.present(targetViewController, animated: true, completion: nil)
@@ -318,7 +316,6 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
             targetViewController.isExcel = true
             targetViewController.isCSV = false
-            targetViewController.sheetIdx = 1
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
                 self.present(targetViewController, animated: true, completion: nil)

@@ -141,7 +141,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var isExcel = false
     var isCSV = false
     var isMail = false
-    var sheetIdx = 0
+//    var sheetIdx = 0
     
     //RangeSelection reset at the start
     var tempRangeSelected = [IndexPath]()
@@ -793,7 +793,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: sheetIdx)
+                self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item]) )
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                     customLayout.resetCellAttrsDictionaryItemZindex()
@@ -813,13 +813,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if appd.imported_xlsx_file_path == "" {
             self.isExcel = false
-            self.sheetIdx = idx ?? 1
         }
         
         if appd.imported_xlsx_file_path != "" {
             print("yourExcelfile",appd.imported_xlsx_file_path)
             let ehp = ExcelHelper()
-            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
+            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: idx!)
             // Do any additional setup after loading the view.
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -827,12 +826,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             
             self.isExcel = true
-            self.sheetIdx = appd.wsSheetIndex
         }
         
         //checkSheet
-        isExcelSheetData(sheetIdx: sheetIdx)
-        initSheetData(sheetIdx: sheetIdx)
+        isExcelSheetData(sheetIdx: idx!)
+        initSheetData()
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
@@ -1669,7 +1667,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
             isExcel = true
-            sheetIdx = 1
             if fileExists{
                 appd.imported_xlsx_file_path=filePath.path
                 //appd.sheetNames
@@ -1698,8 +1695,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         //checkSheet
-        isExcelSheetData(sheetIdx: sheetIdx)
-        initSheetData(sheetIdx: sheetIdx)
+        let initialIdx = appd.sheetNameIds.first ?? "-1"
+        isExcelSheetData(sheetIdx: Int(initialIdx)!)
+        initSheetData()
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
@@ -5392,7 +5390,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //localFileNames = ["sheet1"]
         
         //excel senario
-        if isExcel{
+        if isExcel && sheetIdx != -1{
             let sheet1Json = ReadWriteJSON()
             localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             print("sheetIdx",sheetIdx)
@@ -5433,6 +5431,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 print("something went wrong. maybe corrupt file.")
             }
         }else{
+            isExcel = false
             let sheet1Json = ReadWriteJSON()
             if sheet1Json.readJsonFile(title: "csv_sheet1"){
                 content = sheet1Json.content
@@ -5452,7 +5451,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return false
     }
     
-    func initSheetData(sheetIdx:Int){
+    func initSheetData(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
@@ -5745,7 +5744,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             stringboxText = ""
             
             
-            initSheetData(sheetIdx: selectedSheet)
+            initSheetData()
             //
             FileCollectionView.reloadData()
             fileTitle.text = localFileNames[selectedSheet]

@@ -44,7 +44,6 @@ func showAnimate()
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
             
         targetViewController.isExcel = false
-        targetViewController.sheetIdx = idx ?? 1
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
@@ -66,7 +65,6 @@ func showAnimate()
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         
         targetViewController.isExcel = true
-        targetViewController.sheetIdx = appd.wsSheetIndex
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)

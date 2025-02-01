@@ -3879,7 +3879,7 @@ class Service {
                     //TODO delete the xml file
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(rIdValueNumber)  + ".xml")
                     try FileManager.default.removeItem(at: worksheetXMLURL)
-                    //Reassign index
+       
                     //xl/_res/workbook
                     let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
                     
