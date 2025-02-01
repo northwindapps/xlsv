@@ -148,7 +148,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //
     var localFileName = [String]()
-    var currentFileNameCollectionViewIdx = IndexPath()
+    var currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -789,7 +789,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             currentFileNameCollectionViewIdx = indexPath
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
             print(indexPath.item)
-            appd.wsSheetIndex = indexPath.item + 1
+            appd.wsSheetIndex = Int(appd.sheetNameIds[indexPath.item])!
+            appd.wsIndex = Int(appd.sheetNameIds[indexPath.item])!
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
 //                self.present(targetViewController, animated: true, completion: nil)
@@ -827,10 +828,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             
             self.isExcel = true
-            self.sheetIdx = appd.wsSheetIndex
+            let fileCollectionViewIdx = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex))
+//            self.sheetIdx = fileCollectionViewIdx ?? 0
         }
         
         //checkSheet
+        
         isExcelSheetData(sheetIdx: sheetIdx)
         initSheetData(sheetIdx: sheetIdx)
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
@@ -4449,7 +4452,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             alert.addTextField()
             
             
-            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
+            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { [self] action in
                 var name = alert.textFields?[0].text
                 
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -4458,9 +4461,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                if name == ""{
+                
+                if name == "" || (localFileNames.firstIndex(of: name!) != nil){
                     name = dateFormatter.string(from: today)
                 }
+                
                 _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
                 
                 //sheet cell get touched
@@ -4539,7 +4544,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if name == ""{
                     name = dateFormatter.string(from: today)
                 }
-                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: name!)
                 
                 //sheet cell get touched
                 appd.collectionViewCellSizeChanged = 1
@@ -4572,6 +4577,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
                         self.myCollectionView.reloadData()
+                        self.FileCollectionView.reloadData()
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
