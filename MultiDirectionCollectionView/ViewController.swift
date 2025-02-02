@@ -628,7 +628,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if isExcel && indexPath.item == appd.wsSheetIndex-1{
+            if isExcel && indexPath.item == currentFileNameCollectionViewIdx.item{
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
                 return cell
@@ -2614,7 +2614,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
-//        self.loadExcelSheet(idx:Int(appd.sheetNameIds[0]) )
     }
     
     @objc func filterEmptyContent(){
@@ -4567,27 +4566,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
                 print("go to file view")
                 
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" ) as! LoadingViewController//Landscape
-                targetViewController.modalPresentationStyle = .fullScreen
-                
                 DispatchQueue.main.async {
+                    appd.sheetNameIds.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
+                    appd.sheetNames.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
                     print("after",appd.sheetNameIds)
                     print("after",appd.sheetNames)
-                    print("after",appd.wsSheetIndex)
+                    print("after",appd.sheetNameIds.first)
                     let test = ReadWriteJSON()
-                    test.deleteJsonFile(title: "sheet" + String(appd.wsSheetIndex) + ".xml")
-                    appd.wsDeletedSheets.append(String(appd.wsSheetIndex))
-                    for (i,each) in appd.sheetNameIds.enumerated(){
-                        let hit = appd.wsDeletedSheets.firstIndex(of: each)
-                        if hit == nil{
-                            appd.wsSheetIndex = Int(each)!
-                        }
-                    }
-    //                self.present(targetViewController, animated: true, completion: nil)
-//                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!)) not working
+                    self.loadExcelSheet(idx: Int(appd.wsSheetIndex))
+                    self.FileCollectionView.reloadData()
                     // Assuming `collectionView` is your UICollectionView instance
-                    //self.present(targetViewController, animated: true, completion: nil)
-                    //elf.FileCollectionView.deleteItems(at: [self.currentFileNameCollectionViewIdx])
                 }
                
                 // Present the target view controller after LoadingFileController's view has appeared

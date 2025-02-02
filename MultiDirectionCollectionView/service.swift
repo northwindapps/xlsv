@@ -3692,7 +3692,15 @@ class Service {
                 
                 print("sheetFiles: ", sheetXMLFiles.count)
                 
-                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(sheetXMLFiles.count+1) + ".xml")
+                let sortedFiles = sheetXMLFiles.sorted {
+                    let num1 = Int(numberOnlyString(text: $0.lastPathComponent)) ?? 0
+                    let num2 = Int(numberOnlyString(text: $1.lastPathComponent)) ?? 0
+                    return num1 < num2
+                }
+                
+                let lastNum = Int(numberOnlyString(text: sortedFiles.last!.lastPathComponent))!
+                
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(lastNum+1) + ".xml")
                 
                 try? sheetContent.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                 
@@ -3701,17 +3709,8 @@ class Service {
                 
                 var xmlString = try? String(contentsOf: _relsDirectoryURL)
                 
-                let count = (xmlString?.components(separatedBy: "rId").count ?? 0) - 1
-                
-                for c in 0..<count{
-                    if c > sheetXMLFiles.count{
-                        xmlString = xmlString?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-                    }
-                }
-                
-                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
-                
-                let relContent = "<Relationship Id=\"rId" + String(sheetXMLFiles.count+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(sheetXMLFiles.count+1) + ".xml\"/></Relationships>"
+       
+                let relContent = "<Relationship Id=\"rId" + String(lastNum+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
                 
                 try? xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent).write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
                 
@@ -3720,14 +3719,8 @@ class Service {
                 let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
                 
                 var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
-                let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
-                for c in 0..<count3{
-                    if c > sheetXMLFiles.count{
-                        xmlString3 = xmlString3?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-                    }
-                }
-                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
-                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(sheetXMLFiles.count+1) + "\" r:id=\"rId" + String(sheetXMLFiles.count+1) + "\"/></sheets>"
+
+                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(lastNum+1) + "\"/></sheets>"
                 try? xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook).write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
                 
                 //ready to zip

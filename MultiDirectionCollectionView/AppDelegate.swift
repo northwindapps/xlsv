@@ -51,7 +51,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var diff_end_index = [String]()
     var cellIndex = IndexPath()
     var wsSheetIndex = 1
-    var wsDeletedSheets = [String]()
     var imported_xlsx_file_path=""
     var excelStyleIdx = [Int]()
     var excelStyleLocation = [String]()
