@@ -8,8 +8,6 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     var CELL_WIDTH = 120.0
     var INDEX_WIDTH = 50.0
     var INDEX_HEIGHT = 30.0
-    var DEFAULT_COLUMN_NUMBER = 60
-    var DEFAULT_ROW_NUMBER = 501
     
     let STATUS_BAR = UIApplication.shared.statusBarFrame.height
     var each_width = [Double]()
@@ -60,36 +58,36 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             let size = UserDefaults.standard.object(forKey: "cellSize") as! Int
             switch size {
             case 0:
-            CELL_HEIGHT = 30.0
-            CELL_WIDTH = 40.0
-            INDEX_WIDTH = 30.0
-            INDEX_HEIGHT = 30.0
-            excel_cell_width_margin = 20
+            CELL_HEIGHT = 20.0
+            CELL_WIDTH = 30.0
+            INDEX_WIDTH = 20.0
+            INDEX_HEIGHT = 20.0
+            excel_cell_width_margin = 10
                 break
                     case 1:
-                        CELL_HEIGHT = 30.0
-                        CELL_WIDTH = 80.0
+                        CELL_HEIGHT = 20.0
+                        CELL_WIDTH = 40.0
                         INDEX_WIDTH = 30.0
                         INDEX_HEIGHT = 30.0
                         excel_cell_width_margin = 20
                 break
                 case 2:
                 CELL_HEIGHT = 30.0
-                CELL_WIDTH = 120.0
+                CELL_WIDTH = 70.0
                 INDEX_WIDTH = 30.0
                 INDEX_HEIGHT = 30.0
                 excel_cell_width_margin = 30
             break
             case 3:
                 CELL_HEIGHT = 30.0
-                CELL_WIDTH = 150.0
+                CELL_WIDTH = 90.0
                 INDEX_WIDTH = 30.0
                 INDEX_HEIGHT = 30.0
                 excel_cell_width_margin = 30
             break
             case 4:
                 CELL_HEIGHT = 40.0
-                CELL_WIDTH = 200.0
+                CELL_WIDTH = 180.0
                 INDEX_WIDTH = 40.0
                 INDEX_HEIGHT = 40.0
                 excel_cell_width_margin = 40
@@ -104,8 +102,8 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         merged = appd.diff_start_index //["1,1","5,5"]
         
-        if appd.CELL_HEIGHT_EXCEL_GSHEET > 0 && appd.CELL_WIDTH_EXCEL_GSHEET > 0{
-            CELL_WIDTH = appd.CELL_WIDTH_EXCEL_GSHEET + Double(excel_cell_width_margin)
+        if appd.CELL_WIDTH_EXCEL_GSHEET > 100{
+            CELL_WIDTH = appd.CELL_WIDTH_EXCEL_GSHEET
         }
         
         
@@ -123,7 +121,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         if dataSourceDidUpdate == true{
 
         //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        c = DEFAULT_COLUMN_NUMBER//30
+        c = appd.DEFAULT_COLUMN_NUMBER//30
         if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
             let v = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
             if v > c{
@@ -131,7 +129,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             }
         }
         
-        r = DEFAULT_ROW_NUMBER
+        r = appd.DEFAULT_ROW_NUMBER
         if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
             let v = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
             if v > r{
@@ -164,12 +162,21 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         yPOS.append(0.0)
         xPOS.append(0.0)
         
-        
+        //read temp when it's count was not 0
         for i in 0..<each_height.count{
-            if appd.cshLocation.contains(i){
-                let l = appd.cshLocation.index(of: i)
-                let doubled = Double(appd.customSizedHeight[l!])
-                each_height[i] = doubled
+            switch appd.cshLocation_temp.count {
+            case 0:
+                if appd.cshLocation.contains(i){
+                    let l = appd.cshLocation.index(of: i)
+                    let doubled = Double(appd.customSizedHeight[l!])
+                    each_height[i] = doubled
+                }
+            default:
+                if appd.cshLocation_temp.contains(i){
+                    let l = appd.cshLocation_temp.index(of: i)
+                    let doubled = Double(appd.customSizedHeight_temp[l!])
+                    each_height[i] = doubled
+                }
             }
             
             yPos += each_height[i]
@@ -177,10 +184,19 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         }
         
         for j in 0..<each_width.count{
-            if appd.cswLocation.contains(j){
-                let l = appd.cswLocation.index(of: j)
-                let doubled = Double(appd.customSizedWidth[l!])
-                each_width[j] = doubled
+            switch appd.cswLocation_temp.count {
+            case 0:
+                if appd.cswLocation.contains(j){
+                    let l = appd.cswLocation.index(of: j)
+                    let doubled = Double(appd.customSizedWidth[l!])
+                    each_width[j] = doubled
+                }
+            default:
+                if appd.cswLocation_temp.contains(j){
+                    let l = appd.cswLocation_temp.index(of: j)
+                    let doubled = Double(appd.customSizedWidth_temp[l!])
+                    each_width[j] = doubled
+                }
             }
             
             xPos += each_width[j]
@@ -352,7 +368,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                                 if(cellAttrsDictionary[cellIndex] == nil){
                                     cellAttrsDictionary[cellIndex] = cellAttributes
                                 }else{
-                                    print("attribute exists")
+                                    //print("attribute exists") //well. what should i do in this case
                                 }
                             }
                             
@@ -395,36 +411,15 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     
         return true
     }
+ 
     
-//    func createMergedCells(){ forget it
-//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//        for (index, element) in appd.diff_start_column.enumerated() {
-//            var each_height = 0.0
-//            var each_width = 0.0
-//            for section in appd.diff_start_column[index]...appd.diff_end_column[index]{
-////                each_height += CELL_HEIGHT
-//                for item in appd.diff_start_row[index]...appd.diff_end_row[index]{
-//    //                each_width += CELL_WIDTH
-//                    let cellIndex = IndexPath(item: item, section: section)
-//                    let cellAttributes = UICollectionViewLayoutAttributes(forCellWith: cellIndex)
-//                    if(section == appd.diff_start_column[index] && item == appd.diff_start_row[index]){
-//                        cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: CELL_WIDTH * Double((appd.diff_end_column[index] - appd.diff_start_column[index])), height: CELL_HEIGHT *  Double((appd.diff_end_row[index] - appd.diff_start_row[index])) )
-//
-//                    // Determine zIndex based on cell type.
-//                    cellAttributes.zIndex = 5
-//                    print(cellAttributes)
-//                    // Save the attributes.
-//                    cellAttrsDictionary[cellIndex] = cellAttributes
-//                  }
-//                }
-//            }
-//
-//
-//
-//        }
-//    }
-    
-   
+    func resetCellAttrsDictionaryItemZindex(){
+        for (key, cellAttributes) in cellAttrsDictionary {
+            cellAttributes.zIndex = 0
+            cellAttrsDictionary[key] = cellAttributes
+        }
+
+    }
     
     func getExcelColumnName(columnNumber: Int) -> String
     {

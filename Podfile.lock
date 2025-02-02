@@ -1,96 +1,40 @@
 PODS:
-  - AppAuth (1.7.1):
-    - AppAuth/Core (= 1.7.1)
-    - AppAuth/ExternalUserAgent (= 1.7.1)
-  - AppAuth/Core (1.7.1)
-  - AppAuth/ExternalUserAgent (1.7.1):
-    - AppAuth/Core
-  - AppCheckCore (10.18.1):
-    - GoogleUtilities/Environment (~> 7.11)
-    - PromisesObjC (~> 2.3)
   - CoreXLSX (0.14.1):
     - XMLCoder (~> 0.11.1)
     - ZIPFoundation (~> 0.9.11)
-  - Google-Mobile-Ads-SDK (11.1.0):
-    - GoogleUserMessagingPlatform (>= 1.1)
-  - GoogleAPIClientForREST (3.5.1):
-    - GoogleAPIClientForREST/Core (= 3.5.1)
-    - GTMSessionFetcher/Full (< 4.0, >= 1.6.1)
-  - GoogleAPIClientForREST/Core (3.5.1):
-    - GTMSessionFetcher/Full (< 4.0, >= 1.6.1)
-  - GoogleAPIClientForREST/Drive (3.5.1):
-    - GoogleAPIClientForREST/Core
-    - GTMSessionFetcher/Full (< 4.0, >= 1.6.1)
-  - GoogleSignIn (7.1.0-fac-eap-1.0.0):
-    - AppAuth (~> 1.6)
-    - AppCheckCore (~> 10.18)
-    - GTMAppAuth (~> 4.0)
-    - GTMSessionFetcher/Core (< 4.0, >= 1.1)
-  - GoogleUserMessagingPlatform (2.2.0)
-  - GoogleUtilities/Environment (7.13.0):
-    - GoogleUtilities/Privacy
-    - PromisesObjC (< 3.0, >= 1.2)
-  - GoogleUtilities/Privacy (7.13.0)
-  - GTMAppAuth (4.0.0):
-    - AppAuth/Core (~> 1.6)
-    - GTMSessionFetcher/Core (< 4.0, >= 2.1)
-  - GTMSessionFetcher/Core (3.3.1)
-  - GTMSessionFetcher/Full (3.3.1):
-    - GTMSessionFetcher/Core
-  - PromisesObjC (2.4.0)
   - SSZipArchive (2.4.3)
   - SwiftyXMLParser (5.6.0)
+  - SWXMLHash (7.0.2)
   - XMLCoder (0.11.1)
   - Zip (2.1.2)
-  - ZIPFoundation (0.9.11)
+  - ZIPFoundation (0.9.18)
 
 DEPENDENCIES:
   - CoreXLSX (~> 0.14.1)
-  - Google-Mobile-Ads-SDK
-  - GoogleAPIClientForREST (~> 3.5)
-  - GoogleAPIClientForREST/Drive
-  - GoogleSignIn (= 7.1.0-fac-eap-1.0.0)
   - SSZipArchive
   - SwiftyXMLParser
+  - SWXMLHash
   - Zip (~> 2.1)
 
 SPEC REPOS:
   trunk:
-    - AppAuth
-    - AppCheckCore
     - CoreXLSX
-    - Google-Mobile-Ads-SDK
-    - GoogleAPIClientForREST
-    - GoogleSignIn
-    - GoogleUserMessagingPlatform
-    - GoogleUtilities
-    - GTMAppAuth
-    - GTMSessionFetcher
-    - PromisesObjC
     - SSZipArchive
     - SwiftyXMLParser
+    - SWXMLHash
     - XMLCoder
     - Zip
     - ZIPFoundation
 
 SPEC CHECKSUMS:
-  AppAuth: e93b919be5dbcbba49555011ce94f7d716368574
-  AppCheckCore: d0d4bcb6f90fd9f69958da5350467b79026b38c7
   CoreXLSX: f9a7a70b509150ceb675b05877b7ac041a587030
-  Google-Mobile-Ads-SDK: 4a1f2ccef63660f9a74efc6a6ea979483d421aaa
-  GoogleAPIClientForREST: 8ec5b7f116fe00e2c13a4a6d5efe9928afb811f1
-  GoogleSignIn: 1edd4daf4c1ae7080e3a11574b016fed436f3fe8
-  GoogleUserMessagingPlatform: d31dbfb40ec02c5d9683029815c5d5a7f46389ee
-  GoogleUtilities: d053d902a8edaa9904e1bd00c37535385b8ed152
-  GTMAppAuth: c1bce47a2af077d802eee58a9334c96b2ee65623
-  GTMSessionFetcher: 8a1b34ad97ebe6f909fb8b9b77fba99943007556
-  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
   SwiftyXMLParser: 9b98995235961881322015ebe38d1f3d7c953bd7
+  SWXMLHash: dd733a457e9c4fe93b1538654057aefae4acb382
   XMLCoder: c4638336674de7ba279cd23f2005817d69f538e0
   Zip: b3fef584b147b6e582b2256a9815c897d60ddc67
-  ZIPFoundation: b1f0de4eed33e74a676f76e12559ab6b75990197
+  ZIPFoundation: fa9ae5af13b7cf168245f24d1c672a4fb972e37f
 
-PODFILE CHECKSUM: 5f7b18613eead3ad99f9355975220dfaed900235
+PODFILE CHECKSUM: 98d9b255a02fc0f6e15633467d9911fc94937601
 
 COCOAPODS: 1.15.2

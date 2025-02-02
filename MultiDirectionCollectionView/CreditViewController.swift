@@ -21,7 +21,7 @@ class CreditController: UIViewController {
         creditview.isEditable = false
         creditview.dataDetectorTypes = .link
         
-        creditview.text = "Developer's website:\nhttps://online-flowchart.com/\n\nTutorial of the app (Youtube): \nhttps://www.youtube.com/channel/UCzMh7Tx9e1BRpmQibgX2Skw\n\n\n Credit\nThis application uses the following open source widely in the code.  \n\n\n1.https://github.com/kwandrews7/MultiDirectionCollectionView/tree/adding-sticky-headersCopyright \n(c) 2015 Kyle Andrews\n\n\nLicense(MIT):https://github.com/kwandrews7/MultiDirectionCollectionView/blob/adding-sticky-headers/LICENSE\n\n2.https://github.com/MaxDesiatov/CoreXLSX\n\nCopyright 2018-2019 Max Desiatov\n\nApache License Version 2.0, January 2004 http://www.apache.org/licenses/"
+        creditview.text = "Developer's website:\nhttps://northwindsoftware.com/?US\n\nTutorial of the app (Youtube): \nhttps://www.youtube.com/channel/UCzMh7Tx9e1BRpmQibgX2Skw\n\n\n Credit\nThis application uses the following open source widely in the code.  \n\n\n1.https://github.com/kwandrews7/MultiDirectionCollectionView/tree/adding-sticky-headersCopyright \n(c) 2015 Kyle Andrews\n\n\nLicense(MIT):https://github.com/kwandrews7/MultiDirectionCollectionView/blob/adding-sticky-headers/LICENSE\n\n2.https://github.com/MaxDesiatov/CoreXLSX\n\nCopyright 2018-2019 Max Desiatov\n\nApache License Version 2.0, January 2004 http://www.apache.org/licenses/"
         
 //        returnButton.addTarget(self, action: #selector(returnTOP), for: UIControl.Event.touchUpInside)
         super.viewDidLoad()

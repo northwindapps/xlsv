@@ -7,8 +7,8 @@
 
 
 import UIKit
-import GoogleMobileAds
-import GoogleSignIn
+//import GoogleMobileAds
+//import GoogleSignIn
 
 @UIApplicationMain
 //https://stackoverflow.com/questions/46648834/ld-entry-point-main-undefined-for-architecture-x86-64-xcode-9
@@ -17,8 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     var radigree = 0
     var accessID = String()
-    
-    var initialLaunch = true
+    var isAppStarted = false
     
     //StringFormat
     var FONT_SIZE_DEFAULT = 12
@@ -33,32 +32,54 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var customSizedWidth = [Double]()
     var cshLocation = [Int]()
     var customSizedHeight = [Double]()
-    var border_ids = [Int]()
-    var borders_left_style = [String]()
-    var borders_right_style = [String]()
-    var borders_top_style = [String]()
-    var borders_bottom_style = [String]()
-    var borders_left_color = [String]()
-    var borders_right_color = [String]()
-    var borders_top_color = [String]()
-    var borders_bottom_color = [String]()
+    var cswLocation_temp = [Int]()
+    var customSizedWidth_temp = [Double]()
+    var cshLocation_temp = [Int]()
+    var customSizedHeight_temp = [Double]()
+    //
+//    var border_ids = [Int]()
+//    var borders_left_style = [String]()
+//    var borders_right_style = [String]()
+//    var borders_top_style = [String]()
+//    var borders_bottom_style = [String]()
+//    var borders_left_color = [String]()
+//    var borders_right_color = [String]()
+//    var borders_top_color = [String]()
+//    var borders_bottom_color = [String]()
     var index_border_id = [String: String]()
     var diff_start_index = [String]()
     var diff_end_index = [String]()
     var cellIndex = IndexPath()
+    var wsSheetIndex = 1
+    var imported_xlsx_file_path=""
+    var excelStyleIdx = [Int]()
+    var excelStyleLocation = [String]()
+    var excelStyleLocationAlphabet = [String]()
+    var cellXfs = [Int]()
+    var cellStyleXfs = [Int]()
+    var border_lefts = [Int]()
+    var border_rights = [Int]()
+    var border_bottoms = [Int]()
+    var border_tops = [Int]()
+    var formatCodes = [String]()
+    var numFmts = [String]()
+    var numFmtIds = [Int]()
+    
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0
-    let DEFAULT_ROW_NUMBER = 201
+    let DEFAULT_ROW_NUMBER = 301
     let DEFAULT_COLUMN_NUMBER = 30
     var CELL_HEIGHT_EXCEL_GSHEET = 30.0
     var CELL_WIDTH_EXCEL_GSHEET = 100.0
     
 
+    //workbook info
+    var sheetNameIds = [String]()
+    var sheetNames = [String]()
+    
+    
     var tag_int = 0
-    var viewcontroller_tag=0
-    var username = ""
-    var currtenfile = 0
 
     
     var numberofRow = 0
@@ -106,12 +127,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var R_csize8 = Int()
     var R_rsize9 = Int()
     var R_csize9 = Int()
-    
-    //currentFile
-    var currentDirFiles = [URL]()
-    var nousecells = [[Int]]()
-    var viewconSelectedName = "Initial"
-    
+
     
     //
     var collectionViewCellSizeChanged = -1
@@ -172,54 +188,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             tag_int = 5
         }
 
-        //
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") != nil) {
-            customSizedWidth = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") as! Array
-        }
         
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") != nil) {
-            customSizedHeight = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") as! Array
-        }
+        // Remove all UserDefaults data
+        UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
+                
+        let sheet1Json = ReadWriteJSON()
+        sheet1Json.deleteJsonFile(title: "csv_sheet1")
         
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") != nil) {
-            cswLocation = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") as! Array
-        }
+        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
         
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") != nil) {
-            cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
-        }
+//        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+//            if (error != nil || user == nil) {
+//                // Show the app's signed-out state.
+//                print("sign out")
+//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
+//            } else {
+//                // Show the app's signed-in state.
+//                print("sign in")
+//                //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
+//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
+//            }
+//        }
         
-        if (UserDefaults.standard.object(forKey: "FONT_SIZE_DEFAULT ") != nil) {
-            FONT_SIZE_DEFAULT  = UserDefaults.standard.object(forKey: "FONT_SIZE_DEFAULT ") as! Int
-        }
         
-        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-            if (error != nil || user == nil) {
-                // Show the app's signed-out state.
-                print("sign out")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleSignIn")
-
-                self.window?.rootViewController = initialViewController
-                self.window?.frame = self.window!.bounds
-                self.window?.makeKeyAndVisible()
-            } else {
-                // Show the app's signed-in state.
-                print("sign in")
-                //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
-                let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleDrive")
-
-                self.window?.rootViewController = initialViewController
-                self.window?.frame = self.window!.bounds
-                self.window?.makeKeyAndVisible()
-            }
-        }
-
-        
-        let initialViewController = storyboard.instantiateViewController(withIdentifier: "googleSignIn")
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()
-        
         return true
 
     }

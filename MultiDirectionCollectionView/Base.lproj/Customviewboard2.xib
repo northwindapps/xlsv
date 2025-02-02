@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Customview2" customModule="XLSV" customModuleProvider="target">
             <connections>
+                <outlet property="addNewSheet" destination="uTJ-V1-clN" id="eUU-DA-qTi"/>
                 <outlet property="back" destination="Eit-4b-Vlp" id="9D2-js-QfO"/>
                 <outlet property="calcAll" destination="AkM-DE-7L6" id="czm-fy-c31"/>
-                <outlet property="deletebutton" destination="kTF-3y-sIv" id="ugU-lz-6b7"/>
+                <outlet property="columnButton" destination="Dcp-OC-JMn" id="ckA-OU-h31"/>
+                <outlet property="deleteColumn" destination="JkY-G6-pak" id="Sh6-zb-vyF"/>
+                <outlet property="deleteSheet" destination="kVy-GU-E7z" id="QJV-OG-LmK"/>
+                <outlet property="deletebutton" destination="zd3-md-7JL" id="5e2-z6-kvI"/>
                 <outlet property="emailButton" destination="TPE-jL-3nQ" id="Kol-iJ-59x"/>
                 <outlet property="export" destination="okp-xm-cxi" id="cRd-0L-WD1"/>
+                <outlet property="insertRow" destination="K7o-Qh-q5v" id="1ay-9t-8u4"/>
                 <outlet property="localLoad" destination="x2D-Hd-mUz" id="8dz-Rp-rhm"/>
                 <outlet property="localSave" destination="lCK-kP-XA0" id="hWS-Dm-mRM"/>
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
                 <outlet property="resetStyling" destination="MuS-sR-VDI" id="vq5-oy-HyN"/>
-                <outlet property="savebutton" destination="aoq-1E-NEa" id="X4E-Z5-TXt"/>
+                <outlet property="rowButton" destination="bhr-93-fUG" id="QCA-sh-1LD"/>
                 <outlet property="xlsxSheetExportOniCloudDrive" destination="0dO-3H-IDI" id="LK6-yS-45l"/>
             </connections>
         </placeholder>
@@ -27,130 +33,131 @@
             <rect key="frame" x="0.0" y="0.0" width="285" height="288"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
-                    <rect key="frame" x="145" y="92" width="140" height="25"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="New data">
-                        <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    </state>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="okp-xm-cxi">
-                    <rect key="frame" x="4" y="0.0" width="126" height="25"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="25" id="BO8-7V-izx"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Search"/>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AkM-DE-7L6">
-                    <rect key="frame" x="-1" y="49" width="143" height="25"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="25" id="EyS-0D-Ycr"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Text style"/>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x2D-Hd-mUz">
-                    <rect key="frame" x="150" y="0.0" width="124" height="25"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x2D-Hd-mUz">
+                    <rect key="frame" x="156" y="10" width="115" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Import"/>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kTF-3y-sIv">
-                    <rect key="frame" x="163" y="149" width="100" height="27"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="27" id="HmT-Hd-Ef3"/>
-                    </constraints>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MuS-sR-VDI">
+                    <rect key="frame" x="153" y="201" width="123" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Delete"/>
+                    <state key="normal" title="Settings"/>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lCK-kP-XA0">
-                    <rect key="frame" x="150" y="49" width="126" height="25"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Eit-4b-Vlp">
+                    <rect key="frame" x="43" y="267" width="72" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                    <state key="normal" title="↩︎"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="0dO-3H-IDI">
+                    <rect key="frame" x="156" y="41" width="117" height="30"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Export"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="okp-xm-cxi">
+                    <rect key="frame" x="13" y="10" width="126" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Search"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AkM-DE-7L6">
+                    <rect key="frame" x="5" y="43" width="134" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Text style"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="TPE-jL-3nQ">
+                    <rect key="frame" x="142" y="155" width="143" height="30"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Email"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lCK-kP-XA0">
+                    <rect key="frame" x="158" y="243" width="119" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Tutorial">
                         <color key="titleColor" red="1" green="0.19125069140000001" blue="0.12444555039999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="249" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aoq-1E-NEa">
-                    <rect key="frame" x="4" y="92" width="126" height="25"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="25" id="Uxl-cx-6gs"/>
-                    </constraints>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zd3-md-7JL">
+                    <rect key="frame" x="9" y="240" width="143" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Save"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Delete">
+                        <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MuS-sR-VDI">
-                    <rect key="frame" x="169" y="203" width="88" height="27"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="kVy-GU-E7z">
+                    <rect key="frame" x="147" y="74" width="132" height="35"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Settings"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Delete Sheet">
+                        <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="0dO-3H-IDI">
-                    <rect key="frame" x="4" y="147" width="128" height="30"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Dcp-OC-JMn">
+                    <rect key="frame" x="5" y="121" width="143" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Export"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Insert Column"/>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="TPE-jL-3nQ">
-                    <rect key="frame" x="4" y="203" width="125" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="30" id="gJv-zp-8CW"/>
-                    </constraints>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bhr-93-fUG">
+                    <rect key="frame" x="9" y="205" width="143" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Email"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Delete Row">
+                        <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Eit-4b-Vlp">
-                    <rect key="frame" x="30" y="250" width="72" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="72" id="hWh-fo-IpT"/>
-                    </constraints>
-                    <fontDescription key="fontDescription" type="system" pointSize="13"/>
-                    <state key="normal" title="↩︎"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="K7o-Qh-q5v">
+                    <rect key="frame" x="8" y="174" width="143" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Insert Row">
+                        <color key="titleColor" systemColor="tintColor"/>
+                    </state>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JkY-G6-pak">
+                    <rect key="frame" x="5" y="147" width="143" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                    <state key="normal" title="Delete Column">
+                        <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uTJ-V1-clN">
+                    <rect key="frame" x="5" y="78" width="134" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="New Sheet"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
+                    <rect key="frame" x="152" y="117" width="123" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="New Data">
+                        <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    </state>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            <constraints>
-                <constraint firstItem="x2D-Hd-mUz" firstAttribute="leading" secondItem="okp-xm-cxi" secondAttribute="trailing" constant="20" id="1dW-GE-OLN"/>
-                <constraint firstItem="AkM-DE-7L6" firstAttribute="baseline" secondItem="lCK-kP-XA0" secondAttribute="baseline" id="1kj-fS-YXX"/>
-                <constraint firstItem="lCK-kP-XA0" firstAttribute="centerX" secondItem="kTF-3y-sIv" secondAttribute="centerX" id="1pc-LH-OLq"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="top" secondItem="aoq-1E-NEa" secondAttribute="bottom" constant="30" id="35P-RI-l8K"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="leading" secondItem="0dO-3H-IDI" secondAttribute="leading" id="3o6-H2-My0"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="leading" secondItem="TPE-jL-3nQ" secondAttribute="leading" id="4d9-Ml-OMI"/>
-                <constraint firstItem="x2D-Hd-mUz" firstAttribute="leading" secondItem="lCK-kP-XA0" secondAttribute="leading" id="53U-4y-6jU"/>
-                <constraint firstAttribute="trailing" secondItem="pcP-NY-tUo" secondAttribute="trailing" id="5eS-V4-JqU"/>
-                <constraint firstItem="Eit-4b-Vlp" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="30" id="6Kx-JC-OvM"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="centerX" secondItem="Eit-4b-Vlp" secondAttribute="centerX" id="7yx-2q-9Sx"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="topMargin" id="9Tx-lm-qc9"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="firstBaseline" secondItem="x2D-Hd-mUz" secondAttribute="firstBaseline" id="BHd-I6-3Xh"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="top" secondItem="MuS-sR-VDI" secondAttribute="top" id="Cgx-8W-61j"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="baseline" secondItem="pcP-NY-tUo" secondAttribute="baseline" id="EjM-pC-xhi"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="baseline" secondItem="x2D-Hd-mUz" secondAttribute="baseline" id="H3I-Ab-SB1"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="trailing" secondItem="aoq-1E-NEa" secondAttribute="trailing" id="ILa-N2-lcI"/>
-                <constraint firstAttribute="trailing" secondItem="kTF-3y-sIv" secondAttribute="trailing" constant="22" id="KDl-mJ-6Be"/>
-                <constraint firstAttribute="trailing" secondItem="x2D-Hd-mUz" secondAttribute="trailing" constant="11" id="KdT-BC-YZn"/>
-                <constraint firstItem="0dO-3H-IDI" firstAttribute="centerY" secondItem="kTF-3y-sIv" secondAttribute="centerY" id="Mky-o1-nMh"/>
-                <constraint firstItem="kTF-3y-sIv" firstAttribute="centerX" secondItem="MuS-sR-VDI" secondAttribute="centerX" id="QlU-du-IyK"/>
-                <constraint firstAttribute="bottom" secondItem="Eit-4b-Vlp" secondAttribute="bottom" constant="8" id="Qoc-B1-A9A"/>
-                <constraint firstItem="pcP-NY-tUo" firstAttribute="leading" secondItem="aoq-1E-NEa" secondAttribute="trailing" constant="15" id="UYM-Nz-bPd"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="top" secondItem="pcP-NY-tUo" secondAttribute="top" id="UsN-lk-tCD"/>
-                <constraint firstItem="AkM-DE-7L6" firstAttribute="top" secondItem="okp-xm-cxi" secondAttribute="bottom" constant="24" id="Vzr-WG-svu"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="centerX" secondItem="TPE-jL-3nQ" secondAttribute="centerX" id="Wrv-Ge-l2b"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="leading" secondItem="aoq-1E-NEa" secondAttribute="leading" id="Zu7-hu-Bcq"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="top" secondItem="AkM-DE-7L6" secondAttribute="bottom" constant="18" id="bhy-vc-fbC"/>
-                <constraint firstAttribute="trailing" secondItem="lCK-kP-XA0" secondAttribute="trailing" constant="9" id="dTb-jD-eaB"/>
-                <constraint firstItem="AkM-DE-7L6" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="-1" id="g4G-F6-WSS"/>
-                <constraint firstItem="MuS-sR-VDI" firstAttribute="top" secondItem="kTF-3y-sIv" secondAttribute="bottom" constant="27" id="gea-Z5-ZkQ"/>
-                <constraint firstAttribute="bottom" secondItem="MuS-sR-VDI" secondAttribute="bottom" constant="58" id="kMR-k1-ote"/>
-                <constraint firstItem="aoq-1E-NEa" firstAttribute="firstBaseline" secondItem="pcP-NY-tUo" secondAttribute="firstBaseline" id="ky4-51-i3T"/>
-                <constraint firstItem="MuS-sR-VDI" firstAttribute="leading" secondItem="TPE-jL-3nQ" secondAttribute="trailing" constant="40" id="lAP-bb-0HQ"/>
-                <constraint firstItem="kTF-3y-sIv" firstAttribute="leading" secondItem="0dO-3H-IDI" secondAttribute="trailing" constant="31" id="m25-C0-kbQ"/>
-                <constraint firstItem="Eit-4b-Vlp" firstAttribute="top" secondItem="TPE-jL-3nQ" secondAttribute="bottom" constant="17" id="o73-2Z-JEW"/>
-                <constraint firstItem="lCK-kP-XA0" firstAttribute="leading" secondItem="AkM-DE-7L6" secondAttribute="trailing" constant="8" id="oZY-fR-BV5"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="top" secondItem="x2D-Hd-mUz" secondAttribute="top" id="pkq-Kd-qlO"/>
-                <constraint firstItem="TPE-jL-3nQ" firstAttribute="top" secondItem="0dO-3H-IDI" secondAttribute="bottom" constant="26" id="tzh-0F-icv"/>
-                <constraint firstItem="okp-xm-cxi" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="4" id="xBj-z3-Q17"/>
-                <constraint firstItem="AkM-DE-7L6" firstAttribute="firstBaseline" secondItem="lCK-kP-XA0" secondAttribute="firstBaseline" id="yTr-Tu-Etw"/>
-                <constraint firstItem="AkM-DE-7L6" firstAttribute="top" secondItem="lCK-kP-XA0" secondAttribute="top" id="yr8-gw-2Rx"/>
-            </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <point key="canvasLocation" x="-1202.4000000000001" y="-39.580209895052477"/>
         </view>
     </objects>
+    <resources>
+        <systemColor name="tintColor">
+            <color red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
 </document>

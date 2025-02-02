@@ -9,8 +9,8 @@
 import UIKit
 import CoreXLSX
 import Foundation
-import GoogleAPIClientForREST
-import GoogleSignIn
+//import GoogleAPIClientForREST
+//import GoogleSignIn
 import SwiftyXMLParser
 
 
@@ -21,16 +21,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         present(documentPicker, animated: true, completion: nil)
     }
     
-    let driveService  = GTLRDriveService()
-    func downloadFile(file: GTLRDrive_File){
-        let url = "https://www.googleapis.com/drive/v3/files/\(file.identifier!)?alt=media"
+//    let driveService  = GTLRDriveService()
+//    func downloadFile(file: GTLRDrive_File){
+//        let url = "https://www.googleapis.com/drive/v3/files/\(file.identifier!)?alt=media"
+//
+//        let fetcher = driveService.fetcherService.fetcher(withURLString: url)
 
-        let fetcher = driveService.fetcherService.fetcher(withURLString: url)
-
-//        fetcher.beginFetchWithDelegate(
+//   dont need it     fetcher.beginFetchWithDelegate(
 //            self,
 //            didFinishSelector: #selector(ViewController.finishedFileDownload(_:finishedWithData:error:)))
-    }
+//    }
     
     
     var location = [String]()
@@ -59,7 +59,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         super.viewDidLoad()
         Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(self.timerUpdate), userInfo: nil, repeats: false)
-        
+        appd.imported_xlsx_file_path=""
         // Do any additional setup after loading the view.
         startLoading()
     }
@@ -99,93 +99,94 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     }
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
-        print("this is url")
-        print(url)
-        print(url.absoluteString)
-        //g.sheet 未対応
-        //csvPath = url.absoluteString
-        //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
-        //https://developer.apple.com/reference/foundation/nsfilemanager
-        //
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-        appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
-        //
-        if url.absoluteString.contains(".csv"){
+            print("this is url")
+            print(url)
+            print(url.absoluteString)
+            //g.sheet 未対応
+            //csvPath = url.absoluteString
+            //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
+            //https://developer.apple.com/reference/foundation/nsfilemanager
+            //
             
-        let fnameArry = url.absoluteString.split(separator: "/")
-        let fnameA = fnameArry.last!.split(separator: ".")
-        excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-        
-           
-    
-        let mydata = try! Data(contentsOf: url)
-        let str = swiftDataToString(someData: mydata)
-       
-        
-        var elementArray = str?.components(separatedBy: "\n")
-            var rowcount:Int = elementArray!.count
-        
-        for i in 0..<rowcount {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
+            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             
-            if (elementArray![i].contains("\r")){
-                
-                
-                
-                elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
-                elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
-            }
+            var isExcel = false
             
-        }
+            //
+            if url.absoluteString.contains(".csv"){
+                
+            let fnameArry = url.absoluteString.split(separator: "/")
+            let fnameA = fnameArry.last!.split(separator: ".")
+            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
+            let mydata = try! Data(contentsOf: url)
+            let str = swiftDataToString(someData: mydata)
+            var elementArray = str?.components(separatedBy: "\n")
+                var rowcount:Int = elementArray!.count
+            
+            for i in 0..<rowcount {
 
-            
-        //
-        location.removeAll()
-        contents.removeAll()
-        
-        //Let's start
-        var columncount = 0
-        for r in 0..<rowcount//the number of rows
-        {
-            let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
-            
-            if columncount < wordsArray.count {
-                columncount = wordsArray.count
+                if (elementArray![i].contains("\r")){
+                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
+                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
+                }
             }
+
+            //
+            location.removeAll()
+            contents.removeAll()
+            //
+            appd.sheetNameIds = [String]()
+            appd.sheetNames = [String]()
+            appd.diff_start_index.removeAll()
+            appd.diff_end_index.removeAll()
+            appd.excelStyleIdx.removeAll()
+            appd.excelStyleLocation.removeAll()
+            appd.excelStyleLocationAlphabet.removeAll()
+            appd.cellXfs.removeAll()
+            appd.cellStyleXfs.removeAll()
+            appd.border_lefts.removeAll()
+            appd.border_rights.removeAll()
+            appd.border_bottoms.removeAll()
+            appd.border_tops.removeAll()
             
-            if wordsArray.count < columncount{
-                
-            }
-            else
+            //Let's start
+            var columncount = 0
+            for r in 0..<rowcount//the number of rows
             {
+                let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
                 
-                for c in 0..<columncount
-                {
-                    if wordsArray[c] == "" || wordsArray[c] == " "
-                    {
-                        
-                    }
-                    else
-                    {
-                        
-                        let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
-                        
-                        location.append(targetlocation)
-                        contents.append(wordsArray[c])
-                    }
-                    
-                    
+                if columncount < wordsArray.count {
+                    columncount = wordsArray.count
                 }
                 
+                if wordsArray.count < columncount{
+                    
+                }
+                else
+                {
+                    for c in 0..<columncount
+                    {
+                        if wordsArray[c] == "" || wordsArray[c] == " "
+                        {
+                            
+                        }
+                        else
+                        {
+                            let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
+                            
+                            location.append(targetlocation)
+                            contents.append(wordsArray[c])
+                        }
+                    }
+                }
             }
-            
-        }
-            
+                
             if columncount < appd.DEFAULT_COLUMN_NUMBER {
                 columncount = appd.DEFAULT_COLUMN_NUMBER
             }
@@ -194,80 +195,71 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 rowcount = appd.DEFAULT_ROW_NUMBER
             }
 
-        
-        let csvData = UserDefaults.standard
-        csvData.set(location, forKey: "NEWTMLOCATION")
-   
-        
-        csvData.set(contents, forKey: "NEWTMCONTENT")
-     
-        
-      
-        csvData.set(rowcount, forKey: "NEWRsize")
-        
-        
-        
-        csvData.set(columncount, forKey: "NEWCsize")
-        csvData.synchronize()
-            
-            
+            let csvData = UserDefaults.standard
+            csvData.set(location, forKey: "NEWTMLOCATION")
+            csvData.set(contents, forKey: "NEWTMCONTENT")
+            csvData.set(rowcount, forKey: "NEWRsize")
+            csvData.set(columncount, forKey: "NEWCsize")
+            csvData.synchronize()
 
-                       let today: Date = Date()
-                       let dateFormatter: DateFormatter = DateFormatter()
-                       dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                       let date = dateFormatter.string(from: today)
-                       
-                         
-                       var fontSize = [String]()
-                       var fontColor = [String]()
-                       var bgColor = [String]()
-                       for i in 0..<location.count{
-                           fontSize.append(String(13))
-                           bgColor.append("white")
-                           fontColor.append("black")
-                       }
-                 
-                       
-//                       let dict : [String:Any] = ["filename": "sheet1",
-//                                                  "date": date,
-//                                                  "content": contents,
-//                                                  "location": location,
-//                                                  "fontsize": fontSize,
-//                                                  "fontcolor": fontColor,
-//                                                  "bgcolor": bgColor,
-//                                                  "rowsize": rowcount,
-//                                                  "columnsize": columncount,
-//                                                  "customcellWidth":[String](),
-//                                                  "customcellHeight": [String](),
-//                                                  "ccwLocation": [String](),
-//                                                  "cchLocation": [String](),
-//                                                  "formulaResult":[String](),
-//                                                  "inputOrder":[String]()]
-//
-                       
-               
-                            //let test = ReadWriteJSON() //i want to delete it.
-                            saveuserAll(location: location, content: contents, columnsize: columncount, rowsize: rowcount)
+           let today: Date = Date()
+           let dateFormatter: DateFormatter = DateFormatter()
+           dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+           let date = dateFormatter.string(from: today)
+           var fontSize = [String]()
+           var fontColor = [String]()
+           var bgColor = [String]()
+           for i in 0..<location.count{
+               fontSize.append(String(13))
+               bgColor.append("white")
+               fontColor.append("black")
+           }
+ 
+            let dict : [String:Any] = ["filename": "csv_sheet1",
+                                  "date": date,
+                                  "content": contents,
+                                  "location": location,
+                                  "fontsize": fontSize,
+                                  "fontcolor": fontColor,
+                                  "bgcolor": bgColor,
+                                  "rowsize": rowcount,
+                                  "columnsize": columncount,
+                                  "customcellWidth":[String](),
+                                  "customcellHeight": [String](),
+                                  "ccwLocation": [String](),
+                                  "cchLocation": [String](),
+                                  "formulaResult":[String](),
+                                  "inputOrder":[String]()]
+
+       
+
+            let test = ReadWriteJSON()
+            print("savingImportJSON CSV")
+            test.saveuserAll()
+            test.saveJsonFile(source: dict, title: "csv_sheet1")
+            appd.customSizedHeight.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.cswLocation.removeAll()
+            appd.numberofRow = rowcount+1
+            appd.numberofColumn = columncount+1
+            print("end iCloudController")
             
-                            print("savingImportJSON CSV")
-                            //test.saveuserAll()
-                             //test.saveJsonFile(source: dict, title: "sheet1")
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = false
+            targetViewController.isCSV = true
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
+            }
             
+            
+            return
+            
+        }
         
-                 //OK move to next sheet shall we?
-                 
-        
-        
-        appd.customSizedHeight.removeAll()
-        appd.customSizedWidth.removeAll()
-        appd.cshLocation.removeAll()
-        appd.cswLocation.removeAll()
+        if url.absoluteString.contains(".xlsx"){
             
-        appd.numberofRow = rowcount+1
-        appd.numberofColumn = columncount+1
-        // End of csv.file reading
-            
-        }else if url.absoluteString.contains(".xlsx"){
             //excel process
             print("excel file")
             let fnameArry = url.absoluteString.split(separator: "/")
@@ -298,25 +290,152 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             let filename = String(fnameArry.last!)
             let fp = url2.appendingPathComponent(filename).path
             print("yourExcelfile",fp)
+            appd.imported_xlsx_file_path=fp
             readExcel(path: fp)
+            isExcel = true
             
-        }else{
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            //createxlsxSheet()
             
+            replaceLocalFileWithImportedOne()
+        
+            print("end iCloudController")
+            
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = isExcel
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
+            }
+                return
+            }
+                
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = true
+            targetViewController.isCSV = false
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                self.present(targetViewController, animated: true, completion: nil)
         }
-        
-        print("end iCloudController")
-        
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" )//Landscape
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
         
         
     }
     
+    func replaceLocalFileWithImportedOne(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let pathDirectory = getRootDocumentsDirectory()
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        
+        let overWritingfilePath = appd.imported_xlsx_file_path
+        do {
+            let fileManager = FileManager.default
+            try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
+            print("File replaced successfully at path: \(overWrittenfilePath.path)")
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
+        } catch {
+            print("Error replacing file: \(error.localizedDescription)")
+        }
+
+    }
+    
+    func loadInitialXLSX(url: URL) {
+            print(url.absoluteString)
+        
+            //g.sheet 未対応
+            //csvPath = url.absoluteString
+            //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
+            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
+            //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
+            //https://developer.apple.com/reference/foundation/nsfilemanager
+            //
+            
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
+            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+            
+            var isExcel = false
+        
+        if url.absoluteString.contains(".xlsx"){
+            //excel process
+            print("excel file")
+            let fnameArry = url.absoluteString.split(separator: "/")
+            let pathDirectory = getRootDocumentsDirectory()
+            try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent(String(fnameArry.last!))
+            let fnameA = fnameArry.last!.split(separator: ".")
+            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
+            if FileManager.default.fileExists(atPath: filePath.path) {
+                do{
+                    print("remove file")
+                    try FileManager.default.removeItem(at: filePath)
+                    
+                }catch {
+                    print("new to this app")
+                }
+            }
+            
+            do{
+                let destinationDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                        .appendingPathComponent("importedExcel")
+                    let destinationURL = destinationDirectory.appendingPathComponent("initialXLSX.xlsx")
+                    
+                    // Ensure the destination directory exists
+                    try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
+                        
+                if FileManager.default.fileExists(atPath: url.path) {
+                    print("file exist at the url",url.path)
+                    try FileManager.default.copyItem(at: url, to: destinationURL)
+                }
+            }catch let error{
+                //dump(error)
+                print(error)
+            }
+            
+            let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+            let url2 = URL(fileURLWithPath: path2)
+            let filename = String(fnameArry.last!)
+            let fp = url2.appendingPathComponent("importedExcel").appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: fp) {
+                print("copied yourExcelfile",fp)
+            }
+            appd.imported_xlsx_file_path=fp
+            readExcel(path: fp)
+            isExcel = true
+            
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            print("end iCloudController")
+        }
+        return
+    }
+    
     
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        //dismiss(animated: true, completion: nil)
         
-        dismiss(animated: true, completion: nil)
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.imported_xlsx_file_path = ""
+        appd.sheetNameIds = [String]()
+        appd.sheetNames = [String]()
+        appd.diff_start_index.removeAll()
+        appd.diff_end_index.removeAll()
+        appd.isAppStarted = false
+        
+        let sheet1Json = ReadWriteJSON()
+        sheet1Json.deleteJsonFile(title: "csv_sheet1")
+        
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )
+        targetViewController.modalPresentationStyle = .fullScreen
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+        
+        
     }
     
     
@@ -343,335 +462,411 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
      }
      */
     
-    func readExcel(path:String){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+    func readExcel(path:String, wsIndex:Int = 1){
+        let excelFunctions = [
+            //"SUM",
+            //"AVERAGE",
+            //"MIN",
+            //"MAX",
+            "COUNT",
+            "COUNTA",
+            "PRODUCT",
+            "SUMIF",
+            "ROUND",
+            "INT",
+            "CONCATENATE",
+            "LEFT",
+            "RIGHT",
+            "MID",
+            "LEN",
+            "FIND",
+            "SUBSTITUTE",
+            "UPPER",
+            "LOWER",
+            "TRIM",
+            "TODAY",
+            "NOW",
+            "DATE",
+            "TIME",
+            "DAY",
+            "MONTH",
+            "YEAR",
+            "HOUR",
+            "MINUTE",
+            "SECOND",
+            "VLOOKUP",
+            "HLOOKUP",
+            "INDEX",
+            "MATCH",
+            "OFFSET",
+            "CHOOSE",
+            "IF",
+            "AND",
+            "OR",
+            "NOT",
+            "IFERROR",
+            "PMT",
+            "FV",
+            "PV",
+            "RATE",
+            "NPV",
+            "MEDIAN",
+            "MODE",
+            "STDEV",
+            "VAR",
+            "CORREL",
+            "FORECAST",
+            "ISNUMBER",
+            "ISERROR",
+            "ISBLANK",
+            "ISTEXT",
+            // Information Functions
+            "CELL",
+            "ERROR.TYPE",
+            "INFO",
+            "N",
+            // Lookup and Reference Functions
+            "ADDRESS",
+            "COLUMN",
+            "ROW",
+            "TRANSPOSE",
+            "INDIRECT",
+            // Text Functions
+            "REPLACE",
+            "REPT",
+            "TEXT",
+            "CLEAN",
+            "CODE",
+            // Statistical Functions
+            "PERCENTILE",
+            "PERCENTRANK",
+            "QUARTILE",
+            "RANK",
+            // Mathematical Functions
+            "CEILING",
+            "FLOOR",
+            "MOD",
+            "POWER",
+            "GCD",
+            // Financial Functions
+            "DURATION",
+            "MDURATION",
+            "YIELD",
+            // Date and Time Functions
+            "DATEDIF",
+            "NETWORKDAYS",
+            "WORKDAY",
+            "IMPRODUCT",
+            "IMSUM",
+            "IMSUB",
+            "IMCONJUGATE",
+            "IMDIV",
+            "IMARGUMENT",
+            "IMABS",
+            "IMRECTANGULAR",
+            "COMPLEX",
+            "pi",
+            "e",
+            "asin",
+            "acos",
+            "atan",
+            "sin",
+            "cos",
+            "tan",
+            "exp",
+            "logb",
+            "logd",
+            "log",
+            "abs",
+            "sqrt"
+        ]
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//            appd.wsIndex = wsIndex
             let file = XLSXFile(filepath: path)
-            var counter = 0
-            var sheetsNumber = -1
-            var styles = try? file!.parseStyles()
-            let cellStyleXfs = styles?.cellFormats?.items
-            // Retrieve borders information from styles .compactMap filter nil values
-//            let borders_left_style = styles!.borders?.items.map { $0.left?.style}
-//            let borders_right_style = styles!.borders?.items.map { $0.right?.style}
-//            let borders_top_style = styles!.borders?.items.map { $0.top?.style}
-//            let borders_bottom_style = styles!.borders?.items.map { $0.bottom?.style}
-//            let borders_left_color = styles!.borders?.items.map { $0.left?.color?.rgb}
-//            let borders_right_color = styles!.borders?.items.map { $0.right?.color?.rgb}
-//            let borders_top_color = styles!.borders?.items.map { $0.top?.color?.rgb}
-//            let borders_bottom_color = styles!.borders?.items.map { $0.bottom?.color?.rgb}
-//
-//            for item in cellStyleXfs!{
-//                appd.border_ids.append(Int(item.borderId!))
-//            }
-//
-//            for item in borders_top_color!{
-//                appd.borders_top_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_bottom_color!{
-//                appd.borders_bottom_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_right_color!{
-//                appd.borders_right_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_left_color!{
-//                appd.borders_left_color.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_top_style!{
-//                appd.borders_top_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_bottom_style!{
-//                appd.borders_bottom_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_right_style!{
-//                appd.borders_right_style.append("\(String(describing: item))")
-//            }
-//
-//            for item in borders_left_style!{
-//                appd.borders_left_style.append("\(String(describing: item))")
-//            }
+            appd.sheetNameIds = [String]()
+            appd.sheetNames = [String]()
+            appd.diff_start_index.removeAll()
+            appd.diff_end_index.removeAll()
+            appd.excelStyleIdx.removeAll()
+            appd.excelStyleLocation.removeAll()
+            appd.excelStyleLocationAlphabet.removeAll()
+            appd.cellXfs.removeAll()
+            appd.cellStyleXfs.removeAll()
+            appd.border_lefts.removeAll()
+            appd.border_rights.removeAll()
+            appd.border_bottoms.removeAll()
+            appd.border_tops.removeAll()
+            appd.formatCodes.removeAll()
+            appd.numFmts.removeAll()
+            appd.numFmtIds.removeAll()
             
+            //get all worksheets
+            if let workbook = try file?.parseWorkbooks().first {
+                // Extracting non-nil sheet IDs using compactMap
+                let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
+                print("Sheet Name IDs:", sheetNameIds)
+                appd.sheetNameIds = sheetNameIds
+                let sheetNames = workbook.sheets.items.compactMap { $0.name }
+                print("Sheet Names:", sheetNames)
+                appd.sheetNames = sheetNames
+            }
             
-            sheetsNumber = try file!.parseWorksheetPaths().count-1
-            let path = try file!.parseWorksheetPaths().first
-                print("counter",counter)
-                    //Cleaning instances on table data
-                    columnName = []
-                    stringLocation = []
-                    stringContent = []
-                    valueLocation = []
-                    valueContent = []
-                    
-                    let container = try file!.parseWorksheetPaths()
-                        .compactMap { try file!.parseWorksheet(at: $0) }
-                        .flatMap { $0.data?.rows ?? [] }
-                        .flatMap { $0.cells }
-                    
-                    columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW
+            //appd.ws_total_pages = sheetsNumber
+            //only show first page.
+            //for path in try file!.parseWorksheetPaths() {
+            let paths = try file?.parseWorksheetPaths()
+            // Filter files with "sheet1.xml" in their file name
+            let sheet1Files = paths?.filter { $0.hasSuffix("sheet1.xml") }
+            if let path = try sheet1Files?.first {
+                print("path",path)
+                //Cleaning instances on table data
+                columnName = []
+                stringLocation = []
+                stringContent = []
+                valueLocation = []
+                valueContent = []
                 
-                    
-                    //reset
-                    appd.diff_start_index.removeAll()
-                    appd.diff_end_index.removeAll()
-                    let mergedCells = try file!.parseWorksheetPaths()
-                        .compactMap { try file!.parseWorksheet(at: $0) }
-                        .compactMap { $0.mergeCells}
-                    if mergedCells.count > 0 {
-                        let mergedCellFirstReferences = mergedCells[0].items.map { $0.reference }
-                        var tmpDictionary = [String: String]()
-                        for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
-                            tmpDictionary[String(key)] = mergedCell.description
-                            let references = mergedCell.description.components(separatedBy: ":")
-                            let start_index = references[0]//AB
-                            let end_index = references[1]
-                            appd.diff_start_index.append(start_index)
-                            appd.diff_end_index.append(end_index)
-                        }
+                let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
+                columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
+                
+               
+                //mergedcells initialization
+                let mergedCells = try file?.parseWorksheet(at: path).mergeCells
+                if mergedCells?.items.first != nil {
+                    let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }
+                    var tmpDictionary = [String: String]()
+                    for (key,mergedCell) in mergedCellFirstReferences.enumerated(){
+                        tmpDictionary[String(key)] = mergedCell.description
+                        let references = mergedCell.description.components(separatedBy: ":")
+                        let start_index = references[0]//AB
+                        let end_index = references[1]
+                        appd.diff_start_index.append(start_index)
+                        appd.diff_end_index.append(end_index)
                     }
-                    
-                    let sharedStrings = try file!.parseSharedStrings()
-                    let ws = try file?.parseWorksheet(at: path!)
-                    appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws?.formatProperties?.defaultRowHeight ?? "-1")!
-                    appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws?.formatProperties?.defaultRowHeight ?? "-1")!
-                    
-//                    var tmpDictionary2 = [String: String]()
-//                    let currentSheetsDataRows = ws.data.rows
-//                    if let rows = currentSheetsDataRows, !rows.isEmpty {
-//                        _ = rows.flatMap { row in
-//                            row.cells.enumerated().map { (col, cell) in
-//                                let row = cell.reference.row
-//                                let key = String(col) + "," + String(row)
-//                                let value = cell.styleIndex
-//                                tmpDictionary2[key] = value.map { String($0) } ?? "nil"
-//                            }
-//                        }
-//                    }
-//
-//                    appd.index_border_id = tmpDictionary2
-                    
-                    //Getting strings
-                    for i in 0..<columnName.count {
-                        let k = String(columnName[i])
-                        if k.count != 0 {
-                            let columnCStrings = ws?.cells(atColumns: [ColumnReference(k)!])
-                            // in format internals "s" stands for "shared"
-                                .filter { $0.type?.rawValue ?? nil == "s" }
-                                .filter { $0.value != nil }
+                }
+                
+                let sharedStrings = try file!.parseSharedStrings()
+                let ws = try file!.parseWorksheet(at: path)
+                appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
+                appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
+                
+                
+                //Getting strings
+                for i in 0..<columnName.count {
+                    let k = String(columnName[i])
+                    if k.count != 0 {
+                        let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                        // in format internals "s" stands for "shared"
+                            .filter { $0.type?.rawValue ?? nil == "s" }
+                            .filter { $0.value != nil }
+                        
+                        // Rich Text
+                        let temp = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].richText }
+                        
+                        // Normal Text
+                        var temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
+                        
+                        
+                        //get style
+                        let allCells = ws.cells(atColumns: [ColumnReference(k)!])
+                        for l in 0..<allCells.count {
+                            //get styleindex
+                            let styleIdx = allCells[l].styleIndex ?? -1
+                            let locationIdx =   String(allCells[l].reference.row) + "," + String(columnToInt(allCells[l].reference.column.value)!)
+                            //let locationIdx = String(columnToInt(columnCStrings[l].reference.column.value)!) + "," + String(columnCStrings[l].reference.row)
                             
-                            // Rich Text
-                            let temp = columnCStrings?.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].richText }
-                            
-                            // Normal Text
-                            var temp2 = columnCStrings?.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
-                            
-                            
-                            
-                            // RitchTextArray
-                            var keyValues = [Int: String]()
-                            for i in 0..<(temp?.count ?? 0){
-                                var strapi = ""
-                                for j in 0..<(temp?[i].count ?? 0){
-                                    if String(describing: temp?[i][j].text).count > 0{
-                                        
-                                        strapi.append("\(String(describing: temp?[i][j].text))")
-                                        // seems working now..
-                                    }
-                                }
-                                if strapi != "" {
-                                    keyValues[i] = strapi
-                                }
-                            }
-                            
-                            
-                            var aPlusbArray = [String](repeating: "", count:(temp2?.count ?? 0) + keyValues.count)
-                            for (k,value) in keyValues {
-                                aPlusbArray[k] = String(value)
-                            }
-                            
-                            for l in 0..<aPlusbArray.count{
-                                if aPlusbArray[l] == "" {
-                                    aPlusbArray[l] = (temp2?.first!)!
-                                    temp2?.remove(at: 0)
-                                }
-                            }
-                            stringContent.append(contentsOf: aPlusbArray)
-                            
-                            
-                            stringLocation.append(contentsOf: (columnCStrings?.compactMap { $0.reference.description })!)//A2
+                            appd.excelStyleIdx.append(styleIdx)
+                            appd.excelStyleLocation.append(locationIdx)
+                            appd.excelStyleLocationAlphabet.append(allCells[l].reference.description)
                         }
+                        
+                        
+                        // RitchTextArray
+                        var keyValues = [Int: String]()
+                        for i in 0..<temp.count{
+                            var strapi = ""
+                            for j in 0..<temp[i].count{
+                                if String(describing: temp[i][j].text).count > 0{
+                                    
+                                    strapi.append("\(String(describing: temp[i][j].text))")
+                                    // seems working now..
+                                }
+                            }
+                            if strapi != "" {
+                                keyValues[i] = strapi
+                            }
+                        }
+                        
+                        
+                        var aPlusbArray = [String](repeating: "", count:temp2.count + keyValues.count)
+                        for (k,value) in keyValues {
+                            aPlusbArray[k] = String(value)
+                        }
+                        
+                        for l in 0..<aPlusbArray.count{
+                            if aPlusbArray[l] == "" {
+                                aPlusbArray[l] = temp2.first!
+                                temp2.remove(at: 0)
+                            }
+                        }
+                        stringContent.append(contentsOf: aPlusbArray)
+                        
+                        
+                        stringLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })//A2
                     }
-                    
-                    
-                    //For some reason mergedcells go first
-                    //           //https://stackoverflow.com/questions/42081141/how-to-parse-array-of-json-to-array-in-swift
-                    
-                    var LARGIST_ROW_IN_MERGEDCELLS = 0
-                    
-                    
-                    
-                    //Getting values
-                    //if let formula = cell.formula?.value { returnString = formula } }
-                    for i in 0..<columnName.count {
-                        let k = String(columnName[i])
-                        if k.count != 0 {
-                            let columnCStrings = ws?.cells(atColumns: [ColumnReference(k)!])
-                                .filter { $0.type?.rawValue ?? nil != "s"  }
-                                .filter { $0.value != nil }
+                }
+               
+                //Getting values
+                //if let formula = cell.formula?.value { returnString = formula } }
+                for i in 0..<columnName.count {
+                    let k = String(columnName[i])
+                    if k.count != 0 {
+                        let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                            .filter { $0.type?.rawValue ?? nil != "s"  }
+                            .filter { $0.value != nil }
+                        
+                        var formulaCheck = [String]()
+                        for i in 0..<columnCStrings.count {
+                            let formulaContent = columnCStrings[i].formula?.value
+                            let valueContent = columnCStrings[i].value
                             
-                            var formulaCheck = [String]()
-                            for i in 0..<(columnCStrings?.count ?? 0) {
-                                let formulaContent = columnCStrings?[i].formula?.value
-                                let valueContent = columnCStrings?[i].value
-                                
-                                if formulaContent == nil {
-                                    formulaCheck.append(valueContent!)
-                                }else{
+                            if formulaContent == nil {
+                                //normal values
+                                formulaCheck.append(valueContent!)
+                            }else{
+                                let containsItem = excelFunctions.contains { formulaContent! == $0 }
+                                if !containsItem{
                                     formulaCheck.append("=" + formulaContent!)
                                 }
                                 
+                                if containsItem{
+                                    //TODO
+                                    formulaCheck.append(valueContent!)
+                                }
                             }
-                            valueContent.append(contentsOf: formulaCheck)//$0.value
-                            valueLocation.append(contentsOf: (columnCStrings?.compactMap { $0.reference.description })!)
                             
                         }
-                    }
-                    
-                    
-                    let content1 = UserDefaults.standard
-                    if counter == 0 {
-                        //                    content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
-                        content1.synchronize()
-                    }
-                    
-                    //                print("content",valueContent+stringContent)
-                    
-                    var finalL_value = [String]()
-                    var finalL_string = [String]()
-                    // Needed for LocationData (3,2) (3,4) (1,3)
-                    let columnvalue = SortColumnName(srcAry: columnName) //AA,AB,AC
-                    let key = Index4ColumnName(columnNameAry: columnvalue) //1,2,3
-                    var columnsize = columnvalue.count
-                    if columnvalue.count < appd.DEFAULT_COLUMN_NUMBER {
-                        columnsize = appd.DEFAULT_COLUMN_NUMBER
-                    }
-                    
-                    if counter == 0 {
-                        //                    content1.set(columnsize, forKey: "NEWCsize")//why +2 ? donkow
-                        content1.synchronize()
-                    }
-                    
-                    
-                    
-                    for i in 0..<valueLocation.count {
-                        let columnL_value = valueLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
+                        valueContent.append(contentsOf: formulaCheck)//$0.value
+                        valueLocation.append(contentsOf: columnCStrings.map { $0.reference.description })
                         
-                        let idx = columnvalue.index(of: columnL_value)
-                        
-                        let columnL = key[idx!]
-                        let rowL = valueLocation[i].filter("0123456789.".contains)
-                        //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
-                        //column A -> 0+1
-                        finalL_value.append(String(columnL+1) + "," + rowL)
                     }
+                }
+                
+                
+                let content1 = UserDefaults.standard
+                //content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
+                content1.synchronize()
+                
+                print("content",valueContent+stringContent)
+                
+                var finalL_value = [String]()
+                var finalL_string = [String]()
+                // Needed for LocationData (3,2) (3,4) (1,3)
+                let columnvalue = SortColumnName(srcAry: columnName) //AA,AB,AC
+                var columnsize = GetLastColumnInt(srcAry: columnvalue)
+                if columnsize < appd.DEFAULT_COLUMN_NUMBER {
+                    columnsize = appd.DEFAULT_COLUMN_NUMBER
+                }
+                var columnsInAlphabet = [String]()
+                for index in 0...columnsize {
+                    columnsInAlphabet.append(getExcelColumnName(columnNumber: index))
+                }
+                
+
+                for i in 0..<valueLocation.count {
+                    let columnL_value = valueLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
+                
+                    let columnL = columnsInAlphabet.firstIndex(of: columnL_value)!
+                    let rowL = valueLocation[i].filter("0123456789.".contains)
+                    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
+                    //colum index 0 is empty. empty, A,B,C ...
+                    finalL_value.append(String(columnL) + "," + rowL)
+                }
+                
+                for i in 0..<stringLocation.count {
+                    let columnL_value = stringLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
                     
-                    for i in 0..<stringLocation.count {
-                        let columnL_value = stringLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
-                        
-                        let idx = columnvalue.index(of: columnL_value)
-                        
-                        let columnL = key[idx!]
-                        let rowL = stringLocation[i].filter("0123456789.".contains)
-                        //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
-                        //column A -> 0+1
-                        finalL_string.append(String(columnL+1) + "," + rowL)
-                    }
-                    
-                    
-                    if finalL_string.count != stringContent.count{
-                        appd.wentWrong = true
-                        
-                        
-                        
-                    }else if finalL_string.count == stringContent.count {
-                        appd.wentWrong = false
-                    }
-                    
-                    
-                    //print("location",finalL_value + finalL_string)
-                    
-                    
-                    
-                    var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: LARGIST_ROW_IN_MERGEDCELLS)
-                    
-                    if rowsize < appd.DEFAULT_ROW_NUMBER{
-                        rowsize = appd.DEFAULT_ROW_NUMBER
-                    }
-                    
-                    
-                    
-                    
-                    let today: Date = Date()
-                    let dateFormatter: DateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                    let date = dateFormatter.string(from: today)
-                    
-                    
-                    var fontSize = [String]()
-                    var fontColor = [String]()
-                    var bgColor = [String]()
-                    for i in 0..<finalL_value.count+finalL_string.count{
-                        fontSize.append(String(13))
-                        bgColor.append("white")
-                        fontColor.append("black")
-                    }
+                    let columnL = columnsInAlphabet.firstIndex(of: columnL_value)!
+                    let rowL = stringLocation[i].filter("0123456789.".contains)
+                    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
+                    //colum index 0 is empty. empty, A,B,C ...
+                    finalL_string.append(String(columnL) + "," + rowL)
+                }
+                
+                
+                if finalL_string.count != stringContent.count{
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    appd.wentWrong = true
                     
                     
-//                    let dict : [String:Any] = ["filename": "sheet"+String(counter+1),
-//                                               "date": date,
-//                                               "content": valueContent+stringContent,
-//                                               "location": finalL_value + finalL_string,
-//                                               "fontsize": fontSize,
-//                                               "fontcolor": fontColor,
-//                                               "bgcolor": bgColor,
-//                                               "rowsize": rowsize,
-//                                               "columnsize": columnsize,
-//                                               "customcellWidth":[String](),
-//                                               "customcellHeight": [String](),
-//                                               "ccwLocation": [String](),
-//                                               "cchLocation": [String](),
-//                                               "formulaResult":[String](),
-//                                               "inputOrder":[String]()]
                     
-                    
-                    //i want to delete it.
-                    //let test = ReadWriteJSON()
-                    print("EXCEL savingImportJSON")
-                    //test.saveuserAll()
-                    //test.saveJsonFile(source: dict, title: "sheet"+String(counter+1))
-                    saveuserAll(location: finalL_value + finalL_string, content: valueContent+stringContent, columnsize: columnsize, rowsize: rowsize)
-                    
-                    counter += 1
-                    //OK move to next sheet shall we?
-                    
-                    appd.customSizedHeight.removeAll()
-                    appd.customSizedWidth.removeAll()
-                    appd.cshLocation.removeAll()
-                    appd.cswLocation.removeAll()
-                    appd.numberofRow = rowsize
-                    appd.numberofColumn = columnsize
-             
-            //}// outer for end
+                }else if finalL_string.count == stringContent.count {
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    appd.wentWrong = false
+                }
+                
+                
+                print("location",finalL_value + finalL_string)
+                
+                
+                
+                var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: appd.diff_end_index)
+                
+                let today: Date = Date()
+                let dateFormatter: DateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                let date = dateFormatter.string(from: today)
+                
+                
+                var fontSize = [String]()
+                var fontColor = [String]()
+                var bgColor = [String]()
+                for i in 0..<finalL_value.count+finalL_string.count{
+                    fontSize.append(String(13))
+                    bgColor.append("white")
+                    fontColor.append("black")
+                }
+                
+                
+                let dict : [String:Any] = ["filename": "sheet1.xml",
+                                           "date": date,
+                                           "content": valueContent+stringContent,
+                                           "location": finalL_value + finalL_string,
+                                           "fontsize": fontSize,
+                                           "fontcolor": fontColor,
+                                           "bgcolor": bgColor,
+                                           "rowsize": rowsize,
+                                           "columnsize": columnsize+1,
+                                           "customcellWidth":[String](),
+                                           "customcellHeight": [String](),
+                                           "ccwLocation": [String](),
+                                           "cchLocation": [String](),
+                                           "formulaResult":[String](),
+                                           "inputOrder":[String]()]
+                
+                
+                
+                let test = ReadWriteJSON()
+                print("savingImportJSON")
+                test.saveJsonFile(source: dict, title: "sheet1.xml")
+                //this library is too slow, abound it in the next version
+                
+                
+                appd.customSizedHeight.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.cswLocation.removeAll()
+                appd.numberofRow = rowsize
+                appd.numberofColumn = columnsize
+            }
+                
         } catch {
             print("sorry pal cant copy it.")
         }
     }
+    
     //Making the array with unique values
     func uniquing(src:[String]) -> [String]{
         var unique = [String]()
@@ -694,31 +889,35 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     }
     
     
-    func  Index4ColumnName(columnNameAry: [String]) -> [Int]
-    {
-        var keyAry = [Int]()
-        for i in 0 ..< columnNameAry.count {
-            keyAry.append(i)
-        }
-        return keyAry
-    }
-    
     func SortColumnName(srcAry:[String])->[String]{
         var alphabetOnly = [String]()
-        
         for i in 0..<srcAry.count {
             alphabetOnly.append((srcAry[i].components(separatedBy: CharacterSet.decimalDigits)).joined(separator: ""))
         }
-        
-        
         return uniquing(src: alphabetOnly)
     }
     
-    func GetRowSize(srcAry:[String],fromMergedcells:Int)->Int{
+    func GetLastColumnInt(srcAry:[String])->Int{
+        var last = 0
+        for i in 0..<srcAry.count {
+            if last < columnToNumber(srcAry[i])!{
+                last = columnToNumber(srcAry[i])!
+            }
+        }
+        return last
+    }
+    
+    
+    
+    func GetRowSize(srcAry:[String],fromMergedcells:[String])->Int{
         var numberOnly = [Int]()
     
         for i in 0..<srcAry.count {
             numberOnly.append(Int(srcAry[i].filter("0123456789.".contains))!)
+        }
+        
+        for i in 0..<fromMergedcells.count {
+            numberOnly.append(Int(fromMergedcells[i].filter("0123456789.".contains))!)
         }
         
         var maxrow = numberOnly.max()
@@ -727,16 +926,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             maxrow = 0
         }
         
-        if maxrow! < fromMergedcells{
-            maxrow = fromMergedcells
-        }
-        
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        if appd.DEFAULT_ROW_NUMBER > maxrow + 10{
+//
+//        }
         let rowsize = UserDefaults.standard
-        rowsize.set(maxrow!+2, forKey: "NEWRsize")
+        rowsize.set(maxrow!+10, forKey: "NEWRsize")
         rowsize.synchronize()
    
         
-        return maxrow!+2
+        return maxrow!+10
         
     }
     
@@ -882,25 +1081,44 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         return text.filter {okayChars.contains($0) }
     }
     
-    func saveuserAll(location:[String],content:[String],columnsize:Int,rowsize:Int) {
-        let location1 = UserDefaults.standard
-        location1.set(location, forKey: "NEWTMLOCATION")
-        location1.synchronize()
+    func columnToNumber(_ column: String) -> Int? {
+        let uppercaseColumn = column.uppercased()
+        var result = 0
+        for char in uppercaseColumn {
+            guard let asciiValue = char.asciiValue else {
+                return nil // Return nil if the character is not valid
+            }
+            let intValue = Int(asciiValue) - 64 // Subtracting ASCII value of 'A' (65) gives 1 for A
+            if intValue < 1 || intValue > 26 {
+                return nil // Return nil if the character is not in the range A-Z
+            }
+            result = result * 26 + intValue
+        }
+        return result
+    }
+    
+    
+    
+
+    func columnToInt(_ column: String) -> Int? {
+        // Convert the string to uppercase to handle lowercase inputs
+        let uppercasedColumn = column.uppercased()
         
-        let content1 = UserDefaults.standard
-        content1.set(content, forKey: "NEWTMCONTENT")
-        content1.synchronize()
+        // Calculate the integer value by subtracting the unicode value of "A" and adding 1
+        guard let unicodeScalar = uppercasedColumn.unicodeScalars.first
+              else {
+            return nil
+        }
         
-        let appheight = UserDefaults.standard
-        appheight.set(columnsize, forKey: "NEWCsize")
-        appheight.synchronize()
+        let asciiValue = unicodeScalar.value
         
-        let appheight2 = UserDefaults.standard
-        appheight2.set(rowsize, forKey: "NEWRsize")
-        appheight2.synchronize()
-       
+        // Check if the character is within the range of A-Z
+        guard asciiValue >= 65 && asciiValue <= 90 else {
+            return nil
+        }
         
-        print("saved on userdefault")
+        // Return the integer value (A=1, B=2, ..., Z=26)
+        return Int(asciiValue - 64)
     }
 }
 
