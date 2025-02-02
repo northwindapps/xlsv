@@ -3711,8 +3711,19 @@ class Service {
                 let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
                 
                 var xmlString = try? String(contentsOf: _relsDirectoryURL)
+                var rIdNums = [Int]()
+                let lines = xmlString?.components(separatedBy: "rId")
+                for (i,line) in lines!.enumerated(){
+                    if i > 0{
+                        let numberOrNot = line.components(separatedBy: " ").first!
+                        let tryFilter = numberOnlyString(text: numberOrNot)
+                        if Int(tryFilter) != nil{
+                            rIdNums.append(Int(tryFilter)!)
+                        }
+                    }
+                }
                 
-                let count = (xmlString?.components(separatedBy: "rId").count ?? 0) - 1//lines - 1 this returns count
+                let max = rIdNums.max()//(xmlString?.components(separatedBy: "rId").count ?? 0) - 1//lines - 1 this returns count
 //
 //                for c in 0..<count{
 //                    if c > sheetXMLFiles.count{
@@ -3722,7 +3733,7 @@ class Service {
 //                
 //                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
                 
-                let relContent = "<Relationship Id=\"rId" + String(count+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
+                let relContent = "<Relationship Id=\"rId" + String(max!+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
                 xmlString = xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent)
                 try? xmlString?.write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
                 
@@ -3738,7 +3749,7 @@ class Service {
 //                    }
 //                }
 //                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
-                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(count+1) + "\"/></sheets>"
+                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(max!+1) + "\"/></sheets>"
                 xmlString3 = xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook)
                 try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
                 
