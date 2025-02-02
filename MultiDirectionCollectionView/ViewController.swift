@@ -4573,6 +4573,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!))
                     self.currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
                     self.FileCollectionView.reloadData()
+                    self.myCollectionView.reloadData()
                     // Assuming `collectionView` is your UICollectionView instance
                 }
                
