@@ -2040,7 +2040,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.reset.isHidden = true
         //copy file to local
         customview2.deleteSheet.isHidden = true
-        customview2.deletebutton.isHidden = true
+//        customview2.deletebutton.isHidden = true
         customview2.addNewSheet.isHidden = true
         customview2.resetStyling.isHidden = true
         //customview2.deletebutton.isHidden = true
