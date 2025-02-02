@@ -1,4 +1,13 @@
 //
+//  ViewController 2.swift
+//  MultiDirectionCollectionView
+//
+//  Created by yano on 2025/02/02.
+//  Copyright © 2025 Credera. All rights reserved.
+//
+
+
+//
 //  ViewController.swift
 //  MultiDirectionCollectionView
 //
@@ -141,14 +150,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var isExcel = false
     var isCSV = false
     var isMail = false
-//    var sheetIdx = 0
+    var sheetIdx = 0
     
     //RangeSelection reset at the start
     var tempRangeSelected = [IndexPath]()
     
     //
     var localFileName = [String]()
-    var currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
+    var currentFileNameCollectionViewIdx = IndexPath()
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -628,7 +637,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if isExcel && currentFileNameCollectionViewIdx != IndexPath() && indexPath.item == currentFileNameCollectionViewIdx.item{
+            if isExcel && indexPath.item == appd.wsSheetIndex-1{
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
                 return cell
@@ -698,8 +707,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                print("wsSheetIndex",appd.wsSheetIndex)
-                //let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
@@ -790,12 +797,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
             currentFileNameCollectionViewIdx = indexPath
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
-            print(currentFileNameCollectionViewIdx.item)
-//            appd.wsSheetIndex = indexPath.item + 1
+            print(indexPath.item)
+            appd.wsSheetIndex = indexPath.item + 1
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item]) )
+                self.loadExcelSheet(idx: sheetIdx)
                 // Assuming `collectionView` is your UICollectionView instance
                 if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                     customLayout.resetCellAttrsDictionaryItemZindex()
@@ -815,12 +822,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if appd.imported_xlsx_file_path == "" {
             self.isExcel = false
+            self.sheetIdx = idx ?? 1
         }
         
         if appd.imported_xlsx_file_path != "" {
             print("yourExcelfile",appd.imported_xlsx_file_path)
             let ehp = ExcelHelper()
-            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: idx!)
+            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
             // Do any additional setup after loading the view.
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -828,11 +836,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             
             self.isExcel = true
+            self.sheetIdx = appd.wsSheetIndex
         }
         
         //checkSheet
-        isExcelSheetData(sheetIdx: idx!)
-        initSheetData()
+        isExcelSheetData(sheetIdx: sheetIdx)
+        initSheetData(sheetIdx: sheetIdx)
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
@@ -1669,6 +1678,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
             isExcel = true
+            sheetIdx = 1
             if fileExists{
                 appd.imported_xlsx_file_path=filePath.path
                 //appd.sheetNames
@@ -1697,9 +1707,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         //checkSheet
-        let initialIdx = appd.sheetNameIds.first ?? "-1"
-        isExcelSheetData(sheetIdx: Int(initialIdx)!)
-        initSheetData()
+        isExcelSheetData(sheetIdx: sheetIdx)
+        initSheetData(sheetIdx: sheetIdx)
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
@@ -1766,6 +1775,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let fileManager = FileManager.default
             try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
             print("File replaced successfully at path: \(overWrittenfilePath.path)")
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
             appd.imported_xlsx_file_path = overWrittenfilePath.path
         } catch {
             print("Error replacing file: \(error.localizedDescription)")
@@ -2039,11 +2049,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localSave.isHidden = true
         customview2.reset.isHidden = true
         //copy file to local
-        customview2.deleteSheet.isHidden = true
-//        customview2.deletebutton.isHidden = true
-        customview2.addNewSheet.isHidden = true
+        customview2.savebutton.isHidden = true
+        
         customview2.resetStyling.isHidden = true
-        //customview2.deletebutton.isHidden = true
+        //customview2.savebutton.isHidden = true
         //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.isHidden = true
@@ -2074,7 +2083,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
             
-            customview2.deletebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
+            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
             customview2.deletebutton.setTitle("Supprimer", for: .normal)
             
         }else if locationstr.contains( "zh"){
@@ -2083,7 +2092,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else if locationstr.contains( "de")
         {
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-            customview2.deletebutton.setTitle("Lokal speichern", for: .normal)
+            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
             customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
@@ -2427,7 +2436,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
-        customview2.deleteSheet.addTarget(self, action: #selector(ViewController.deletexlsxSheet), for: UIControl.Event.touchUpInside)
+        customview2.savebutton.addTarget(self, action: #selector(ViewController.localSave), for: UIControl.Event.touchUpInside)
         
         customview2.deletebutton.isHidden = true
         customview2.columnButton.isHidden = true
@@ -2447,11 +2456,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else if locationstr.contains( "fr"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
             
+            customview2.savebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
+            customview2.deletebutton.setTitle("Supprimer", for: .normal)
+            
         }else if locationstr.contains( "zh"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
             
         }else if locationstr.contains( "de"){
             customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+            customview2.savebutton.setTitle("Lokal speichern", for: .normal)
+            customview2.deletebutton.setTitle("Löschen", for: .normal)
             
         }else if locationstr.contains( "it")
         {
@@ -2480,7 +2494,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }
         customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
-        customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
+//        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
     }
@@ -2602,15 +2616,83 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //create excel todo
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        excelAddSheet()
-        if customview2 != nil{
-            customview2.removeFromSuperview()
+        readAllJsonFiles()
+        
+        sleep(3)
+        
+        var jsonFiles = [String]()
+        var export_content = [String]()
+        var export_location = [String]()
+        var export_formula_result = [String]()
+        var export_formula_location = [String]()
+        var export_input_order = [String]()
+        var export_sheet_idx = [Int]()
+        
+        
+        //get FileTitle
+        let RJ = ReadWriteJSON()
+        
+        
+        for i in 0..<old_localFileNames.count {
+            var content = [String]()
+            var location = [String]()
+            var FR = [String]()
+            var IO = [String]()
+            (content,location,FR,IO) = RJ.old_readJsonForSheet(title: old_localFileNames[i])
+            export_content.append(contentsOf: content)
+            export_location.append(contentsOf: location)
+            export_formula_result.append(contentsOf: FR)
+            export_input_order.append(contentsOf: IO)
+            
+            for j in 0..<content.count {
+                export_sheet_idx.append(i+1)
+            }
         }
-    }
-    
-    @objc func deletexlsxSheet(){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        excelDeleteSheet()
+        
+        //COMPLEX NUMBER NEEDS SOME WORK TO BE DONE TO IT 1+j4 -> 1+4j
+        
+        
+        //Don't match
+        //        if formulaParts.count == export_formula_result.count {
+        for i in 0..<export_content.count {
+            if export_content[i].contains("=") {
+                //EXCEL CONSTANT PI() LOG10  EXP(
+                export_content[i] = excelFormulaExpression(src:export_content[i])
+                export_formula_location.append(export_content[i].replacingOccurrences(of: "=", with: ""))
+                if export_formula_result.count != 0{
+                    export_content[i] = export_formula_result[0]
+                    export_formula_result.removeFirst()
+                }else{
+                    export_formula_location.append("nil")
+                }
+                
+                
+            }else{
+                export_formula_location.append("nil")
+            }
+        }
+        
+        var location_in_alphabet = [String]()
+        for i in 0..<export_location.count {
+            
+            let locationAry = export_location[i].components(separatedBy: ",")
+            let alphabetLetter = getExcelColumnName(columnNumber: Int(locationAry[0])!)
+            location_in_alphabet.append(String(alphabetLetter) + locationAry[1])
+            
+        }
+        
+        export_location = location_in_alphabet
+        
+        let today: Date = Date()
+        let dateFormatter: DateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+        let date = dateFormatter.string(from: today)
+        let dateStr = String(date).replacingOccurrences(of: ":", with: "_")
+        
+        let serviceInstance = Service(imp_sheetNumber: jsonFiles.count, imp_stringContents: export_content, imp_locations: export_location, imp_idx: export_sheet_idx, imp_fileName: "XLSV " + dateStr + ".xlsx",imp_formula:export_formula_location)
+        serviceInstance.export()
+        
+        sleep(7)
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
@@ -3911,10 +3993,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func input(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.collectionViewCellSizeChanged = 0
-        let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-        appd.wsSheetIndex = sheetIdx!
-        print("wsSheetIndex",appd.wsSheetIndex)
-        
         let pasteboard = UIPasteboard.general
         pasteboard.string = ""
         
@@ -4105,9 +4183,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
         if isExcel && srcString.count > 0{
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
             var numFmt = 0
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -4184,9 +4259,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
         if isExcel && srcString.count > 0{
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
             var numFmt = 0
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -4257,9 +4329,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4309,9 +4378,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4360,9 +4426,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4411,9 +4474,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4453,162 +4513,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 } else {
                     print("CustomCollectionViewLayout is not set as the current layout")
                 }
+                
             }
-        }
-    }
-    
-    func excelAddSheet(filename:String = "")
-    {
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
-            var message = "Set a sheet name."
-            var yes = "OK"
-            var no = "No"
-            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-            
-            
-            let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
-            alert.addTextField()
-            
-            
-            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-                var name = alert.textFields?[0].text
-                
-                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                
-                //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-                let today: Date = Date()
-                let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                if name == "" || (self.localFileNames.firstIndex(of: name!) != nil){
-                    name = dateFormatter.string(from: today)
-                }
-                _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
-                
-                //sheet cell get touched
-                appd.collectionViewCellSizeChanged = 1
-                appd.cswLocation.removeAll()
-                appd.customSizedWidth.removeAll()
-                appd.cshLocation.removeAll()
-                appd.customSizedHeight.removeAll()
-                
-                
-                self.f_calculated.removeAll()
-                self.f_content.removeAll()
-                self.content.removeAll()
-                self.location.removeAll()
-                self.f_location_alphabet.removeAll()
-                
-                //print("sheet changed",indexPath.item)
-                self.stringboxText = ""
-            
-                print("go to file view")
-               
-               
-                
-                // Present the target view controller after LoadingFileController's view has appeared
-                DispatchQueue.main.async {
-    //                self.present(targetViewController, animated: true, completion: nil)
-                    self.loadExcelSheet(idx: appd.wsSheetIndex)
-                    // Assuming `collectionView` is your UICollectionView instance
-                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                        customLayout.resetCellAttrsDictionaryItemZindex()
-                        customLayout.prepare()
-                        customLayout.invalidateLayout() // Call the method on the instance
-                        self.myCollectionView.reloadData()
-                        self.FileCollectionView.reloadData()
-                    } else {
-                        print("CustomCollectionViewLayout is not set as the current layout")
-                    }
-                    
-                }
-                
-               
-                self.customview2.removeFromSuperview()
-                
-            })
-            
-            alert.addAction(confirmAction)
-            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-            self.present(alert, animated: true)
-        }
-    }
-    
-    func excelDeleteSheet(filename:String = "")
-    {
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if isExcel {
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
-            var message = "Set a sheet name."
-            var yes = "OK"
-            var no = "No"
-            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-            
-            
-            let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
-            alert.addTextField()
-            
-            alert.textFields?[0].text = localFileNames[currentFileNameCollectionViewIdx.item]
-            
-            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-                
-                var name = alert.textFields?[0].text
-                
-                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                
-                //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-                let today: Date = Date()
-                let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-                if name == ""{
-                    name = dateFormatter.string(from: today)
-                }
-                print("before",appd.sheetNameIds)
-                print("before",appd.sheetNames)
-                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: name!)
-                
-                //sheet cell get touched
-                appd.collectionViewCellSizeChanged = 1
-                appd.cswLocation.removeAll()
-                appd.customSizedWidth.removeAll()
-                appd.cshLocation.removeAll()
-                appd.customSizedHeight.removeAll()
-                
-                self.f_calculated.removeAll()
-                self.f_content.removeAll()
-                self.content.removeAll()
-                self.location.removeAll()
-                self.f_location_alphabet.removeAll()
-                
-                //print("sheet changed",indexPath.item)
-                self.stringboxText = ""
-            
-                print("go to file view")
-                
-                DispatchQueue.main.async {
-                    appd.sheetNameIds.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
-                    appd.sheetNames.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
-                    appd.wsSheetIndex = Int(appd.sheetNameIds.first!)!
-                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!))
-                    self.currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
-                    self.FileCollectionView.reloadData()
-                    self.myCollectionView.reloadData()
-                    // Assuming `collectionView` is your UICollectionView instance
-                }
-               
-                // Present the target view controller after LoadingFileController's view has appeared
-                //self.customview2.removeFromSuperview()
-                
-            })
-            
-            alert.addAction(confirmAction)
-            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-            self.present(alert, animated: true)
         }
     }
     
@@ -5414,7 +5320,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //localFileNames = ["sheet1"]
         
         //excel senario
-        if isExcel && sheetIdx != -1{
+        if isExcel{
             let sheet1Json = ReadWriteJSON()
             localFileNames = appd.sheetNameIds.map { "sheet\($0)" }
             print("sheetIdx",sheetIdx)
@@ -5435,27 +5341,26 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             
             //the workbook is corrupted?
-//            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-//                content = sheet1Json.content
-//                location = sheet1Json.location
-//                textsize = sheet1Json.fontsize
-//                bgcolor = sheet1Json.bgcolor
-//                tcolor = sheet1Json.fontcolor
-//                COLUMNSIZE = sheet1Json.columnsize
-//                ROWSIZE = sheet1Json.rowsize
-//                appd.customSizedWidth = sheet1Json.customcellWidth
-//                appd.customSizedHeight = sheet1Json.customcellHeight
-//                appd.cswLocation = sheet1Json.ccwLocation
-//                appd.cshLocation = sheet1Json.cchLocation
-//                return true
-//            }
-//            
-//            //
-//            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-//                print("something went wrong. maybe corrupt file.")
-//            }
+            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+                content = sheet1Json.content
+                location = sheet1Json.location
+                textsize = sheet1Json.fontsize
+                bgcolor = sheet1Json.bgcolor
+                tcolor = sheet1Json.fontcolor
+                COLUMNSIZE = sheet1Json.columnsize
+                ROWSIZE = sheet1Json.rowsize
+                appd.customSizedWidth = sheet1Json.customcellWidth
+                appd.customSizedHeight = sheet1Json.customcellHeight
+                appd.cswLocation = sheet1Json.ccwLocation
+                appd.cshLocation = sheet1Json.cchLocation
+                return true
+            }
+            
+            //
+            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
+                print("something went wrong. maybe corrupt file.")
+            }
         }else{
-            isExcel = false
             let sheet1Json = ReadWriteJSON()
             if sheet1Json.readJsonFile(title: "csv_sheet1"){
                 content = sheet1Json.content
@@ -5475,7 +5380,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return false
     }
     
-    func initSheetData(){
+    func initSheetData(sheetIdx:Int){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
@@ -5768,7 +5673,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             stringboxText = ""
             
             
-            initSheetData()
+            initSheetData(sheetIdx: selectedSheet)
             //
             FileCollectionView.reloadData()
             fileTitle.text = localFileNames[selectedSheet]
