@@ -3863,7 +3863,9 @@ class Service {
                 let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
                 var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
                 var rIdValue = ""
+                var sheetIdValue = ""
                 var snippet = ""
+                //xl/workbook
                 // Define regex pattern to match the sheet snippet
                 let pattern = "<sheet name=\"\(sheetname)\"[^>]+/>"
                 if let range = xmlString3?.range(of: pattern, options: .regularExpression) {
@@ -3879,13 +3881,23 @@ class Service {
                     } else {
                         print("r:id not found")
                     }
+                    let pattern3 = #"sheetId="([^"]+)""#
+                    if let regex3 = try? NSRegularExpression(pattern: pattern3),
+                       let match3 = regex3.firstMatch(in: snippet, range: NSRange(snippet.startIndex..., in: snippet)) {
+                        if let range3 = Range(match3.range(at: 1), in: snippet) {
+                            sheetIdValue = String(snippet[range3])
+                            print(sheetIdValue) // Output: rId1
+                        }
+                    } else {
+                        print("sheetId not found")
+                    }
                 } else {
                     print("Sheet not found")
                 }
                 
                 
                 
-                if rIdValue != "" && snippet != ""{
+                if rIdValue != "" && snippet != "" && sheetIdValue != ""{
                     xmlString3 = xmlString3?.replacingOccurrences(of: snippet, with: "")
                     try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
                     
@@ -3894,19 +3906,17 @@ class Service {
                     
                     
                     let rIdValueNumber = numberOnlyString(text: rIdValue)
+                    let sheetIdValueNumber = numberOnlyString(text: sheetIdValue)
                     //print("sheetFiles: ", sheetXMLFiles.count)
                     //TODO delete the xml file
-                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(rIdValueNumber)  + ".xml")
+                    let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(sheetIdValueNumber)  + ".xml")
                     try FileManager.default.removeItem(at: worksheetXMLURL)
        
                     //xl/_res/workbook
                     let _relsDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("_rels").appendingPathComponent("workbook.xml.rels")
                     
                     var xmlString = try? String(contentsOf: _relsDirectoryURL)
-                    
-                    let relationshipId = rIdValue
-                    let pattern_xlres = "<Relationship Id=\"\(relationshipId)\"[^>]+/>"
-                    
+                    let pattern_xlres = "<Relationship Id=\"\(rIdValue)\"[^>]+/>"
                     if let range_xlres = xmlString?.range(of: pattern_xlres, options: .regularExpression) {
                         let snippet_xlres = String(xmlString![range_xlres])
                         print("snippet_xlres",snippet_xlres )
