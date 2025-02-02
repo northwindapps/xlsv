@@ -628,7 +628,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if isExcel && indexPath.item == currentFileNameCollectionViewIdx.item{
+            if isExcel && currentFileNameCollectionViewIdx != IndexPath() && indexPath.item == currentFileNameCollectionViewIdx.item{
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
                 return cell
@@ -4569,11 +4569,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 DispatchQueue.main.async {
                     appd.sheetNameIds.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
                     appd.sheetNames.remove(at: Int(self.currentFileNameCollectionViewIdx.item))
-                    print("after",appd.sheetNameIds)
-                    print("after",appd.sheetNames)
-                    print("after",appd.sheetNameIds.first)
-                    let test = ReadWriteJSON()
-                    self.loadExcelSheet(idx: Int(appd.wsSheetIndex))
+                    appd.wsSheetIndex = Int(appd.sheetNameIds.first!)!
+                    self.loadExcelSheet(idx: Int(appd.sheetNameIds.first!))
+                    self.currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
                     self.FileCollectionView.reloadData()
                     // Assuming `collectionView` is your UICollectionView instance
                 }

@@ -3724,15 +3724,7 @@ class Service {
                 }
                 
                 let max = rIdNums.max()//(xmlString?.components(separatedBy: "rId").count ?? 0) - 1//lines - 1 this returns count
-//
-//                for c in 0..<count{
-//                    if c > sheetXMLFiles.count{
-//                        xmlString = xmlString?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-//                    }
-//                }
-//                
-//                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
-                
+  
                 let relContent = "<Relationship Id=\"rId" + String(max!+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
                 xmlString = xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent)
                 try? xmlString?.write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
@@ -3743,12 +3735,6 @@ class Service {
                 
                 var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
                 //let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
-//                for c in 0..<count3{
-//                    if c > sheetXMLFiles.count{
-//                        xmlString3 = xmlString3?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
-//                    }
-//                }
-//                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
                 let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(max!+1) + "\"/></sheets>"
                 xmlString3 = xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook)
                 try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
