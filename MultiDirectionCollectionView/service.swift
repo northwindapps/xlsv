@@ -3585,6 +3585,7 @@ class Service {
     
     func testAddSheetBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, filename: String = "") -> URL? {
         do {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
             let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
@@ -3664,7 +3665,6 @@ class Service {
                 var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-000000000000}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
 
                 
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 
                 
                     
@@ -3712,19 +3712,36 @@ class Service {
                 
                 var xmlString = try? String(contentsOf: _relsDirectoryURL)
                 
-       
-                let relContent = "<Relationship Id=\"rId" + String(lastNum+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
+                let count = (xmlString?.components(separatedBy: "rId").count ?? 0) - 1//lines - 1 this returns count
+//
+//                for c in 0..<count{
+//                    if c > sheetXMLFiles.count{
+//                        xmlString = xmlString?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+//                    }
+//                }
+//                
+//                xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
                 
-                try? xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent).write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
+                let relContent = "<Relationship Id=\"rId" + String(count+1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + String(lastNum+1) + ".xml\"/></Relationships>"
+                xmlString = xmlString?.replacingOccurrences(of: "</Relationships>", with: relContent)
+                try? xmlString?.write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
                 
                 
-                
+                //xl/book
                 let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
                 
                 var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
-
-                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(lastNum+1) + "\"/></sheets>"
-                try? xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook).write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                //let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
+//                for c in 0..<count3{
+//                    if c > sheetXMLFiles.count{
+//                        xmlString3 = xmlString3?.replacingOccurrences(of: "rId" + String(c), with: "rId____")
+//                    }
+//                }
+//                xmlString3 = xmlString3?.replacingOccurrences(of: "____", with: "")
+                let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(count+1) + "\"/></sheets>"
+                xmlString3 = xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook)
+                try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                
                 
                 //ready to zip
                 var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
