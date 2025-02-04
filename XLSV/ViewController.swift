@@ -4105,6 +4105,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
         if isExcel && srcString.count > 0{
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
             var numFmt = 0
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -4181,6 +4184,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
         if isExcel && srcString.count > 0{
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
             var numFmt = 0
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -4251,6 +4257,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4300,6 +4309,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4348,6 +4360,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4396,6 +4411,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
@@ -4443,6 +4461,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             var message = "Set a sheet name."
             var yes = "OK"
             var no = "No"
@@ -4520,6 +4541,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
             var message = "Set a sheet name."
             var yes = "OK"
             var no = "No"

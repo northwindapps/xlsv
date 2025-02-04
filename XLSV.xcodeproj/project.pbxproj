@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
 		2BBA16502D4D1BD6002E950C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2BBA164F2D4D1BD6002E950C /* initialXLSX.xlsx */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
 		3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22A79621DCD860001ADDD9 /* Input4Pad.xib */; };
@@ -28,7 +29,6 @@
 		6A1F5E1E2542D74A002796C0 /* service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A1F5E1D2542D74A002796C0 /* service.swift */; };
 		6A3CE83323B799DC00F720FF /* Pods in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A3CE83223B799DC00F720FF /* Pods */; };
 		6A3CE83523B799F400F720FF /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A3CE83423B799F400F720FF /* CoreXLSX */; };
-		6A3CE83723B79A0000F720FF /* Pods_MultiDirectionCollectionView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A3CE83623B79A0000F720FF /* Pods_MultiDirectionCollectionView.framework */; };
 		6A3CE83923B79A0700F720FF /* CoreXLSX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A3CE83823B79A0700F720FF /* CoreXLSX.framework */; };
 		6A496CA723B8ED1B00E7AE0F /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A496CA623B8ED1A00E7AE0F /* Images.xcassets */; };
 		6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A6E851E245DA132008AFA03 /* Launch Screen.storyboard */; };
@@ -113,7 +113,9 @@
 		3C40887021D6321D005D0E6D /* colorclass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = colorclass.swift; sourceTree = "<group>"; };
 		3C6F503820E3D151001EC20D /* TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableViewCell.swift; sourceTree = "<group>"; };
 		3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		43D033E5AA00307D9793FAA2 /* Pods-XLSV.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XLSV.release.xcconfig"; path = "Target Support Files/Pods-XLSV/Pods-XLSV.release.xcconfig"; sourceTree = "<group>"; };
 		5946AB48E368AF4458CDF7F2 /* Pods-MultiDirectionCollectionViewTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionViewTests.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionViewTests/Pods-MultiDirectionCollectionViewTests.release.xcconfig"; sourceTree = "<group>"; };
+		5AAC6005D389121F9508E58F /* Pods-XLSV.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XLSV.debug.xcconfig"; path = "Target Support Files/Pods-XLSV/Pods-XLSV.debug.xcconfig"; sourceTree = "<group>"; };
 		6A1F5E042542D704002796C0 /* contenttype.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = contenttype.swift; sourceTree = "<group>"; };
 		6A1F5E072542D727002796C0 /* sheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = sheet.swift; sourceTree = "<group>"; };
 		6A1F5E082542D727002796C0 /* adapter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = adapter.swift; sourceTree = "<group>"; };
@@ -134,7 +136,6 @@
 		6A3CE7F623B7946B00F720FF /* CoreXLSX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CoreXLSX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A3CE83223B799DC00F720FF /* Pods */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Pods; sourceTree = "<group>"; };
 		6A3CE83423B799F400F720FF /* CoreXLSX */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CoreXLSX; path = Pods/CoreXLSX; sourceTree = "<group>"; };
-		6A3CE83623B79A0000F720FF /* Pods_MultiDirectionCollectionView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Pods_MultiDirectionCollectionView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A3CE83823B79A0700F720FF /* CoreXLSX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CoreXLSX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A496CA623B8ED1A00E7AE0F /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6A5BFB2F246278EA000BC3E5 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Main.strings"; sourceTree = "<group>"; };
@@ -217,7 +218,6 @@
 		8DB176FB1E149410009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		8DB177101E149464009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard2.xib; sourceTree = "<group>"; };
 		8DB177B61E1499F0009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		8DB177C01E149C91009DCD75 /* MultiDirectionCollectionView.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = MultiDirectionCollectionView.entitlements; path = MultiDirectionCollectionView/MultiDirectionCollectionView.entitlements; sourceTree = "<group>"; };
 		8DF476D11E6C242E0006D940 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		8DF476D31E6C24730006D940 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		8DF476D51E6C249E0006D940 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
@@ -231,6 +231,7 @@
 		8DF476FC1E6C2C7B0006D940 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/formatviewboard.strings"; sourceTree = "<group>"; };
 		8DF796AD1E4E799500BE7D38 /* NilController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NilController.swift; sourceTree = "<group>"; };
 		BB5F65B16AF8F8F0FE7B1104 /* Pods_MultiDirectionCollectionView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MultiDirectionCollectionView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_XLSV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3156E3FD5FC5086E4F2AEBA /* Pods-MultiDirectionCollectionView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.debug.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.debug.xcconfig"; sourceTree = "<group>"; };
 		FB5D95361ABE5E6B00E7C8CD /* XLSV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLSV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -248,9 +249,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A3CE83923B79A0700F720FF /* CoreXLSX.framework in Frameworks */,
-				6A3CE83723B79A0000F720FF /* Pods_MultiDirectionCollectionView.framework in Frameworks */,
 				6A3CE83323B799DC00F720FF /* Pods in Frameworks */,
 				6A3CE83523B799F400F720FF /* CoreXLSX in Frameworks */,
+				0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -319,6 +320,8 @@
 				1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */,
 				8956A9B24B6B4F9D604F4B3A /* Pods-MultiDirectionCollectionViewTests.debug.xcconfig */,
 				5946AB48E368AF4458CDF7F2 /* Pods-MultiDirectionCollectionViewTests.release.xcconfig */,
+				5AAC6005D389121F9508E58F /* Pods-XLSV.debug.xcconfig */,
+				43D033E5AA00307D9793FAA2 /* Pods-XLSV.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -328,7 +331,6 @@
 			children = (
 				2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */,
 				6A3CE83823B79A0700F720FF /* CoreXLSX.framework */,
-				6A3CE83623B79A0000F720FF /* Pods_MultiDirectionCollectionView.framework */,
 				6A3CE83423B799F400F720FF /* CoreXLSX */,
 				6A3CE83223B799DC00F720FF /* Pods */,
 				6A3CE7F623B7946B00F720FF /* CoreXLSX.framework */,
@@ -338,6 +340,7 @@
 				6A3CE7EE23B7923700F720FF /* CoreXLSX.framework */,
 				BB5F65B16AF8F8F0FE7B1104 /* Pods_MultiDirectionCollectionView.framework */,
 				8CBD5CBF6DADDF9E0115150B /* Pods_MultiDirectionCollectionViewTests.framework */,
+				E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -345,8 +348,7 @@
 		FB5D952D1ABE5E6B00E7C8CD = {
 			isa = PBXGroup;
 			children = (
-				8DB177C01E149C91009DCD75 /* MultiDirectionCollectionView.entitlements */,
-				FB5D95381ABE5E6B00E7C8CD /* MultiDirectionCollectionView */,
+				FB5D95381ABE5E6B00E7C8CD /* XLSV */,
 				6ACE5BB22B9C646B00CBA907 /* XLSVTests */,
 				FB5D95371ABE5E6B00E7C8CD /* Products */,
 				F17736E60F92A26FF2D28781 /* Pods */,
@@ -363,7 +365,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		FB5D95381ABE5E6B00E7C8CD /* MultiDirectionCollectionView */ = {
+		FB5D95381ABE5E6B00E7C8CD /* XLSV */ = {
 			isa = PBXGroup;
 			children = (
 				8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */,
@@ -402,7 +404,7 @@
 				FB5D95391ABE5E6B00E7C8CD /* Supporting Files */,
 				6A6E851E245DA132008AFA03 /* Launch Screen.storyboard */,
 			);
-			path = MultiDirectionCollectionView;
+			path = XLSV;
 			sourceTree = "<group>";
 		};
 		FB5D95391ABE5E6B00E7C8CD /* Supporting Files */ = {
@@ -434,9 +436,9 @@
 			productReference = 6ACE5BB12B9C646A00CBA907 /* XLSVTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FB5D95351ABE5E6B00E7C8CD /* MultiDirectionCollectionView */ = {
+		FB5D95351ABE5E6B00E7C8CD /* XLSV */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FB5D95551ABE5E6B00E7C8CD /* Build configuration list for PBXNativeTarget "MultiDirectionCollectionView" */;
+			buildConfigurationList = FB5D95551ABE5E6B00E7C8CD /* Build configuration list for PBXNativeTarget "XLSV" */;
 			buildPhases = (
 				54FC62317625FF37E01B88C1 /* [CP] Check Pods Manifest.lock */,
 				FB5D95321ABE5E6B00E7C8CD /* Sources */,
@@ -448,7 +450,7 @@
 			);
 			dependencies = (
 			);
-			name = MultiDirectionCollectionView;
+			name = XLSV;
 			productName = MultiDirectionCollectionView;
 			productReference = FB5D95361ABE5E6B00E7C8CD /* XLSV.app */;
 			productType = "com.apple.product-type.application";
@@ -482,7 +484,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FB5D95311ABE5E6B00E7C8CD /* Build configuration list for PBXProject "MultiDirectionCollectionView" */;
+			buildConfigurationList = FB5D95311ABE5E6B00E7C8CD /* Build configuration list for PBXProject "XLSV" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -504,7 +506,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FB5D95351ABE5E6B00E7C8CD /* MultiDirectionCollectionView */,
+				FB5D95351ABE5E6B00E7C8CD /* XLSV */,
 				6ACE5BB02B9C646A00CBA907 /* XLSVTests */,
 			);
 		};
@@ -556,7 +558,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-MultiDirectionCollectionView-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-XLSV-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -569,7 +571,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-XLSV/Pods-XLSV-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/CoreXLSX/CoreXLSX.framework",
 				"${BUILT_PRODUCTS_DIR}/SSZipArchive/SSZipArchive.framework",
 				"${BUILT_PRODUCTS_DIR}/SWXMLHash/SWXMLHash.framework",
@@ -590,7 +592,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-XLSV/Pods-XLSV-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -659,7 +661,7 @@
 /* Begin PBXTargetDependency section */
 		6ACE5BB62B9C646B00CBA907 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FB5D95351ABE5E6B00E7C8CD /* MultiDirectionCollectionView */;
+			target = FB5D95351ABE5E6B00E7C8CD /* XLSV */;
 			targetProxy = 6ACE5BB52B9C646B00CBA907 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -999,14 +1001,14 @@
 		};
 		FB5D95561ABE5E6B00E7C8CD /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F3156E3FD5FC5086E4F2AEBA /* Pods-MultiDirectionCollectionView.debug.xcconfig */;
+			baseConfigurationReference = 5AAC6005D389121F9508E58F /* Pods-XLSV.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MultiDirectionCollectionView/MultiDirectionCollectionView.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.6;
+				CURRENT_PROJECT_VERSION = 3.0.7;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1015,13 +1017,13 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/XMLCoder\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation\"",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/MultiDirectionCollectionView/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/XLSV/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = XLSV;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0.6;
+				MARKETING_VERSION = 3.0.7;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1049,14 +1051,14 @@
 		};
 		FB5D95571ABE5E6B00E7C8CD /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */;
+			baseConfigurationReference = 43D033E5AA00307D9793FAA2 /* Pods-XLSV.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MultiDirectionCollectionView/MultiDirectionCollectionView.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.6;
+				CURRENT_PROJECT_VERSION = 3.0.7;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1065,12 +1067,12 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/XMLCoder\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation\"",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/MultiDirectionCollectionView/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/XLSV/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = XLSV;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0.6;
+				MARKETING_VERSION = 3.0.7;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1108,7 +1110,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB5D95311ABE5E6B00E7C8CD /* Build configuration list for PBXProject "MultiDirectionCollectionView" */ = {
+		FB5D95311ABE5E6B00E7C8CD /* Build configuration list for PBXProject "XLSV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB5D95531ABE5E6B00E7C8CD /* Debug */,
@@ -1117,7 +1119,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB5D95551ABE5E6B00E7C8CD /* Build configuration list for PBXNativeTarget "MultiDirectionCollectionView" */ = {
+		FB5D95551ABE5E6B00E7C8CD /* Build configuration list for PBXNativeTarget "XLSV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB5D95561ABE5E6B00E7C8CD /* Debug */,
