@@ -17,3 +17,6 @@ This project was built using MultiDirectionCollectionView by kwandrews7, which i
 
 ## License
 This project is licensed under the MIT License. See LICENSE for details.
+
+## Contributions
+At this time, I am not accepting contributions for this project. Thank you for your understanding.
