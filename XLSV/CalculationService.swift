@@ -131,15 +131,24 @@ class CalculationService{
             
       }
     
-      func isFloat(_ str: String) -> Bool {
-            let floatRegex = #"^-?\d+(\.\d+)?$"#
-            let range = NSRange(str.startIndex..<str.endIndex, in: str)
-            return NSPredicate(format: "SELF MATCHES %@", floatRegex).evaluate(with: str)
-      }
+    //   func isFloat(_ str: String) -> Bool {
+    //         let floatRegex = #"^-?\d+(\.\d+)?$"#
+    //         let range = NSRange(str.startIndex..<str.endIndex, in: str)
+    //         return NSPredicate(format: "SELF MATCHES %@", floatRegex).evaluate(with: str)
+    //   }
 
-      func areAllFloats(_ item: String) -> Bool {
-            return Float(item) != nil
-      }
+    func isFloat(_ str: String) -> Bool {
+    let pattern = "^-?\\d+(\\.\\d+)?$"
+    // NSRegularExpression を直接使う（NSPredicateより確実）
+    guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+    
+    let range = NSRange(location: 0, length: str.utf16.count)
+    return regex.firstMatch(in: str, options: [], range: range) != nil
+}
+
+    func areAllFloats(_ item: String) -> Bool {
+        return Float(item) != nil
+    }
 
     func containsAlphabetChars(_ str: String) -> Bool {
         let lettersSet = CharacterSet.letters
@@ -147,9 +156,9 @@ class CalculationService{
     }
 
 
-    func degreesToRadians(_ degrees: Double) -> String {
-        let radians = degrees * (.pi / 180.0)
-        return String(radians)
+    func radianToString(_ degrees: Double) -> String {
+        //let radians = degrees * (.pi / 180.0)
+        return String(degrees)
     }
 
     
@@ -191,6 +200,8 @@ class CalculationService{
                     while loopCounter > 0 {
                         tempStr = scientificOperation(tempStr!)
                         tempStr = basicOperation(source: tempStr!)
+                        tempStr = slashDotPowerPlusCase(tempStr!)
+                        print("tempStr",tempStr)
                         if tempStr == ERROR{
                             isInfinity = true;
                         }
@@ -208,7 +219,7 @@ class CalculationService{
                     let cloned = "(\(match))"
                     var result: String? = nil
                     var j = 10
-                    
+                    print("match",cloned)
                     for i in 0..<cloned.count {
                         if containsAlphabetChars(cloned) {
                             result = scientificOperation(cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: ""))
@@ -221,6 +232,7 @@ class CalculationService{
                                         result = scientificOperation(result ?? "")
                                     } else {
                                         result = basicOperation(source: result ?? "")
+                                        tempStr = slashDotPowerPlusCase(tempStr!)
                                         if result == ERROR{
                                             isInfinity = true;
                                         }
@@ -231,8 +243,11 @@ class CalculationService{
                         } else {
                             var k = 50
                             var basicExp = cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
+                            print("basicExp",basicExp)
                             while k > 0 {
                                 result = basicOperation(source: basicExp)
+                                tempStr = slashDotPowerPlusCase(tempStr!)
+                                print("result",result)
                                 if result == ERROR{
                                     isInfinity = true;
                                 }
@@ -246,6 +261,7 @@ class CalculationService{
                             if let unwrappedResult = result {
                                 let ptn = cloned
                                 tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
+                                print(tempStr)
                             }
                         }
                     }
@@ -255,6 +271,7 @@ class CalculationService{
                 if match == nil{
                     tempStr = scientificOperation(tempStr ?? "")
                     tempStr = basicOperation(source: tempStr ?? "")
+                    tempStr = slashDotPowerPlusCase(tempStr!)
                     if tempStr == ERROR{
                         isInfinity = true;
                     }
@@ -314,6 +331,7 @@ class CalculationService{
         } else {
             if elements.contains("^") {
                 for i in 1..<elements.count {
+                    print("element",elements[i])
                     if elements[i] == "^" && i - 1 >= 0 && isFloat(String(elements[i - 1])) && i + 1 < elements.count && isFloat(String(elements[i + 1])) {
                         let a = Double(elements[i-1])
                         let b = Double(elements[i+1])
@@ -363,8 +381,17 @@ class CalculationService{
             elements = elements.filter { item in
                 return item != "nil"
             }
+            print("joined",elements.joined(separator: ""))
             return elements.joined(separator: "")
         }
+    }
+
+    func slashDotPowerPlusCase(_ source: String) -> String {
+        var input = source
+            input = input.replacingOccurrences(of: "/+", with: "/")
+            input = input.replacingOccurrences(of: "*+", with: "*")
+            input = input.replacingOccurrences(of: "^+", with: "^")
+        return input
     }
     
     func scientificOperation(_ source: String) -> String {
@@ -376,42 +403,42 @@ class CalculationService{
                 for element in elements {
                     if element.contains("asin") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "asin", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(asin(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
                     }
                     if element.contains("acos") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "acos", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(acos(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
                     }
                     if element.contains("atan") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "atan", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(atan(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
                     }
                     if element.contains("sin") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "sin", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(sin(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
                     }
                     if element.contains("cos") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "cos", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(cos(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
                     }
                     if element.contains("tan") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "tan", with: "")),
-                           let arg = Decimal(string:degreesToRadians(exp.doubleValue)) {
+                           let arg = Decimal(string:radianToString(exp.doubleValue)) {
                             let resultValue = Decimal(tan(arg.doubleValue))
                             input = input.replacingOccurrences(of: element, with: resultValue.description)
                         }
