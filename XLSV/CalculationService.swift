@@ -10,6 +10,11 @@ import Foundation
 
 
 class CalculationService{
+        // Testcase Examples
+        // let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
+        // let cs = CalculationService()
+        // let result = cs.execute(expression:tempStr) ?? ""
+        // print("final",result)
         static let reservedWords: [String] = [
            "pi",
            "e",
@@ -139,7 +144,7 @@ class CalculationService{
 
     func isFloat(_ str: String) -> Bool {
     let pattern = "^-?\\d+(\\.\\d+)?$"
-    // NSRegularExpression を直接使う（NSPredicateより確実）
+    // NSRegularExpression over NSPredicate
     guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
     
     let range = NSRange(location: 0, length: str.utf16.count)
@@ -285,6 +290,10 @@ class CalculationService{
                     loopCounter = 0
                 }
                 loopCounter -= 1
+            }
+            
+            if tempStr ?? "" == "nil"{
+              return "error"
             }
             
             return isFloat(tempStr ?? "") ? tempStr : nil
@@ -506,3 +515,12 @@ extension Decimal {
     }
 }
 
+
+
+
+
+
+// let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
+// let cs = CalculationService()
+// let result = cs.execute(expression:tempStr) ?? ""
+// print("final",result)
