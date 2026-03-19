@@ -2528,60 +2528,36 @@ class Service {
         }
     }
 
-    func checkSharedStringsIndex(url:URL? = nil, SSlist:[String] = [], word:String)->(Int?,String?){
-        var new_count : Int?
-        var new_count2 : Int?
-        
-        if word == ""{
-            return (nil,nil)
+    func checkSharedStringsIndex(url: URL? = nil, SSlist: [String] = [], word: String) -> (Int?, String?) {
+        guard let url2 = url, word != "", Float(word) == nil else {
+            return (nil, nil)
         }
-        
-        if word != "" && (Float(word) != nil) {
-            return (nil,nil)
+
+        guard var xmlString = try? String(contentsOf: url2, encoding: .utf8) else {
+            return (nil, nil)
         }
-        
-        if let url2 = url{
-            var xmlString = try? String(contentsOf: url2)
-            let INDEX_1_DIFF_ADJUST = 0
-            if (xmlString != nil){
-                //
-                if let idx = SSlist.firstIndex(of:word) {
-                    print("String exists at", idx + INDEX_1_DIFF_ADJUST)
-                    return (idx + INDEX_1_DIFF_ADJUST, xmlString)
-                } else {
-                    print("String not exists.")
-                    // Find the position to insert the new <si> element
-                    if let range = xmlString!.range(of: "</sst>") {
-                        // Construct the new <si> element
-                        var newSIElement = "<si><t>" + word + "</t></si>"
-                        
-                        // Insert the new <si> element at the end of <sst>
-                        xmlString?.replaceSubrange(range, with: "\(newSIElement)</sst>")
-                        
-                        let xmlData = try? Data(contentsOf: url2)
-                        
-                        // Create an XML parser and set its delegate
-                        let parser = XMLParser(data: xmlData!)
-                        let delegate = XMLParserHelper()
-                        parser.delegate = delegate
-                        // Parse the XML data
-                        if parser.parse() {
-                            print("Number of <si> elements:", delegate.siElementCount)
-                            new_count = delegate.siElementCount
-                        } else {
-                            print("Failed to parse XML data.")
-                        }
-                        print("New <si> element inserted successfully.")
-                        
-                        return (SSlist.count ,xmlString)
-                    } else {
-                        print("Failed to find </sst> in the XML data.")
-                    }
-                }
-            }
+
+        if let idx = SSlist.firstIndex(of: word) {
+            print("String exists at", idx)
+            return (idx, xmlString)
         }
-        return (nil,nil)
+
+        print("String not exists. Inserting: \(word)")
+        
+        if let range = xmlString.range(of: "</sst>") {
+            let newSIElement = "<si><t>\(word)</t></si>"
+            xmlString.replaceSubrange(range, with: "\(newSIElement)</sst>")
+            return (SSlist.count, xmlString)
+        } else if let range = xmlString.range(of: "/>", options: .backwards) {
+            let newSIElement = "><si><t>\(word)</t></si></sst>"
+            xmlString.replaceSubrange(range, with: newSIElement)
+            return (SSlist.count, xmlString)
+        } else {
+            print("Failed to find any sst tag end.")
+            return (nil, nil)
+        }
     }
+
     
     
     func testSandBox(fp: String = "", url: URL? = nil) -> URL? {
@@ -2911,9 +2887,17 @@ class Service {
                 let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                 //update to it contains date numFmt and other format
                 if (modifiedStylesStr != nil){
-                    try? modifiedStylesStr!.write(to: styleXMLURL, atomically: true, encoding: .utf8)
-                    var xmlString = try? String(contentsOf: styleXMLURL)
-                    //print(xmlString)
+                    do {
+                        try modifiedStylesStr?.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                    } catch {
+                        print("Styles.xml write error: \(error)")
+                    }
+                    do {
+                        var xmlString = try? String(contentsOf: styleXMLURL)
+                        //                    print("xmlString: \(xmlString)")
+                    }catch{
+                        print("failed at writing to styleXMLURL")
+                    }
                 }
                 
                     
@@ -2923,9 +2907,10 @@ class Service {
                 //check missing files and create the missing ones
                 if !FileManager.default.fileExists(atPath: shardStringXMLURL.path) {
                     let content = """
-                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                    <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1"></sst>
-                    """
+                        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                        <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0">
+                        </sst>
+                        """
                     
                     try? content.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
                 }
@@ -2946,7 +2931,11 @@ class Service {
                         let replacedWithNewString = testUpdateValue(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString) ?? ""//A3
                         // Write the modified XML data back to the file
                         if(replacedWithNewString != ""){
-                            try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            do{
+                                try replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            } catch{
+                                print("failed at replacedWithNewString")
+                            }
                         }
                         check = true
                     }
@@ -2955,7 +2944,11 @@ class Service {
                         let replacedWithNewString = testUpdateFormula(url:worksheetXMLURL, vIndex: String(input), index: cellIdxString,numFmtId:numFmt,fString: fString, calculated: calculated) ?? ""//A3
                         // Write the modified XML data back to the file
                         if(replacedWithNewString != ""){
-                            try? replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            do {
+                                try replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            }catch{
+                               print("failed at replacedWithNewString")
+                           }
                         }
                         check = true
                     }
@@ -2963,10 +2956,18 @@ class Service {
                         let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(shredStringId.0!), index: cellIdxString)//A3
                         // Write the modified XML data back to the file
                         if(!check && replacedWithNewString != nil && replacedWithNewString != ""){
-                            try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            do {
+                                try replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                            }catch{
+                               print("failed at replacedWithNewString")
+                           }
                             
-                            // Write the modified XML data back to the file
-                            try? shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
+                            do {
+                                // Write the modified XML data back to the file
+                                try shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
+                            }catch{
+                               print("failed at shredStringId.1")
+                           }
                         }
                     }
                         
@@ -3864,7 +3865,7 @@ class Service {
                 var snippet = ""
                 //xl/workbook
                 // Define regex pattern to match the sheet snippet
-                let pattern = "<sheet name=\"\(sheetname)\"[^>]+/>"
+                let pattern = #"<sheet [^>]*name="\#(sheetname)"[^>]*>"#
                 if let range = xmlString3?.range(of: pattern, options: .regularExpression) {
                     snippet = String(xmlString3![range])
                     print("snippet",snippet) // Output: <sheet name="Sheet1" sheetId="1" r:id="rId1"/>

@@ -446,6 +446,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
             if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1) && appd.cellXfs.count != 0 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0 && appd.excelStyleIdx.count != 0){
                 var c = 0
+                if appd.cellXfs.count <= appd.excelStyleIdx[styleId!] || appd.numFmtIds.count <= appd.excelStyleIdx[styleId!] {
+                    return cell
+                }
                 let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
                 let numId = appd.numFmtIds[appd.excelStyleIdx[styleId!]]
                 var idx = appd.numFmts.firstIndex(of: String(numId))
@@ -5348,8 +5351,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
         if down_bool {
             datainputview.downArrow.setImage(UIImage(named: "downArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-            let str = datainputview.stringbox.text
-            datainputview.stringbox.text = str!.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "↓"
+            var str = ""
+            str = datainputview.stringbox.text.replacingOccurrences(of: ";", with: ":")
+            datainputview.stringbox.text = str.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "↓"
         }else if !down_bool{
             datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text
@@ -5366,8 +5370,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if down_bool {
             datainputview.downArrow.setImage(UIImage(named: "downArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-            let str = datainputview.stringbox.text
-            datainputview.stringbox.text = str!.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "↓"
+            var str = ""
+            str = datainputview.stringbox.text.replacingOccurrences(of: ";", with: ":")
+            datainputview.stringbox.text = str.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "↓"
         }else if !down_bool{
             datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text
@@ -5383,8 +5388,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
         if right_bool {
             datainputview.rightArrow.setImage(UIImage(named: "rightArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-            let str = datainputview.stringbox.text
-            datainputview.stringbox.text = str!.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "→"
+            var str = ""
+            str = datainputview.stringbox.text.replacingOccurrences(of: ";", with: ":")
+            datainputview.stringbox.text = str.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "→"
         }else if !right_bool{
             datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text
@@ -5401,8 +5407,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if right_bool {
             datainputview.rightArrow.setImage(UIImage(named: "rightArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-            let str = datainputview.stringbox.text
-            datainputview.stringbox.text = str!.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "→"
+            var str = ""
+            str = datainputview.stringbox.text.replacingOccurrences(of: ";", with: ":")
+            datainputview.stringbox.text = str.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "←", with: "").replacingOccurrences(of: "↑", with: "") + "→"
         }else if !right_bool{
             datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
             let str = datainputview.stringbox.text

@@ -7,23 +7,6 @@ class HandwritingViewController: UIViewController {
     let canvasView = PKCanvasView()
     var toolPicker: PKToolPicker?
     
-    
-//    let parseButton: UIButton = {
-//        let button = UIButton(type: .custom)
-//        
-//        let icon = UIImage.excelIcon(size: CGSize(width: 44, height: 40), color: .white)
-//        button.setImage(icon, for: .normal)
-//        
-//        // レイアウト調整
-//        button.backgroundColor = .systemGreen // Excelっぽく緑に
-//        button.layer.cornerRadius = 10
-//        button.layer.zPosition = 1
-//        
-//        // アイコンのパディング調整（必要なら）
-//        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-//        
-//        return button
-//    }()
     let parseButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Parse", for: .normal)
@@ -49,7 +32,7 @@ class HandwritingViewController: UIViewController {
     let backButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Back", for: .normal)
-        button.backgroundColor = .systemGray // 他と区別するためグレーに
+        button.backgroundColor = .systemGray
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
         button.layer.zPosition = 1
@@ -73,20 +56,16 @@ class HandwritingViewController: UIViewController {
     private func setupCanvas() {
         canvasView.frame = view.bounds
         canvasView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        // iOS 13以降
         canvasView.allowsFingerDrawing = true
         view.addSubview(canvasView)
     }
 
     private func setupToolPicker() {
-        // iOS 13の互換性を考慮したウィンドウ取得
         guard let window = view.window else { return }
         
-        // iOS 13では共有インスタンスではなく直接生成して保持
         if #available(iOS 14.0, *) {
             toolPicker = PKToolPicker()
         } else {
-            // iOS 13専用の取得方法
             toolPicker = PKToolPicker.shared(for: window)
         }
         
@@ -98,7 +77,7 @@ class HandwritingViewController: UIViewController {
     private func setupButtons() {
         view.addSubview(parseButton)
         view.addSubview(clearButton)
-        view.addSubview(backButton) // 追加
+        view.addSubview(backButton)
         
         parseButton.translatesAutoresizingMaskIntoConstraints = false
         clearButton.translatesAutoresizingMaskIntoConstraints = false
@@ -111,7 +90,7 @@ class HandwritingViewController: UIViewController {
         NSLayoutConstraint.activate([
             // 1. Deleteボタン (左)
             clearButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: sideMargin),
-            clearButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -120),
+            clearButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
             clearButton.heightAnchor.constraint(equalToConstant: buttonHeight),
             
             // 2. Backボタン (真ん中)
