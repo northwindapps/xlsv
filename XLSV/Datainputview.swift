@@ -25,6 +25,8 @@ class Datainputview: UIView {
     @IBOutlet weak var stringbox: UITextView!
    
     @IBOutlet weak var copyButton: UIButton!
+    
+    @IBOutlet weak var handWritingInputButton: UIButton!
 
     
     @IBOutlet weak var returnbutton: UIButton!

@@ -386,21 +386,37 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         
     }
     
+//    override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+//        
+//        // Create an array to hold all elements found in our current view.
+//        var attributesInRect = [UICollectionViewLayoutAttributes]()
+//        
+//        // Check each element to see if it should be returned.
+//        for cellAttributes in cellAttrsDictionary.values {
+//            if rect.intersects(cellAttributes.frame) {
+//                attributesInRect.append(cellAttributes)
+//            }
+//        }
+//
+//        // Return list of elements.
+//        return attributesInRect
+//    }
     override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        
-        // Create an array to hold all elements found in our current view.
         var attributesInRect = [UICollectionViewLayoutAttributes]()
         
-        // Check each element to see if it should be returned.
         for cellAttributes in cellAttrsDictionary.values {
+            // 1. 通常のセルは画面内にあるか判定
             if rect.intersects(cellAttributes.frame) {
                 attributesInRect.append(cellAttributes)
             }
+            // 2. 固定ヘッダー（セクション0や1列目など）は強制的に追加するロジックが必要
+            else if cellAttributes.indexPath.section == 0 || cellAttributes.indexPath.item == 0 {
+                attributesInRect.append(cellAttributes)
+            }
         }
-
-        // Return list of elements.
         return attributesInRect
     }
+
     
     override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
    

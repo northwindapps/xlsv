@@ -695,23 +695,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.stringbox.text = content[locationIdx!]
             }
             
-            // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                print("wsSheetIndex",appd.wsSheetIndex)
-                //let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+                let appd = UIApplication.shared.delegate as! AppDelegate
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
-                // Assuming `collectionView` is your UICollectionView instance
-                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                    customLayout.resetCellAttrsDictionaryItemZindex()
-                    customLayout.prepare()
-                    customLayout.invalidateLayout() // Call the method on the instance
-                    self.myCollectionView.reloadData()
-                } else {
-                    print("CustomCollectionViewLayout is not set as the current layout")
-                }
                 
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.dataSourceDidUpdate = true
+                    customLayout.cellAttrsDictionary.removeAll()
+                    self.myCollectionView.reloadData()
+                }
             }
+
             return false
         }
         return true
@@ -3920,8 +3914,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
-        var element :String = datainputview.stringbox.text!
-        let original_element = element
+        var element: String = datainputview.stringbox.text!
+
+        if element.hasPrefix("=") {
+            let targets = ["sum", "average", "min", "max"]
+            for target in targets {
+                // （options: .caseInsensitive）
+                element = element.replacingOccurrences(
+                    of: target,
+                    with: target.uppercased(),
+                    options: .caseInsensitive
+                )
+            }
+        }
+
+        
         datainputview.stringbox.text = ""
         
         //add more complicated functionality
@@ -4540,6 +4547,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func excelDeleteSheet(filename:String = "")
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        
+        if appd.sheetNames.count <= 1 {
+            let errorAlert = UIAlertController(title: "ERROR", message: "The book needs at least one sheet.", preferredStyle: .alert)
+            errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(errorAlert, animated: true)
+            return
+        }
+        
         if isExcel {
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -4824,28 +4839,28 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func excel_sum_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         if fc[fidx].hasPrefix("=SUM("){
-            return ExcelHelper().excel_sum(src: fc[fidx], cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
+            return ExcelHelper().excel_sum(src: fc[fidx].uppercased(), cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
         }
         return "calculation error"
     }
     
     @objc func excel_average_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         if fc[fidx].hasPrefix("=AVERAGE("){
-            return ExcelHelper().excel_average(src: fc[fidx], cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
+            return ExcelHelper().excel_average(src: fc[fidx].uppercased(), cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
         }
         return "calculation error"
     }
     
     @objc func excel_min_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         if fc[fidx].hasPrefix("=MIN("){
-            return ExcelHelper().excel_min(src: fc[fidx], cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
+            return ExcelHelper().excel_min(src: fc[fidx].uppercased(), cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
         }
         return "calculation error"
     }
     
     @objc func excel_max_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         if fc[fidx].hasPrefix("=MAX("){
-            return ExcelHelper().excel_max(src: fc[fidx], cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
+            return ExcelHelper().excel_max(src: fc[fidx].uppercased(), cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
         }
         return "calculation error"
     }
