@@ -702,12 +702,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let appd = UIApplication.shared.delegate as! AppDelegate
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
                 
-                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                    customLayout.dataSourceDidUpdate = true
-                    customLayout.cellAttrsDictionary.removeAll()
-                    self.myCollectionView.reloadData()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
+                        self.myCollectionView.reloadData()
+                    }
                 }
             }
+
+
 
             return false
         }
