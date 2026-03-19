@@ -903,6 +903,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 datainputview.downArrow.addTarget(self, action: #selector(imoveDown), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(imoveRight), for: UIControl.Event.touchUpInside)
+                datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
                 
                 break
             case .pad:
@@ -941,6 +942,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.closeBraceButton.addTarget(self, action: #selector(closeBraceAction), for: UIControl.Event.touchUpInside)
                 datainputview.commaButton.addTarget(self, action: #selector(commaAction), for: UIControl.Event.touchUpInside)
                 datainputview.colonButton.addTarget(self, action: #selector(colonAction), for: UIControl.Event.touchUpInside)
+                
+            
+                datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
                 
                 
                 break
@@ -6051,6 +6055,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             datainputview.stringbox.text = datainputview.stringbox.text + ":"
         }
+    }
+    
+    @objc func hwAction(){
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "HandwritingView" )
+        targetViewController.modalPresentationStyle = .fullScreen
+        self.present( targetViewController, animated: true, completion: nil)
     }
     
     func isNumeric(_ str: String) -> Bool {

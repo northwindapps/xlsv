@@ -23,6 +23,7 @@
                 <outlet property="downArrow" destination="qEg-ID-yDc" id="Y2k-4e-5zZ"/>
                 <outlet property="expButton" destination="uaK-Nf-xz4" id="LU6-z9-3mw"/>
                 <outlet property="getValuesButton" destination="jOr-1q-Ua2" id="qPe-Kb-1Ja"/>
+                <outlet property="handWritingInputButton" destination="bfN-6o-M1C" id="P21-GP-dZk"/>
                 <outlet property="imabsButton" destination="Wa7-qv-fc8" id="jxO-9E-H79"/>
                 <outlet property="imargButton" destination="mBz-ra-U3x" id="F02-tb-qkh"/>
                 <outlet property="imdivButton" destination="wa3-S5-z98" id="Zsp-iG-Ldq"/>

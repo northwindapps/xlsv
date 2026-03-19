@@ -529,7 +529,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
         <!--Handwriting View Controller-->
         <scene sceneID="DhQ-ie-KoE">
             <objects>
-                <viewController storyboardIdentifier="test" id="Xbh-Eu-bHB" customClass="HandwritingViewController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="HandwritingView" id="Xbh-Eu-bHB" customClass="HandwritingViewController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="LRl-2J-Oc5"/>
                         <viewControllerLayoutGuide type="bottom" id="PS2-eo-WQv"/>
