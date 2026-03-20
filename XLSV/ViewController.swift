@@ -5113,6 +5113,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             for i in 0..<filteredContent.count {
                 if Double(filteredResult[i]) != nil { continue }
                 
+                filteredResult[i] = "error"
+                
                 var currentFormula = filteredContent[i].replacingOccurrences(of: "=", with: "")
                 
                 for j in 0..<literalLocationInExcel.count {
@@ -5129,8 +5131,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 
                 if currentFormula.contains("SUM(") || currentFormula.contains("AVERAGE(") || currentFormula.contains("MAX(") || currentFormula.contains("MIN(") {
-                    
-                    filteredResult[i] = "error"
                     
                     switch currentFormula {
                     case _ where currentFormula.contains("SUM("):

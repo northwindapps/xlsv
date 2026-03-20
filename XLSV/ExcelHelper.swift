@@ -595,25 +595,22 @@ class ExcelHelper{
     }
     
     func columnToInt(_ column: String) -> Int? {
-        // Convert the string to uppercase to handle lowercase inputs
         let uppercasedColumn = column.uppercased()
+        var result = 0
         
-        // Calculate the integer value by subtracting the unicode value of "A" and adding 1
-        guard let unicodeScalar = uppercasedColumn.unicodeScalars.first
-              else {
-            return nil
+        for scalar in uppercasedColumn.unicodeScalars {
+            let asciiValue = scalar.value
+            
+            if asciiValue >= 65 && asciiValue <= 90 {
+                result = result * 26 + Int(asciiValue - 64)
+            } else {
+                break
+            }
         }
         
-        let asciiValue = unicodeScalar.value
-        
-        // Check if the character is within the range of A-Z
-        guard asciiValue >= 65 && asciiValue <= 90 else {
-            return nil
-        }
-        
-        // Return the integer value (A=1, B=2, ..., Z=26)
-        return Int(asciiValue - 64)
+        return result > 0 ? result : nil
     }
+
     
     func excel_sum(src:String,cursor:String,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         //merge2array
@@ -878,8 +875,12 @@ class ExcelHelper{
         let endColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: endCell)) ?? 0
         let endRowInt = Int(ExcelHelper().numberOnlyString(text: endCell)) ?? 0
 
+        print("startColumnInt,startRowInt")
         print(startColumnInt,startRowInt)
+        print("endColumnInt,endRowInt")
         print(endColumnInt,endRowInt)
+        print("cellCol,cellRow")
+        print(cellColumn,cellRow)
         // Check if the cell is within the range
         return (cellColumn >= (startColumnInt) && cellColumn <= (endColumnInt)) && (cellRow >= (startRowInt) && cellRow <= (endRowInt))
         
