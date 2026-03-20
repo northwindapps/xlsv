@@ -3738,8 +3738,15 @@ class Service {
                 //let count3 = (xmlString3?.components(separatedBy: "rId").count ?? 0) - 1
                 let newBook = "<sheet name=\"" + filename + "\" sheetId=\"" + String(lastNum+1) + "\" r:id=\"rId" + String(max!+1) + "\"/></sheets>"
                 xmlString3 = xmlString3?.replacingOccurrences(of: "</sheets>", with: newBook)
-                try? xmlString3?.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
                 
+                //sort
+                let sortedXML = helperReorderSheetsByName(xmlString: xmlString3!)
+                print(sortedXML)
+                do{
+                    try sortedXML.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                }catch{
+                    print("Error occured in process xmlString3?.write")
+                }
                 
                 //ready to zip
                 var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
@@ -3787,6 +3794,36 @@ class Service {
         return nil
     }
     
+
+    func helperReorderSheetsByName(xmlString: String) -> String {
+        let sheetPattern = #"<sheet\s+[^>]*name="([^"]+)"[^>]*/>"#
+        let regex = try! NSRegularExpression(pattern: sheetPattern, options: [])
+        let nsString = xmlString as NSString
+        let matches = regex.matches(in: xmlString, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        var sheets = matches.map { match -> (name: String, fullTag: String) in
+            let fullTag = nsString.substring(with: match.range)
+            let name = nsString.substring(with: match.range(at: 1))
+            return (name: name, fullTag: fullTag)
+        }
+        
+        sheets.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        
+        let sortedSheetsString = sheets.map { $0.fullTag }.joined()
+        
+        let containerPattern = #"(<sheets>)(.*?)(</sheets>)"#
+        let containerRegex = try! NSRegularExpression(pattern: containerPattern, options: [.dotMatchesLineSeparators])
+        
+        let result = containerRegex.stringByReplacingMatches(
+            in: xmlString,
+            options: [],
+            range: NSRange(location: 0, length: nsString.length),
+            withTemplate: "$1\(sortedSheetsString)$3"
+        )
+        
+        return result
+    }
+
     func testDeleteSheetBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, sheetname: String = "") -> URL? {
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -3922,6 +3959,175 @@ class Service {
                         try? xmlString?.write(to: _relsDirectoryURL, atomically: true, encoding: .utf8)
                     } else {
                         print("Relationship not found")
+                    }
+                }
+                
+                
+                //ready to zip
+                var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                let fpURL = URL(fileURLWithPath: fp)
+                let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                //appendingPathComponent("imported2.xlsx")
+                let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                // Check if the destination file exists
+                if FileManager.default.fileExists(atPath: fpURL.path) {
+                    // If it exists, remove it
+                    try FileManager.default.removeItem(at: fpURL)
+                }
+                //overwrite or update xlsx
+                let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                   }
+                }
+                
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Done: ", files)
+                
+                return nil
+
+                
+            } else {
+                // Handle the case where the specified path doesn't exist
+                print("File or directory does not exist at path: \(fp)")
+            }
+            
+        } else {
+            print("Document directory not found.")
+        }
+            
+            
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        return nil
+    }
+    
+    func testChangeSheetNameBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, sheetname: String = "", newsheetname: String = "") -> URL? {
+        do {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            // Get the sandbox directory for documents
+            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+            let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
+            //
+            if FileManager.default.fileExists(atPath: fp) {
+                        // The specified path exists, continue with your code
+                        print("File or directory exists at path: \(fp)")
+                let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                        
+                // Check if the subdirectory already exists
+                if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                    // Create the subdirectory
+                    try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                    print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                } else {
+                    // Subdirectory already exists
+                    print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                    var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                       }
+                    }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory is now empty",files)
+                }
+                
+                // Construct the URL for the destination file
+                let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+               
+                // Check if the file already exists at the destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                    // Remove destination file if it already exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                } else {
+                    // Move the file to the subdirectory
+                    try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                    print("File moved successfully to: \(destinationURL.path)")
+                }
+                
+                do {
+                    //unzip
+                    let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                    print("File unzipped successfully.")
+                } catch {
+                    print("Error unzipping file: \(error)")
+                }
+                
+                do {
+                    //delete imported2.zip or imported2.xlsx
+                    try FileManager.default.removeItem(at: destinationURL)
+                    print("Deleted zip file:", destinationURL)
+                } catch {
+                    print("Error deleting file:", error)
+                }
+                
+                //starts here
+                //workbook
+                let wkbookDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("workbook.xml")
+                var xmlString3 = try? String(contentsOf: wkbookDirectoryURL)
+                var rIdValue = ""
+                var sheetIdValue = ""
+                var snippet = ""
+                //xl/workbook
+                // Define regex pattern to match the sheet snippet
+                let pattern = #"<sheet [^>]*name="\#(sheetname)"[^>]*>"#
+                if let range = xmlString3?.range(of: pattern, options: .regularExpression) {
+                    snippet = String(xmlString3![range])
+                    print("snippet",snippet) // Output: <sheet name="Sheet1" sheetId="1" r:id="rId1"/>
+                    let pattern2 = #"r:id="([^"]+)""#
+                    if let regex2 = try? NSRegularExpression(pattern: pattern2),
+                       let match2 = regex2.firstMatch(in: snippet, range: NSRange(snippet.startIndex..., in: snippet)) {
+                        if let range2 = Range(match2.range(at: 1), in: snippet) {
+                            rIdValue = String(snippet[range2])
+                            print(rIdValue) // Output: rId1
+                        }
+                    } else {
+                        print("r:id not found")
+                    }
+                    let pattern3 = #"sheetId="([^"]+)""#
+                    if let regex3 = try? NSRegularExpression(pattern: pattern3),
+                       let match3 = regex3.firstMatch(in: snippet, range: NSRange(snippet.startIndex..., in: snippet)) {
+                        if let range3 = Range(match3.range(at: 1), in: snippet) {
+                            sheetIdValue = String(snippet[range3])
+                            print(sheetIdValue) // Output: rId1
+                        }
+                    } else {
+                        print("sheetId not found")
+                    }
+                } else {
+                    print("Sheet not found")
+                }
+                
+                
+                
+                if rIdValue != "" && snippet != "" && sheetIdValue != ""{
+                    let newone = snippet.replacingOccurrences(of: sheetname, with: newsheetname)
+                    xmlString3 = xmlString3?.replacingOccurrences(of: snippet, with: newone)
+                    
+                    //sort
+                    let sortedXML = helperReorderSheetsByName(xmlString: xmlString3!)
+                    print(sortedXML)
+                    do{
+                        try sortedXML.write(to: wkbookDirectoryURL, atomically: true, encoding: .utf8)
+                    }catch{
+                        print("Error occured in process xmlString3?.write")
                     }
                 }
                 

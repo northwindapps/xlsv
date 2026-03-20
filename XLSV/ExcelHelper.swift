@@ -38,7 +38,15 @@ class ExcelHelper{
     var dictMergedCellList = [String]()
     var mergedCellsLocation = [[String:AnyObject]]()
     
-    let DEFAULT_FONTSIZE = String(10)
+    // デバイスによってサイズを切り替える定数
+    let DEFAULT_FONTSIZE: String = {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return "10.0" // iPad用の大きいサイズ
+        } else {
+            return "12.0" // iPhone用の標準サイズ
+        }
+    }()
+
 
     func readExcel2(path:String, wsIndex:Int){
         var reIdx = wsIndex
