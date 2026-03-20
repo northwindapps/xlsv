@@ -38,7 +38,7 @@ class ExcelHelper{
     var dictMergedCellList = [String]()
     var mergedCellsLocation = [[String:AnyObject]]()
     
-    
+    let DEFAULT_FONTSIZE = String(10)
 
     func readExcel2(path:String, wsIndex:Int){
         var reIdx = wsIndex
@@ -411,7 +411,7 @@ class ExcelHelper{
                var fontColor = [String]()
                var bgColor = [String]()
                for i in 0..<finalL_value.count+finalL_string.count{
-                   fontSize.append(String(13))
+                   fontSize.append(DEFAULT_FONTSIZE)
                    bgColor.append("white")
                    fontColor.append("black")
                }
@@ -636,7 +636,7 @@ class ExcelHelper{
             return "error"
         }
         
-        var sum = 0.0
+        var sum: Decimal = 0
         var cnt = 0
         for (i, cell) in jl.enumerated() {
             let colnumber = cell.components(separatedBy: ",")[0]
@@ -650,8 +650,10 @@ class ExcelHelper{
                     return "error"
                 }
                 if Double(jr[i]) != nil{
-                    sum += Double(jr[i])!
-                    cnt += 1
+                    if let decimalValue = Decimal(string: jr[i]) {
+                        sum += decimalValue
+                        cnt += 1
+                    }
                 }
             } else {
                 //print("\(cell) is outside the range col,row")
@@ -662,7 +664,7 @@ class ExcelHelper{
             return "error"
         }
         
-        return String(sum)
+            return "\(sum)"
         
     }
     
@@ -695,9 +697,9 @@ class ExcelHelper{
             return "error"
         }
         
-        var sum = 0.0
-        var cnt = 0
-        var avg = 0.0
+        var sum: Decimal = 0
+        var cnt: Decimal = 0
+        var avg: Decimal = 0
         for (i, cell) in jl.enumerated() {
             let colnumber = cell.components(separatedBy: ",")[0]
             let rownumber = cell.components(separatedBy: ",")[1]
@@ -710,14 +712,10 @@ class ExcelHelper{
                     return "error"
                 }
                 if Double(jr[i]) != nil{
-                    sum += Double(jr[i])!
-                    cnt += 1
-                    avg = sum/Double(cnt)
-                    let numberOfPlaces = 5.0
-                    let multiplier = pow(10.0, numberOfPlaces)
-                    var calculated = avg * multiplier
-                    calculated = round(calculated) / multiplier
-                    avg = calculated
+                    if let decimalValue = Decimal(string: jr[i]) {
+                        sum += decimalValue
+                        cnt += 1
+                        avg = sum/cnt                    }
                 }
             } else {
                 //print("\(cell) is outside the range col,row")
@@ -728,7 +726,7 @@ class ExcelHelper{
             return "error"
         }
         
-        return String(avg)
+        return "\(avg)"
         
     }
     

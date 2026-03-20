@@ -134,7 +134,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //User feedback
     var selectingColor = "black"
-    var selectingSize = 12
+    var selectingSize = 10
     var selectingBgColor = "white"
     
     //isExcelFile?
@@ -284,7 +284,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
             }else{
                 //empty
-                let fl: CGFloat = CGFloat(("13" as NSString).doubleValue)
+                let fl: CGFloat = CGFloat(("11" as NSString).doubleValue)
                 cell.label2?.font = UIFont.systemFont(ofSize: fl)
                 cell.label2?.text = ""
                 cell.label2?.textAlignment = .center
@@ -4975,12 +4975,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     let result = cs.execute(expression:tempStr) ?? ""
                     if Double(result) != nil{
                         //http://swift-salaryman.com/round.php
-                        let numberOfPlaces = 10.0
-                        let multiplier = pow(10.0, numberOfPlaces)
-                        var calculated = Double(result)! * multiplier
-                        calculated = round(calculated) / multiplier
+//                        let numberOfPlaces = 10.0
+//                        let multiplier = pow(10.0, numberOfPlaces)
+//                        var calculated = Double(result)! * multiplier
+//                        calculated = round(calculated) / multiplier
                         //print(calculated, "final answer")
-                        filteredResult[i] = String(calculated)
+                        filteredResult[i] = String(result)
                     }else{
                         filteredResult[i] = "calculation error"
                         switch filteredContent[i] {
