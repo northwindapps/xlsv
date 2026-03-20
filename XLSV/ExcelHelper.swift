@@ -662,6 +662,8 @@ class ExcelHelper{
                         sum += decimalValue
                         cnt += 1
                     }
+                }else{
+                    return "error"
                 }
             } else {
                 //print("\(cell) is outside the range col,row")
@@ -724,6 +726,8 @@ class ExcelHelper{
                         sum += decimalValue
                         cnt += 1
                         avg = sum/cnt                    }
+                }else{
+                    return "error"
                 }
             } else {
                 //print("\(cell) is outside the range col,row")
@@ -782,6 +786,8 @@ class ExcelHelper{
                 if Double(jr[i]) != nil{
                     items.append(Double(jr[i])!)
                     items.sort()//0.0,1.41,12.7
+                }else{
+                    return "error"
                 }
             } else {
                 //print("\(cell) is outside the range col,row")
@@ -840,6 +846,8 @@ class ExcelHelper{
                 if Double(jr[i]) != nil{
                     items.append(Double(jr[i])!)
                     items.sort()//0.0,1.41,12.7
+                }else{
+                    return "error"
                 }
             } else {
                 //print("\(cell) is outside the range col,row")

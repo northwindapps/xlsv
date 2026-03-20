@@ -4975,7 +4975,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.reloadData()
     }
     
-    @objc func excel_sum_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
+    @objc func
+    excel_sum_each(fidx:Int,fc:[String],fl:[String],fle:[String],fr:[String],lc:[String],ll:[String],lle:[String],lr:[String])->String{
         if fc[fidx].hasPrefix("=SUM("){
             return ExcelHelper().excel_sum(src: fc[fidx].uppercased(), cursor:fl[fidx],fc: fc,fl: fl,fle: fle,fr: fr,lc: lc,ll:ll,lle: lle,lr: lr)
         }
@@ -5003,6 +5004,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return "calculation error"
     }
     
+    func applyValue(formula: String, ref: String, value: String) -> String {
+        let pattern = "\\b\(ref)(?!\\d)"
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return formula
+        }
+        
+        let range = NSRange(location: 0, length: formula.utf16.count)
+        return regex.stringByReplacingMatches(in: formula, options: [], range: range, withTemplate: value)
+    }
+    
+    func isReadyToCalculate(expression:String) -> Bool{
+        let charset: Set<Character> = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        if expression.contains(where: { charset.contains($0) }) {
+            return false
+        }
+        return true
+    }
+    
     @objc func calculatormode_update_main(){
         f_calculated.removeAll()
         f_location.removeAll()
@@ -5021,12 +5041,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         // Loop through the content array and extract items with "=" prefix
         for (index, item) in content.enumerated() {
+            //=100-AQ11
             if item.hasPrefix("=") {
                 filteredContent.append(item.replacingOccurrences(of: " ", with: ""))
                 filteredLocation.append(location[index])
                 filteredLocationInExcel.append(locationInExcel[index])
                 filteredResult.append("")
             }
+            //42
             if !item.hasPrefix("=") {
                 literalContent.append(item)
                 literalLocation.append(location[index])
@@ -5045,36 +5067,38 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         //topology sorting
         //content = ["=B1","10","=SUM(A1:B2)","Jack","=C3"],location["1,1","2,1","3,3","3,1",""]
     
-        content = elsvFormulaExpression(src:content)
+        //Formatting log->LOG
+//        content = elsvFormulaExpression(src:content)
         
         
         var tempStr = "sin(PI/4)^2"//"3*(3^-1)"//"sin(PI/3+PI/6)"//"((sin3)^2+(cos3)^2)"//"1/((1-0)/(2-0))"//"((30+3)*23-3)/5-1"//30 3 + 23 3 - *  count the number of
         
         
         // Define the sorting criteria
-        let indices = filteredContent.indices.sorted { lhs, rhs in
-            func isExcelFunction(_ str: String) -> Bool {
-                let keywords = ["=SUM(", "=AVERAGE(", "=MIN(", "=MAX("]
-                return keywords.contains { str.contains($0) }
-            }
-
-            let lhsIsExcel = isExcelFunction(filteredContent[lhs])
-            let rhsIsExcel = isExcelFunction(filteredContent[rhs])
-
-            if lhsIsExcel != rhsIsExcel {
-                return !lhsIsExcel
-            }
-            return filteredContent[lhs] < filteredContent[rhs]
-        }
+//        let indices = filteredContent.indices.sorted { lhs, rhs in
+//            func isExcelFunction(_ str: String) -> Bool {
+//                let keywords = ["=SUM(", "=AVERAGE(", "=MIN(", "=MAX("]
+//                return keywords.contains { str.contains($0) }
+//            }
+//
+//            let lhsIsExcel = isExcelFunction(filteredContent[lhs])
+//            let rhsIsExcel = isExcelFunction(filteredContent[rhs])
+//
+//            if lhsIsExcel != rhsIsExcel {
+//                return !lhsIsExcel
+//            }
+//            return filteredContent[lhs] < filteredContent[rhs]
+//        }
         
         // Reorder all arrays based on sorted indices
-        filteredContent = indices.map { filteredContent[$0] }
-        filteredLocation = indices.map { filteredLocation[$0] }
-        filteredLocationInExcel = indices.map { filteredLocationInExcel[$0] }
-        filteredResult = indices.map { filteredResult[$0] }
+//        filteredContent = indices.map { filteredContent[$0] }
+//        filteredLocation = indices.map { filteredLocation[$0] }
+//        filteredLocationInExcel = indices.map { filteredLocationInExcel[$0] }
+//        filteredResult = indices.map { filteredResult[$0] }
         
         //replaceing excelIndex with value if the value alredy exists
         for i in 0..<filteredContent.count {
+            //Non Excel Function Expressions
             if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") && !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX("){
                 for j in 0..<literalContent.count {
                     filteredContent[i] = filteredContent[i].replacingOccurrences(of: literalLocationInExcel[j], with: literalContent[j])
@@ -5082,80 +5106,79 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
         
-        //home work topological sorting
-        for k in 0..<filteredContent.count {
-            for i in 0..<filteredContent.count {//final calculation loop is needed
-                if  Double(filteredResult[i]) == nil{
-                    
-                    //1st ref
-                    for j in 0..<filteredResult.count {
-                        //update references in formulacontent
-                        if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") &&
-                            !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX(") {
-                            if Double(filteredResult[j]) != nil{
-                                //replace refrences
-                                filteredContent[i] = filteredContent[i].replacingOccurrences(of: filteredLocationInExcel[j], with: filteredResult[j])
-                            }
-                        }
-                    }
-                    
-                    tempStr = filteredContent[i].replacingOccurrences(of: "=", with: "")
-                    let cs = CalculationService()
-                    let result = cs.execute(expression:tempStr) ?? ""
-                    if Double(result) != nil{
-                        //http://swift-salaryman.com/round.php
-//                        let numberOfPlaces = 10.0
-//                        let multiplier = pow(10.0, numberOfPlaces)
-//                        var calculated = Double(result)! * multiplier
-//                        calculated = round(calculated) / multiplier
-                        //print(calculated, "final answer")
-                        filteredResult[i] = String(result)
-                    }else{
-                        filteredResult[i] = "calculation error"
-                        switch filteredContent[i] {
-                        case let content where content.contains("=SUM("):
-                            let rltstr = excel_sum_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                            filteredResult[i] = rltstr
-
-                        case let content where content.contains("=AVERAGE("):
-                            let rltstr = excel_average_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                            filteredResult[i] = rltstr
-
-                        case let content where content.contains("=MIN("):
-                            let rltstr = excel_min_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                            filteredResult[i] = rltstr
-
-                        case let content where content.contains("=MAX("):
-                            let rltstr = excel_max_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                            filteredResult[i] = rltstr
-
-                        default:
-                            // If no condition is matched, you can handle it here if needed
-                            break
-                        }
-                    }
-                    
-                    //2nd refs update
-                    for j in 0..<filteredResult.count {
-                        //update references in formulacontent
-                        if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") &&
-                            !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX(") {
-                            if Double(filteredResult[j]) != nil{
-                                //replace refrences
-                                filteredContent[i] = filteredContent[i].replacingOccurrences(of: filteredLocationInExcel[j], with: filteredResult[j])
-                            }
-                        }
+        let cs = CalculationService()
+        for _ in 0..<filteredContent.count {
+            var allCalculated = true
+            
+            for i in 0..<filteredContent.count {
+                if Double(filteredResult[i]) != nil { continue }
+                
+                var currentFormula = filteredContent[i].replacingOccurrences(of: "=", with: "")
+                
+                for j in 0..<literalLocationInExcel.count {
+                    let val = literalContent[j]
+                    if Double(val) != nil {
+                        currentFormula = applyValue(formula: currentFormula, ref: literalLocationInExcel[j], value: val)
                     }
                 }
                 
-                if filteredResult.allSatisfy({ Double($0) != nil }) {
-                    print("All items are valid doubles.")
-                    break
+                for j in 0..<filteredResult.count {
+                    if let val = Double(filteredResult[j]) {
+                        currentFormula = applyValue(formula: currentFormula, ref: filteredLocationInExcel[j], value: String(val))
+                    }
                 }
                 
-            }//forloopend
-        }//outerloopend
-        
+                if currentFormula.contains("SUM(") || currentFormula.contains("AVERAGE(") || currentFormula.contains("MAX(") || currentFormula.contains("MIN(") {
+                    
+                    filteredResult[i] = "error"
+                    
+                    switch currentFormula {
+                    case _ where currentFormula.contains("SUM("):
+                        let rltstr = excel_sum_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
+                        if Double(rltstr) != nil{
+                            filteredResult[i] = rltstr
+                        }
+                        break
+                        
+                    case _ where currentFormula.contains("AVERAGE("):
+                        let rltstr = excel_average_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
+                        if Double(rltstr) != nil{
+                            filteredResult[i] = rltstr
+                        }
+                        break
+                        
+                    case _ where currentFormula.contains("MIN("):
+                        let rltstr = excel_min_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
+                        if Double(rltstr) != nil{
+                            filteredResult[i] = rltstr
+                        }
+                        break
+                        
+                    case _ where currentFormula.contains("MAX("):
+                        let rltstr = excel_max_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
+                        if Double(rltstr) != nil{
+                            filteredResult[i] = rltstr
+                        }
+                        break
+                        
+                    default:
+                        break
+                    }
+                    
+                }else if isReadyToCalculate(expression: currentFormula) {
+                    let res = cs.execute(expression: currentFormula)
+                    if let doubleVal = Double(res ?? "") {
+                        filteredResult[i] = String(doubleVal)
+                    } else {
+                        filteredResult[i] = "Error"
+                    }
+                } else {
+                    allCalculated = false
+                }
+            }
+            if allCalculated { break }
+        }
+
         //update
         f_calculated = filteredResult
         f_location = filteredLocation
