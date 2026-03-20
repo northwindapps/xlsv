@@ -2239,7 +2239,7 @@ class Service {
     func testAddCols(url:URL? = nil, vIndex:String?, index:String?, numFmtId:Int?, fString:String? = nil, calculated:String = "", colRange:[Int] = [], locationInExcel:[String] = []) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //appd.numberofColumn you need this
-        let newColSize = appd.numberofColumn+colRange.count+1//DEFAULT_COLUMN_NUMBER numberofColumn
+        let newColSize = appd.numberofColumn+colRange.count//DEFAULT_COLUMN_NUMBER numberofColumn
         var newExcelColList = [String]()
         for i in 0..<newColSize{
             newExcelColList.append(GetExcelColumnName(columnNumber: i))
@@ -2254,7 +2254,7 @@ class Service {
         var lettersAry = [String]()
         var fullAddressAry = [String]()
         for i in 0..<locationInExcel.count {
-            for j in 1..<newExcelColList.count {
+            for j in 0..<newExcelColList.count {
                 if alphabetOnlyString(text: locationInExcel[i]) == newExcelColList[j]{
                     print("test col\(i)")
                         lettersAry.append(alphabetOnlyString(text: locationInExcel[i]))
@@ -2274,19 +2274,34 @@ class Service {
             var xmlString = try? String(contentsOf: url2)
             let backUpXmlString = xmlString
             var xml = XMLHash.parse(xmlString!)
+            var isOutIndex = false
             let startCol = colRange.min()!
-            for (i,each) in fullAddressAry.enumerated(){
+            for (i, each) in fullAddressAry.enumerated().reversed() {
                 let presentCol = "r=\"\(each)\""
                 let rowInt = rowIntAry[i]
                 let colIdx = newExcelColList.firstIndex(of: lettersAry[i])!
+                if colIdx >= appd.MAXIMUM_COLUMN_NUMBER{
+                    isOutIndex = true
+                }
                 let newAddress = newExcelColList[colIdx+colRange.count] + String(rowInt)
-                let newCol = "r=____\"\(newAddress)\""
+                let newCol = "r=\"____\(newAddress)\""
                 if colIdx >= startCol{
                     xmlString = xmlString?.replacingOccurrences(of: presentCol, with: newCol)
                 }
             }
             
             xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
+            let validator = XMLValidator()
+            if validator.validateXML(xmlString: xmlString!) {
+                print("XML is valid.")
+            } else {
+                print("XML is not valid.")
+                xmlString = backUpXmlString
+            }
+            if isOutIndex{
+                xmlString = backUpXmlString
+            }
+            
             print("added\(xmlString)")
             return xmlString
         }
@@ -2366,48 +2381,60 @@ class Service {
                         var deleteCols = [String]()
                         let bkString = xmlString
                         
-                        for m in 0..<colRange.count{
-//                            targetRowTag    String    "<c s=\"1\" r=\"B2\"><v>1</v></c>"
-                            let selectedColLetter = GetExcelColumnName(columnNumber: colRange[m])
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"1")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                        for m in 0..<colRange.count{
+////                            targetRowTag    String    "<c s=\"1\" r=\"B2\"><v>1</v></c>"
+//                            let selectedColLetter = GetExcelColumnName(columnNumber: colRange[m])
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"1")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"2")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"3")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"4")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"5")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"6")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"7")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"8")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                            if targetRowTag.contains("r=\"\(selectedColLetter+"9")\""){
+//                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
+//                            }
+//                        }
+                        
+                        for m in 0..<colRange.count {
+                                let selectedColLetter = GetExcelColumnName(columnNumber: colRange[m])
+                                // r="BE1" や r="BE100" などにマッチする正規表現
+                                let pattern = "<c[^>]*r=\"\(selectedColLetter)\\d+\"[^>]*>.*?</c>|<c[^>]*r=\"\(selectedColLetter)\\d+\"[^>]*/>"
+                                
+                                if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                                    let range = NSRange(xmlString!.startIndex..., in: xmlString!)
+                                    // マッチした部分（タグ全体）を空文字に置換
+                                    xmlString = regex.stringByReplacingMatches(in: xmlString!, options: [], range: range, withTemplate: "")
+                                }
                             }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"2")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"3")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"4")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"5")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"6")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"7")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"8")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                            if targetRowTag.contains("r=\"\(selectedColLetter+"9")\""){
-                                xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: "")
-                            }
-                        }
                         
                         
                         
                         
-                        let validator = XMLValidator()
-                        if validator.validateXML(xmlString: xmlString!) {
-                            print("XML is valid.")
-                        } else {
-                            print("XML is not valid.")
-                            xmlString = bkString
-                        }
+//                        let validator = XMLValidator()
+//                        if validator.validateXML(xmlString: xmlString!) {
+//                            print("XML is valid.")
+//                        } else {
+//                            print("XML is not valid.")
+//                            xmlString = bkString
+//                        }
                     }
                 }
             }
@@ -2455,18 +2482,19 @@ class Service {
                                 xmlString = xmlString?.replacingOccurrences(of: targetRowTag, with: newTargetRowTag)
                             }
                             
-                            let validator = XMLValidator()
-                            if validator.validateXML(xmlString: xmlString!) {
-                                print("XML is valid.")
-                            } else {
-                                print("XML is not valid.")
-                                xmlString = bkString
-                            }
+                           
                         }
                     }
                 }
             }
             xmlString = xmlString?.replacingOccurrences(of: "____", with: "")
+            let validator = XMLValidator()
+            if validator.validateXML(xmlString: xmlString!) {
+                print("XML is valid.")
+            } else {
+                print("XML is not valid.")
+                xmlString = backUpXmlString
+            }
             print("deleted\(xmlString)")
             return xmlString
         }
