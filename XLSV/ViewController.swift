@@ -5827,7 +5827,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
             //print("ViewController" ,filePath)
             if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
+//                No more. Leave Excel YANO 20260321
+//                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
             }else{
                 print("noContent")
             }
