@@ -875,12 +875,12 @@ class ExcelHelper{
         let endColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: endCell)) ?? 0
         let endRowInt = Int(ExcelHelper().numberOnlyString(text: endCell)) ?? 0
 
-        print("startColumnInt,startRowInt")
-        print(startColumnInt,startRowInt)
-        print("endColumnInt,endRowInt")
-        print(endColumnInt,endRowInt)
-        print("cellCol,cellRow")
-        print(cellColumn,cellRow)
+//        print("startColumnInt,startRowInt")
+//        print(startColumnInt,startRowInt)
+//        print("endColumnInt,endRowInt")
+//        print(endColumnInt,endRowInt)
+//        print("cellCol,cellRow")
+//        print(cellColumn,cellRow)
         // Check if the cell is within the range
         return (cellColumn >= (startColumnInt) && cellColumn <= (endColumnInt)) && (cellRow >= (startRowInt) && cellRow <= (endRowInt))
         
