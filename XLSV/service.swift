@@ -2931,6 +2931,7 @@ class Service {
                         if(replacedWithNewString != ""){
                             do {
                                 try replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                                print("Success: XML updated for \(cellIdxString)")
                             }catch{
                                print("failed at replacedWithNewString")
                            }

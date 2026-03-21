@@ -1795,7 +1795,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             print("Double-tapped cell at \(indexPath)")
             // Perform your double-tap action here
         }
-        
+        //sheet name mangament
         excelChangeSheetName()
         
         
@@ -1810,7 +1810,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // Perform your double-tap action here
         }
         
-        selection_bool = !selection_bool
+        selection_bool = true
         myCollectionView.reloadData()
     }
     
@@ -1849,112 +1849,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         else { return }
         let startRow = indexPath.section
         let startCol = indexPath.item
+        let idxInLocation = location.firstIndex(of: currentindexstr) ?? -1
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
-        
-       
-        //existing content and it starts with "=" TODO
-//        if lIndex != -1 && content[lIndex].hasPrefix("="){
-//            let startContent = content[lIndex]
-//            var extractedReferences = extractExcelCellReferences(from: startContent)
-//            
-//            switch gesture.state {
-//            case .began:
-//                print("start")
-//                // Change background color to indicate dragging started
-//                cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
-//                break
-//                
-//            case .changed:
-//                let locationCG = gesture.location(in: myCollectionView)
-//                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-//                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-//                        cell2.label2.backgroundColor = UIColor.systemBlue
-//                    }
-//                }
-//                break
-//                
-//            case .ended, .cancelled:
-//                let locationCG = gesture.location(in: myCollectionView)
-//                if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-//                    if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-//                        cell2.label2.backgroundColor = UIColor.green
-//                    }
-//                    let newRow = newIndexPath.section
-//                    let newCol = newIndexPath.item
-//                    //horizontal scroll
-//                    let colHeader = 1
-//                    if newRow == startRow && (newCol > startCol){
-//                        for i in 1...newCol-startCol {
-//                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: false, incrementVolume: i)
-//                            
-//                            incrementedRowCells = incrementedRowCells.map { cell in
-//                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
-//                                return cell[..<midpoint] + "_" + cell[midpoint...]
-//                            }
-//                            print(extractedReferences)
-//                            print(incrementedRowCells)
-//                            
-//                            let targetlocation = String(startCol+i) + "," + String(startRow)
-//                            var newcontent = startContent
-//                            for (j,each) in extractedReferences.enumerated() {
-//                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
-//                            }
-//                            
-//                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
-//                            //input(defaultstr: targetlocation, defaultelement: newcontent)
-//                            
-//                            //save
-//                            saveuserF()
-//                            saveuserD()
-//                        
-//                            selection_bool = false
-//                        }
-//                        break
-//                    }
-//                    
-//                    
-//                    //vertical scroll
-//                    if newCol == startCol && (newRow > startRow){
-//                        for i in 1...newRow-startRow {
-//                            var incrementedRowCells = incrementCells(in: extractedReferences, isIncrementRow: true, incrementVolume: i)
-//                            
-//                            incrementedRowCells = incrementedRowCells.map { cell in
-//                                let midpoint = cell.index(cell.startIndex, offsetBy: cell.count / 2)
-//                                return cell[..<midpoint] + "_" + cell[midpoint...]
-//                            }
-//                            print(extractedReferences)
-//                            print(incrementedRowCells)
-//                            
-//                            let targetlocation = String(startCol) + "," + String(startRow+i)
-//                            var newcontent = startContent
-//                            for (j,each) in extractedReferences.enumerated() {
-//                                newcontent = newcontent.replacingOccurrences(of: each, with: incrementedRowCells[j])
-//                            }
-//                            
-//                            newcontent = newcontent.replacingOccurrences(of: "_", with: "")
-//                            //input(defaultstr: targetlocation, defaultelement: newcontent)
-//                            
-//                            //save
-//                            saveuserF()
-//                            saveuserD()
-//                           
-//                            selection_bool = false
-//                        }
-//                        break
-//                    }
-//                }
-//                // Restore the original background color
-//                print("ended")
-//                myCollectionView.reloadData()
-//                break
-//                
-//                // Optionally handle reordering logic here (see earlier example)
-//                
-//            default:
-//                break
-//            }
-//            return
-//        }
         
         switch gesture.state {
         case .began:
@@ -1996,18 +1892,90 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             print("selected",tempRangeSelected)
             // Restore the original background color
             print("ended")
-            panGestureShow2()
+            
+            // 重複を排除してソート（選択順ではなく座標順にするため）
+            let sortedSelection = Array(Set(tempRangeSelected)).sorted {
+                $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section
+            }
+            
+            // 全てのIndexPathが同じ行（section）にあるか
+            let isSingleRow = tempRangeSelected.allSatisfy { $0.section == tempRangeSelected.first?.section }
+
+            // 全てのIndexPathが同じ列（item）にあるか
+            let isSingleCol = tempRangeSelected.allSatisfy { $0.item == tempRangeSelected.first?.item }
+
+            if isSingleRow && isSingleCol {
+                panGestureShow2()
+                print("single cell selection")
+                
+            } else if isSingleRow || isSingleCol {
+                print("one row direction selection")
+                if idxInLocation != -1{
+                    print("content",content[idxInLocation])
+                    let inputText = content[idxInLocation]
+                            //If the content was a date
+                            if isValidDate(text: inputText) {
+                                let alert = UIAlertController(
+                                    title: "Enter Sequential Data",
+                                    message: "Do you want to fill the selected range with dates in order?",
+                                    preferredStyle: .alert
+                                )
+                                
+                                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                                    if isSingleCol{
+                                        self.fillDateInSelectedCellContent(direction: 0)
+                                    }else{
+                                        self.fillDateInSelectedCellContent(direction: 1)
+                                    }
+                                })
+                                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
+                                    self.selection_bool = false
+                                    self.myCollectionView.reloadData()
+                                })
+                                self.present(alert, animated: true)
+                            }else if(inputText.replacingOccurrences(of: " ", with: "").hasPrefix("=")){
+                                let alert = UIAlertController(title: "Enter Sequential Data",
+                                                            message: "Do you want to fill the selected range with functions in order?",
+                                                            preferredStyle: .alert)
+                                
+                                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                                    if isSingleCol{
+                                        self.fillFunctionInSelectedCellContent(direction: 0)
+                                    }else{
+                                        self.fillFunctionInSelectedCellContent(direction: 1)
+                                    }
+                                })
+                                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
+                                    self.selection_bool = false
+                                    self.myCollectionView.reloadData()
+                                })
+                                self.present(alert, animated: true)
+                            }
+                            else{
+                                //del,insert ops
+                                panGestureShow2()
+                            }
+                }else{
+                    panGestureShow2()
+                }
+               
+            } else {
+                print("multi row and col selection")
+                panGestureShow2()
+            }
+
+           
             
             //myCollectionView.reloadData()
             break
-            
-            // Optionally handle reordering logic here (see earlier example)
-            
         default:
             break
         }
-        
-//        }
+    }
+    
+    func isValidDate(text: String) -> Bool {
+        let pattern = "^\\d{4}/\\d{2}/\\d{2}$"
+        return text.range(of: pattern, options: .regularExpression) != nil
     }
     
     func panGestureShow2() {
@@ -2253,6 +2221,195 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         calculatormode_update_main()
         myCollectionView.reloadData()
     }
+    
+    @objc func fillDateInSelectedCellContent(direction:Int ) {
+        // 1. 基準となる日付を取得（選択範囲の最初のセルの内容など）
+        guard let firstIndexPath = tempRangeSelected.first,
+              let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
+        
+        let baseDateString = content[firstIdx] // "2026/03/01"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        
+        guard let startDate = formatter.date(from: baseDateString) else { return }
+        let calendar = Calendar.current
+
+        // 2. 選択範囲をソート（左上から順に並べる）
+        let sortedSelection = tempRangeSelected.sorted {
+            $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section
+        }
+
+        var excelIndice = [String]()
+        var generatedDates = [String]()
+
+        for (i, each) in sortedSelection.enumerated() {
+            let column = each.item
+            let row = each.section
+            let posKey = "\(column),\(row)"
+            
+            if let nextDate = calendar.date(byAdding: .day, value: i, to: startDate) {
+                let nextDateString = formatter.string(from: nextDate)
+                generatedDates.append(nextDateString)
+            }
+
+            if let j = location.firstIndex(of: posKey) {
+                excelIndice.append(locationInExcel[j])
+                
+                location.remove(at: j)
+                locationInExcel.remove(at: j)
+                content.remove(at: j)
+                tcolor.remove(at: j)
+                textsize.remove(at: j)
+                bgcolor.remove(at: j)
+            }
+            
+            if let k = f_location.firstIndex(of: posKey) {
+                f_calculated.remove(at: k)
+                f_location_alphabet.remove(at: k)
+                f_location.remove(at: k)
+            }
+        }
+
+        if excelIndice.count > 0 {
+            let sourceStr = generatedDates.joined(separator: ":")
+            if sourceStr != "" {
+                if direction == 0{
+                    down_bool = true
+                }else{
+                    right_bool = true
+                }
+                virtual_input(source:sourceStr, cellId: getIndexlabel())//the red text on the left top
+            }
+            
+        }
+
+        if !isExcel {
+            saveAsLocalJson(filename: "csv_sheet1")
+        }
+
+        calculatormode_update_main()
+        myCollectionView.reloadData()
+    }
+    
+    @objc func fillFunctionInSelectedCellContent(direction: Int) {
+        // 1. 基準となる数式を取得
+        guard let firstIndexPath = tempRangeSelected.sorted(by: { $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section }).first,
+              let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
+        
+        let baseFormula = content[firstIdx] // 例: "=A3+1"
+        
+        // 2. ソート（前回のロジックを適用）
+        let sortedSelection = tempRangeSelected.sorted { (a, b) -> Bool in
+            if direction == 0 {
+                return a.item == b.item ? a.section < b.section : a.item < b.item
+            } else {
+                return a.section == b.section ? a.item < b.item : a.section < b.section
+            }
+        }
+
+        var excelIndice = [String]()
+        var generatedFormulas = [String]()
+
+        for (i, each) in sortedSelection.enumerated() {
+            let posKey = "\(each.item),\(each.section)"
+            
+            // --- 数式のオフセット計算 ---
+            // 最初のセル(i=0)はそのまま、i>0 は座標の差分だけセル番地をずらす
+            let colOffset = each.item - firstIndexPath.item
+            let rowOffset = each.section - firstIndexPath.section
+            let newFormula = shiftFormula(baseFormula, colOffset: colOffset, rowOffset: rowOffset)
+            generatedFormulas.append(newFormula)
+
+            // --- 既存データの削除ロジック（提供コードの移植） ---
+            if let j = location.firstIndex(of: posKey) {
+                excelIndice.append(locationInExcel[j])
+                
+                // 配列から削除
+                location.remove(at: j)
+                locationInExcel.remove(at: j)
+                content.remove(at: j)
+                tcolor.remove(at: j)
+                textsize.remove(at: j)
+                bgcolor.remove(at: j)
+            }
+            
+            if let k = f_location.firstIndex(of: posKey) {
+                f_calculated.remove(at: k)
+                f_location_alphabet.remove(at: k)
+                f_location.remove(at: k)
+            }
+        }
+
+
+        for (i, eachFormula) in generatedFormulas.enumerated() {
+            let targetIndexPath = sortedSelection[i]
+        
+            currentindexstr = "\(targetIndexPath.item),\(targetIndexPath.section)"
+            
+            down_bool = false
+            right_bool = false
+            
+            let colName = ExcelHelper().GetExcelColumnName(columnNumber: targetIndexPath.item)
+            virtual_input(source: eachFormula, cellId: colName + String(targetIndexPath.section))
+        }
+            
+            
+        
+
+        if !isExcel { saveAsLocalJson(filename: "csv_sheet1") }
+        calculatormode_update_main()
+        myCollectionView.reloadData()
+    }
+
+    func shiftFormula(_ formula: String, colOffset: Int, rowOffset: Int) -> String {
+        // セル番地（例: A1, B10, AA100）にマッチする正規表現
+        let pattern = "([A-Z]+)([0-9]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return formula }
+        
+        let nsString = formula as NSString
+        var offsetFormula = formula
+        
+        // 後ろから置換しないとインデックスが狂うため、reverse
+        let matches = regex.matches(in: formula, options: [], range: NSRange(location: 0, length: nsString.length)).reversed()
+        
+        for match in matches {
+            let colRange = match.range(at: 1)
+            let rowRange = match.range(at: 2)
+            
+            let colStr = nsString.substring(with: colRange)
+            let rowStr = nsString.substring(with: rowRange)
+            
+            if let rowInt = Int(rowStr) {
+                let newRow = rowInt + rowOffset
+                let colInt = excelColumnToIndex(colStr)
+                let newColStr = indexToExcelColumn(colInt + colOffset)
+                
+                let newReference = "\(newColStr)\(newRow)"
+                offsetFormula = (offsetFormula as NSString).replacingCharacters(in: match.range, with: newReference)
+            }
+        }
+        return offsetFormula
+    }
+
+    func excelColumnToIndex(_ col: String) -> Int {
+        var result = 0
+        for char in col.uppercased().unicodeScalars {
+            result = result * 26 + Int(char.value - 64)
+        }
+        return result
+    }
+
+    func indexToExcelColumn(_ index: Int) -> String {
+        var n = index
+        var result = ""
+        while n > 0 {
+            let remainder = (n - 1) % 26
+            result = String(UnicodeScalar(65 + remainder)!) + result
+            n = (n - 1) / 26
+        }
+        return result
+    }
+
     
     // Function to increment the row of an Excel-style cell reference by a given volume
     func incrementRow(for cell: String, incrementVolume: Int) -> String {
@@ -4141,6 +4298,200 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return
     }
     
+    @objc func virtual_input(source:String,cellId:String){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.collectionViewCellSizeChanged = 0
+        let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+        appd.wsSheetIndex = sheetIdx!
+        print("wsSheetIndex",appd.wsSheetIndex)
+        
+        let pasteboard = UIPasteboard.general
+        pasteboard.string = ""
+        
+        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        
+        var element = source
+        if element.hasPrefix("=") {
+            let targets = ["sum", "average", "min", "max"]
+            for target in targets {
+                // （options: .caseInsensitive）
+                element = element.replacingOccurrences(
+                    of: target,
+                    with: target.uppercased(),
+                    options: .caseInsensitive
+                )
+            }
+        }
+
+        
+        //add more complicated functionality
+        if autoComplete(src: element).count > 1 {
+            element = autoComplete(src: element)
+        }
+        
+        
+        let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let t_item = IP.components(separatedBy: ",")[0]
+        let t_section = IP.components(separatedBy: ",")[1]
+        
+        let IP_i = Int(t_item)!
+        let IP_s = Int(t_section)!
+        var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        
+        var collocation = -1
+        if element.contains("→"){
+            let checkAlpha = alphabetOnlyString(text: element)
+            if columnNames.index(of: checkAlpha) != nil {
+                collocation = columnNames.index(of: checkAlpha)!
+                checkInput = checkInput.replacingOccurrences(of: checkAlpha, with: String(collocation))
+            }
+        }
+        
+        if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
+            
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
+            //20200502
+            switch UIDevice.current.userInterfaceIdiom {
+            case .phone:
+                //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
+                let padAry = element.components(separatedBy: ":")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
+                        }
+                    }
+                    down_bool = false
+                }
+                
+                if right_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i+idx) + "," + String(IP_s)
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
+                        }
+                    }
+                    right_bool = false
+                }
+                break
+                
+                
+            case .pad:
+                let padAry = element.components(separatedBy: ":")
+                
+                if down_bool {
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i) + "," + String(IP_s+idx)
+                        if IP_s+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
+                        }
+                    }
+                    down_bool = false
+                }
+                
+                
+                
+                if right_bool{
+                    for idx in 0..<padAry.count{
+                        let IPl = String(IP_i+idx) + "," + String(IP_s)
+                        if IP_i+idx <= 0 {
+                            //it's
+                        }else{
+                            var each = padAry[idx]
+                            if each == "-"{
+                                if location.contains(IPl){
+                                    let i = location.index(of: IPl)
+                                    each = content[i!]
+                                }
+                            }
+                            storeInput(IPd: IPl, elementd: each)
+                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
+                            excelEntry(srcString: each, cellId: alphabet + String(IP_s))
+                        }
+                    }
+                    right_bool = false
+                }
+                
+                break
+                
+            default:
+                storeInput(IPd: IP, elementd: element)
+                let alphabet = getExcelColumnName(columnNumber: IP_i)
+                excelEntry(srcString: element, cellId: alphabet + String(IP_s))
+                break
+            }
+            pasteboard.string = clipboard
+            //It makes better UX
+            changeaffected.removeAll()
+            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+            changeaffected.append(currentUpdate)
+            return
+        }
+        
+        //it take care of empty string
+        storeInput(IPd: IP, elementd: element)
+        
+        //if element.hasPrefix("="){
+        f_content.removeAll()
+        f_calculated.removeAll()
+        f_location_alphabet.removeAll()
+        f_location.removeAll()
+        calculatormode_update_main()
+
+        
+        //always excel, no such thing as csv case
+        if element == ""{
+            //TODO want to modify xml
+            element = " "
+        }
+        excelEntry(srcString: element,cellId: cellId) //cellId, AB44, A5,B4...
+        
+        //It makes better UX
+        changeaffected.removeAll()
+        let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
+        changeaffected.append(currentUpdate)
+        return
+    }
+    
     func excelEntry(srcString:String,cellId:String)
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -4220,6 +4571,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
+    //for delete purpose
     func excelEntryBulk(srcString:String,cellId:String,bka:[String] = [])
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
