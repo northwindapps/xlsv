@@ -263,32 +263,33 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             //excel process
             print("excel file")
             let fnameArry = url.absoluteString.split(separator: "/")
-            let pathDirectory = getRootDocumentsDirectory()
-            try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-            let filePath = pathDirectory.appendingPathComponent(String(fnameArry.last!))
+            let workSpaceDirectory = getWorkSpaceDirectory()
+            let workSpaceFilePath = workSpaceDirectory.appendingPathComponent(String(fnameArry.last!))
             let fnameA = fnameArry.last!.split(separator: ".")
             excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-            if FileManager.default.fileExists(atPath: filePath.path) {
+            if FileManager.default.fileExists(atPath: workSpaceFilePath.path) {
                 do{
-                    print("remove file")
-                    try FileManager.default.removeItem(at: filePath)
+                    print("remove workspace file")
+                    try FileManager.default.removeItem(at: workSpaceFilePath)
                     
                 }catch {
-                    print("new to this app")
+                    print("something went wrong")
                 }
             }
             
             do{
-                print("move file", filePath)
-                try FileManager.default.moveItem(at: url, to: filePath)
+                try FileManager.default.moveItem(at: url, to: workSpaceFilePath)
+                print("moved file", workSpaceFilePath)
             }catch let error{
                 //dump(error)
+                print("failed to move file to:", workSpaceFilePath)
             }
             
-            let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-            let url2 = URL(fileURLWithPath: path2)
-            let filename = String(fnameArry.last!)
-            let fp = url2.appendingPathComponent(filename).path
+            //
+            // let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+            // let url2 = URL(fileURLWithPath: path2)
+            // let filename = String(fnameArry.last!)
+            let fp = workSpaceFilePath
             print("yourExcelfile",fp)
             appd.imported_xlsx_file_path=fp
             readExcel(path: fp)
