@@ -6572,9 +6572,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func hwAction(){
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "HandwritingView" )
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
+        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "HandwritingView")
+
+        // 1. プレゼンテーションスタイルを「重ね合わせ」に設定
+        targetViewController.modalPresentationStyle = .overCurrentContext
+
+        // 2. 遷移先の背景を透明にする（Storyboard側で設定してもOK）
+        targetViewController.view.backgroundColor = UIColor.clear
+
+        self.present(targetViewController, animated: true, completion: nil)
+
     }
     
     func isNumeric(_ str: String) -> Bool {

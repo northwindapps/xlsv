@@ -46,6 +46,28 @@ class HandwritingViewController: UIViewController {
         
         setupCanvas()
         setupButtons()
+        
+        // 1. Content Mode: Scale To Fill
+        self.view.contentMode = .scaleToFill
+
+        // 2. Interaction: User Interaction Enabled
+        self.view.isUserInteractionEnabled = true
+        
+        // 3. Alpha: 0.8
+        self.view.alpha = 0.8
+
+        // 4. Background: Clear Color
+        self.view.backgroundColor = .clear
+
+        // 5. Drawing: Opaque のチェックを外す (透明にする場合は false)
+        self.view.isOpaque = false
+
+        // 6. Drawing: Clears Graphics Context
+        self.view.clearsContextBeforeDrawing = true
+
+        // 7. Drawing: Autoresize Subviews
+        self.view.autoresizesSubviews = true
+        
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -144,7 +166,6 @@ class HandwritingViewController: UIViewController {
         }
 
         request.recognitionLevel = .accurate
-        // iOS 13の日本語認識は限定的ですが、英語は問題なく動作します
         request.recognitionLanguages = ["en-US", "ja-JP"]
         
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
