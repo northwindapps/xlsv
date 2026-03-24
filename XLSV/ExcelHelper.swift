@@ -478,31 +478,15 @@ class ExcelHelper{
     }
 
 
+    // target /var/mobile/Containers/Data/Application/393DA76E-F782-4CED-BF5C-19B289A2DA92/Documents
+    // Found importedCSV
+    // Found initialXLSX.xlsx
+    // Found sub
+    // Found outputInAppContainer.zip
+    // Found importedExcel
     func getRootDocumentsDirectory() -> URL {
        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
        return paths[0]
-    }
-
-    func getWorkSpaceDirectory() -> URL? {
-        let fileManager = FileManager.default
-        
-        guard let documentPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first else {
-            return nil
-        }
-        
-        let documentURL = URL(fileURLWithPath: documentPath)
-        let workSpaceDirectory = documentURL.appendingPathComponent("WorkSpace", isDirectory: true)
-        
-        if !fileManager.fileExists(atPath: workSpaceDirectory.path) {
-            do {
-                try fileManager.createDirectory(at: workSpaceDirectory, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("Backups folder creation failed: \(error)")
-                return nil
-            }
-        }
-        
-        return workSpaceDirectory
     }
 
     func getBackupDirectory() -> URL? {

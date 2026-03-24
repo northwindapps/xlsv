@@ -99,6 +99,21 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     }
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
+            let bkupFolder = ExcelHelper().getBackupDirectory()
+            print("backup",bkupFolder)
+            //https://www.hackingwithswift.com/example-code/system/how-to-read-the-contents-of-a-directory-using-filemanager
+//            let fm = FileManager.default
+//            let path = Bundle.main.resourcePath!
+//
+//            do {
+//                let items = try fm.contentsOfDirectory(atPath: path)
+//
+//                for item in items {
+//                    print("Found \(item)")
+//                }
+//            } catch {
+//                // failed to read directory – bad permissions, perhaps?
+//            }
             print("this is url")
             print(url)
             print(url.absoluteString)
