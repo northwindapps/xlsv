@@ -19,7 +19,7 @@ let reuseIdentifier = "customCell"
 var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
 var SCREENSIZE = ScreenSize.SCREEN_HEIGHT
 
-var otherclass = colorclass()
+var fontcolorClass = colorclass()
 
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
@@ -832,7 +832,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //checkSheet
             isExcelSheetData(sheetIdx: idx)
             initSheetData()
-            otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+            fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
             initExcelLocation()
             
             
@@ -1708,7 +1708,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let initialIdx = appd.sheetNameIds.first ?? "-1"
         isExcelSheetData(sheetIdx: Int(initialIdx)!)
         initSheetData()
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
@@ -2498,7 +2498,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func restore()
     {
         //It's now restoreing.
-        (content,location,COLUMNSIZE,ROWSIZE) = otherclass.outValues()
+        (content,location,COLUMNSIZE,ROWSIZE) = fontcolorClass.outValues()
         myCollectionView.reloadData()
         
     }
@@ -3586,7 +3586,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if indexSection == 0{
             
-            (location,content) = otherclass.horribleMethod4Col(tempArray: location,tempArrayContent: content, colInt: indexItem)
+            (location,content) = fontcolorClass.horribleMethod4Col(tempArray: location,tempArrayContent: content, colInt: indexItem)
             
             
             plus = COLUMNSIZE+1
@@ -3598,7 +3598,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }else if indexItem == 0{
             
-            (location,content) = otherclass.horribleMethod4Row(tempArray: location,tempArrayContent: content, rowInt: indexSection)
+            (location,content) = fontcolorClass.horribleMethod4Row(tempArray: location,tempArrayContent: content, rowInt: indexSection)
             
             
             plus = ROWSIZE+1
@@ -3646,7 +3646,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         if indexSection == 0{
             
-            (location,content) = otherclass.horribleMethod4ColMinus(tempArray: location,tempArrayContent:content , colInt: indexItem)
+            (location,content) = fontcolorClass.horribleMethod4ColMinus(tempArray: location,tempArrayContent:content , colInt: indexItem)
             
             
             minus = COLUMNSIZE-1
@@ -3675,7 +3675,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
         }else if indexItem == 0{
             
-            (location,content) = otherclass.horribleMethod4RowMinus(tempArray: location,tempArrayContent: content, rowInt: indexSection)
+            (location,content) = fontcolorClass.horribleMethod4RowMinus(tempArray: location,tempArrayContent: content, rowInt: indexSection)
             
             
             minus = ROWSIZE-1
@@ -3798,7 +3798,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
         
         var element :String = datainputview.stringbox.text!
@@ -4103,7 +4103,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let pasteboard = UIPasteboard.general
         pasteboard.string = ""
         
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
         var element: String = datainputview.stringbox.text!
 
@@ -4308,7 +4308,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let pasteboard = UIPasteboard.general
         pasteboard.string = ""
         
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
         var element = source
         if element.hasPrefix("=") {
@@ -6154,9 +6154,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         isMail = true
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        //createxlsxSheet()
+        //excel file creation
+//        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        
+        
+        //excel backups
+        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        
+        //TODO Backup Excel Files
+        // copy the url file to Backup folder .. every 30 min? or every time app launches
+        
         //save temp content
         var result = content
         for idx in 0..<f_calculated.count{
@@ -6180,7 +6187,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //print("ViewController" ,filePath)
             if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
 //                No more. Leave Excel YANO 20260321
-//                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
+                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
             }else{
                 print("noContent")
             }
