@@ -1,0 +1,27 @@
+
+/* Class = "UIButton"; normalTitle = "Text style"; ObjectID = "AkM-DE-7L6"; */
+"AkM-DE-7L6.normalTitle" = "Tekststil";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "Eit-4b-Vlp"; */
+"Eit-4b-Vlp.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "Settings"; ObjectID = "MuS-sR-VDI"; */
+"MuS-sR-VDI.normalTitle" = "Indstillinger";
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "aoq-1E-NEa"; */
+"aoq-1E-NEa.normalTitle" = "Gemme";
+
+/* Class = "UIButton"; normalTitle = "Delete"; ObjectID = "kTF-3y-sIv"; */
+"kTF-3y-sIv.normalTitle" = "Slet";
+
+/* Class = "UIButton"; normalTitle = "Tutorial"; ObjectID = "lCK-kP-XA0"; */
+"lCK-kP-XA0.normalTitle" = "Vejledning";
+
+/* Class = "UIButton"; normalTitle = "Search"; ObjectID = "okp-xm-cxi"; */
+"okp-xm-cxi.normalTitle" = "Søg";
+
+/* Class = "UIButton"; normalTitle = "New data"; ObjectID = "pcP-NY-tUo"; */
+"pcP-NY-tUo.normalTitle" = "Nye data";
+
+/* Class = "UIButton"; normalTitle = "Import"; ObjectID = "x2D-Hd-mUz"; */
+"x2D-Hd-mUz.normalTitle" = "Importere";

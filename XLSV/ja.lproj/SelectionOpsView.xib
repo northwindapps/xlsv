@@ -1,0 +1,30 @@
+
+/* Class = "UIButton"; normalTitle = "Calc"; ObjectID = "AkM-DE-7L6"; */
+"AkM-DE-7L6.normalTitle" = "フォント";
+
+/* Class = "UIButton"; normalTitle = "↩︎"; ObjectID = "Eit-4b-Vlp"; */
+"Eit-4b-Vlp.normalTitle" = "↩︎";
+
+/* Class = "UIButton"; normalTitle = "xlsx"; ObjectID = "IHd-wM-Ek6"; */
+"IHd-wM-Ek6.normalTitle" = "xlsx";
+
+/* Class = "UIButton"; normalTitle = "Reset"; ObjectID = "MuS-sR-VDI"; */
+"MuS-sR-VDI.normalTitle" = "設定";
+
+/* Class = "UIButton"; normalTitle = "Save"; ObjectID = "aoq-1E-NEa"; */
+"aoq-1E-NEa.normalTitle" = "ファイル保存";
+
+/* Class = "UIButton"; normalTitle = "Delete"; ObjectID = "kTF-3y-sIv"; */
+"kTF-3y-sIv.normalTitle" = "ファイル消去";
+
+/* Class = "UIButton"; normalTitle = "Tutorial"; ObjectID = "lCK-kP-XA0"; */
+"lCK-kP-XA0.normalTitle" = "操作手順";
+
+/* Class = "UIButton"; normalTitle = "Search"; ObjectID = "okp-xm-cxi"; */
+"okp-xm-cxi.normalTitle" = "探索";
+
+/* Class = "UIButton"; normalTitle = "New data"; ObjectID = "pcP-NY-tUo"; */
+"pcP-NY-tUo.normalTitle" = "新規ファイル";
+
+/* Class = "UIButton"; normalTitle = "Import"; ObjectID = "x2D-Hd-mUz"; */
+"x2D-Hd-mUz.normalTitle" = "iCloud";

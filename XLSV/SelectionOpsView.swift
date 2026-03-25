@@ -8,38 +8,11 @@
 
 import UIKit
 
-class Customview2: UIView {
+class SelectionOpsView: UIView {
 
     var view2:UIView!
     
    
-    @IBOutlet weak var calcAll: UIButton!
-    @IBOutlet weak var export: UIButton!
-    
-    @IBOutlet weak var resetStyling: UIButton!
-
-    @IBOutlet weak var xlsxSheetExportOniCloudDrive: UIButton!
-    @IBOutlet weak var localLoad: UIButton!
-    @IBOutlet weak var localSave: UIButton!
-    @IBOutlet weak var reset: UIButton!
-    @IBOutlet weak var back: UIButton!
-    
-    @IBOutlet weak var savebutton: UIButton!
-
-    @IBOutlet weak var v135Data: UIButton!
-    
-    @IBOutlet weak var savefile: UIButton!
-    @IBOutlet weak var backups: UIButton!
-    @IBOutlet weak var deleteSheet: UIButton!
-    @IBOutlet weak var addNewSheet: UIButton!
-    @IBOutlet weak var emailButton: UIButton!
-    
-    @IBOutlet weak var deletebutton: UIButton!
-       
-    @IBOutlet weak var deleteColumn: UIButton!
-   @IBOutlet weak var insertRow: UIButton!
-   @IBOutlet weak var columnButton: UIButton!
-   @IBOutlet weak var rowButton: UIButton!
     override init(frame: CGRect)
     {
         super.init(frame: frame)
@@ -66,7 +39,7 @@ class Customview2: UIView {
     func loadviewfromNib() ->UIView
     {
         let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "Customviewboard2",bundle: bundle)
+        let nib = UINib(nibName: "SelectionOpsView",bundle: bundle)
         let view2 = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
         
         return view2

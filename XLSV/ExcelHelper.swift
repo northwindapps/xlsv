@@ -511,6 +511,23 @@ class ExcelHelper{
         return backupDirectory
     }
 
+    func getBackupFiles() -> [URL] {
+        guard let backupDirectory = getBackupDirectory() else { return [] }
+        
+        let fileManager = FileManager.default
+        do {
+            let fileURLs = try fileManager.contentsOfDirectory(at: backupDirectory,
+                                                            includingPropertiesForKeys: nil)
+            
+            let excelFiles = fileURLs.filter { $0.pathExtension.lowercased() == "xlsx" }
+            
+            return excelFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+        } catch {
+            print("failed to retrieve: \(error)")
+            return []
+        }
+    }
+
 
     func SortColumnName(srcAry:[String])->[String]{
        var alphabetOnly = [String]()

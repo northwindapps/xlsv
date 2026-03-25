@@ -2552,8 +2552,8 @@ class Service {
                 let driveURL = URL(fileURLWithPath: sandBox).appendingPathComponent("Documents")
                 //
                 if FileManager.default.fileExists(atPath: fp) {
-                            // The specified path exists, continue with your code
-                            print("File or directory exists at path: \(fp)")
+                    // The specified path exists, continue with your code
+                    print("File or directory exists at path: \(fp)")
                     let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
                     let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
                             
@@ -2570,7 +2570,8 @@ class Service {
                         for fileURL in files {
                            do {
                                try FileManager.default.removeItem(at: fileURL)
-                               print("Deleted file:", fileURL.lastPathComponent)
+                               
+                               print(" testSandBox Deleted file:", fileURL)
                            } catch {
                                print("Error deleting file:", error)
                            }
@@ -2582,7 +2583,6 @@ class Service {
                     
                     // Construct the URL for the destination file
                     let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
-                    //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
                    
                     // Check if the file already exists at the destination
                     if FileManager.default.fileExists(atPath: destinationURL.path) {
@@ -2634,15 +2634,6 @@ class Service {
                     
                     
                     let oldAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-//                    let idx = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: "goodbyework")
-//
-//
-//                        let replacedWithNewString = testUpdateString(url:worksheetXMLURL, vIndex: String(idx!), index: "N2")
-//                        // Write the modified XML data back to the file
-//                    if(idx != nil && replacedWithNewString != nil){
-//                        try? replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-//                    }
                     
                     let newAry = testStringUniqueAry(url: shardStringXMLURL)
                     
@@ -4537,18 +4528,23 @@ class Service {
                 print("Invalid backupDir, return nil")
                 return nil
             }
-            
+       
             //creating backup file name
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyyMMdd_HHmm"
             let timestamp = formatter.string(from: Date())
 
-            let fileName = fpURL.lastPathComponent // coook.xlsx
+            var fileName = fpURL.lastPathComponent // initial.xlsx
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            if appd.excelfilename != ""{
+                fileName = appd.excelfilename.components(separatedBy: ".").first ?? "excelfile"
+            }
             
+               
             let nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
             let fileExtension = fpURL.pathExtension // xlsx
 
-            let newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
+            let newFileName = "\(fileName)_\(timestamp).\(fileExtension)"
             let backupURL = backupDirURL!.appendingPathComponent(newFileName)
 
             

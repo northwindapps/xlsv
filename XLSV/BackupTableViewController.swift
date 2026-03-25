@@ -1,36 +1,25 @@
-//
-//  ViewController4.swift
-//  dictionary
-//
-//  Created by 矢野悠人 on 2017/06/22.
-//  Copyright © 2017年 yumiya. All rights reserved.
-//
-
 import UIKit
 import CoreXLSX
 import Foundation
-//import GoogleAPIClientForREST
-//import GoogleSignIn
 import SwiftyXMLParser
 
 
-class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPickerDelegate,UINavigationControllerDelegate,FileManagerDelegate{
+class BackupTableViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
-    func documentMenu(_ documentMenu: UIDocumentMenuViewController, didPickDocumentPicker documentPicker: UIDocumentPickerViewController) {
-        documentPicker.delegate = self
-        present(documentPicker, animated: true, completion: nil)
-    }
+    var backupFiles: [URL] = []
+    let cellId = "cell"
     
-//    let driveService  = GTLRDriveService()
-//    func downloadFile(file: GTLRDrive_File){
-//        let url = "https://www.googleapis.com/drive/v3/files/\(file.identifier!)?alt=media"
-//
-//        let fetcher = driveService.fetcherService.fetcher(withURLString: url)
-
-//   dont need it     fetcher.beginFetchWithDelegate(
-//            self,
-//            didFinishSelector: #selector(ViewController.finishedFileDownload(_:finishedWithData:error:)))
-//    }
+    let tableView = UITableView()
+    
+    let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Back", for: .normal)
+        button.backgroundColor = .systemBlue
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 10
+        button.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
+        return button
+    }()
     
     
     var location = [String]()
@@ -50,454 +39,170 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     var mergedCellsLocation = [[String:AnyObject]]()
     
     var test = true
-    
-    @IBOutlet weak var aci: UIActivityIndicatorView!
-    //var activityIndicator: UIActivityIndicatorView!
-    
-    override func viewDidLoad() {
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        super.viewDidLoad()
-        Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(self.timerUpdate), userInfo: nil, repeats: false)
-        appd.imported_xlsx_file_path=""
-        // Do any additional setup after loading the view.
-        startLoading()
-    }
-    
-    func startLoading() {
-           // Start animating the activity indicator
-           aci.startAnimating()
-           
-           // Optionally, disable user interaction to prevent interaction during loading
-           view.isUserInteractionEnabled = false
-       }
 
-       func stopLoading() {
-           // Stop animating the activity indicator
-           aci.stopAnimating()
-           
-           // Re-enable user interaction
-           view.isUserInteractionEnabled = true
-       }
-    
-    
-    //https://qiita.com/KikurageChan/items/5b33f95cbec9e0d8a05f
-    @objc func timerUpdate() {
-        print("update")
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        self.title = "Backups"
         
-        let source = ["public.data"]//["public.comma-separated-values-text"]
-        let documentPicker = UIDocumentPickerViewController(documentTypes: source, in: UIDocumentPickerMode.import)//Import
-        documentPicker.delegate = self
-        self.present(documentPicker, animated: true, completion: nil)
+        setupLayout()
         
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
         
+        loadData()
     }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-    
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
-        let bkupFolder = ExcelHelper().getBackupDirectory()
-        print("backup",bkupFolder)
-        //https://www.hackingwithswift.com/example-code/system/how-to-read-the-contents-of-a-directory-using-filemanager
-//            let fm = FileManager.default
-//            let path = Bundle.main.resourcePath!
-//
-//            do {
-//                let items = try fm.contentsOfDirectory(atPath: path)
-//
-//                for item in items {
-//                    print("Found \(item)")
-//                }
-//            } catch {
-//                // failed to read directory – bad permissions, perhaps?
-//            }
-        print("this is url")
-        print(url)
-        print(url.absoluteString)
-        //g.sheet 未対応
-        //csvPath = url.absoluteString
-        //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
-        //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-        //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
-        //https://developer.apple.com/reference/foundation/nsfilemanager
-        //
+
+    func setupLayout() {
+        view.addSubview(tableView)
+        view.addSubview(backButton)
         
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-        appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        backButton.translatesAutoresizingMaskIntoConstraints = false
         
-        var isExcel = false
-        
-        //
-        if url.absoluteString.hasSuffix(".csv"){
+        NSLayoutConstraint.activate([
+            backButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            backButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            backButton.heightAnchor.constraint(equalToConstant: 50),
             
-            let fnameArry = url.absoluteString.split(separator: "/")
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: backButton.topAnchor, constant: -10)
+        ])
+    }
+
+    @objc func backButtonTapped() {
+        self.dismiss(animated: true, completion: nil)
+    }
+
+    func loadData() {
+        self.backupFiles = ExcelHelper().getBackupFiles()
+        tableView.reloadData()
+    }
+
+    // MARK: - TableView Methods
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return backupFiles.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath)
+        cell.textLabel?.text = backupFiles[indexPath.row].lastPathComponent
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let selectedFileURL: URL = backupFiles[indexPath.row]
+        
+        print("Selected file: \(selectedFileURL.lastPathComponent)")
+        
+        //        // 例：確認アラートを出す
+        //        let alert = UIAlertController(title: "Restore?", message: "Do you want to restore \(selectedFile.lastPathComponent)?", preferredStyle: .alert)
+        //        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        //        alert.addAction(UIAlertAction(title: "Restore", style: .default, handler: { _ in
+        //            // リストアの処理など
+        //        }))
+        //        present(alert, animated: true)
+        
+        
+        
+        if selectedFileURL.absoluteString.contains(".xlsx"){
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            
+            let fnameArry = selectedFileURL.absoluteString.split(separator: "/")
             let fnameA = fnameArry.last!.split(separator: ".")
             excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-            let mydata = try! Data(contentsOf: url)
-            let str = swiftDataToString(someData: mydata)
-            var elementArray = str?.components(separatedBy: "\n")
-                var rowcount:Int = elementArray!.count
             
-            for i in 0..<rowcount {
-
-                if (elementArray![i].contains("\r")){
-                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
-                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
-                }
-            }
-
-            //
-            location.removeAll()
-            contents.removeAll()
-            //
-            appd.sheetNameIds = [String]()
-            appd.sheetNames = [String]()
-            appd.diff_start_index.removeAll()
-            appd.diff_end_index.removeAll()
-            appd.excelStyleIdx.removeAll()
-            appd.excelStyleLocation.removeAll()
-            appd.excelStyleLocationAlphabet.removeAll()
-            appd.cellXfs.removeAll()
-            appd.cellStyleXfs.removeAll()
-            appd.border_lefts.removeAll()
-            appd.border_rights.removeAll()
-            appd.border_bottoms.removeAll()
-            appd.border_tops.removeAll()
-            
-            //Let's start
-            var columncount = 0
-            for r in 0..<rowcount//the number of rows
-            {
-                let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
-                
-                if columncount < wordsArray.count {
-                    columncount = wordsArray.count
-                }
-                
-                if wordsArray.count < columncount{
-                    
-                }
-                else
-                {
-                    for c in 0..<columncount
-                    {
-                        if wordsArray[c] == "" || wordsArray[c] == " "
-                        {
-                            
-                        }
-                        else
-                        {
-                            let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
-                            
-                            location.append(targetlocation)
-                            contents.append(wordsArray[c])
-                        }
-                    }
-                }
-            }
-                
-            if columncount < appd.DEFAULT_COLUMN_NUMBER {
-                columncount = appd.DEFAULT_COLUMN_NUMBER
-            }
-            
-            if rowcount < appd.DEFAULT_ROW_NUMBER {
-                rowcount = appd.DEFAULT_ROW_NUMBER
-            }
-
-            let csvData = UserDefaults.standard
-            csvData.set(location, forKey: "NEWTMLOCATION")
-            csvData.set(contents, forKey: "NEWTMCONTENT")
-            csvData.set(rowcount, forKey: "NEWRsize")
-            csvData.set(columncount, forKey: "NEWCsize")
-            csvData.synchronize()
-
-           let today: Date = Date()
-           let dateFormatter: DateFormatter = DateFormatter()
-           dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-           let date = dateFormatter.string(from: today)
-           var fontSize = [String]()
-           var fontColor = [String]()
-           var bgColor = [String]()
-           for i in 0..<location.count{
-               fontSize.append(String(13))
-               bgColor.append("white")
-               fontColor.append("black")
-           }
- 
-            let dict : [String:Any] = ["filename": "csv_sheet1",
-                                  "date": date,
-                                  "content": contents,
-                                  "location": location,
-                                  "fontsize": fontSize,
-                                  "fontcolor": fontColor,
-                                  "bgcolor": bgColor,
-                                  "rowsize": rowcount,
-                                  "columnsize": columncount,
-                                  "customcellWidth":[String](),
-                                  "customcellHeight": [String](),
-                                  "ccwLocation": [String](),
-                                  "cchLocation": [String](),
-                                  "formulaResult":[String](),
-                                  "inputOrder":[String]()]
-
-       
-
-            let test = ReadWriteJSON()
-            print("savingImportJSON CSV")
-            test.saveuserAll()
-            test.saveJsonFile(source: dict, title: "csv_sheet1")
-            appd.customSizedHeight.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.cswLocation.removeAll()
-            appd.numberofRow = rowcount+1
-            appd.numberofColumn = columncount+1
-            print("end iCloudController")
-            
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-            targetViewController.isExcel = false
-            targetViewController.isCSV = true
-            targetViewController.modalPresentationStyle = .fullScreen
-            DispatchQueue.main.async {
-                self.present(targetViewController, animated: true, completion: nil)
-            }
-            
-            
-            return
-            
-        }
-        
-        if url.absoluteString.hasSuffix(".xlsx"){
-                
             //excel process
+            let fp = selectedFileURL.path
             print("excel file")
-            let pathDirectory = getRootDocumentsDirectory()
-            try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-            let lastComponent = url.lastPathComponent
-            let nameWithoutExtension = url.deletingPathExtension().lastPathComponent
-            let extensionPart = url.pathExtension
-            excelName = "\(nameWithoutExtension).\(extensionPart)"
-            let fnameArry = url.absoluteString.split(separator: "/")
-            let filePath = pathDirectory.appendingPathComponent(String(fnameArry.last!))
-            if FileManager.default.fileExists(atPath: filePath.path) {
-                do{
-                    print("remove file")
-                    try FileManager.default.removeItem(at: filePath)
-                    
-                }catch {
-                    print("new to this app")
-                }
-            }
-            
-            do{
-                print("move file", filePath)
-                try FileManager.default.moveItem(at: url, to: filePath)
-            }catch let error{
-                //dump(error)
-            }
-        
-            let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-            let url2 = URL(fileURLWithPath: path2)
-            let filename = String(fnameArry.last!)
-            let fp = url2.appendingPathComponent(filename).path
             print("yourExcelfile",fp)
             appd.imported_xlsx_file_path=fp
-            appd.excelfilename = excelName
+            appd.excelfilename=excelName
             readExcel(path: fp)
-            isExcel = true
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            
             let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
             //createxlsxSheet()
             
             replaceLocalFileWithImportedOne()
-        
-            print("end iCloudController")
-        
+            
+            
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-            targetViewController.isExcel = isExcel
+            targetViewController.isExcel = true
+            
             if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-               let window = appDelegate.window {
-                
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                    window.rootViewController = targetViewController
-                }, completion: nil)
-                
-                window.makeKeyAndVisible()
-            }
-            return
-        }
-                
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-        targetViewController.isExcel = true
-        targetViewController.isCSV = true
-        targetViewController.modalPresentationStyle = .fullScreen
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
+                   let window = appDelegate.window {
+                    
+                    UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                        window.rootViewController = targetViewController
+                    }, completion: nil)
+                    
+                    window.makeKeyAndVisible()
+                }
         }
     }
+    
+    //Delete Backups Function, swipe the row
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let fileURLToDelete = backupFiles[indexPath.row]
+            
+            do {
+                try FileManager.default.removeItem(at: fileURLToDelete)
+                print("Deleted file: \(fileURLToDelete.lastPathComponent)")
+                
+                backupFiles.remove(at: indexPath.row)
+                
+                tableView.deleteRows(at: [indexPath], with: .fade)
+                
+            } catch {
+                print("Could not delete file: \(error.localizedDescription)")
+                
+                loadData()
+            }
+        }
+    }
+
     
     func replaceLocalFileWithImportedOne() {
         let appd = UIApplication.shared.delegate as! AppDelegate
         let pathDirectory = getRootDocumentsDirectory()
-        let destinationfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
         
-        let currentfilePath = URL(fileURLWithPath: appd.imported_xlsx_file_path)
+        let overWritingfilePath = URL(fileURLWithPath: appd.imported_xlsx_file_path)
         
-
         let backupDir = ExcelHelper().getBackupDirectory()
-        let isFromBackup = backupDir.map { currentfilePath.path.contains($0.path) } ?? false
+        let isFromBackup = backupDir.map { overWritingfilePath.path.contains($0.path) } ?? false
 
         do {
             let fileManager = FileManager.default
             
+            //Want to keep backup files
             if isFromBackup {
-                //clean up before copy
-                if fileManager.fileExists(atPath: destinationfilePath.path) {
-                    try fileManager.removeItem(at: destinationfilePath)
+                if fileManager.fileExists(atPath: overWrittenfilePath.path) {
+                    try fileManager.removeItem(at: overWrittenfilePath)
                 }
-                //keep the original with copyItem
-                try fileManager.copyItem(at: currentfilePath, to: destinationfilePath)
+                try fileManager.copyItem(at: overWritingfilePath, to: overWrittenfilePath)
                 print("Restore: Copied from backup to local.")
             } else {
-                //original currentfile dies, survie at destinationfile path
-                try fileManager.replaceItemAt(destinationfilePath, withItemAt: currentfilePath)
+                //Ok to delete temp imported files
+                try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: overWritingfilePath)
                 print("Import: Replaced local file and removed temp.")
             }
             
-            appd.imported_xlsx_file_path = destinationfilePath.path
+            appd.imported_xlsx_file_path = overWrittenfilePath.path
         } catch {
             print("Error during file replacement: \(error.localizedDescription)")
         }
     }
 
-    
-    func loadInitialXLSX(url: URL) {
-            print(url.absoluteString)
-        
-            //g.sheet 未対応
-            //csvPath = url.absoluteString
-            //http://stackoverflow.com/questions/28641325/using-uidocumentpickerviewcontroller-to-import-text-in-swift
-            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-            //http://stackoverflow.com/questions/32263893/cast-nsstringcontentsofurl-to-string
-            //http://qiita.com/nwatabou/items/898bc4395adbb2e05f8d
-            //http://miyano-harikyu.jp/sola/devlog/2013/11/22/post-113/
-            //https://developer.apple.com/reference/foundation/nsfilemanager
-            //
-            
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
-            
-            var isExcel = false
-        
-        if url.absoluteString.contains(".xlsx"){
-            //excel process
-            print("excel file")
-            let fnameArry = url.absoluteString.split(separator: "/")
-            let pathDirectory = getRootDocumentsDirectory()
-            try? FileManager().createDirectory(at: pathDirectory, withIntermediateDirectories: true)
-            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent(String(fnameArry.last!))
-            let fnameA = fnameArry.last!.split(separator: ".")
-            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-            if FileManager.default.fileExists(atPath: filePath.path) {
-                do{
-                    print("remove file")
-                    try FileManager.default.removeItem(at: filePath)
-                    
-                }catch {
-                    print("new to this app")
-                }
-            }
-            
-            do{
-                let destinationDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                        .appendingPathComponent("importedExcel")
-                    let destinationURL = destinationDirectory.appendingPathComponent("initialXLSX.xlsx")
-                    
-                    // Ensure the destination directory exists
-                    try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
-                        
-                if FileManager.default.fileExists(atPath: url.path) {
-                    print("file exist at the url",url.path)
-                    try FileManager.default.copyItem(at: url, to: destinationURL)
-                }
-            }catch let error{
-                //dump(error)
-                print(error)
-            }
-            
-            let path2 = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-            let url2 = URL(fileURLWithPath: path2)
-            let filename = String(fnameArry.last!)
-            let fp = url2.appendingPathComponent("importedExcel").appendingPathComponent(filename).path
-            if FileManager.default.fileExists(atPath: fp) {
-                print("copied yourExcelfile",fp)
-            }
-            appd.imported_xlsx_file_path=fp
-            readExcel(path: fp)
-            isExcel = true
-            
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-            print("end iCloudController")
-        }
-        return
-    }
-    
-    
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        //dismiss(animated: true, completion: nil)
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.imported_xlsx_file_path = ""
-        appd.sheetNameIds = [String]()
-        appd.sheetNames = [String]()
-        appd.diff_start_index.removeAll()
-        appd.diff_end_index.removeAll()
-        appd.isAppStarted = false
-        
-        let sheet1Json = ReadWriteJSON()
-        sheet1Json.deleteJsonFile(title: "csv_sheet1")
-        
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )
-        targetViewController.modalPresentationStyle = .fullScreen
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
-        }
-    }
-    
-    
-    
-    
-    //https://stackoverflow.com/questions/44160111/what-is-the-equivalent-of-string-encoding-utf8-rawvalue-in-objective-c
-    func swiftDataToString(someData:Data) -> String? {
-        return String(data: someData, encoding: .utf8)
-    }
-    
-    func swiftStringToData(someStr:String) ->Data? {
-        return someStr.data(using: .utf8)
-    }
-    
-    
-    
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destinationViewController.
-     // Pass the selected object to the new view controller.
-     }
-     */
     
     func readExcel(path:String, wsIndex:Int = 1){
         let excelFunctions = [
@@ -903,7 +608,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             print("sorry pal cant copy it.")
         }
     }
-    
+        
     //Making the array with unique values
     func uniquing(src:[String]) -> [String]{
         var unique = [String]()
@@ -1150,7 +855,5 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         return result > 0 ? result : nil
     }
+
 }
-
-
-

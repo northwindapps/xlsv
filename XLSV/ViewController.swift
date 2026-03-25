@@ -1679,13 +1679,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             isExcel = true
             if fileExists{
                 appd.imported_xlsx_file_path=filePath.path
-                //appd.sheetNames
                 let icc = iCloudViewController()
                 icc.readExcel(path: filePath.path)
-                //let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-                //createxlsxSheet()
                 
             }
             if !fileExists {
@@ -2025,10 +2020,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.layer.borderColor = UIColor.black.cgColor
         
+        customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
+                
+        customview2.rowButton.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
         
-        customview2.export.isHidden = true
+        customview2.insertRow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
         
-        customview2.calcAll.isHidden = true
+        customview2.columnButton.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
+
+        
+        
+//        customview2.export.isHidden = true
+        
+//        customview2.calcAll.isHidden = true
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
         
         customview2.localLoad.isHidden = true
@@ -2045,70 +2049,57 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.emailButton.isHidden = true
 //        customview2.columnButton.isHidden = true
         
-        customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
         
-        customview2.rowButton.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
-        
-        customview2.insertRow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
-        
-        customview2.columnButton.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
-        
-        customview2.deleteColumn.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
-        
-        
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
-        
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
-        if locationstr.contains( "ja")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
-            
-        }else if locationstr.contains( "fr")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
-            
-            customview2.deletebutton.setTitle("Sauvegarder \nlocalement", for: .normal)
-            customview2.deletebutton.setTitle("Supprimer", for: .normal)
-            
-        }else if locationstr.contains( "zh"){
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
-            
-        }else if locationstr.contains( "de")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-            customview2.deletebutton.setTitle("Lokal speichern", for: .normal)
-            customview2.deletebutton.setTitle("Löschen", for: .normal)
-            
-        }else if locationstr.contains( "it")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
-            
-        }else if locationstr.contains( "ru")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
-            
-            
-        }else if locationstr.contains("sv")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
-            
-        }else if locationstr.contains("da")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
-            
-        }else if locationstr.contains("ar")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
-            
-        }else if locationstr.contains("es")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
-            
-        }
-        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
+//        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+//        
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
+//        
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
+//        if locationstr.contains( "ja")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
+//            
+//        }else if locationstr.contains( "fr")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
+//            
+//            
+//            
+//        }else if locationstr.contains( "zh"){
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
+//            
+//        }else if locationstr.contains( "de")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+//            
+//        }else if locationstr.contains( "it")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
+//            
+//        }else if locationstr.contains( "ru")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
+//            
+//            
+//        }else if locationstr.contains("sv")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("da")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("ar")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("es")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
+//            
+//        }
+//        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
         
         self.view.addSubview(customview2)
     }
@@ -2596,9 +2587,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.layer.borderColor = UIColor.black.cgColor
         
         
-        customview2.export.addTarget(self, action: #selector(ViewController.movetosearchreplace(_:)), for: UIControl.Event.touchUpInside)
+//        customview2.export.addTarget(self, action: #selector(ViewController.movetosearchreplace(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.calcAll.addTarget(self, action: #selector(fontediting), for: UIControl.Event.touchUpInside)
+//        customview2.calcAll.addTarget(self, action: #selector(fontediting), for: UIControl.Event.touchUpInside)
         
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
         
@@ -2610,61 +2601,61 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
+        customview2.savefile.addTarget(self, action: #selector(ViewController.filesave), for: UIControl.Event.touchUpInside)
+        
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
         customview2.deleteSheet.addTarget(self, action: #selector(ViewController.deletexlsxSheet), for: UIControl.Event.touchUpInside)
         
-        customview2.deletebutton.isHidden = true
-        customview2.columnButton.isHidden = true
-        customview2.rowButton.isHidden = true
-        customview2.insertRow.isHidden = true
-        customview2.deleteColumn.isHidden = true
+        customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
+        
+  
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
-        
-        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
-        if locationstr.contains( "ja")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
-            
-        }else if locationstr.contains( "fr"){
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
-            
-        }else if locationstr.contains( "zh"){
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
-            
-        }else if locationstr.contains( "de"){
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-            
-        }else if locationstr.contains( "it")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
-            
-        }else if locationstr.contains( "ru")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
-            
-            
-        }else if locationstr.contains("sv")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
-            
-        }else if locationstr.contains("da")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
-            
-        }else if locationstr.contains("ar")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
-            
-        }else if locationstr.contains("es")
-        {
-            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
-            
-        }
-        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
+//        
+//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
+//        if locationstr.contains( "ja")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
+//            
+//        }else if locationstr.contains( "fr"){
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
+//            
+//        }else if locationstr.contains( "zh"){
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
+//            
+//        }else if locationstr.contains( "de"){
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
+//            
+//        }else if locationstr.contains( "it")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
+//            
+//        }else if locationstr.contains( "ru")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
+//            
+//            
+//        }else if locationstr.contains("sv")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("da")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("ar")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
+//            
+//        }else if locationstr.contains("es")
+//        {
+//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
+//            
+//        }
+//        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
         customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
@@ -2796,6 +2787,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func deletexlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         excelDeleteSheet()
+        if customview2 != nil{
+            customview2.removeFromSuperview()
+        }
+    }
+    
+    @objc func moveToBackupsView(){
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Backups" ) as! BackupTableViewController
+        targetViewController.modalPresentationStyle = .fullScreen
+        present(targetViewController, animated: true, completion: nil)
         if customview2 != nil{
             customview2.removeFromSuperview()
         }
@@ -6155,14 +6155,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel file creation
-//        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        
-        
-        //excel backups
-        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        
-        //TODO Backup Excel Files
-        // copy the url file to Backup folder .. every 30 min? or every time app launches
+        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
         
         //save temp content
         var result = content
@@ -6201,6 +6194,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         } else {
             // show failure alert
         }
+    }
+    
+    @objc func filesave() {
+        //make a backup
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        //excel backups
+        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
     }
     
     func uploadFileToICloud(url: URL,filename: String) {
