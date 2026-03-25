@@ -8,11 +8,22 @@
 
 import UIKit
 
-class SelectionOpsView: UIView {
+class RangeSelectionOpsView: UIView {
 
-    var view2:UIView!
+    var view3:UIView!
     
-   
+    @IBOutlet weak var insertcol: UIButton!
+    
+    @IBOutlet weak var insertrow: UIButton!
+    
+    @IBOutlet weak var deletecol: UIButton!
+    
+    @IBOutlet weak var deleterow: UIButton!
+    
+    @IBOutlet weak var deletevalues: UIButton!
+    
+    @IBOutlet weak var `return`: UIButton!
+    
     override init(frame: CGRect)
     {
         super.init(frame: frame)
@@ -27,11 +38,11 @@ class SelectionOpsView: UIView {
     
     func setup()
     {
-        view2 = loadviewfromNib()
-        view2.frame = bounds
+        view3 = loadviewfromNib()
+        view3.frame = bounds
         //http://stackoverflow.com/questions/30867325/binary-operator-cannot-be-applied-to-two-UIView.AutoresizingMask-operands
-        view2.autoresizingMask = [UIView.AutoresizingMask.flexibleWidth, UIView.AutoresizingMask.flexibleHeight]
-        addSubview(view2)
+        view3.autoresizingMask = [UIView.AutoresizingMask.flexibleWidth, UIView.AutoresizingMask.flexibleHeight]
+        addSubview(view3)
         
     }
     
@@ -39,10 +50,10 @@ class SelectionOpsView: UIView {
     func loadviewfromNib() ->UIView
     {
         let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "SelectionOpsView",bundle: bundle)
-        let view2 = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
+        let nib = UINib(nibName: "RangeSelectionOpsView",bundle: bundle)
+        let view3 = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
         
-        return view2
+        return view3
     }
 
 }

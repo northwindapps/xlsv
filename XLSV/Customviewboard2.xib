@@ -4,7 +4,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -13,17 +12,12 @@
                 <outlet property="addNewSheet" destination="uTJ-V1-clN" id="eUU-DA-qTi"/>
                 <outlet property="back" destination="Eit-4b-Vlp" id="9D2-js-QfO"/>
                 <outlet property="backups" destination="EGM-9G-WIs" id="DFo-tA-QyJ"/>
-                <outlet property="columnButton" destination="7Ue-5W-qJz" id="TBv-ci-CsT"/>
-                <outlet property="deleteColumn" destination="uJz-Q6-ifs" id="wKq-TW-C17"/>
                 <outlet property="deleteSheet" destination="kVy-GU-E7z" id="QJV-OG-LmK"/>
-                <outlet property="deletebutton" destination="aOS-rZ-cjI" id="Rgp-Wp-06j"/>
                 <outlet property="emailButton" destination="TPE-jL-3nQ" id="Kol-iJ-59x"/>
-                <outlet property="insertRow" destination="Ply-m1-e6l" id="dkO-fb-9iI"/>
                 <outlet property="localLoad" destination="x2D-Hd-mUz" id="8dz-Rp-rhm"/>
                 <outlet property="localSave" destination="lCK-kP-XA0" id="hWS-Dm-mRM"/>
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
                 <outlet property="resetStyling" destination="MuS-sR-VDI" id="vq5-oy-HyN"/>
-                <outlet property="rowButton" destination="5Kb-0u-vQh" id="ZI2-ha-QMR"/>
                 <outlet property="savefile" destination="ysU-BP-3Eg" id="bEs-aS-845"/>
             </connections>
         </placeholder>
@@ -101,56 +95,10 @@
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="New Sheet"/>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uJz-Q6-ifs">
-                    <rect key="frame" x="35" y="113" width="75" height="35"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Delete Col">
-                        <color key="titleColor" systemColor="systemPinkColor"/>
-                    </state>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7Ue-5W-qJz">
-                    <rect key="frame" x="35" y="73" width="75" height="35"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Insert Col"/>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ply-m1-e6l">
-                    <rect key="frame" x="35" y="155" width="75" height="35"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Insert Row"/>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5Kb-0u-vQh">
-                    <rect key="frame" x="35" y="196" width="75" height="35"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Delete Row">
-                        <color key="titleColor" systemColor="systemPinkColor"/>
-                    </state>
-                </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aOS-rZ-cjI">
-                    <rect key="frame" x="34" y="233" width="78" height="35"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                    <state key="normal" title="Delete Values">
-                        <color key="titleColor" systemColor="systemPinkColor"/>
-                    </state>
-                </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <point key="canvasLocation" x="-1202.4000000000001" y="-39.580209895052477"/>
         </view>
     </objects>
-    <resources>
-        <systemColor name="systemPinkColor">
-            <color red="1" green="0.1764705882" blue="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </systemColor>
-    </resources>
 </document>

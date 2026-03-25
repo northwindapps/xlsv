@@ -73,6 +73,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //
     var customview3 :Customview3!
+    var rsview: RangeSelectionOpsView!
     
     var stringboxText = ""
     var pastemode : Bool = false
@@ -1187,6 +1188,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.customview2.removeFromSuperview()
     }
     
+    @objc func backRS(_ sender:UIButton)
+    {
+        selection_bool = false
+        myCollectionView.reloadData()
+        self.rsview.removeFromSuperview()
+    }
     
     
     @objc func loadCreditview(_ sender:UIButton)
@@ -1975,29 +1982,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     func panGestureShow2() {
         
-        if customview2 != nil{
+        if rsview != nil{
             
-            customview2.removeFromSuperview()
+            rsview.removeFromSuperview()
         }
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:10, width: 220,height: 160))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:200, width: 220,height: 160))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:190, width: 220,height: 160))
             break
             
             
@@ -2005,7 +2012,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 180,height: 370))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
             break
             
         }
@@ -2013,95 +2020,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         
-        customview2.layer.borderWidth = 1
+        rsview.layer.borderWidth = 1
         
-        customview2.layer.cornerRadius = 8;
+        rsview.layer.cornerRadius = 8;
         
         
-        customview2.layer.borderColor = UIColor.black.cgColor
+        rsview.layer.borderColor = UIColor.black.cgColor
         
-        customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
+        rsview.deletevalues.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
                 
-        customview2.rowButton.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
+        rsview.deleterow.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
         
-        customview2.insertRow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertrow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
         
-        customview2.columnButton.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertcol.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
+        
+        rsview.deletecol.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
 
+        rsview.return.addTarget(self, action: #selector(ViewController.backRS(_:)), for: UIControl.Event.touchUpInside)
         
         
-//        customview2.export.isHidden = true
-        
-//        customview2.calcAll.isHidden = true
-        customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
-        
-        customview2.localLoad.isHidden = true
-        customview2.localSave.isHidden = true
-        customview2.reset.isHidden = true
-        //copy file to local
-        customview2.deleteSheet.isHidden = true
-//        customview2.deletebutton.isHidden = true
-        customview2.addNewSheet.isHidden = true
-        customview2.resetStyling.isHidden = true
-        //customview2.deletebutton.isHidden = true
-        //customview2.deletebutton.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
-        
-        customview2.emailButton.isHidden = true
-//        customview2.columnButton.isHidden = true
-        
-        
-//        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-//        
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
-//        
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
-//        if locationstr.contains( "ja")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
-//            
-//        }else if locationstr.contains( "fr")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
-//            
-//            
-//            
-//        }else if locationstr.contains( "zh"){
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
-//            
-//        }else if locationstr.contains( "de")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-//            
-//        }else if locationstr.contains( "it")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
-//            
-//        }else if locationstr.contains( "ru")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
-//            
-//            
-//        }else if locationstr.contains("sv")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("da")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("ar")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("es")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
-//            
-//        }
-//        customview2.xlsxSheetExportOniCloudDrive.isHidden = true
-        
-        self.view.addSubview(customview2)
+        self.view.addSubview(rsview)
     }
     
     @objc func rowDeleteOperation(){
@@ -2587,9 +2526,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.layer.borderColor = UIColor.black.cgColor
         
         
-//        customview2.export.addTarget(self, action: #selector(ViewController.movetosearchreplace(_:)), for: UIControl.Event.touchUpInside)
-        
-//        customview2.calcAll.addTarget(self, action: #selector(fontediting), for: UIControl.Event.touchUpInside)
+
         
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
         
@@ -2612,50 +2549,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
   
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.numberOfLines = 0
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.lineBreakMode = .byWordWrapping
-//        
-//        customview2.xlsxSheetExportOniCloudDrive.titleLabel?.textAlignment = .center
-//        if locationstr.contains( "ja")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("iCloudに保存", for: .normal)
-//            
-//        }else if locationstr.contains( "fr"){
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exporter \nvers iCloud", for: .normal)
-//            
-//        }else if locationstr.contains( "zh"){
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("导出到iCloud", for: .normal)
-//            
-//        }else if locationstr.contains( "de"){
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("In iCloud \nexportieren", for: .normal)
-//            
-//        }else if locationstr.contains( "it")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Esporta \nsu iCloud", for: .normal)
-//            
-//        }else if locationstr.contains( "ru")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Экспорт \nв iCloud", for: .normal)
-//            
-//            
-//        }else if locationstr.contains("sv")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportera \ntill iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("da")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Eksporter \ntil iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("ar")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("تصدير إلى iCloud", for: .normal)
-//            
-//        }else if locationstr.contains("es")
-//        {
-//            customview2.xlsxSheetExportOniCloudDrive.setTitle("Exportar \na iCloud", for: .normal)
-//            
-//        }
-//        customview2.xlsxSheetExportOniCloudDrive.addTarget(self, action: #selector(ViewController.saveOniCloudAction), for: UIControl.Event.touchUpInside)
         customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)

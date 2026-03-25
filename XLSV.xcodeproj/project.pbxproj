@@ -8,9 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
-		2B37287E2F74054200D27F01 /* SelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* SelectionOpsView.swift */; };
+		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
 		2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */; };
-		2B37288E2F7405DD00D27F01 /* SelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B37288D2F7405DD00D27F01 /* SelectionOpsView.xib */; };
+		2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
 		2BBA16502D4D1BD6002E950C /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2BBA164F2D4D1BD6002E950C /* initialXLSX.xlsx */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
@@ -87,9 +87,9 @@
 /* Begin PBXFileReference section */
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		2B37287D2F74054200D27F01 /* SelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionOpsView.swift; sourceTree = "<group>"; };
+		2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSelectionOpsView.swift; sourceTree = "<group>"; };
 		2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Customviewboard2.xib; sourceTree = "<group>"; };
-		2B37288D2F7405DD00D27F01 /* SelectionOpsView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SelectionOpsView.xib; sourceTree = "<group>"; };
+		2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RangeSelectionOpsView.xib; sourceTree = "<group>"; };
 		2B585C3E2D2813B500962A29 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Hint.strings; sourceTree = "<group>"; };
 		2B585C402D2813C300962A29 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Hint.strings; sourceTree = "<group>"; };
 		2B585C422D2813E700962A29 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Hint.strings"; sourceTree = "<group>"; };
@@ -299,7 +299,7 @@
 				6AAFEA03255D56CB000612B8 /* Hint.swift */,
 				8D6A11351E4D6A3D00019BEA /* formatview.swift */,
 				8DB176C71E1492AA009DCD75 /* Customview2.swift */,
-				2B37287D2F74054200D27F01 /* SelectionOpsView.swift */,
+				2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */,
 				6AB0A801245AE82C007703C0 /* Customview3.swift */,
 			);
 			name = boards;
@@ -400,7 +400,7 @@
 				8DB176FC1E149410009DCD75 /* Main.storyboard */,
 				8D3863D61F0C4C3C00F2220D /* Datainput.xib */,
 				2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */,
-				2B37288D2F7405DD00D27F01 /* SelectionOpsView.xib */,
+				2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */,
 				8D8201021E3AC9D60039540A /* Customviewboard3.xib */,
 				8DF476F21E6C2B020006D940 /* formatviewboard.xib */,
 				6A6E8529245DB566008AFA03 /* numberkeyView.xib */,
@@ -529,12 +529,12 @@
 			files = (
 				8D8201001E3AC9D60039540A /* Customviewboard3.xib in Resources */,
 				2BBA16502D4D1BD6002E950C /* initialXLSX.xlsx in Resources */,
+				2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
 				8DB176FA1E149410009DCD75 /* Main.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
 				2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */,
-				2B37288E2F7405DD00D27F01 /* SelectionOpsView.xib in Resources */,
 				6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */,
 				3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */,
 				6A6E8522245DA1D5008AFA03 /* LaunchScreen.xib in Resources */,
@@ -652,7 +652,7 @@
 				3CD1E3B62142985F0023BC43 /* SettingsViewController.swift in Sources */,
 				6AC832292465CBC2006FA917 /* FileCollectionViewCell.swift in Sources */,
 				6AB0A815245B14F3007703C0 /* StyleReadFile.swift in Sources */,
-				2B37287E2F74054200D27F01 /* SelectionOpsView.swift in Sources */,
+				2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */,
 				6A9743BD2BB3A74E005D341C /* helper.swift in Sources */,
 				8D3014511F0A74720026E961 /* Datainputview.swift in Sources */,
 				6AB0A813245B14E5007703C0 /* Unzipping.swift in Sources */,
