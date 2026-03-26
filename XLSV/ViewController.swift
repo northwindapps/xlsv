@@ -706,6 +706,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
+                            self.myCollectionView.collectionViewLayout.invalidateLayout()
                             self.myCollectionView.reloadData()
                         }
                     }

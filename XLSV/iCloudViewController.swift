@@ -135,7 +135,16 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         //
         if url.absoluteString.hasSuffix(".csv"){
-            
+            //temporary susupend feature
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            targetViewController.isExcel = true
+            targetViewController.isCSV = false
+            targetViewController.modalPresentationStyle = .fullScreen
+            DispatchQueue.main.async {
+                //just return and start with an initial xlsx file
+                self.present(targetViewController, animated: true, completion: nil)
+            }
+            return
             let fnameArry = url.absoluteString.split(separator: "/")
             let fnameA = fnameArry.last!.split(separator: ".")
             excelName = String(fnameA.first!) + "." + String(fnameA.last!)
@@ -260,7 +269,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.numberofColumn = columncount+1
             print("end iCloudController")
             
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+//            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
             targetViewController.isExcel = false
             targetViewController.isCSV = true
             targetViewController.modalPresentationStyle = .fullScreen
@@ -337,7 +346,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         targetViewController.isExcel = true
-        targetViewController.isCSV = true
+        targetViewController.isCSV = false
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
