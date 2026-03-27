@@ -254,11 +254,11 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
 
     
     func readExcel(path:String, wsIndex:Int = 1){
-        let excelFunctions = [
-            //"SUM",
-            //"AVERAGE",
-            //"MIN",
-            //"MAX",
+        let excelFunctionsNotSupportedInXLSV = [
+            "SUM",
+            "AVERAGE",
+            "MIN",
+            "MAX",
             "COUNT",
             "COUNTA",
             "PRODUCT",
@@ -369,7 +369,21 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             "logd",
             "log",
             "abs",
-            "sqrt"
+            "sqrt",
+            "PI()",
+            "EXP(1)",
+            "ASIN",
+            "ACOS",
+            "ATAN",
+            "SIN",
+            "COS",
+            "TAN",
+            "EXP",
+            "LOG",
+            "LOG10",
+            "LN",
+            "ABS",
+            "SQRT"
         ]
         //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
         do {
@@ -527,7 +541,7 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                                 //normal values
                                 formulaCheck.append(valueContent!)
                             }else{
-                                let containsItem = excelFunctions.contains { formulaContent! == $0 }
+                                let containsItem = excelFunctionsNotSupportedInXLSV.contains { formulaContent! == $0 }
                                 if !containsItem{
                                     formulaCheck.append("=" + formulaContent!)
                                 }

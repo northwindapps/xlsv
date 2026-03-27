@@ -4390,6 +4390,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
+        
+        // \ / ? * : [ ] escaping command chars to literal
+        let invalidChars = CharacterSet(charactersIn: "\\/[]\"")
+        element = element.components(separatedBy: invalidChars).joined()
+        
         if isExcel && srcString.count > 0{
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -6045,6 +6050,36 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //sendEmail
     @objc func excelEmail() {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let alert = UIAlertController(title: "File Export via Email", message: "Name the xlsx file", preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.placeholder = appd.excelfilename.isEmpty ? "XLSV Backup File" :appd.excelfilename
+            textField.text = appd.excelfilename.isEmpty ? "XLSV_Backup_File" :appd.excelfilename
+
+            textField.clearButtonMode = .whileEditing
+        }
+    
+        let confirmAction = UIAlertAction(title: "OK", style: .default) { [weak self, weak alert] _ in
+            guard let fileName = alert?.textFields?.first?.text, !fileName.isEmpty else {
+                return
+            }
+            
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.excelfilename = fileName
+            self?.proceedToEmail()
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
+        
+        self.present(alert, animated: true, completion: nil)
+        
+    }
+
+    func proceedToEmail() {
         isMail = true
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -6077,6 +6112,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if appd.excelfilename != ""{
                 fileName = fileName + appd.excelfilename
                 fileName = fileName.removingPercentEncoding!
+                if !fileName.hasSuffix(".xlsx"){
+                    fileName += ".xlsx"
+                }
             }
             
             
@@ -6097,6 +6135,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // show failure alert
         }
     }
+
+
     
     @objc func filesave() {
         //make a backup

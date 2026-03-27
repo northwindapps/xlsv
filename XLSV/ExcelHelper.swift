@@ -50,11 +50,11 @@ class ExcelHelper{
 
     func readExcel2(path:String, wsIndex:Int){
         var reIdx = wsIndex
-        let excelFunctions = [
-            //"SUM",
-            //"AVERAGE",
-            //"MIN",
-            //"MAX",
+        let excelFunctionsNotSupportedInXLSV = [
+//            "SUM",
+//            "AVERAGE",
+//            "MIN",
+//            "MAX",
             "COUNT",
             "COUNTA",
             "PRODUCT",
@@ -152,20 +152,34 @@ class ExcelHelper{
             "IMABS",
             "IMRECTANGULAR",
             "COMPLEX",
-            "pi",
-            "e",
-            "asin",
-            "acos",
-            "atan",
-            "sin",
-            "cos",
-            "tan",
-            "exp",
-            "logb",
-            "logd",
-            "log",
-            "abs",
-            "sqrt"
+//            "pi",
+//            "e",
+//            "asin",
+//            "acos",
+//            "atan",
+//            "sin",
+//            "cos",
+//            "tan",
+//            "exp",
+//            "logb",
+//            "logd",
+//            "log",
+//            "abs",
+//            "sqrt",
+//            "PI()",
+//            "EXP(1)",
+//            "ASIN",
+//            "ACOS",
+//            "ATAN",
+//            "SIN",
+//            "COS",
+//            "TAN",
+//            "EXP",
+//            "LOG",
+//            "LOG10",
+//            "LN",
+//            "ABS",
+//            "SQRT"
         ]
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
@@ -332,7 +346,7 @@ class ExcelHelper{
                            if formulaContent == nil {
                                formulaCheck.append(valueContent!)
                            }else{
-                               let containsItem = excelFunctions.contains { formulaContent! == $0 }
+                               let containsItem = excelFunctionsNotSupportedInXLSV.contains { formulaContent! == $0 }
                                if !containsItem{
                                    formulaCheck.append("=" + formulaContent!)
                                }

@@ -29,7 +29,22 @@ class CalculationService{
            "logd",
            "log",
            "abs",
-           "sqrt"
+           "sqrt",
+           //These excel expressions should be transformed earlier
+//           "PI()",
+//           "EXP(1)",
+//           "ASIN",
+//           "ACOS",
+//           "ATAN",
+//           "SIN",
+//           "COS",
+//           "TAN",
+//           "EXP",
+//           "LOG",
+//           "LOG10",
+//           "LN",
+//           "ABS",
+//           "SQRT"
        ]
 
        var propertyMap: [String: Any] = [:]
