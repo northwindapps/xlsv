@@ -101,16 +101,66 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
         
         print("Selected file: \(selectedFileURL.lastPathComponent)")
         
-        //        // 例：確認アラートを出す
-        //        let alert = UIAlertController(title: "Restore?", message: "Do you want to restore \(selectedFile.lastPathComponent)?", preferredStyle: .alert)
-        //        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        //        alert.addAction(UIAlertAction(title: "Restore", style: .default, handler: { _ in
-        //            // リストアの処理など
-        //        }))
-        //        present(alert, animated: true)
         
+        let fileName = selectedFileURL.lastPathComponent
         
+        let actionSheet = UIAlertController(title: "Options", message: fileName, preferredStyle: .actionSheet)
         
+    
+        actionSheet.addAction(UIAlertAction(title: "Restore", style: .default) { _ in
+            self.restore(selectedFileURL: selectedFileURL)
+        })
+        
+     
+        actionSheet.addAction(UIAlertAction(title: "Rename", style: .default) { _ in
+            self.rename(fileName: fileName, selectedFileURL: selectedFileURL)
+        })
+        
+
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        if let popoverController = actionSheet.popoverPresentationController {
+            if let cell = tableView.cellForRow(at: indexPath) {
+                popoverController.sourceView = cell
+                popoverController.sourceRect = cell.bounds
+            }
+        }
+        
+        present(actionSheet, animated: true, completion: nil)
+    }
+    
+    func rename(fileName:String,selectedFileURL:URL){
+        let renameAlert = UIAlertController(title: "Rename File", message: "Enter new name", preferredStyle: .alert)
+        
+        renameAlert.addTextField { textField in
+            textField.text = (fileName as NSString).deletingPathExtension
+        }
+        
+        let confirmAction = UIAlertAction(title: "OK", style: .default) { _ in
+            guard let newName = renameAlert.textFields?.first?.text, !newName.isEmpty else { return }
+            
+            let fileExtension = selectedFileURL.pathExtension
+            let directoryURL = selectedFileURL.deletingLastPathComponent()
+            let newFileURL = directoryURL.appendingPathComponent(newName).appendingPathExtension(fileExtension)
+            
+            do {
+                try FileManager.default.moveItem(at: selectedFileURL, to: newFileURL)
+                print("Renamed to: \(newFileURL.lastPathComponent)")
+ 
+                self.loadData()
+                
+            } catch {
+                print("Error renaming file: \(error.localizedDescription)")
+            }
+        }
+        
+        renameAlert.addAction(confirmAction)
+        renameAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        self.present(renameAlert, animated: true)
+    }
+    
+    func restore(selectedFileURL:URL){
         if selectedFileURL.absoluteString.contains(".xlsx"){
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             
@@ -148,7 +198,6 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 }
         }
     }
-    
     //Delete Backups Function, swipe the row
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {

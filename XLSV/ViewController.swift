@@ -6070,11 +6070,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
             mail.setSubject("from ios")
 
+            //creating backup file name
 
+            var fileName = date + "_XLSV_"
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            if appd.excelfilename != ""{
+                fileName = fileName + appd.excelfilename
+                fileName = fileName.removingPercentEncoding!
+            }
+            
+            
             //print("ViewController" ,filePath)
             if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-//                No more. Leave Excel YANO 20260321
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: url!.lastPathComponent)
+                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
             }else{
                 print("noContent")
             }

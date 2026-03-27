@@ -4544,7 +4544,7 @@ class Service {
             let nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
             let fileExtension = fpURL.pathExtension // xlsx
 
-            let newFileName = "\(fileName)_\(timestamp).\(fileExtension)"
+            let newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
             let backupURL = backupDirURL!.appendingPathComponent(newFileName)
 
             
