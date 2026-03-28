@@ -2790,7 +2790,8 @@ class Service {
     }
     
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:String = "") -> URL? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:String = "") -> Bool? {
+        var isError = false
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -2873,6 +2874,7 @@ class Service {
                         //                    print("xmlString: \(xmlString)")
                     }catch{
                         print("failed at writing to styleXMLURL")
+                        return false
                     }
                 }
                 
@@ -2911,6 +2913,7 @@ class Service {
                                 try replacedWithNewString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                             } catch{
                                 print("failed at replacedWithNewString")
+                                return false
                             }
                         }
                         check = true
@@ -2925,6 +2928,7 @@ class Service {
                                 print("Success: XML updated for \(cellIdxString)")
                             }catch{
                                print("failed at replacedWithNewString")
+                                return false
                            }
                         }
                         check = true
@@ -2937,6 +2941,7 @@ class Service {
                                 try replacedWithNewString!.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                             }catch{
                                print("failed at replacedWithNewString")
+                                return false
                            }
                             
                             do {
@@ -2944,6 +2949,7 @@ class Service {
                                 try shredStringId.1!.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
                             }catch{
                                print("failed at shredStringId.1")
+                                return false
                            }
                         }
                     }
@@ -2966,6 +2972,7 @@ class Service {
                             print("File written successfully to \(worksheetXMLURL.path)")
                         } catch {
                             print("Failed to write file: \(error.localizedDescription)")
+                            return false
                         }
                     }
                 }
@@ -3003,18 +3010,20 @@ class Service {
                        print("Deleted file:", fileURL.lastPathComponent)
                    } catch {
                        print("Error deleting file:", error)
+                       return false
                    }
                 }
                 
                 files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
                 print("Done: ", files)
                 
-                return nil
+                return true
 
                 
             } else {
                 // Handle the case where the specified path doesn't exist
                 print("File or directory does not exist at path: \(fp)")
+                return false
             }
             
         } else {
@@ -3024,9 +3033,10 @@ class Service {
             
         } catch {
             print("Error: \(error)")
+            return false
         }
         
-        return nil
+        return false
     }
     
     func testRowsDeleteBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, bulkAry:[String] = [], calculated:String = "", rowRange:[Int] = [], locationInExcel:[String] = []) -> URL? {

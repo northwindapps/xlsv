@@ -50,7 +50,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var sum_str = ""
     
     //Font location
-    var cursor = String()
+//    var cursor = String()
     var changeaffected = [String]()
     
     var tcolor = [String]()
@@ -123,7 +123,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var data: Data? = nil
     var byproduct: NSMutableString? = nil
     var currentindex : IndexPath!
-    var currentindexstr = "1,1"//String!
+    var cursor = ""//String! (1,1)
     var selectedSheet = 0 //initial
     
     //calculation
@@ -299,11 +299,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             //Border
-            if cursor == (String(indexPath.item)+","+String(indexPath.section)) || changeaffected.contains(String(indexPath.item)+","+String(indexPath.section)){
-                
+            if cursor == (String(indexPath.item)+","+String(indexPath.section)) {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 3.0
-            }else{
+            }else if(changeaffected.contains(String(indexPath.item)+","+String(indexPath.section))){
+                    
+                cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
+                cell.label2?.layer.borderWidth = 3.0
+            }
+            else{
                 cell.label2?.layer.borderColor = UIColor.orange.cgColor
                 cell.label2?.layer.borderWidth = 0.5
             }
@@ -694,7 +698,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //}
             
             
-            let locationIdx = location.firstIndex(of: currentindexstr)
+            let locationIdx = location.firstIndex(of: cursor)
             if locationIdx != nil && content[locationIdx!] != ""{
                 datainputview.stringbox.text = content[locationIdx!]
             }
@@ -708,10 +712,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
                             self.myCollectionView.collectionViewLayout.invalidateLayout()
                             self.myCollectionView.reloadData()
+                            
+                            self.myCollectionView.selectItem(at: self.currentindex,
+                                                                    animated: true,
+                                                                    scrollPosition: [.centeredVertically, .centeredHorizontally])
+                            self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
                         }
                     }
                 }
             }
+            
+            
 
 
 
@@ -726,11 +737,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if collectionView === myCollectionView{
             //reset change history
             currentindex = indexPath
-            currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
+            cursor = String(currentindex!.item)+","+String(currentindex!.section)
             
             
             getIndexlabel()
-            cursor = currentindexstr
             
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 appd.collectionViewCellSizeChanged = 0
@@ -757,7 +767,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             opendatainputview()
                         
                         }
-                        let locationIdx = location.firstIndex(of: currentindexstr)
+                        let locationIdx = location.firstIndex(of: cursor)
                         if (locationIdx != nil) && datainputview != nil {
                             datainputview.stringbox.text = content[locationIdx!]
                         }
@@ -1852,7 +1862,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         else { return }
         let startRow = indexPath.section
         let startCol = indexPath.item
-        let idxInLocation = location.firstIndex(of: currentindexstr) ?? -1
+        let idxInLocation = location.firstIndex(of: cursor) ?? -1
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
         
         switch gesture.state {
@@ -2275,7 +2285,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         for (i, eachFormula) in generatedFormulas.enumerated() {
             let targetIndexPath = sortedSelection[i]
         
-            currentindexstr = "\(targetIndexPath.item),\(targetIndexPath.section)"
+            cursor = "\(targetIndexPath.item),\(targetIndexPath.section)"
             
             down_bool = false
             right_bool = false
@@ -3026,7 +3036,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let rounded = Int(floor(Fview.sizeslider.value))
         Fview.sizelabel.text = String(rounded)
         
-        let IP :String = currentindexstr
+        let IP :String = cursor
         
         
         switch UIDevice.current.userInterfaceIdiom {
@@ -3661,9 +3671,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //copy
     @objc func copyText(){
         
-//        currentindexstr = String(currentindex!.item)+","+String(currentindex!.section)
-//        if location.contains(currentindexstr){
-//            let i = location.index(of: currentindexstr)
+//        cursor = String(currentindex!.item)+","+String(currentindex!.section)
+//        if location.contains(cursor){
+//            let i = location.index(of: cursor)
 //
 //            datainputview.stringbox.text = datainputview.stringbox.text  + content[i!]
 //
@@ -3704,7 +3714,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         
-        let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let IP :String = cursor   //String(currentindex!.item) + String(currentindex!.section)
         let t_item = IP.components(separatedBy: ",")[0]
         let t_section = IP.components(separatedBy: ",")[1]
         
@@ -4022,13 +4032,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         
-        let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let IP :String = cursor   //String(currentindex!.item) + String(currentindex!.section)
         let t_item = IP.components(separatedBy: ",")[0]
         let t_section = IP.components(separatedBy: ",")[1]
         
         let IP_i = Int(t_item)!
         let IP_s = Int(t_section)!
         var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        if !element.contains("...") && !element.contains(":"){
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        }
         
         var collocation = -1
         if element.contains("→"){
@@ -4039,7 +4052,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
         
-        if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
+        if (element.contains(":") && element.contains("↓"))  || (element.contains(":") && element.contains("←")) || (element.contains(":") && element.contains("↑"))  || (element.contains(":") && element.contains("→")) {
             
             element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
             //20200502
@@ -4068,7 +4081,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    down_bool = false
                 }
                 
                 if right_bool{
@@ -4091,7 +4103,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    right_bool = false
                 }
                 break
                 
@@ -4119,7 +4130,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    down_bool = false
                 }
                 
                 
@@ -4144,7 +4154,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                     datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    right_bool = false
                 }
                 
                 break
@@ -4156,10 +4165,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 break
             }
             pasteboard.string = clipboard
-            //It makes better UX
+            //It makes better UX by shiftting the selected cell
             changeaffected.removeAll()
-            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-            changeaffected.append(currentUpdate)
+            if right_bool{
+                currentindex = IndexPath(item:currentindex.item+1, section: currentindex.section)
+            }
+            
+            if down_bool{
+                currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+            }
+            cursor = String(currentindex.item) + "," + String(currentindex.section)
             
             stringboxText = element
             return
@@ -4186,9 +4201,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //It makes better UX
         changeaffected.removeAll()
-        let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-        changeaffected.append(currentUpdate)
+        if right_bool{
+            currentindex = IndexPath(item:currentindex.item+1, section: currentindex.section)
+        }
+        
+        if down_bool{
+            currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+        }
+        cursor = String(currentindex.item) + "," + String(currentindex.section)
         stringboxText = element
+        
         return
     }
     
@@ -4224,13 +4246,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         
-        let IP :String = currentindexstr   //String(currentindex!.item) + String(currentindex!.section)
+        let IP :String = cursor   //String(currentindex!.item) + String(currentindex!.section)
         let t_item = IP.components(separatedBy: ",")[0]
         let t_section = IP.components(separatedBy: ",")[1]
         
         let IP_i = Int(t_item)!
         let IP_s = Int(t_section)!
         var checkInput = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        
+        if !element.contains("...") && !element.contains(":"){
+            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
+        }
         
         var collocation = -1
         if element.contains("→"){
@@ -4241,7 +4267,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
         
-        if element.contains(":") && down_bool == true || element.contains(":") && left_bool == true || element.contains(":") && up_bool == true || element.contains(":") && right_bool == true{
+        if (element.contains(":") && element.contains("↓"))  || (element.contains(":") && element.contains("←")) || (element.contains(":") && element.contains("↑"))  || (element.contains(":") && element.contains("→")) {
             
             element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
             //20200502
@@ -4269,7 +4295,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
-                    down_bool = false
                 }
                 
                 if right_bool{
@@ -4291,7 +4316,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
-                    right_bool = false
                 }
                 break
                 
@@ -4318,7 +4342,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
                         }
                     }
-                    down_bool = false
                 }
                 
                 
@@ -4342,7 +4365,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             excelEntry(srcString: each, cellId: alphabet + String(IP_s))
                         }
                     }
-                    right_bool = false
                 }
                 
                 break
@@ -4356,8 +4378,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             pasteboard.string = clipboard
             //It makes better UX
             changeaffected.removeAll()
-            let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-            changeaffected.append(currentUpdate)
+            if right_bool{
+                currentindex = IndexPath(item:currentindex.item+1, section: currentindex.section)
+            }
+            
+            if down_bool{
+                currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+            }
+            cursor = String(currentindex.item) + "," + String(currentindex.section)
             return
         }
         
@@ -4381,12 +4409,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //It makes better UX
         changeaffected.removeAll()
-        let currentUpdate = String(currentindex.item) + "," + String(currentindex.section)
-        changeaffected.append(currentUpdate)
+        if right_bool{
+            currentindex = IndexPath(item:currentindex.item+1, section: currentindex.section)
+        }
+        
+        if down_bool{
+            currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+        }
+        cursor = String(currentindex.item) + "," + String(currentindex.section)
         return
     }
     
-    func excelEntry(srcString:String,cellId:String)
+    func excelEntry(srcString:String,cellId:String) -> Bool?
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         var element = srcString
@@ -4461,13 +4495,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated)
+            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated)
+            
+            if !(isOK ?? true){
+                return false
+            }
             
             if (f_idx != nil), element.hasPrefix("=") && f_calculated.count>f_idx! && f_content.count > f_idx! && f_calculated[f_idx!] != "error"{
                 _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx!], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
             }
         }
-        
+        return true
     }
     
     //for delete purpose
@@ -5491,7 +5529,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func fonteditmode(){
         
         //let IP = IndexPath(row: currentindex.section, section: currentindex.section)
-        let IP :String = currentindexstr
+        let IP :String = cursor
         
         if location.index(of: IP) != nil{
             
