@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
+		2B0FEED02F782629005BF38E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* Main.storyboard */; };
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
 		2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */; };
 		2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */; };
@@ -68,7 +69,6 @@
 		8DB176CD1E1492AA009DCD75 /* CustomCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */; };
 		8DB176CE1E1492AA009DCD75 /* CustomCollectionViewLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */; };
 		8DB176D11E1492AA009DCD75 /* Customview2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB176C71E1492AA009DCD75 /* Customview2.swift */; };
-		8DB176FA1E149410009DCD75 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8DB176FC1E149410009DCD75 /* Main.storyboard */; };
 		8DB177B51E1499F0009DCD75 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8DB177B71E1499F0009DCD75 /* InfoPlist.strings */; };
 		8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8DF476F21E6C2B020006D940 /* formatviewboard.xib */; };
 		8DF796AE1E4E799500BE7D38 /* NilController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF796AD1E4E799500BE7D38 /* NilController.swift */; };
@@ -86,6 +86,7 @@
 
 /* Begin PBXFileReference section */
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
+		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSelectionOpsView.swift; sourceTree = "<group>"; };
 		2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Customviewboard2.xib; sourceTree = "<group>"; };
@@ -147,14 +148,6 @@
 		6A3CE83423B799F400F720FF /* CoreXLSX */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CoreXLSX; path = Pods/CoreXLSX; sourceTree = "<group>"; };
 		6A3CE83823B79A0700F720FF /* CoreXLSX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CoreXLSX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A496CA623B8ED1A00E7AE0F /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		6A5BFB2F246278EA000BC3E5 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Main.strings"; sourceTree = "<group>"; };
-		6A5BFB31246279E7000BC3E5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB3324627B2A000BC3E5 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB3524627BA4000BC3E5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB3924627CD1000BC3E5 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB3D24627E4C000BC3E5 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB3F24627F17000BC3E5 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Main.strings; sourceTree = "<group>"; };
-		6A5BFB41246284A5000BC3E5 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Main.strings; sourceTree = "<group>"; };
 		6A60D4B1245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		6A60D4B2245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Input4Pad.strings; sourceTree = "<group>"; };
 		6A60D4B4245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -174,7 +167,6 @@
 		6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingViewController.swift; sourceTree = "<group>"; };
 		6A92A8D0251DF22000DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		6A92A8D1251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Input4Pad.strings; sourceTree = "<group>"; };
-		6A92A8D2251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Main.strings; sourceTree = "<group>"; };
 		6A92A8D3251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Datainput.strings; sourceTree = "<group>"; };
 		6A92A8D5251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		6A92A8D6251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/formatviewboard.strings; sourceTree = "<group>"; };
@@ -215,7 +207,6 @@
 		8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomCollectionViewCell.swift; sourceTree = "<group>"; };
 		8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomCollectionViewLayout.swift; sourceTree = "<group>"; };
 		8DB176C71E1492AA009DCD75 /* Customview2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Customview2.swift; sourceTree = "<group>"; };
-		8DB176FB1E149410009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		8DB177B61E1499F0009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		8DF476D11E6C242E0006D940 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		8DF476D31E6C24730006D940 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
@@ -397,7 +388,7 @@
 				6A6E8520245DA1D5008AFA03 /* LaunchScreen.xib */,
 				8DB177B71E1499F0009DCD75 /* InfoPlist.strings */,
 				3C22A79621DCD860001ADDD9 /* Input4Pad.xib */,
-				8DB176FC1E149410009DCD75 /* Main.storyboard */,
+				2B0FEECF2F782629005BF38E /* Main.storyboard */,
 				8D3863D61F0C4C3C00F2220D /* Datainput.xib */,
 				2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */,
 				2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */,
@@ -531,7 +522,7 @@
 				2BBA16502D4D1BD6002E950C /* initialXLSX.xlsx in Resources */,
 				2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
-				8DB176FA1E149410009DCD75 /* Main.storyboard in Resources */,
+				2B0FEED02F782629005BF38E /* Main.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
 				2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */,
@@ -769,23 +760,6 @@
 			name = Customviewboard3.xib;
 			sourceTree = "<group>";
 		};
-		8DB176FC1E149410009DCD75 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				8DB176FB1E149410009DCD75 /* Base */,
-				6A5BFB2F246278EA000BC3E5 /* zh-Hans */,
-				6A5BFB31246279E7000BC3E5 /* ru */,
-				6A5BFB3324627B2A000BC3E5 /* de */,
-				6A5BFB3524627BA4000BC3E5 /* fr */,
-				6A5BFB3924627CD1000BC3E5 /* es */,
-				6A5BFB3D24627E4C000BC3E5 /* sv */,
-				6A5BFB3F24627F17000BC3E5 /* it */,
-				6A5BFB41246284A5000BC3E5 /* ja */,
-				6A92A8D2251DF22100DC8BF1 /* da */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		8DB177B71E1499F0009DCD75 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -998,7 +972,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.10;
+				CURRENT_PROJECT_VERSION = 3.0.12;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1013,7 +987,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0.10;
+				MARKETING_VERSION = 3.0.12;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1030,7 +1004,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SWIFT3_OBJC_INFERENCE = On;
@@ -1048,7 +1022,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.10;
+				CURRENT_PROJECT_VERSION = 3.0.12;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1062,7 +1036,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0.10;
+				MARKETING_VERSION = 3.0.12;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1079,7 +1053,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_SWIFT3_OBJC_INFERENCE = On;
