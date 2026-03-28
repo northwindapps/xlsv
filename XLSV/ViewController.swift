@@ -1781,6 +1781,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
         doubleTapGesture2.numberOfTapsRequired = 2
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
+        
+        if appd.isFirstLaunchToday == false{
+            takeDailyBackup()
+            appd.isFirstLaunchToday = true
+        }
     }
     
     @objc private func localSave(){
@@ -6182,6 +6187,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
         let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+    }
+    
+    @objc func takeDailyBackup() {
+        //make a backup
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        //excel backups
+        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true)
     }
     
     func uploadFileToICloud(url: URL,filename: String) {

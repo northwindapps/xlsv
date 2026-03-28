@@ -134,22 +134,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var excelfilename = ""
     
-//    func application(
-//      _ app: UIApplication,
-//      open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]
-//    ) -> Bool {
-//      var handled: Bool
-//
-//      handled = GIDSignIn.sharedInstance.handle(url)
-//      if handled {
-//        return true
-//      }
-//
-//      // Handle other custom URL types.
-//
-//      // If not handled by this app, return false.
-//      return false
-//    }
+    var isFirstLaunchToday = false
+    
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     
@@ -191,49 +177,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         
-        // Remove all UserDefaults data
-        UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
-                
-        let sheet1Json = ReadWriteJSON()
-        sheet1Json.deleteJsonFile(title: "csv_sheet1")
         
-        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
+        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
         
-//        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-//            if (error != nil || user == nil) {
-//                // Show the app's signed-out state.
-//                print("sign out")
-//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleSignIn
-//            } else {
-//                // Show the app's signed-in state.
-//                print("sign in")
-//                //let initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
-//                initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")//googleDrive
-//            }
-//        }
+        
         
         
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()
+        
         return true
 
     }
-    
-//    func application(
-//      _ application: UIApplication,
-//      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-//    ) -> Bool {
-//      GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-//        if error != nil || user == nil {
-//          // Show the app's signed-out state.
-//        } else {
-//          // Show the app's signed-in state.
-//        }
-//      }
-//      return trues
-//    }
-//
    
 
     func applicationWillResignActive(_ application: UIApplication) {

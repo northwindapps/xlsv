@@ -4457,7 +4457,7 @@ class Service {
             return nil
     }
     
-    func writeXlsxBackup(fp: String = "", url: URL? = nil) -> URL? {
+    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false) -> URL? {
         do {
         // Get the sandbox directory for documents
         if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -4551,7 +4551,12 @@ class Service {
             }
             
                
-            let nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
+            var nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
+            
+            if isAutoSave == true{
+                nameWithoutExtension = "system_auto_save"
+            }
+            
             let fileExtension = fpURL.pathExtension // xlsx
 
             let newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
