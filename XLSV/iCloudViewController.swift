@@ -234,7 +234,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
            var fontColor = [String]()
            var bgColor = [String]()
            for i in 0..<location.count{
-               fontSize.append(String(13))
+               fontSize.append(String(10))
                bgColor.append("white")
                fontColor.append("black")
            }
@@ -884,7 +884,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 var fontColor = [String]()
                 var bgColor = [String]()
                 for i in 0..<finalL_value.count+finalL_string.count{
-                    fontSize.append(String(13))
+                    fontSize.append(String(10))
                     bgColor.append("white")
                     fontColor.append("black")
                 }

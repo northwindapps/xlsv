@@ -5921,6 +5921,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize
+                print("textsize",textsize)
                 bgcolor = sheet1Json.bgcolor
                 tcolor = sheet1Json.fontcolor
                 COLUMNSIZE = sheet1Json.columnsize
