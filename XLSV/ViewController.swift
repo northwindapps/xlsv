@@ -2218,12 +2218,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
 
         if excelIndice.count > 0 {
-            let sourceStr = generatedDates.joined(separator: ":")
+            var sourceStr = generatedDates.joined(separator: ":")
             if sourceStr != "" {
                 if direction == 0{
                     down_bool = true
+                    sourceStr += "↓"
+                    
                 }else{
                     right_bool = true
+                    sourceStr += "→"
                 }
                 virtual_input(source:sourceStr, cellId: getIndexlabel())//the red text on the left top
             }
@@ -4455,7 +4458,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var element = srcString
         
         // \ / ? * : [ ] escaping command chars to literal
-        let invalidChars = CharacterSet(charactersIn: "\\/[]\"")
+        let invalidChars = CharacterSet(charactersIn: "\\\"")
         element = element.components(separatedBy: invalidChars).joined()
         
         if isExcel && srcString.count > 0{

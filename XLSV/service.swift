@@ -1914,17 +1914,19 @@ class Service {
                             sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f><v>0</v></c>"
                         } else {
                             //Value
-                            if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
-                                sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
+                            //Txt
+                            let index = currentAry?.firstIndex(of: cell.content)
+                            if ((index != nil)){
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
                             }else{
-                                //Txt
-                                let index = currentAry?.firstIndex(of: cell.content)
-                                if ((index != nil)){
-                                sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
-                                }else{
+                                if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
+                                    sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
+                                }
+                                else{
                                     print("something went wrong, no index")
                                 }
                             }
+                            
                             
                         }
                     }
