@@ -136,6 +136,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var isFirstLaunchToday = false
     
+    
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     

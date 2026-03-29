@@ -714,9 +714,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             self.myCollectionView.reloadData()
                             
                             self.myCollectionView.selectItem(at: self.currentindex,
-                                                                    animated: true,
-                                                                    scrollPosition: [.centeredVertically, .centeredHorizontally])
+                                                             animated: true,
+                                                             scrollPosition: [.centeredVertically, .centeredHorizontally])
                             self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
+
                         }
                     }
                 }
@@ -4082,7 +4083,30 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             storeInput(IPd: IPl, elementd: each)
                             let alphabet = getExcelColumnName(columnNumber: IP_i)
                             clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                            excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx))
+                            let rlt = excelEntry(srcString: each, cellId: alphabet + String(IP_s+idx)) ?? true
+                            if(!rlt){
+                                
+                                if (!rlt) {
+                                    let alert = UIAlertController(
+                                        title: "Something went wrong",
+                                        message: "We recommend loading from backups.",
+                                        preferredStyle: .alert
+                                    )
+
+                                    let loadAction = UIAlertAction(title: "Load from Backups", style: .default) { _ in
+                                        self.moveToBackupsView()
+                                    }
+                                    
+                                    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+
+                                    alert.addAction(loadAction)
+                                    alert.addAction(cancelAction)
+
+                                    self.present(alert, animated: true, completion: nil)
+                                }
+
+                                
+                            }
                         }
                     }
                     datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
@@ -4500,15 +4524,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated)
+            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated,content: content, locationInExcel: locationInExcel)
             
-            if !(isOK ?? true){
+            if !(isOK ?? false){
                 return false
             }
             
-            if (f_idx != nil), element.hasPrefix("=") && f_calculated.count>f_idx! && f_content.count > f_idx! && f_calculated[f_idx!] != "error"{
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx!], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
-            }
+//            if (f_idx != nil), element.hasPrefix("=") && f_calculated.count>f_idx! && f_content.count > f_idx! && f_calculated[f_idx!] != "error"{
+//                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx!], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+//            }
         }
         return true
     }
@@ -4579,11 +4603,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if element == " "{
                 element = ""
             }
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka)
+            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
             
-            if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
-                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
-            }
+//            if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
+//                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
+//            }
         }
     }
     
@@ -6730,4 +6754,17 @@ extension UIView {
         }
     }
 }
-
+struct ExcelCell {
+    let excelRef: String // "A1", "B10" など
+    let content: String
+    
+    // ソート用の行番号を取得
+    var rowNumber: Int {
+        return Int(excelRef.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) ?? 0
+    }
+    
+    // ソート用の列名を取得
+    var columnName: String {
+        return excelRef.components(separatedBy: CharacterSet.decimalDigits).joined()
+    }
+}
