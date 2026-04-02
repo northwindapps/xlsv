@@ -783,28 +783,54 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             //FileNameCollectionview Change Page
             //sheet cell get touched
+        
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let alert = UIAlertController(
+                title: appd.sheetNames[indexPath.item],
+                message: "Select action to perform.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Add New One", style: .default) { _ in
+                self.createxlsxSheet()
+            })
+            
+            alert.addAction(UIAlertAction(title: "Delete", style: .default) { _ in
+                self.deletexlsxSheet()
+            })
+            
+            alert.addAction(UIAlertAction(title: "Change Name", style: .default) { _ in
+                self.excelChangeSheetName()
+            })
+            
+            
+            
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
+              
+            })
+            
+            
             appd.collectionViewCellSizeChanged = 1
             appd.cswLocation.removeAll()
             appd.customSizedWidth.removeAll()
             appd.cshLocation.removeAll()
             appd.customSizedHeight.removeAll()
-            
-            
-            f_calculated.removeAll()
-            f_content.removeAll()
-            content.removeAll()
-            location.removeAll()
-            f_location_alphabet.removeAll()
-            
+
+
+            self.f_calculated.removeAll()
+            self.f_content.removeAll()
+            self.content.removeAll()
+            self.location.removeAll()
+            self.f_location_alphabet.removeAll()
+
             //print("sheet changed",indexPath.item)
-            stringboxText = ""
-        
+            self.stringboxText = ""
+
             print("go to file view")
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
-            currentFileNameCollectionViewIdx = indexPath
+            self.currentFileNameCollectionViewIdx = indexPath
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
-            print(currentFileNameCollectionViewIdx.item)
+            print(self.currentFileNameCollectionViewIdx.item)
 
             DispatchQueue.main.async {
                 self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item])! ){
@@ -813,12 +839,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
                         self.myCollectionView.reloadData()
+                        self.present(alert, animated: true)
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
                 }
-                
+
             }
+      
         }
     }
     
@@ -2562,14 +2590,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
-        customview2.deleteSheet.addTarget(self, action: #selector(ViewController.deletexlsxSheet), for: UIControl.Event.touchUpInside)
+//        customview2.deleteSheet.addTarget(self, action: #selector(ViewController.deletexlsxSheet), for: UIControl.Event.touchUpInside)
         
         customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
   
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
-        customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
+//        customview2.addNewSheet.addTarget(self, action: #selector(createxlsxSheet), for: UIControl.Event.touchUpInside)
         
         self.view.addSubview(customview2)
     }
@@ -4827,8 +4855,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
+            
+            
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
+            
+            
             print("wsSheetIndex",appd.wsSheetIndex)
             var message = "Set a sheet name."
             var yes = "OK"
@@ -4852,7 +4884,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if name == "" || (self.localFileNames.firstIndex(of: name!) != nil){
                     name = dateFormatter.string(from: today)
                 }
+            
                 _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                
+                //Not got a new sheet in appd .. seems working
+                let ic = iCloudViewController()
+                ic.getExcelSheetNamesAndIds(path: appd.imported_xlsx_file_path)
+                
+                let nameId = appd.sheetNames.firstIndex(of: name!)
+                //TODO Fetch New One's sheetIndex from xml
+                let sheetId = appd.sheetNameIds[nameId!]
+                appd.wsSheetIndex = Int(sheetId)!
+                
                 
                 //sheet cell get touched
                 appd.collectionViewCellSizeChanged = 1
@@ -4873,28 +4916,43 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
                 print("go to file view")
                
-               
-                
-                // Present the target view controller after LoadingFileController's view has appeared
                 DispatchQueue.main.async {
-    //                self.present(targetViewController, animated: true, completion: nil)
-                    self.loadExcelSheet(idx: appd.wsSheetIndex){
-                        // Assuming `collectionView` is your UICollectionView instance
-                        if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                            customLayout.resetCellAttrsDictionaryItemZindex()
-                            customLayout.prepare()
-                            customLayout.invalidateLayout() // Call the method on the instance
-                            self.myCollectionView.reloadData()
-                            self.FileCollectionView.reloadData()
-                        } else {
-                            print("CustomCollectionViewLayout is not set as the current layout")
+                    self.loadExcelSheet(idx: Int(appd.wsSheetIndex)){
+//                        print("after_sheetNameIds",appd.sheetNameIds)
+//                        print("after_Names",appd.sheetNames)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            if let index = self.localFileNames.firstIndex(of: name!) {
+                                self.currentFileNameCollectionViewIdx = IndexPath(item: index, section: 0)
+                                self.FileCollectionView.reloadData()
+                                self.myCollectionView.reloadData()
+                            }else{
+                                print("Index not found, something went wrong")
+                            }
                         }
                     }
-                    
                 }
                 
-               
-                self.customview2.removeFromSuperview()
+//                // Present the target view controller after LoadingFileController's view has appeared
+//                DispatchQueue.main.async {
+//    //                self.present(targetViewController, animated: true, completion: nil)
+//                    self.loadExcelSheet(idx: appd.wsSheetIndex){
+//                        // Assuming `collectionView` is your UICollectionView instance
+//                        if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+//                            customLayout.resetCellAttrsDictionaryItemZindex()
+//                            customLayout.prepare()
+//                            customLayout.invalidateLayout() // Call the method on the instance
+//                            self.myCollectionView.reloadData()
+//                            self.FileCollectionView.reloadData()
+//                        } else {
+//                            print("CustomCollectionViewLayout is not set as the current layout")
+//                        }
+//                    }
+//                    
+//                }
+                
+                if (self.customview2 != nil){
+                    self.customview2.removeFromSuperview()
+                }
                 
             })
             
@@ -5071,8 +5129,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             }
                         }
                     }
-                    
-                    // Assuming `collectionView` is your UICollectionView instance
                 }
                
                 // Present the target view controller after LoadingFileController's view has appeared

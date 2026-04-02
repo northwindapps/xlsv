@@ -508,6 +508,25 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
      }
      */
     
+    func getExcelSheetNamesAndIds(path:String,wsIndex:Int = 1){
+        do{
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let file = XLSXFile(filepath: path)
+            //get all worksheets
+            if let workbook = try file?.parseWorkbooks().first {
+                // Extracting non-nil sheet IDs using compactMap. This is where sheetNameIds retrieved
+                let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
+                print("Sheet Name IDs:", sheetNameIds)
+                appd.sheetNameIds = sheetNameIds
+                let sheetNames = workbook.sheets.items.compactMap { $0.name }
+                print("Sheet Names:", sheetNames)
+                appd.sheetNames = sheetNames
+            }
+        }catch {
+            print("sorry pal cant copy it.")
+        }
+    }
+    
     func readExcel(path:String, wsIndex:Int = 1){
         let excelFunctionsNotSupportedInXLSV = [
 //            "SUM",
@@ -664,7 +683,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             
             //get all worksheets
             if let workbook = try file?.parseWorkbooks().first {
-                // Extracting non-nil sheet IDs using compactMap
+                // Extracting non-nil sheet IDs using compactMap. This is where sheetNameIds retrieved
                 let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
                 print("Sheet Name IDs:", sheetNameIds)
                 appd.sheetNameIds = sheetNameIds
