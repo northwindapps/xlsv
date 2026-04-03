@@ -224,10 +224,7 @@ class ExcelHelper{
                let reIdx1 = appd.sheetNameIds.firstIndex(of: String(wsIndex))
                sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(reIdx1 ?? 0) + ".xml") }
            }
-//           if isSheetDelete{
-//               let reIdx2 = appd.sheetNameIds.first
-//               sheet1Files = paths.filter { $0.hasSuffix("sheet" + reIdx2!  + ".xml") }
-//           }
+
            if let path = try sheet1Files.first {
                print("path",path)
                //Cleaning instances on table data
