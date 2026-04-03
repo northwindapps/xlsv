@@ -795,18 +795,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.createxlsxSheet()
             })
             
-            alert.addAction(UIAlertAction(title: "Delete", style: .default) { _ in
-                self.deletexlsxSheet()
+
+            alert.addAction(UIAlertAction(title: "Make a copy", style: .default) { _ in
+                self.excelCopySheet()
             })
             
-            alert.addAction(UIAlertAction(title: "Change Name", style: .default) { _ in
-                self.excelChangeSheetName()
+            alert.addAction(UIAlertAction(title: "Delete", style: .default) { _ in
+                self.deletexlsxSheet()
             })
             
             
             
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
-              
             })
             
             
@@ -2773,7 +2773,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let today: Date = Date()
         let dateFormatter: DateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+        dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
         let date = dateFormatter.string(from: today)
         
         
@@ -4847,7 +4847,30 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    func excelAddSheet(filename:String = "")
+    func excelCopySheet(filename:String = "")
+    {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if isExcel {
+            
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            
+            
+            let rlt = service.testGetSheetDataBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            
+            
+            if rlt == nil{
+                print("Error: sheetData is nil")
+                return
+            }
+            excelAddSheet(filename: filename,copySheetData: rlt!)
+        }
+        
+        
+    }
+    
+    func excelAddSheet(filename:String = "", copySheetData:String = "")
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
@@ -4876,12 +4899,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
                 if name == "" || (self.localFileNames.firstIndex(of: name!) != nil){
                     name = dateFormatter.string(from: today)
                 }
             
-                _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!)
+                _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!,copySheetData: copySheetData)
                 
                 //Not got a new sheet in appd .. seems working
                 let ic = iCloudViewController()
@@ -4993,7 +5016,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
                 if name == ""{
                     name = dateFormatter.string(from: today)
                 }
@@ -5085,7 +5108,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
                 let today: Date = Date()
                 let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
                 if name == ""{
                     name = dateFormatter.string(from: today)
                 }
@@ -6220,7 +6243,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if MFMailComposeViewController.canSendMail() {
             let today: Date = Date()
             let dateFormatter: DateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
             var date = dateFormatter.string(from: today)
 
             let mail = MFMailComposeViewController()
