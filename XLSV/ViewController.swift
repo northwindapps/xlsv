@@ -735,6 +735,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //touch cell touch
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        //Close all subviews
+        if Hintview != nil{
+            Hintview.removeFromSuperview()
+        }
+        if customview2 != nil{
+            customview2.removeFromSuperview()
+        }
         if collectionView === myCollectionView{
             //reset change history
             currentindex = indexPath
@@ -2582,7 +2589,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
-//        customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
+        customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         

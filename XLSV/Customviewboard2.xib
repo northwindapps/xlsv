@@ -15,6 +15,7 @@
                 <outlet property="localLoad" destination="x2D-Hd-mUz" id="8dz-Rp-rhm"/>
                 <outlet property="localSave" destination="lCK-kP-XA0" id="hWS-Dm-mRM"/>
                 <outlet property="reset" destination="pcP-NY-tUo" id="Dp7-tZ-HV7"/>
+                <outlet property="resetStyling" destination="fvj-7b-951" id="dEa-YA-35r"/>
                 <outlet property="savefile" destination="ysU-BP-3Eg" id="bEs-aS-845"/>
             </connections>
         </placeholder>
@@ -55,6 +56,14 @@
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="Export"/>
                 </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lCK-kP-XA0">
+                    <rect key="frame" x="154" y="119" width="119" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <state key="normal" title="Tutorial">
+                        <color key="titleColor" red="1" green="0.19125069140000001" blue="0.12444555039999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                </button>
                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pcP-NY-tUo">
                     <rect key="frame" x="152" y="43" width="123" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -63,13 +72,11 @@
                         <color key="titleColor" red="0.20000000000000001" green="0.40000000000000002" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     </state>
                 </button>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lCK-kP-XA0">
-                    <rect key="frame" x="154" y="119" width="119" height="25"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="characterWrap" translatesAutoresizingMaskIntoConstraints="NO" id="fvj-7b-951">
+                    <rect key="frame" x="142" y="152" width="143" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <state key="normal" title="Tutorial">
-                        <color key="titleColor" red="1" green="0.19125069140000001" blue="0.12444555039999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                    </state>
+                    <state key="normal" title="Cell Size"/>
                 </button>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
