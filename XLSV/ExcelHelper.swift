@@ -1,14 +1,5 @@
 //
 //  ExcelHelper.swift
-//  HWCSV
-//
-//  Created by yano on 2024/12/07.
-//  Copyright © 2024 Credera. All rights reserved.
-//
-
-
-//
-//  ExcelHelper.swift
 //  MultiDirectionCollectionView
 //
 //  Created by yujin on 2024/03/27.

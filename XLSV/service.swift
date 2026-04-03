@@ -2643,36 +2643,10 @@ class Service {
                 
                 
                 //create new sheet
-                var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-000000000000}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
-
-                
-                
-                
-                    
+                var sheetContent = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetData/></worksheet>"""                    
                 let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
                 var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
                 let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
-                var dup = false
-                for each in sheetFiles{
-                    let checkXmlString = try? String(contentsOf: each)
-                    let count = (checkXmlString?.components(separatedBy: code).count ?? 0)
-                    if (count>0){
-                        dup = true
-                        break
-                    }
-                }
-                if dup{
-                    var code2 = ""
-                    for _ in 0..<8 {
-                        let idx = Int.random(in: 0..<16)
-                        code2.append(randamChar[idx])
-                    }
-                    
-                    
-                    //create new sheet
-                    var sheetContent = "<worksheet mc:Ignorable=\"x14ac xr xr2 xr3\" xr:uid=\"{" + code + "-0001-0000-0000-0000" + code2 + "}\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"><dimension ref=\"A1\"></dimension><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection sqref=\"B5\" activeCell=\"B5\"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"13.5\"></sheetFormatPr><sheetData></sheetData><pageMargins header=\"0.3\" right=\"0.7\" footer=\"0.3\" bottom=\"0.75\" top=\"0.75\" left=\"0.7\"></pageMargins></worksheet>"
-
-                }
                 
                 print("sheetFiles: ", sheetXMLFiles.count)
                 
