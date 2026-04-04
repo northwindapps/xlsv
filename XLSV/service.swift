@@ -2009,7 +2009,7 @@ class Service {
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
                 
                 
-                let oldAry = testStringUniqueAry(url: shardStringXMLURL)
+//                let oldAry = testStringUniqueAry(url: shardStringXMLURL)
                
                     
                     var oldSheetDataPart = ""
@@ -2086,19 +2086,36 @@ class Service {
                     sheetXmlString += "</sheetData>"
                 
                
-                    if(oldSheetDataPart != ""){
-                        let updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
-                        do{
-                            try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                        } catch{
-                            print("failed to update sheetdata")
-                            return false
+                if oldSheetDataPart != "" {
+                    let updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
+                    do {
+                        try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        
+                        // --- 成功時のログ ---
+                        print("✅ Sheet update successful!")
+                        print("📍 Path: \(worksheetXMLURL.path)")
+                        print("📊 Data length: \(oldSheetDataPart.count) -> \(sheetXmlString.count) characters")
+                        
+                        // 念のため、書き込み後のファイルが存在するか確認
+                        if let attributes = try? FileManager.default.attributesOfItem(atPath: worksheetXMLURL.path) {
+                            let fileSize = attributes[.size] as? Int64 ?? 0
+                            print("💾 Final file size: \(fileSize) bytes")
                         }
+                        
+                    } catch {
+                        // --- 失敗時のログ（詳細なエラー内容を出す） ---
+                        print("❌ Failed to update sheetData: \(error.localizedDescription)")
+                        print("⚠️ Error details: \(error)")
+                        return false
                     }
+                } else {
+                    print("⚠️ Warning: oldSheetDataPart was empty, no replacement performed.")
+                }
+
                 
-                    
-                let newAry = testStringUniqueAry(url: shardStringXMLURL)
-                let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
+//                    
+//                let newAry = testStringUniqueAry(url: shardStringXMLURL)
+//                let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
 
                 
                 let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
