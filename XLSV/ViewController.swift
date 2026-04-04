@@ -2014,12 +2014,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                             }
                 }else{
                     //del,insert ops TODO must fix bug in next version
-//                    panGestureShow2()
+                    panGestureShow2()
                 }
                
             } else {
                 //del,insert ops TODO must fix bug in next version
-//                    panGestureShow2()
+                    panGestureShow2()
             }
 
            
@@ -2164,48 +2164,98 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func clearSelectedCellContent(){
-        var excelIndice = [String]()
-        for (i,each) in tempRangeSelected.enumerated() {
-            let column = each.item
-            let row = each.section
-            let j = location.firstIndex(of: String(column)+","+String(row))
-            if !isExcel{
-                print("saved")
-                saveAsLocalJson(filename: "csv_sheet1")
+        if isExcel {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
+            
+            for (i,each) in tempRangeSelected.enumerated() {
+                let column = each.item
+                let row = each.section
+                //(column,row) location
+                let locIndex = location.firstIndex(of: String(column)+","+String(row))
+                if locIndex == nil{
+                    continue
+                }
+                if !isExcel{
+                    print("saved")
+                    saveAsLocalJson(filename: "csv_sheet1")
+                }
+                
+                //excel
+                changeaffected.removeAll()
+                
+                //data input
+                //            if j != nil{
+                //                excelIndice.append(locationInExcel[j!])
+                //            }
+                
+                if location.count > locIndex!{
+                    location.remove(at:locIndex!)
+                    locationInExcel.remove(at:locIndex!)
+                    content.remove(at:locIndex!)
+                    tcolor.remove(at:locIndex!)
+                    textsize.remove(at:locIndex!)
+                    bgcolor.remove(at:locIndex!)
+                    
+                }
+                
+                let k = f_location.firstIndex(of: String(column)+","+String(row))
+                if k != nil && f_calculated.count > k!{
+                    f_calculated.remove(at:k!)
+                    f_location_alphabet.remove(at:k!)
+                    f_location.remove(at:k!)
+                }
             }
             
-            //excel
-            changeaffected.removeAll()
             
-            //data input
-            if j != nil{
-                excelIndice.append(locationInExcel[j!])
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            
+            if rlt == nil{
+                print("Something went wrong")
+                return
             }
             
-            if j != nil && location.count > j!{
-                location.remove(at:j!)
-                locationInExcel.remove(at:j!)
-                content.remove(at:j!)
-                tcolor.remove(at:j!)
-                textsize.remove(at:j!)
-                bgcolor.remove(at:j!)
-            }
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
             
-            let k = f_location.firstIndex(of: String(column)+","+String(row))
-            if k != nil && f_calculated.count > k!{
-                f_calculated.remove(at:k!)
-                f_location_alphabet.remove(at:k!)
-                f_location.remove(at:k!)
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+            
+            print("go to file view")
+            
+            
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+                //                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                    // Assuming `collectionView` is your UICollectionView instance
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
+                    }
+                }
+                
             }
         }
-           
-//        inputBalk(src: " ", idx: String(column)+","+String(row), excelIdx: locationInExcel[j!])
-        if excelIndice.count > 0{
-            excelEntryBulk(srcString: " ", cellId: excelIndice[0], bka:excelIndice)
-        }
-     
-        calculatormode_update_main()
-        myCollectionView.reloadData()
     }
     
     @objc func fillDateInSelectedCellContent(direction:Int ) {

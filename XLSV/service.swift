@@ -1896,6 +1896,267 @@ class Service {
         }
     }
     
+    func testRangeOperationsBox(fp: String = "", url: URL? = nil, calculated:String = "",content:[String] = [],locationInExcel:[String] = []) -> Bool? {
+        var isError = false
+        do {
+            // Get the sandbox directory for documents
+            if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+
+            //
+            if FileManager.default.fileExists(atPath: fp) {
+                        // The specified path exists, continue with your code
+                        print("File or directory exists at path: \(fp)")
+                let directoryURL =  URL.init(fileURLWithPath: fp).deletingLastPathComponent()
+                let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+                        
+                // Check if the subdirectory already exists
+                if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                    // Create the subdirectory
+                    try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+                    print("Subdirectory created successfully at path: \(subdirectoryURL.path)")
+                } else {
+                    // Subdirectory already exists
+                    print("Subdirectory already exists at path: \(subdirectoryURL.path)")
+                    var files = try FileManager.default.contentsOfDirectory(at:
+                                                                                subdirectoryURL, includingPropertiesForKeys: nil)
+                    for fileURL in files {
+                       do {
+                           try FileManager.default.removeItem(at: fileURL)
+                           print("Deleted file:", fileURL.lastPathComponent)
+                       } catch {
+                           print("Error deleting file:", error)
+                           return false
+                       }
+                    }
+                    
+                    files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                    print("Subdirectory is now empty",files)
+                }
+                
+                // Construct the URL for the destination file
+                let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+                //let destinationURL = subdirectoryURL.appendingPathComponent(URL.init(fileURLWithPath: fp).lastPathComponent)
+               
+                // Check if the file already exists at the destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                    // Remove destination file if it already exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                } else {
+                    // Move the file to the subdirectory
+                    try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
+                    print("File moved successfully to: \(destinationURL.path)")
+                }
+                
+                do {
+                    //unzip
+                    let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+                    print("File unzipped successfully.")
+                } catch {
+                    print("Error unzipping file: \(error)")
+                    return false
+                }
+                
+                do {
+                    //delete imported2.zip or imported2.xlsx
+                    try FileManager.default.removeItem(at: destinationURL)
+                    print("Deleted zip file:", destinationURL)
+                } catch {
+                    print("Error deleting file:", error)
+                    return false
+                }
+                
+                //TODO update sytle.xml here
+                let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
+                let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
+                //update to it contains date numFmt and other format
+                if (modifiedStylesStr != nil){
+                    do {
+                        try modifiedStylesStr?.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                    } catch {
+                        print("Styles.xml write error: \(error)")
+                        return false
+                    }
+                    do {
+                        var xmlString = try String(contentsOf: styleXMLURL)
+                        //                    print("xmlString: \(xmlString)")
+                    }catch{
+                        print("failed at writing to styleXMLURL")
+                        return false
+                    }
+                }
+                
+                    
+                //shardString update test
+                let shardStringXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
+                
+                //check missing files and create the missing ones
+                if !FileManager.default.fileExists(atPath: shardStringXMLURL.path) {
+                    let content = """
+                        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                        <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0">
+                        </sst>
+                        """
+                    
+                    try? content.write(to: shardStringXMLURL, atomically: true, encoding: .utf8)
+                }
+                
+                
+                //value and string update test
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
+                
+                
+                let oldAry = testStringUniqueAry(url: shardStringXMLURL)
+               
+                    
+                    var oldSheetDataPart = ""
+                    let sheetData = try? Data(contentsOf: worksheetXMLURL)
+                    if sheetData == nil{
+                        return false
+                    }
+                    
+                    let xmlString = String(data: sheetData!, encoding: .utf8) ?? ""
+                    let pattern = "<sheetData.*?>.*?</sheetData>|<sheetData ?/>"
+                    if let range = xmlString.range(of: pattern, options: .regularExpression) {
+                        oldSheetDataPart = String(xmlString[range])
+                    } else {
+                        return false
+                    }
+                    
+                    var cells: [ExcelCell] = []
+                    for i in 0..<locationInExcel.count {
+                        cells.append(ExcelCell(excelRef: locationInExcel[i], content: content[i]))
+                    }
+                    
+                  
+                    cells.sort {
+                        if $0.rowNumber != $1.rowNumber {
+                            return $0.rowNumber < $1.rowNumber //ASC
+                        }
+                        return $0.columnName < $1.columnName // ASC(A, B, C...)
+                    }
+                    
+                    print(cells)
+                    let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                    
+                    let currentAry = testStringUniqueAry(url: shardStringXMLURL)
+                    
+                    var sheetXmlString = "<sheetData>"
+                    var lastRowNumber = -1
+                
+                    for cell in cells {
+                        
+                        if cell.rowNumber != lastRowNumber {
+                            if lastRowNumber != -1 {
+                                sheetXmlString += "</row>"
+                            }
+                            sheetXmlString += "<row r=\"\(cell.rowNumber)\">"
+                            lastRowNumber = cell.rowNumber
+                        }
+                        
+                        if cell.content.hasPrefix("=") {
+                            //Formula
+                            let formula = cell.content.replacingOccurrences(of: "=", with: "")
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f><v>0</v></c>"
+                        } else {
+                            //Value
+                            //Txt
+                            let index = currentAry?.firstIndex(of: cell.content)
+                            if ((index != nil)){
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
+                            }else{
+                                if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
+                                    sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
+                                }
+                                else{
+                                    print("something went wrong, no index")
+                                }
+                            }
+                            
+                            
+                        }
+                    }
+                    
+                    if lastRowNumber != -1 {
+                        sheetXmlString += "</row>"
+                    }
+                    sheetXmlString += "</sheetData>"
+                
+               
+                    if(oldSheetDataPart != ""){
+                        let updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
+                        do{
+                            try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                        } catch{
+                            print("failed to update sheetdata")
+                            return false
+                        }
+                    }
+                
+                    
+                let newAry = testStringUniqueAry(url: shardStringXMLURL)
+                let oldUniqueCount = testStringOldUniqueCount(url: shardStringXMLURL)
+
+                
+                let sheetDirectoryURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets")
+                var sheetFiles = try FileManager.default.contentsOfDirectory(at: sheetDirectoryURL, includingPropertiesForKeys: nil)
+                let sheetXMLFiles = sheetFiles.filter { $0.pathExtension == "xml" }
+                    for file in sheetFiles {
+                        print("Found .xml file:", file.lastPathComponent)
+                    }
+                print("sheetFiles: ", sheetXMLFiles)
+                
+                
+                //ready to zip
+                var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                let fpURL = URL(fileURLWithPath: fp)
+                let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
+                //appendingPathComponent("imported2.xlsx")
+                let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+                // Check if the destination file exists
+                if FileManager.default.fileExists(atPath: fpURL.path) {
+                    // If it exists, remove it
+                    try FileManager.default.removeItem(at: fpURL)
+                }
+                //overwrite or update xlsx
+                let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                
+                for fileURL in files {
+                   do {
+                       try FileManager.default.removeItem(at: fileURL)
+                       print("Deleted file:", fileURL.lastPathComponent)
+                   } catch {
+                       print("Error deleting file:", error)
+                       return false
+                   }
+                }
+                
+                files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
+                print("Done: ", files)
+                
+                return true
+
+                
+            } else {
+                // Handle the case where the specified path doesn't exist
+                print("File or directory does not exist at path: \(fp)")
+                return false
+            }
+            
+        } else {
+            print("Document directory not found.")
+            return false
+        }
+            
+            
+        } catch {
+            print("Error: \(error)")
+            return false
+        }
+    }
     
     func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:String = "",content:[String] = [],locationInExcel:[String] = []) -> Bool? {
         var isError = false
