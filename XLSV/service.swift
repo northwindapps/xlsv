@@ -3676,7 +3676,33 @@ class Service {
             return nil
     }
     
-    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false) -> URL? {
+    func removeXlsxBackup() -> Bool? {
+        do {
+            let backupDirURL = ExcelHelper().getBackupDirectory()
+            if (backupDirURL == nil){
+                print("Invalid backupDir, return nil")
+                return nil
+            }
+       
+            let fileURLs = try FileManager.default.contentsOfDirectory(at: backupDirURL!, includingPropertiesForKeys: nil)
+
+            for fileURL in fileURLs {
+                if fileURL.lastPathComponent.hasPrefix("before_") {
+                    try FileManager.default.removeItem(at: fileURL)
+                    print("🗑️ Deleted old prefix file: \(fileURL.lastPathComponent)")
+                }
+            }
+            return true
+
+            
+        } catch {
+            print("Error: \(error)")
+        }
+
+        return false
+    }
+    
+    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false,msg:String = "") -> URL? {
         do {
         // Get the sandbox directory for documents
         if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -3773,7 +3799,7 @@ class Service {
             var nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
             
             if isAutoSave == true{
-                nameWithoutExtension = "system_auto_save"
+                nameWithoutExtension = msg + "auto_save"
             }
             
             let fileExtension = fpURL.pathExtension // xlsx
@@ -3781,14 +3807,19 @@ class Service {
             let newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
             let backupURL = backupDirURL!.appendingPathComponent(newFileName)
 
-            
-//            let backupURL = backupDirURL!.appendingPathComponent(fpURL.lastPathComponent)
-            //appendingPathComponent("imported2.xlsx")
             let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
-            let rlt = try FileManager.default.copyItem(at: zipFilePath, to: backupURL)
+            
+      
+            if FileManager.default.fileExists(atPath: backupURL.path) {
+                try FileManager.default.removeItem(at: backupURL)
+            }
+
+            try FileManager.default.copyItem(at: zipFilePath, to: backupURL)
             
             files = try FileManager.default.contentsOfDirectory(at:backupDirURL!, includingPropertiesForKeys: nil)
             print("Bakup is made: ", files)
+            
+            try FileManager.default.removeItem(at: zipFilePath)
             
             return backupURL
 

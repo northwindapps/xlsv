@@ -1821,9 +1821,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         doubleTapGesture2.numberOfTapsRequired = 2
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
-        if appd.isFirstLaunchToday == false{
-            takeDailyBackup()
-            appd.isFirstLaunchToday = true
+        checkAndUpdateLaunchDateAlsoTakeDailyBackup()
+    }
+    
+    func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
+        let calendar = Calendar.current
+        let today = Date()
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        if !calendar.isDate(appd.lastLaunchDate, inSameDayAs: today) {
+            appd.lastLaunchDate = today
+            takeDailyBackup(msg: "daily_")
+            UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let rlt = serviceInstance.removeXlsxBackup()
+            if rlt == false{
+                print("auto backup removal failed")
+            }
         }
     }
     
@@ -1979,6 +1993,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                 )
                                 
                                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                                    self.takeDailyBackup(msg: "before_seqDate_")
                                     if isSingleCol{
                                         self.fillDateInSelectedCellContent(direction: 0)
                                     }else{
@@ -1996,6 +2011,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                                             preferredStyle: .alert)
                                 
                                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                                    self.takeDailyBackup(msg: "before_seqFunc_")
                                     if isSingleCol{
                                         self.fillFunctionInSelectedCellContent(direction: 0)
                                     }else{
@@ -2101,6 +2117,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func rowInsertOperation() {
         if isExcel {
+            takeDailyBackup(msg: "before_rowInsert_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -2193,6 +2210,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func rowDeleteOperation() {
         if isExcel {
+            takeDailyBackup(msg: "before_rowDelete_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -2292,6 +2310,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func columnInsertOperation(){
         if isExcel {
+            takeDailyBackup(msg: "before_colInsert_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -2379,6 +2398,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func columnDeleteOperation() {
         if isExcel {
+            takeDailyBackup(msg: "before_colDel_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -2473,6 +2493,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func clearSelectedCellContent(){
         if isExcel {
+            takeDailyBackup(msg: "before_cellDel_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
@@ -2641,13 +2662,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func fillFunctionInSelectedCellContent(direction: Int) {
-        // 1. 基準となる数式を取得
         guard let firstIndexPath = tempRangeSelected.sorted(by: { $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section }).first,
               let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
         
-        let baseFormula = content[firstIdx] // 例: "=A3+1"
-        
-        // 2. ソート（前回のロジックを適用）
+        let baseFormula = content[firstIdx] //"=A3+1"
         let sortedSelection = tempRangeSelected.sorted { (a, b) -> Bool in
             if direction == 0 {
                 return a.item == b.item ? a.section < b.section : a.item < b.item
@@ -2666,18 +2684,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             let posKey = "\(each.item),\(each.section)"
             
-            // --- 数式のオフセット計算 ---
-            // 最初のセル(i=0)はそのまま、i>0 は座標の差分だけセル番地をずらす
             let colOffset = each.item - firstIndexPath.item
             let rowOffset = each.section - firstIndexPath.section
             let newFormula = shiftFormula(baseFormula, colOffset: colOffset, rowOffset: rowOffset)
             generatedFormulas.append(newFormula)
 
-            // --- 既存データの削除ロジック（提供コードの移植） ---
             if let j = location.firstIndex(of: posKey) {
                 excelIndice.append(locationInExcel[j])
                 
-                // 配列から削除
                 location.remove(at: j)
                 locationInExcel.remove(at: j)
                 content.remove(at: j)
@@ -6682,12 +6696,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    @objc func takeDailyBackup() {
+    @objc func takeDailyBackup(msg:String = "") {
         //make a backup
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
-        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true)
+        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true,msg: msg)
         
         
     }

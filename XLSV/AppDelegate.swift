@@ -134,7 +134,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var excelfilename = ""
     
-    var isFirstLaunchToday = false
+    var lastLaunchDate: Date = {
+        return UserDefaults.standard.object(forKey: "lastLaunchDateKey") as? Date ?? Date(timeIntervalSince1970: 0)
+    }()
     
     
 
