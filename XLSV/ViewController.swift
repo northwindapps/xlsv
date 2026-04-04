@@ -794,23 +794,26 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let alert = UIAlertController(
                 title: appd.sheetNames[indexPath.item],
-                message: "Select action to perform.",
+                message: "Choose an action",
                 preferredStyle: .alert
             )
             
-            alert.addAction(UIAlertAction(title: "Add New One", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: "Add Sheet", style: .default) { _ in
                 self.createxlsxSheet()
             })
             
 
-            alert.addAction(UIAlertAction(title: "Make a copy", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: "Duplicate", style: .default) { _ in
                 self.excelCopySheet()
             })
             
-            alert.addAction(UIAlertAction(title: "Delete", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: "Delete Sheet", style: .default) { _ in
                 self.deletexlsxSheet()
             })
             
+            alert.addAction(UIAlertAction(title: "Rename Sheet", style: .default) { _ in
+                self.excelChangeSheetName()
+            })
             
             
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
@@ -2006,11 +2009,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                 self.present(alert, animated: true)
                             }
                             else{
-                                //del,insert ops
-                                panGestureShow2()
+                                //del,insert ops TODO must fix bug
+                                //panGestureShow2()
                             }
                 }else{
-                    panGestureShow2()
+                    //del,insert ops TODO must fix bug
+                    //panGestureShow2()
                 }
                
             } else {
@@ -2225,6 +2229,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var generatedDates = [String]()
 
         for (i, each) in sortedSelection.enumerated() {
+            if i == sortedSelection.count - 1 {
+                print("This is the last item")
+                continue
+            }
             let column = each.item
             let row = each.section
             let posKey = "\(column),\(row)"
@@ -2296,6 +2304,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var generatedFormulas = [String]()
 
         for (i, each) in sortedSelection.enumerated() {
+            if i == sortedSelection.count - 1 {
+                print("This is the last item")
+                continue
+            }
             let posKey = "\(each.item),\(each.section)"
             
             // --- 数式のオフセット計算 ---
@@ -2579,9 +2591,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         customview2.layer.borderColor = UIColor.black.cgColor
-        
-        
-
         
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
         
@@ -6297,6 +6306,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
         let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        let alert = UIAlertController(
+            title: "Backup saved.",
+            message: "Your file has been saved successfully.",
+            preferredStyle: .alert
+        )
+        
+        if url == nil {
+            alert.title = "Save Failed"
+            alert.message = "Something went wrong while making a buckup."
+        }
+        
+        
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        
+        self.present(alert, animated: true)
+        
+        
     }
     
     @objc func takeDailyBackup() {
@@ -6305,6 +6332,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
         let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true)
+        
+        
     }
     
     func uploadFileToICloud(url: URL,filename: String) {

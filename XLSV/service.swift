@@ -1814,7 +1814,6 @@ class Service {
                 //value and string update test
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 
-//                let sheetNameId = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex))
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet" + String(appd.wsSheetIndex) + ".xml")
                 
                 
