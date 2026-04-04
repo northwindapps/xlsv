@@ -2099,38 +2099,196 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.view.addSubview(rsview)
     }
     
-    @objc func rowDeleteOperation(){
-        //print(tempRangeSelected)
-        var rowItems = [Int]()
-        var old = [String]()
-        var new = [String]()
-        for (i,each) in tempRangeSelected.enumerated(){
-            let colInt = each.item
-            let rowInt = each.section
-            if !rowItems.contains(rowInt){
-                rowItems.append(rowInt)
+    @objc func rowInsertOperation() {
+        if isExcel {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
+            
+            let rowsToInsert = Set(tempRangeSelected.map { $0.section })
+            let minRow = rowsToInsert.min() ?? 0
+            let numberOfRowsToInsert = rowsToInsert.count
+            
+            //dealing with index inconsistancy by reversed
+            for i in (0..<location.count).reversed() {
+                let locComponents = location[i].split(separator: ",")
+                guard locComponents.count == 2,
+                      let col = Int(locComponents[0]),
+                      let row = Int(locComponents[1]) else { continue }
+                
+                if row >= minRow {
+                    let newRow = row + numberOfRowsToInsert
+                    
+                    location[i] = "\(col),\(newRow)"
+                    
+                    //"A7" -> "A8"
+                    let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: col)
+                    locationInExcel[i] = "\(excelCol)\(newRow)"
+                }
+                
+                if !isExcel{
+                    print("saved")
+                    saveAsLocalJson(filename: "csv_sheet1")
+                }
+                
+                //excel
+                changeaffected.removeAll()
+            }
+            
+            content = content.filter { $0 != "" }
+            locationInExcel = locationInExcel.filter { $0 != "" }
+            print("newcontent(col,row)",content)
+            print("newExcellocation(col,row)",locationInExcel)
+            
+            
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            
+            if rlt == nil{
+                print("Something went wrong")
+                return
+            }
+            
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
+            
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+            
+            print("go to file view")
+            tempRangeSelected = []
+            
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+                //                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                    // Assuming `collectionView` is your UICollectionView instance
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
+                    }
+                }
+                
             }
         }
-        print("rowIntNew",rowItems)
-        excelRowsDelete(rowRange: rowItems)
-        tempRangeSelected = []
     }
     
-    @objc func rowInsertOperation(){
-        var rowItems = [Int]()
-        var old = [String]()
-        var new = [String]()
-        for (i,each) in tempRangeSelected.enumerated(){
-            let colInt = each.item
-            let rowInt = each.section
-            if !rowItems.contains(rowInt){
-                rowItems.append(rowInt)
+    
+    @objc func rowDeleteOperation() {
+        if isExcel {
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+            appd.wsSheetIndex = sheetIdx!
+            print("wsSheetIndex",appd.wsSheetIndex)
+            
+            let rowsToDelete = Set(tempRangeSelected.map { $0.section })
+            let minRow = rowsToDelete.min() ?? 0
+            let numberOfRowsToDelete = rowsToDelete.count
+            
+            //dealing with index inconsistancy by reversed
+            for i in (0..<location.count).reversed() {
+                let locComponents = location[i].split(separator: ",")
+                guard locComponents.count == 2,
+                      let col = Int(locComponents[0]),
+                      let row = Int(locComponents[1]) else { continue }
+                
+                if rowsToDelete.contains(row) {
+                    location[i] = ""
+                    locationInExcel[i] = ""
+                    content[i] = ""
+                    tcolor[i] = ""
+                    textsize[i] = ""
+                    bgcolor[i] = ""
+                } else if row > minRow {
+                    //shift + 1
+                    let newRow = row - numberOfRowsToDelete
+                    location[i] = "\(col),\(newRow)"
+                    
+                    //"A10" -> "A9")
+                    let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: col)
+                    locationInExcel[i] = "\(excelCol)\(newRow)"
+                }
+                
+                if !isExcel{
+                    print("saved")
+                    saveAsLocalJson(filename: "csv_sheet1")
+                }
+                
+                //excel
+                changeaffected.removeAll()
+            }
+            
+            content = content.filter { $0 != "" }
+            locationInExcel = locationInExcel.filter { $0 != "" }
+            print("newcontent(col,row)",content)
+            print("newExcellocation(col,row)",locationInExcel)
+            
+            
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            
+            if rlt == nil{
+                print("Something went wrong")
+                return
+            }
+            
+            //sheet cell get touched
+            appd.collectionViewCellSizeChanged = 1
+            appd.cswLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedHeight.removeAll()
+            
+            
+            f_calculated.removeAll()
+            f_content.removeAll()
+            content.removeAll()
+            location.removeAll()
+            f_location_alphabet.removeAll()
+            
+            //print("sheet changed",indexPath.item)
+            stringboxText = ""
+            
+            print("go to file view")
+            tempRangeSelected = []
+            
+            
+            // Present the target view controller after LoadingFileController's view has appeared
+            DispatchQueue.main.async {
+                //                self.present(targetViewController, animated: true, completion: nil)
+                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                    // Assuming `collectionView` is your UICollectionView instance
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
+                    }
+                }
+                
             }
         }
-        print("rowIntNew",rowItems)
-        excelRowsAdd(rowRange: rowItems)
-        tempRangeSelected = []
     }
+
     
     @objc func columnInsertOperation(){
         if isExcel {
