@@ -2013,13 +2013,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                 //panGestureShow2()
                             }
                 }else{
-                    //del,insert ops TODO must fix bug
-                    //panGestureShow2()
+                    //del,insert ops TODO must fix bug in next version
+//                    panGestureShow2()
                 }
                
             } else {
-                print("multi row and col selection")
-                panGestureShow2()
+                //del,insert ops TODO must fix bug in next version
+//                    panGestureShow2()
             }
 
            
@@ -2037,7 +2037,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     func panGestureShow2() {
-        
+        //TODO Bug fix
         if rsview != nil{
             
             rsview.removeFromSuperview()
