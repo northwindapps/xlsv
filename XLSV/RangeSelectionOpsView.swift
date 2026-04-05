@@ -24,6 +24,7 @@ class RangeSelectionOpsView: UIView {
     
     @IBOutlet weak var `return`: UIButton!
     
+    @IBOutlet weak var copyandpaste: UIButton!
     override init(frame: CGRect)
     {
         super.init(frame: frame)

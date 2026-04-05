@@ -2061,22 +2061,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         switch tag_int {
         case 0:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
             break
         case 1:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
             break
         case 2:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
             break
         case 3:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:10, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:10, width: 220,height: 180))
             break
         case 4:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:200, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:200, width: 220,height: 180))
             break
         case 5:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:190, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:190, width: 220,height: 180))
             break
             
             
@@ -2084,7 +2084,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
         default:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 160))
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
             break
             
         }
@@ -2108,6 +2108,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         rsview.insertcol.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
         
         rsview.deletecol.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
+        
+        rsview.copyandpaste.addTarget(self, action: #selector(copyPasteSelectedCellContent), for: UIControl.Event.touchUpInside)
 
         rsview.return.addTarget(self, action: #selector(ViewController.backRS(_:)), for: UIControl.Event.touchUpInside)
         
@@ -2582,6 +2584,112 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 
             }
+        }
+    }
+
+    @objc func copyPasteSelectedCellContent() {
+        if isExcel {
+            let ecol = ExcelHelper().GetExcelColumnName(columnNumber: currentindex.item)
+            let alert = UIAlertController(
+                title: "Copy & Paste Selected Cell Values",
+                message: "Do you want to paste them starting from cell " + ecol + String(currentindex.section) + "?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Yes", style: .default) { _ in
+                self.takeDailyBackup(msg: "before_copyPaste_")
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+                appd.wsSheetIndex = sheetIdx!
+                print("wsSheetIndex",appd.wsSheetIndex)
+
+
+                //find copy origin point(left top)
+                let minCol = self.tempRangeSelected.map { $0.item }.min() ?? 0
+                let minRow = self.tempRangeSelected.map { $0.section }.min() ?? 0
+                
+                //find paste origin point
+                let destBaseCol = self.currentindex.item
+                let destBaseRow = self.currentindex.section
+                
+                var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
+                
+                for each in self.tempRangeSelected {
+                    if let idx = self.location.firstIndex(of: "\(each.item),\(each.section)") {
+                        copyBuffer.append((
+                            colOffset: each.item - minCol,
+                            rowOffset: each.section - minRow,
+                            value: self.content[idx]
+                        ))
+                    }
+                }
+                
+                //start copying
+                for item in copyBuffer {
+                    let destCol = destBaseCol + item.colOffset
+                    let destRow = destBaseRow + item.rowOffset
+                    let destLocStr = "\(destCol),\(destRow)"
+                    
+                    if let existingIdx = self.location.firstIndex(of: destLocStr) {
+                        self.content[existingIdx] = item.value
+                    } else {
+                        self.location.append(destLocStr)
+                        self.content.append(item.value)
+                        let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: destCol)
+                        self.locationInExcel.append("\(excelCol)\(destRow)")
+                    }
+                }
+
+                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+                let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel )
+                
+                if rlt == nil{
+                    print("Something went wrong")
+                    return
+                }
+                
+                //sheet cell get touched
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+                
+                
+                self.f_calculated.removeAll()
+                self.f_content.removeAll()
+                self.content.removeAll()
+                self.location.removeAll()
+                self.f_location_alphabet.removeAll()
+                
+                //print("sheet changed",indexPath.item)
+                self.stringboxText = ""
+                
+                print("go to file view")
+                self.tempRangeSelected = []
+                
+                
+                // Present the target view controller after LoadingFileController's view has appeared
+                DispatchQueue.main.async {
+                    //                self.present(targetViewController, animated: true, completion: nil)
+                    self.loadExcelSheet(idx: appd.wsSheetIndex){
+                        // Assuming `collectionView` is your UICollectionView instance
+                        if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                            customLayout.resetCellAttrsDictionaryItemZindex()
+                            customLayout.prepare()
+                            customLayout.invalidateLayout() // Call the method on the instance
+                            self.myCollectionView.reloadData()
+                        } else {
+                            print("CustomCollectionViewLayout is not set as the current layout")
+                        }
+                    }
+                    
+                }
+                
+            })
+            alert.addAction(UIAlertAction(title: "No", style: .cancel){ _ in
+            })
+            self.present(alert, animated: true)
         }
     }
     
