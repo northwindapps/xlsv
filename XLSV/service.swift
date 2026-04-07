@@ -95,144 +95,150 @@ class Service {
     func testExtractStyle(url:URL? = nil)->String?{
         if let url2 = url{
             var modifiedPartNum = 0
-            let xmlData = try? Data(contentsOf: url2)
-            let parser = XMLParser(data: xmlData!)
-            // Set XMLParserDelegate
-            let delegate = CustomXMLParserDelegate()
-            parser.delegate = delegate
+            do{
+            let xmlData = try Data(contentsOf: url2)
             
-            var patternFound = false
-            // Start parsing
-            if parser.parse() {
-                // Retrieve the extracted part
-                let extractedPart = delegate.extractedPart
-                //print(extractedPart)
-            }
-            
-            //regular expression
-            var xmlString = try? String(contentsOf: url2)
-            if (xmlString != nil){
-                let generalNumFmt = "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                let parser = XMLParser(data: xmlData)
+                // Set XMLParserDelegate
+                let delegate = CustomXMLParserDelegate()
+                parser.delegate = delegate
                 
-                if !xmlString!.contains(generalNumFmt) {
-                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: generalNumFmt + "</cellXfs>")
-                    modifiedPartNum += 1
+                var patternFound = false
+                // Start parsing
+                if parser.parse() {
+                    // Retrieve the extracted part
+                    let extractedPart = delegate.extractedPart
+                    //print(extractedPart)
                 }
                 
-                
-                //edit it first. append numFmtId 14 Date
-                let dateNumFmt = "<xf numFmtId=\"14\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
-                
-                if !xmlString!.contains(dateNumFmt) {
-                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: dateNumFmt + "</cellXfs>")
-                    modifiedPartNum += 1
-                }
-                
-                let timeNumFmt = "<xf numFmtId=\"20\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
-                
-                if !xmlString!.contains(timeNumFmt) {
-                    xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: timeNumFmt + "</cellXfs>")
-                    modifiedPartNum += 1
-                }
-                
-                
-                
-                let xml = XMLHash.parse(xmlString!)
-                
-                var numFmts = [String]()
-                var formatCodes = [String]()
-                // Assuming `xml` is your XML object
-                for child in xml.children.first!.children[0].children {
-                    if child.element?.name == "numFmt" {
-                        // Get the attributes
-                        let attributes = child.element?.allAttributes
-                        // Extract numFmtId
-                        if let numFmtId = attributes!["numFmtId"]?.text {
-                            print("numFmtId:", numFmtId)
-                            numFmts.append(numFmtId)
-                        }
-                        // Extract formatCode
-                        if let formatCode = attributes!["formatCode"]?.text {
-                            print("formatCode:", formatCode)
-                            formatCodes.append(formatCode)
-                        }
+                //regular expression
+                var xmlString = try? String(contentsOf: url2)
+                if (xmlString != nil){
+                    let generalNumFmt = "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                    
+                    if !xmlString!.contains(generalNumFmt) {
+                        xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: generalNumFmt + "</cellXfs>")
+                        modifiedPartNum += 1
                     }
-                }
-                
-                var numFmtIds = [Int]()
-                // Assuming `xml` is your XML object
-                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
-                    if let id = child.element?.allAttributes["numFmtId"]?.text {
-                        numFmtIds.append(Int(id) ?? -1)
+                    
+                    
+                    //edit it first. append numFmtId 14 Date
+                    let dateNumFmt = "<xf numFmtId=\"14\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                    
+                    if !xmlString!.contains(dateNumFmt) {
+                        xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: dateNumFmt + "</cellXfs>")
+                        modifiedPartNum += 1
                     }
-                }
-                
-
-                var cellXfs = [Int]()
-                // Assuming `xml` is your XML object
-                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
-                    if let borderId = child.element?.allAttributes["borderId"]?.text {
-                        cellXfs.append(Int(borderId) ?? -1)
+                    
+                    let timeNumFmt = "<xf numFmtId=\"20\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>"
+                    
+                    if !xmlString!.contains(timeNumFmt) {
+                        xmlString! = xmlString!.replacingOccurrences(of: "</cellXfs>", with: timeNumFmt + "</cellXfs>")
+                        modifiedPartNum += 1
                     }
-                }
-                
-                var cellStyleXfs = [Int]()
-                // Assuming `xml` is your XML object
-                for child in xml.children.first!.children.first(where: { $0.element?.name == "cellStyleXfs" })!.children {
-                    if let borderId = child.element?.allAttributes["borderId"]?.text {
-                        cellStyleXfs.append(Int(borderId) ?? -1)
-                    }
-                }
-                
-                
-                var border_lefts = [Int]()
-                var border_rights = [Int]()
-                var border_bottoms = [Int]()
-                var border_tops = [Int]()
-                // Assuming `xml` is your XML object
-                for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
-                    if child.children.count > 0{
-                        border_lefts.append(0)
-                        border_rights.append(0)
-                        border_bottoms.append(0)
-                        border_tops.append(0)
-                        for gChild in child.children{
-                            if gChild.element?.name == "left"{
-                                let leftCount = gChild.children.count
-                                border_lefts[border_lefts.count - 1] = leftCount
+                    
+                    
+                    
+                    let xml = XMLHash.parse(xmlString!)
+                    
+                    var numFmts = [String]()
+                    var formatCodes = [String]()
+                    // Assuming `xml` is your XML object
+                    for child in xml.children.first!.children[0].children {
+                        if child.element?.name == "numFmt" {
+                            // Get the attributes
+                            let attributes = child.element?.allAttributes
+                            // Extract numFmtId
+                            if let numFmtId = attributes!["numFmtId"]?.text {
+                                print("numFmtId:", numFmtId)
+                                numFmts.append(numFmtId)
                             }
-                            
-                            if gChild.element?.name == "right"{
-                                let rightCount = gChild.children.count
-                                border_rights[border_rights.count - 1] = rightCount
+                            // Extract formatCode
+                            if let formatCode = attributes!["formatCode"]?.text {
+                                print("formatCode:", formatCode)
+                                formatCodes.append(formatCode)
                             }
-                            
-                            if gChild.element?.name == "top"{
-                                let topCount = gChild.children.count
-                                border_tops[border_tops.count - 1] = topCount
-                            }
-                            
-                            if gChild.element?.name == "bottom"{
-                                let bottomCount = gChild.children.count
-                                border_bottoms[border_bottoms.count - 1] = bottomCount
-                            }
-                            
                         }
                     }
+                    
+                    var numFmtIds = [Int]()
+                    // Assuming `xml` is your XML object
+                    for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
+                        if let id = child.element?.allAttributes["numFmtId"]?.text {
+                            numFmtIds.append(Int(id) ?? -1)
+                        }
+                    }
+                    
+                    
+                    var cellXfs = [Int]()
+                    // Assuming `xml` is your XML object
+                    for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
+                        if let borderId = child.element?.allAttributes["borderId"]?.text {
+                            cellXfs.append(Int(borderId) ?? -1)
+                        }
+                    }
+                    
+                    var cellStyleXfs = [Int]()
+                    // Assuming `xml` is your XML object
+                    for child in xml.children.first!.children.first(where: { $0.element?.name == "cellStyleXfs" })!.children {
+                        if let borderId = child.element?.allAttributes["borderId"]?.text {
+                            cellStyleXfs.append(Int(borderId) ?? -1)
+                        }
+                    }
+                    
+                    
+                    var border_lefts = [Int]()
+                    var border_rights = [Int]()
+                    var border_bottoms = [Int]()
+                    var border_tops = [Int]()
+                    // Assuming `xml` is your XML object
+                    for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
+                        if child.children.count > 0{
+                            border_lefts.append(0)
+                            border_rights.append(0)
+                            border_bottoms.append(0)
+                            border_tops.append(0)
+                            for gChild in child.children{
+                                if gChild.element?.name == "left"{
+                                    let leftCount = gChild.children.count
+                                    border_lefts[border_lefts.count - 1] = leftCount
+                                }
+                                
+                                if gChild.element?.name == "right"{
+                                    let rightCount = gChild.children.count
+                                    border_rights[border_rights.count - 1] = rightCount
+                                }
+                                
+                                if gChild.element?.name == "top"{
+                                    let topCount = gChild.children.count
+                                    border_tops[border_tops.count - 1] = topCount
+                                }
+                                
+                                if gChild.element?.name == "bottom"{
+                                    let bottomCount = gChild.children.count
+                                    border_bottoms[border_bottoms.count - 1] = bottomCount
+                                }
+                                
+                            }
+                        }
+                    }
+                    
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    appd.cellXfs = cellXfs
+                    appd.cellStyleXfs = cellStyleXfs
+                    appd.border_lefts = border_lefts
+                    appd.border_rights  = border_rights
+                    appd.border_bottoms = border_bottoms
+                    appd.border_tops = border_tops
+                    appd.formatCodes = formatCodes
+                    appd.numFmts = numFmts
+                    appd.numFmtIds = numFmtIds
+                    
+                    return xmlString
                 }
-                
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                appd.cellXfs = cellXfs
-                appd.cellStyleXfs = cellStyleXfs
-                appd.border_lefts = border_lefts
-                appd.border_rights  = border_rights
-                appd.border_bottoms = border_bottoms
-                appd.border_tops = border_tops
-                appd.formatCodes = formatCodes
-                appd.numFmts = numFmts
-                appd.numFmtIds = numFmtIds
-                
-                return xmlString
+            }catch{
+                print("no style file")
+                return nil
             }
         }
         return nil
