@@ -1463,6 +1463,9 @@ class Service {
     }
 
     func checkSharedStringsIndex(url: URL? = nil, SSlist: [String] = [], word: String) -> (Int?, String?) {
+        if word.replacingOccurrences(of: " ", with: "").hasPrefix("="){
+            return (nil, nil)
+        }
         guard let url2 = url, word != "", Float(word) == nil else {
             return (nil, nil)
         }
@@ -2356,9 +2359,9 @@ class Service {
                             lastRowNumber = cell.rowNumber
                         }
                         
-                        if cell.content.hasPrefix("=") {
+                        if cell.content.replacingOccurrences(of: " ", with: "").hasPrefix("=") {
                             //Formula
-                            let formula = cell.content.replacingOccurrences(of: "=", with: "")
+                            let formula = cell.content.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "=", with: "")
                             sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f><v>0</v></c>"
                         } else {
                             //Value

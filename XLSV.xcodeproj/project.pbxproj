@@ -12,7 +12,7 @@
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
 		2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B37288B2F7405CF00D27F01 /* Customviewboard2.xib */; };
 		2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B3728912F741F5A00D27F01 /* RangeSelectionOpsView.xib */; };
-		2B6D5BE82F854CD400A9A9C1 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B6D5BE72F854CD400A9A9C1 /* initialXLSX.xlsx */; };
+		2B903C4E2F85C6DC00A21B66 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B903C4D2F85C6DC00A21B66 /* initialXLSX.xlsx */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
@@ -100,8 +100,8 @@
 		2B585C4C2D2813FC00962A29 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Hint.strings; sourceTree = "<group>"; };
 		2B585C4E2D2813FF00962A29 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Hint.strings; sourceTree = "<group>"; };
 		2B585C502D28140300962A29 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Hint.strings; sourceTree = "<group>"; };
-		2B6D5BE72F854CD400A9A9C1 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXlsxSheet1.xlsx; sourceTree = "<group>"; };
+		2B903C4D2F85C6DC00A21B66 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2BB809742F72DF74009666B6 /* BackupTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTableViewController.swift; sourceTree = "<group>"; };
 		2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewController.swift; sourceTree = "<group>"; };
 		3C22A75F21D79003001ADDD9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -368,11 +368,11 @@
 				6AB0A81A245B320B007703C0 /* ViewController.swift */,
 				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
 				6AC83230246658C2006FA917 /* ReadWriteJSON.swift */,
+				2B903C4D2F85C6DC00A21B66 /* initialXLSX.xlsx */,
 				6AD456152AF4F8B20049198C /* CalculationService.swift */,
 				6AC832282465CBC2006FA917 /* FileCollectionViewCell.swift */,
 				3C40887021D6321D005D0E6D /* colorclass.swift */,
 				3C6F503820E3D151001EC20D /* TableViewCell.swift */,
-				2B6D5BE72F854CD400A9A9C1 /* initialXLSX.xlsx */,
 				8DB176C21E1492AA009DCD75 /* CreditViewController.swift */,
 				2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */,
 				3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */,
@@ -520,12 +520,12 @@
 			files = (
 				8D8201001E3AC9D60039540A /* Customviewboard3.xib in Resources */,
 				2B3728922F741F5A00D27F01 /* RangeSelectionOpsView.xib in Resources */,
-				2B6D5BE82F854CD400A9A9C1 /* initialXLSX.xlsx in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
 				2B0FEED02F782629005BF38E /* Main.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
 				2B37288C2F7405CF00D27F01 /* Customviewboard2.xib in Resources */,
+				2B903C4E2F85C6DC00A21B66 /* initialXLSX.xlsx in Resources */,
 				6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */,
 				3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */,
 				6A6E8522245DA1D5008AFA03 /* LaunchScreen.xib in Resources */,

@@ -1742,7 +1742,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             if !fileExists {
                 print("File doesn't exist at path: \(filePath.path)")
-                //loadinitialXLSX
+                //loadinitialXLSX so it's reading from actual file
                 if let filePath2 = Bundle.main.path(forResource: "initialXLSX", ofType: "xlsx"){
                     do {
                         let icc = iCloudViewController()
