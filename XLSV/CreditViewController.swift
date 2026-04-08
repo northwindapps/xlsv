@@ -10,18 +10,21 @@ import UIKit
 
 class CreditController: UIViewController {
 
+    
     @IBOutlet weak var creditview: UITextView!
     @IBOutlet weak var returnButton: UIButton!
     
     @IBAction func returnAction(_ sender: Any) {
         showAnimate()
     }
+    
+    var idx:Int?
     override func viewDidLoad() {
         
         creditview.isEditable = false
         creditview.dataDetectorTypes = .link
         
-        creditview.text = "Developer's website:\nhttps://northwindsoftware.com/?US\n\nTutorial of the app (Youtube): \nhttps://www.youtube.com/channel/UCzMh7Tx9e1BRpmQibgX2Skw\n\n\n Credit\nThis application uses the following open source widely in the code.  \n\n\n1.https://github.com/kwandrews7/MultiDirectionCollectionView/tree/adding-sticky-headersCopyright \n(c) 2015 Kyle Andrews\n\n\nLicense(MIT):https://github.com/kwandrews7/MultiDirectionCollectionView/blob/adding-sticky-headers/LICENSE\n\n2.https://github.com/MaxDesiatov/CoreXLSX\n\nCopyright 2018-2019 Max Desiatov\n\nApache License Version 2.0, January 2004 http://www.apache.org/licenses/"
+        creditview.text = "Developer's website:\nhttps://yanocodecom.web.app/\n\nTutorial of the app (Youtube): \nhttps://www.youtube.com/channel/UCzMh7Tx9e1BRpmQibgX2Skw\n\n\n Credit\nThis application uses the following open source widely in the code.  \n\n\n1.https://github.com/kwandrews7/MultiDirectionCollectionView/tree/adding-sticky-headersCopyright \n(c) 2015 Kyle Andrews\n\n\nLicense(MIT):https://github.com/kwandrews7/MultiDirectionCollectionView/blob/adding-sticky-headers/LICENSE\n\n2.https://github.com/MaxDesiatov/CoreXLSX\n\nCopyright 2018-2019 Max Desiatov\n\nApache License Version 2.0, January 2004 http://www.apache.org/licenses/"
         
 //        returnButton.addTarget(self, action: #selector(returnTOP), for: UIControl.Event.touchUpInside)
         super.viewDidLoad()
@@ -37,9 +40,22 @@ class CreditController: UIViewController {
     func showAnimate()
     {
       
-        let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
-        next.modalPresentationStyle = .fullScreen
-        self.present(next,animated: true, completion: nil)
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if appd.imported_xlsx_file_path == "" {
+            let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+            next.modalPresentationStyle = .fullScreen
+            self.present(next,animated: true, completion: nil)
+            return
+        }
+        
+        print("go to file view")
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+        targetViewController.idx = idx
+        targetViewController.modalPresentationStyle = .fullScreen
+        // Present the target view controller after LoadingFileController's view has appeared
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
         
     }
     

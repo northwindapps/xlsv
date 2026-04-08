@@ -1248,8 +1248,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func loadCreditview(_ sender:UIButton)
     {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //       postAction()
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "creditView" )
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "creditView" ) as! CreditController
+        if isExcel{
+            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+        }
         targetViewController.modalPresentationStyle = .fullScreen
         self.present( targetViewController, animated: true, completion: nil)
         
@@ -5045,15 +5049,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: calculated,content: content, locationInExcel: locationInExcel)
+            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
             
             if !(isOK ?? false){
                 return false
             }
-            
-//            if (f_idx != nil), element.hasPrefix("=") && f_calculated.count>f_idx! && f_content.count > f_idx! && f_calculated[f_idx!] != "error"{
-//                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx!], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
-//            }
         }
         return true
     }
@@ -5126,9 +5126,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
             
-//            if let f_idx = f_location_alphabet.firstIndex(of: cellId), element.hasPrefix("=") && f_calculated.count>f_idx && f_content.count > f_idx && f_calculated[f_idx] != "error"{
-//                _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: f_calculated[f_idx], cellIdxString: cellId,numFmt:numFmt, fString: element.replacingOccurrences(of: "=", with: ""))
-//            }
         }
     }
     
