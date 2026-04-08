@@ -409,14 +409,25 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             
             //get all worksheets
             if let workbook = try file?.parseWorkbooks().first {
-                // Extracting non-nil sheet IDs using compactMap
-                let sheetNameIds = workbook.sheets.items.compactMap { $0.id }
-                print("Sheet Name IDs:", sheetNameIds)
-                appd.sheetNameIds = sheetNameIds
-                let sheetNames = workbook.sheets.items.compactMap { $0.name }
-                print("Sheet Names:", sheetNames)
-                appd.sheetNames = sheetNames
+                let worksheetPaths = try file?.parseWorksheetPathsAndNames(workbook: workbook) ?? []
+                
+                var tempSheets: [(name: String, id: Int, idString: String)] = []
+
+                for (name, path) in worksheetPaths {
+                    guard let name = name else { continue }
+                    
+                    let idString = path.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                    if let id = Int(idString) {
+                        tempSheets.append((name: name, id: id, idString: idString))
+                    }
+                }
+
+                tempSheets.sort { $0.id < $1.id }
+
+                appd.sheetNames = tempSheets.map { $0.name }
+                appd.sheetNameIds = tempSheets.map { $0.idString }
             }
+
             
             //appd.ws_total_pages = sheetsNumber
             //only show first page.
