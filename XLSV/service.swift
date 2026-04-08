@@ -1463,10 +1463,25 @@ class Service {
     }
 
     func checkSharedStringsIndex(url: URL? = nil, SSlist: [String] = [], word: String) -> (Int?, String?) {
-        if word.replacingOccurrences(of: " ", with: "").hasPrefix("="){
+        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+        // Ignore formulas
+        if trimmed.hasPrefix("=") {
             return (nil, nil)
         }
-        guard let url2 = url, word != "", Float(word) == nil else {
+        
+        // Ignore empty
+        if trimmed.isEmpty {
+            return (nil, nil)
+        }
+        
+        // Ignore numbers (more robust)
+        if Double(trimmed) != nil {
+            return (nil, nil)
+        }
+        
+        // Ensure URL exists
+        guard let url2 = url else {
             return (nil, nil)
         }
 
@@ -2069,7 +2084,7 @@ class Service {
                         if cell.content.hasPrefix("=") {
                             //Formula
                             let formula = cell.content.replacingOccurrences(of: "=", with: "")
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f><v>0</v></c>"
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f></c>"
                         } else {
                             //Value
                             //Txt
@@ -2184,7 +2199,7 @@ class Service {
         }
     }
     
-    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:String = "",content:[String] = [],locationInExcel:[String] = []) -> Bool? {
+    func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:[String] = [],calculated_location:[String] = [],content:[String] = [],locationInExcel:[String] = []) -> Bool? {
         var isError = false
         do {
             // Get the sandbox directory for documents
@@ -2358,28 +2373,39 @@ class Service {
                             sheetXmlString += "<row r=\"\(cell.rowNumber)\">"
                             lastRowNumber = cell.rowNumber
                         }
-                        
+                        //=A2,=3-1
                         if cell.content.replacingOccurrences(of: " ", with: "").hasPrefix("=") {
                             //Formula
                             let formula = cell.content.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "=", with: "")
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f><v>0</v></c>"
+                            let fvalueIndex = calculated_location.firstIndex(of: cell.excelRef)
+//                            var fvalue = "0"
+//                            if fvalueIndex != nil{
+//                                fvalue = calculated[fvalueIndex!]
+//                            }
+                            //it's not a formula just a value
+                            if(Double(formula) != nil){
+                                sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(formula)</v></c>"
+                            }else{
+                                sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f></c>"
+                            }
                         } else {
-                            //Value
-                            //Txt
+                        //Value
+                        //Txt
+                        //3,4,5,value
+                        if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
+                            //value
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
+                        }
+                        else{
+                            //text
                             let index = currentAry?.firstIndex(of: cell.content)
                             if ((index != nil)){
                             sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
                             }else{
-                                if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
-                                    sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
-                                }
-                                else{
-                                    print("something went wrong, no index")
-                                }
+                                print("something went wrong in data input, not value, not text, not formula")
                             }
-                            
-                            
                         }
+                    }
                     }
                     
                     if lastRowNumber != -1 {
@@ -2396,6 +2422,8 @@ class Service {
                             print("failed to update sheetdata")
                             return false
                         }
+                        print("sheet data",updatedString)
+                        print("shared string",sharedStringIdAndString)
                     }
                     check = true
                 }else{
@@ -3971,11 +3999,6 @@ class Service {
                 parser.delegate = delegate
 
                 if parser.parse() {
-                    //print("si",delegate.sis)
-                    //print("si count", delegate.sis.count)
-                    //var xmlString = try? String(contentsOf: url2)
-
-                    //try? xmlString?.write(to: url2, atomically: true, encoding: .utf8)
                     return delegate.sis
                 }
             }

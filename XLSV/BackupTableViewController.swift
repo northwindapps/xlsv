@@ -541,7 +541,7 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                     if k.count != 0 {
                         let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
                             .filter { $0.type?.rawValue ?? nil != "s"  }
-                            .filter { $0.value != nil }
+                            .filter { $0.value != nil || $0.formula != nil } 
                         
                         var formulaCheck = [String]()
                         for i in 0..<columnCStrings.count {

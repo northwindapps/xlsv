@@ -337,15 +337,15 @@ class ExcelHelper{
                    if k.count != 0 {
                        let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
                            .filter { $0.type?.rawValue ?? nil != "s"  }
-                           .filter { $0.value != nil }
+                           .filter { $0.value != nil || $0.formula != nil } 
                        
                        var formulaCheck = [String]()
                        for i in 0..<columnCStrings.count {
                            let formulaContent = columnCStrings[i].formula?.value
-                           let valueContent = columnCStrings[i].value
+                           let valueContentTemp = columnCStrings[i].value
                            
                            if formulaContent == nil {
-                               formulaCheck.append(valueContent!)
+                               formulaCheck.append(valueContentTemp!)
                            }else{
                                let containsItem = excelFunctionsNotSupportedInXLSV.contains { formulaContent! == $0 }
                                if !containsItem{
@@ -354,7 +354,7 @@ class ExcelHelper{
                                
                                if containsItem{
                                    //TODO
-                                   formulaCheck.append(valueContent!)
+                                   formulaCheck.append(valueContentTemp!)
                                }
                            }
                            
