@@ -3711,7 +3711,7 @@ class Service {
         return false
     }
     
-    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false,msg:String = "") -> URL? {
+    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false,msg:String = "",filename:String="") -> URL? {
         do {
         // Get the sandbox directory for documents
         if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -3813,7 +3813,12 @@ class Service {
             
             let fileExtension = fpURL.pathExtension // xlsx
 
-            let newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
+            var newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
+            
+            if filename.replacingOccurrences(of: " ", with: "") != ""{
+                newFileName = "\(filename).\(fileExtension)"
+            }
+            
             let backupURL = backupDirURL!.appendingPathComponent(newFileName)
 
             let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")

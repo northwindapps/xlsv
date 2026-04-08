@@ -6777,32 +6777,69 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
 
 
-    
     @objc func filesave() {
-        //make a backup
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        //excel backups
-        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
         let alert = UIAlertController(
-            title: "Backup saved.",
-            message: "Your file has been saved successfully.",
+            title: "Save Backup",
+            message: "Enter a file name",
             preferredStyle: .alert
         )
         
-        if url == nil {
-            alert.title = "Save Failed"
-            alert.message = "Something went wrong while making a buckup."
+        // Add text field
+        alert.addTextField { textField in
+            textField.placeholder = "e.g. backup.xlsx"
         }
         
+        // Save action
+        let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
+            let fileName = alert.textFields?.first?.text ?? ""
+            
+            if fileName.isEmpty {
+                self.showResultAlert(title: "Invalid Name", message: "Please enter a file name.")
+                return
+            }
+            
+            let serviceInstance = Service(
+                imp_sheetNumber: 0,
+                imp_stringContents: [String](),
+                imp_locations: [String](),
+                imp_idx: [Int](),
+                imp_fileName: "",
+                imp_formula: [String]()
+            )
+            
+            let appd = UIApplication.shared.delegate as! AppDelegate
+            
+            let url = serviceInstance.writeXlsxBackup(
+                fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
+                filename: fileName
+            )
+            
+            if url == nil {
+                self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
+            } else {
+                self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
+            }
+        }
         
-        
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        // Cancel action
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(saveAction)
         
         self.present(alert, animated: true)
-        
-        
     }
+
+    // Helper function to reduce duplication
+    func showResultAlert(title: String, message: String) {
+        let resultAlert = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: .alert
+        )
+        
+        resultAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(resultAlert, animated: true)
+    }
+    
     
     @objc func takeDailyBackup(msg:String = "") {
         //make a backup
