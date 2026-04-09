@@ -710,7 +710,9 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                     }
                 }
 
-                tempSheets.sort { $0.id < $1.id }
+                tempSheets.sort {
+                    $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                }
 
                 appd.sheetNames = tempSheets.map { $0.name }
                 appd.sheetNameIds = tempSheets.map { $0.idString }
