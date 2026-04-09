@@ -21,6 +21,7 @@ var SCREENSIZE = ScreenSize.SCREEN_HEIGHT
 
 var fontcolorClass = colorclass()
 
+var pasteboard = UIPasteboard.general
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
     
@@ -4228,8 +4229,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.collectionViewCellSizeChanged = 0
-        let pasteboard = UIPasteboard.general
-        pasteboard.string = ""
+        //pasteboard.string = ""
         
         
         
@@ -4535,8 +4535,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         appd.wsSheetIndex = sheetIdx!
         print("wsSheetIndex",appd.wsSheetIndex)
         
-        let pasteboard = UIPasteboard.general
-        pasteboard.string = ""
+        //let pasteboard = UIPasteboard.general
+        //pasteboard.string = ""
         
         fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
@@ -4775,8 +4775,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         appd.wsSheetIndex = sheetIdx!
         print("wsSheetIndex",appd.wsSheetIndex)
         
-        let pasteboard = UIPasteboard.general
-        pasteboard.string = ""
+//        let pasteboard = UIPasteboard.general
+//        pasteboard.string = ""
         
         fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         
