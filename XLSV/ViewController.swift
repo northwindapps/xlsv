@@ -791,34 +791,75 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             //FileNameCollectionview Change Page
             //sheet cell get touched
-        
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let locationstr = NSLocale.preferredLanguages.first ?? "en"
+            var msgChoose = "Choose an action"
+            var msgAdd = "Add Sheet"
+            var msgDup = "Duplicate"
+            var msgDel = "Delete Sheet"
+            var msgRen = "Rename Sheet"
+            var msgCancel = "Cancel"
+            
+            if locationstr.hasPrefix("ja") {
+                msgChoose = "操作を選択してください"
+                msgAdd = "シートを追加"
+                msgDup = "複製"
+                msgDel = "シートを削除"
+                msgRen = "名前を変更"
+                msgCancel = "キャンセル"
+            } else if locationstr.hasPrefix("zh") {
+                msgChoose = "选择操作"
+                msgAdd = "新建工作表"
+                msgDup = "副本"
+                msgDel = "删除工作表"
+                msgRen = "重命名"
+                msgCancel = "取消"
+            } else if locationstr.hasPrefix("fr") {
+                msgChoose = "Choisir une action"
+                msgAdd = "Ajouter feuille"
+                msgDup = "Dupliquer"
+                msgDel = "Supprimer feuille"
+                msgRen = "Renommer"
+                msgCancel = "Annuler"
+            } else if locationstr.hasPrefix("de") {
+                msgChoose = "Aktion wählen"
+                msgAdd = "Blatt hinzufügen"
+                msgDup = "Duplizieren"
+                msgDel = "Blatt löschen"
+                msgRen = "Umbenennen"
+                msgCancel = "Abbrechen"
+            } else if locationstr.hasPrefix("es") {
+                msgChoose = "Elige una acción"
+                msgAdd = "Añadir hoja"
+                msgDup = "Duplicar"
+                msgDel = "Eliminar hoja"
+                msgRen = "Renombrar"
+                msgCancel = "Cancelar"
+            }
+
+            let appd = UIApplication.shared.delegate as! AppDelegate
             let alert = UIAlertController(
                 title: appd.sheetNames[indexPath.item],
-                message: "Choose an action",
+                message: msgChoose,
                 preferredStyle: .alert
             )
-            
-            alert.addAction(UIAlertAction(title: "Add Sheet", style: .default) { _ in
+
+            alert.addAction(UIAlertAction(title: msgAdd, style: .default) { _ in
                 self.createxlsxSheet()
             })
-            
 
-            alert.addAction(UIAlertAction(title: "Duplicate", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: msgDup, style: .default) { _ in
                 self.excelCopySheet()
             })
-            
-            alert.addAction(UIAlertAction(title: "Delete Sheet", style: .default) { _ in
+
+            alert.addAction(UIAlertAction(title: msgDel, style: .destructive) { _ in
                 self.deletexlsxSheet()
             })
-            
-            alert.addAction(UIAlertAction(title: "Rename Sheet", style: .default) { _ in
+
+            alert.addAction(UIAlertAction(title: msgRen, style: .default) { _ in
                 self.excelChangeSheetName()
             })
-            
-            
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
-            })
+
+            alert.addAction(UIAlertAction(title: msgCancel, style: .cancel))
             
             
             appd.collectionViewCellSizeChanged = 1
@@ -1094,13 +1135,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if self.view.subviews.contains(Hintview){
                 Hintview.removeFromSuperview()
             }else{
-                Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 300,height: 330))
+                Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
                 Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
                 
                 self.view.addSubview(Hintview)
             }
         }else{
-            Hintview = Hint(frame: CGRect(x:Int(5),y:Int(10), width: 300,height: 330))
+            Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
             Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
             
             self.view.addSubview(Hintview)
@@ -1995,12 +2036,39 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 print("one row direction selection")
                 if idxInLocation != -1{
                     print("content",content[idxInLocation])
+                    var titleLabel = "AutoFill"
+                    var msgDate = "Fill the selected range with dates?"
+                    var msgMore = "Advanced..."
+                    var msgFunction = "    Fill range with functions?"
+                    let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+                    if locationstr.contains("ja"){
+                        msgDate = "選択範囲を日付順に埋めますか？"
+                        msgMore = "その他"
+                        msgFunction = "選択範囲に関数を入力しますか？"
+                    }else if locationstr.contains("fr"){
+                        msgDate = "Remplir la sélection avec des dates ?"
+                        msgMore = "Plus..."
+                        msgFunction = "Remplir avec les fonctions ?"
+                    }else if locationstr.contains("zh"){
+                        msgDate = "是否按日期顺序填充选定区域？"
+                        msgMore = "更多选项"
+                        msgFunction = "是否按顺序填充函数？"
+                    }else if locationstr.contains("de"){
+                        msgDate = "Bereich mit Datumswerten füllen?"
+                        msgMore = "Optionen"
+                        msgFunction = "Bereich mit Funktionen füllen?"
+                    }else if locationstr.contains("es"){
+                        msgDate = "¿Rellenar el rango con fechas?"
+                        msgMore = "Opciones"
+                        msgFunction = "¿Rellenar rango con funciones?"
+                    }
+                    
                     let inputText = content[idxInLocation]
                             //If the content was a date
                             if isValidDate(text: inputText) {
                                 let alert = UIAlertController(
-                                    title: "Enter Sequential Data",
-                                    message: "Do you want to fill the selected range with dates in order?",
+                                    title: titleLabel,
+                                    message: msgDate,
                                     preferredStyle: .alert
                                 )
                                 
@@ -2012,7 +2080,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                         self.fillDateInSelectedCellContent(direction: 1)
                                     }
                                 })
-                                alert.addAction(UIAlertAction(title: "Other options", style: .default){ _ in
+                                alert.addAction(UIAlertAction(title: msgMore, style: .default){ _ in
                                     self.panGestureShow2()
                                 })
                                 alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
@@ -2021,11 +2089,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                 })
                                 self.present(alert, animated: true)
                             }else if(inputText.replacingOccurrences(of: " ", with: "").hasPrefix("=")){
-                                let alert = UIAlertController(title: "Enter Sequential Data",
-                                                            message: "Do you want to fill the selected range with functions in order?",
+                                let alert = UIAlertController(title: titleLabel,
+                                                              message: msgFunction,
                                                             preferredStyle: .alert)
                                 
-                                alert.addAction(UIAlertAction(title: "Fill", style: .default) { _ in
+                                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
                                     self.takeDailyBackup(msg: "before_seqFunc_")
                                     if isSingleCol{
                                         self.fillFunctionInSelectedCellContent(direction: 0)
@@ -2037,7 +2105,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                     self.selection_bool = false
                                     self.myCollectionView.reloadData()
                                 })
-                                alert.addAction(UIAlertAction(title: "Other options", style: .default){ _ in
+                                alert.addAction(UIAlertAction(title: msgMore, style: .default){ _ in
                                     self.panGestureShow2()
                                 })
                                 self.present(alert, animated: true)
@@ -2509,6 +2577,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             }
         }
+        backRS2()
     }
     
     @objc func clearSelectedCellContent(){
@@ -2713,7 +2782,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func fillDateInSelectedCellContent(direction:Int ) {
-        // 1. 基準となる日付を取得（選択範囲の最初のセルの内容など）
         guard let firstIndexPath = tempRangeSelected.first,
               let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
         
@@ -2724,7 +2792,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         guard let startDate = formatter.date(from: baseDateString) else { return }
         let calendar = Calendar.current
 
-        // 2. 選択範囲をソート（左上から順に並べる）
+        // Sort selected range from top left
         let sortedSelection = tempRangeSelected.sorted {
             $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section
         }
@@ -2863,7 +2931,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let nsString = formula as NSString
         var offsetFormula = formula
         
-        // 後ろから置換しないとインデックスが狂うため、reverse
+        //reverse to prevent index corruption
         let matches = regex.matches(in: formula, options: [], range: NSRange(location: 0, length: nsString.length)).reversed()
         
         for match in matches {
