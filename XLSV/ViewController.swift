@@ -1246,6 +1246,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.rsview.removeFromSuperview()
     }
     
+    @objc func backRS2()
+    {
+        selection_bool = false
+        myCollectionView.reloadData()
+        self.rsview.removeFromSuperview()
+    }
+    
     
     @objc func loadCreditview(_ sender:UIButton)
     {
@@ -2015,7 +2022,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                                             message: "Do you want to fill the selected range with functions in order?",
                                                             preferredStyle: .alert)
                                 
-                                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                                alert.addAction(UIAlertAction(title: "Fill", style: .default) { _ in
                                     self.takeDailyBackup(msg: "before_seqFunc_")
                                     if isSingleCol{
                                         self.fillFunctionInSelectedCellContent(direction: 0)
@@ -2027,20 +2034,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                     self.selection_bool = false
                                     self.myCollectionView.reloadData()
                                 })
+                                alert.addAction(UIAlertAction(title: "Other options", style: .default){ _ in
+                                    self.panGestureShow2()
+                                })
                                 self.present(alert, animated: true)
                             }
                             else{
-                                //del,insert ops TODO must fix bug
-                                //panGestureShow2()
+                                //TODO improve UX
+                                panGestureShow2()
                             }
                 }else{
-                    //del,insert ops TODO must fix bug in next version
+                    //TODO improve UX
                     panGestureShow2()
                 }
                
             } else {
-                //del,insert ops TODO must fix bug in next version
-                    panGestureShow2()
+                //TODO improve UX
+                panGestureShow2()
             }
 
            
@@ -2593,7 +2603,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
 
     @objc func copyPasteSelectedCellContent() {
-        if isExcel {
+        if isExcel && currentindex != nil {
             let ecol = ExcelHelper().GetExcelColumnName(columnNumber: currentindex.item)
             let alert = UIAlertController(
                 title: "Copy & Paste Selected Cell Values",
@@ -2696,6 +2706,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             })
             self.present(alert, animated: true)
         }
+        backRS2()
     }
     
     @objc func fillDateInSelectedCellContent(direction:Int ) {
