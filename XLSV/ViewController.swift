@@ -2012,6 +2012,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                         self.fillDateInSelectedCellContent(direction: 1)
                                     }
                                 })
+                                alert.addAction(UIAlertAction(title: "Other options", style: .default){ _ in
+                                    self.panGestureShow2()
+                                })
                                 alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
                                     self.selection_bool = false
                                     self.myCollectionView.reloadData()
@@ -4228,9 +4231,32 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }else{
                         return ""
                     }
-                }else{
-                    return ""
                 }
+                
+                //just string
+                if Double(ary[0]) == nil && Int(ary[1]) != nil{
+                    if (Double(ary[0]) == nil) && Int(ary[1])! > 0{
+                        var product = ""
+                        for i in 0 ..< Int(ary[1])!{
+                            product = product + ary[0] + ":"
+                        }
+                        
+                        if down_bool == true {
+                            product = product + "↓"
+                        }else if right_bool == true {
+                            product = product + "→"
+                        }else{
+                            product = product + "↓"
+                        }
+                        return product
+                    }else{
+                        return ""
+                    }
+                }
+                    
+                
+                return ""
+                
             }
         }else{
             return ""
