@@ -4168,36 +4168,63 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func autoComplete(src:String)->String{
-        let dotdot = src.replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "...", with: "…")
+        var dotdot = src.replacingOccurrences(of: "↓", with: "…").replacingOccurrences(of: "→", with: "…").replacingOccurrences(of: "...", with: "…")
+        
         
         let ary = dotdot.components(separatedBy: "…")
         if ary.count > 1{
-            if Int(ary[0]) != nil && Int(ary[1]) != nil{
-                if (Int(ary[0]) != nil) && Int(ary[1])! > 0{
-                    var product = ""
-                    var cnt = Int(ary[0])!
-                    for i in 0 ..< Int(ary[1])!{
-                        product = product + String(cnt) + ":"
-                        cnt += 1
-                    }
-                    
-                    if down_bool == true {
-                        product = product + "↓"
-                    }else if right_bool == true {
-                        product = product + "→"
+            if ary.count == 3{
+                //1.0...10↓-0.5 case
+                if Double(ary[0]) != nil && Int(ary[1]) != nil && Double(ary[2]) != nil{
+                    if (Double(ary[0]) != nil) && Int(ary[1])! > 0{
+                        var product = ""
+                        var cnt = Double(ary[0])!
+                        for i in 0 ..< Int(ary[1])!{
+                            product = product + String(cnt) + ":"
+                            cnt += Double(ary[2])!
+                        }
+                        
+                        if down_bool == true {
+                            product = product + "↓"
+                        }else if right_bool == true {
+                            product = product + "→"
+                        }else{
+                            product = product + "↓"
+                        }
+                        return product
                     }else{
-                        product = product + "↓"
+                        return ""
                     }
-                    return product
+                }
+                //1000...10↓ case
+                if Int(ary[0]) != nil && Int(ary[1]) != nil{
+                    if (Int(ary[0]) != nil) && Int(ary[1])! > 0{
+                        var product = ""
+                        var cnt = Int(ary[0])!
+                        for i in 0 ..< Int(ary[1])!{
+                            product = product + String(cnt) + ":"
+                            cnt += 1
+                        }
+                        
+                        if down_bool == true {
+                            product = product + "↓"
+                        }else if right_bool == true {
+                            product = product + "→"
+                        }else{
+                            product = product + "↓"
+                        }
+                        return product
+                    }else{
+                        return ""
+                    }
                 }else{
                     return ""
                 }
-            }else{
-                return ""
             }
         }else{
             return ""
         }
+        return ""
     }
     
     //copy
