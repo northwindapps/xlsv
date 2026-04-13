@@ -6119,8 +6119,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         for i in 0..<filteredContent.count {
             //Non Excel Function Expressions
             if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") && !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX("){
-                for j in 0..<literalContent.count {
-                    filteredContent[i] = filteredContent[i].replacingOccurrences(of: literalLocationInExcel[j], with: literalContent[j])
+                
+                //prevent index corruption. start with long ones. B111,B11,B1...
+                let combined = zip(literalLocationInExcel, literalContent).sorted { $0.0.count > $1.0.count }
+                
+                let sortedCombined = combined.sorted { (a, b) -> Bool in
+                    if a.0.count != b.0.count {
+                        return a.0.count > b.0.count
+                    }
+                    return a.0 > b.0
+                }
+
+                for (location, content) in sortedCombined {
+                    let pattern = "\\b\(location)\\b"
+                    //replace only perfect match C11 not C1
+                    filteredContent[i] = filteredContent[i].replacingOccurrences(
+                        of: pattern,
+                        with: content,
+                        options: .regularExpression
+                    )
                 }
             }
         }

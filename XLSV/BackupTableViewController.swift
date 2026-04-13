@@ -104,20 +104,52 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
         
         let fileName = selectedFileURL.lastPathComponent
         
-        let actionSheet = UIAlertController(title: "Options", message: fileName, preferredStyle: .actionSheet)
+        var msgRestore = "Restore"
+        var msgChoose = "Choose"
+        var msgRen = "Rename"
+        var msgCancel = "Cancel"
+        let locationstr = NSLocale.preferredLanguages.first ?? "en"
+        if locationstr.hasPrefix("ja") {
+            msgChoose = "操作を選択してください"
+            msgRen = "名前を変更"
+            msgCancel = "キャンセル"
+            msgRestore = "復元"
+        } else if locationstr.hasPrefix("zh") {
+            msgChoose = "选择操作"
+            msgRen = "重命名"
+            msgCancel = "取消"
+            msgRestore = "还原"
+        } else if locationstr.hasPrefix("fr") {
+            msgChoose = "Choisir une action"
+            msgRen = "Renommer"
+            msgCancel = "Annuler"
+            msgRestore = "Restaurer"
+        } else if locationstr.hasPrefix("de") {
+            msgChoose = "Aktion wählen"
+            msgRen = "Umbenennen"
+            msgCancel = "Abbrechen"
+            msgRestore = "Wiederherstellen"
+        } else if locationstr.hasPrefix("es") {
+            msgChoose = "Elige una acción"
+            msgRen = "Renombrar"
+            msgCancel = "Cancelar"
+            msgRestore = "Restaurar"
+        }
+        
+        let actionSheet = UIAlertController(title: msgChoose, message: fileName, preferredStyle: .actionSheet)
         
     
-        actionSheet.addAction(UIAlertAction(title: "Restore", style: .default) { _ in
+        actionSheet.addAction(UIAlertAction(title: msgRestore, style: .default) { _ in
             self.restore(selectedFileURL: selectedFileURL)
         })
         
      
-        actionSheet.addAction(UIAlertAction(title: "Rename", style: .default) { _ in
+        actionSheet.addAction(UIAlertAction(title: msgRen, style: .default) { _ in
             self.rename(fileName: fileName, selectedFileURL: selectedFileURL)
         })
         
 
-        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(UIAlertAction(title: msgCancel, style: .cancel, handler: nil))
         
         if let popoverController = actionSheet.popoverPresentationController {
             if let cell = tableView.cellForRow(at: indexPath) {
