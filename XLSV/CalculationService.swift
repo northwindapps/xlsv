@@ -90,9 +90,6 @@ class CalculationService{
                     range: NSRange(location: 0, length: input.utf16.count),
                     withTemplate: "$1 *("
                 )
-                
-                // Print the modified string
-                print(modified)
                 return modified
             }
             return input;
@@ -106,9 +103,6 @@ class CalculationService{
 
         // Replace matches in the input string
         let modifiedString = regex.stringByReplacingMatches(in: input, options: [], range: NSRange(location: 0, length: input.utf16.count), withTemplate: "$1 * $2")
-
-        // Print the modified string
-        print(modifiedString)
         return modifiedString
     }
     
@@ -157,11 +151,10 @@ class CalculationService{
     //         return NSPredicate(format: "SELF MATCHES %@", floatRegex).evaluate(with: str)
     //   }
 
-    func isFloat(_ str: String) -> Bool {
-    let pattern = "^-?\\d+(\\.\\d+)?$"
-    // NSRegularExpression over NSPredicate
-    guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+    static let floatRegex = try? NSRegularExpression(pattern: "^-?\\d+(\\.\\d+)?$")
     
+    func isFloat(_ str: String) -> Bool {
+    guard let regex = CalculationService.floatRegex else { return false }
     let range = NSRange(location: 0, length: str.utf16.count)
     return regex.firstMatch(in: str, options: [], range: range) != nil
 }
@@ -221,7 +214,6 @@ class CalculationService{
                         tempStr = scientificOperation(tempStr!)
                         tempStr = basicOperation(source: tempStr!)
                         tempStr = slashDotPowerPlusCase(tempStr!)
-                        print("tempStr",tempStr)
                         if tempStr == ERROR{
                             isInfinity = true;
                         }
@@ -239,9 +231,7 @@ class CalculationService{
                     let cloned = "(\(match))"
                     var result: String? = nil
                     var j = 10
-                    print("match",cloned)
-                    for i in 0..<cloned.count {
-                        if containsAlphabetChars(cloned) {
+                    if containsAlphabetChars(cloned) {
                             result = scientificOperation(cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: ""))
                             while j > 0 {
                                 if let unwrappedResult = result, isFloat(unwrappedResult) {
@@ -263,11 +253,9 @@ class CalculationService{
                         } else {
                             var k = 50
                             var basicExp = cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-                            print("basicExp",basicExp)
                             while k > 0 {
                                 result = basicOperation(source: basicExp)
                                 tempStr = slashDotPowerPlusCase(tempStr!)
-                                print("result",result)
                                 if result == ERROR{
                                     isInfinity = true;
                                 }
@@ -281,7 +269,6 @@ class CalculationService{
                             if let unwrappedResult = result {
                                 let ptn = cloned
                                 tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
-                                print(tempStr)
                             }
                         }
                     }
@@ -355,7 +342,6 @@ class CalculationService{
         } else {
             if elements.contains("^") {
                 for i in 1..<elements.count {
-                    print("element",elements[i])
                     if elements[i] == "^" && i - 1 >= 0 && isFloat(String(elements[i - 1])) && i + 1 < elements.count && isFloat(String(elements[i + 1])) {
                         let a = Double(elements[i-1])
                         let b = Double(elements[i+1])
@@ -405,7 +391,6 @@ class CalculationService{
             elements = elements.filter { item in
                 return item != "nil"
             }
-            print("joined",elements.joined(separator: ""))
             return elements.joined(separator: "")
         }
     }
