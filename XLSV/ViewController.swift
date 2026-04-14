@@ -6092,44 +6092,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         var tempStr = "sin(PI/4)^2"//"3*(3^-1)"//"sin(PI/3+PI/6)"//"((sin3)^2+(cos3)^2)"//"1/((1-0)/(2-0))"//"((30+3)*23-3)/5-1"//30 3 + 23 3 - *  count the number of
         
+        //prevent index corruption. start with long ones. B111,B11,B1...
+        let combined = zip(literalLocationInExcel, literalContent).sorted { $0.0.count > $1.0.count }
         
-        // Define the sorting criteria
-//        let indices = filteredContent.indices.sorted { lhs, rhs in
-//            func isExcelFunction(_ str: String) -> Bool {
-//                let keywords = ["=SUM(", "=AVERAGE(", "=MIN(", "=MAX("]
-//                return keywords.contains { str.contains($0) }
-//            }
-//
-//            let lhsIsExcel = isExcelFunction(filteredContent[lhs])
-//            let rhsIsExcel = isExcelFunction(filteredContent[rhs])
-//
-//            if lhsIsExcel != rhsIsExcel {
-//                return !lhsIsExcel
-//            }
-//            return filteredContent[lhs] < filteredContent[rhs]
-//        }
-        
-        // Reorder all arrays based on sorted indices
-//        filteredContent = indices.map { filteredContent[$0] }
-//        filteredLocation = indices.map { filteredLocation[$0] }
-//        filteredLocationInExcel = indices.map { filteredLocationInExcel[$0] }
-//        filteredResult = indices.map { filteredResult[$0] }
+        let sortedCombined = combined.sorted { (a, b) -> Bool in
+            if a.0.count != b.0.count {
+                return a.0.count > b.0.count
+            }
+            return a.0 > b.0
+        }
         
         //replaceing excelIndex with value if the value alredy exists
         for i in 0..<filteredContent.count {
             //Non Excel Function Expressions
             if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") && !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX("){
-                
-                //prevent index corruption. start with long ones. B111,B11,B1...
-                let combined = zip(literalLocationInExcel, literalContent).sorted { $0.0.count > $1.0.count }
-                
-                let sortedCombined = combined.sorted { (a, b) -> Bool in
-                    if a.0.count != b.0.count {
-                        return a.0.count > b.0.count
-                    }
-                    return a.0 > b.0
-                }
-
                 for (location, content) in sortedCombined {
                     let pattern = "\\b\(location)\\b"
                     //replace only perfect match C11 not C1
@@ -6143,12 +6119,45 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         let cs = CalculationService()
-        for _ in 0..<filteredContent.count {
-            var allCalculated = true
+        
+        // Build dependency graph: which formulas does each formula depend on?
+        var dependencies: [Int: Set<Int>] = [:]
+        for i in 0..<filteredContent.count {
+            dependencies[i] = Set()
+            let cellRefs = extractCellIndices(from: filteredContent[i].replacingOccurrences(of: "=", with: ""))
+            for ref in cellRefs {
+                if let refIdx = filteredLocationInExcel.firstIndex(of: ref) {
+                    dependencies[i]?.insert(refIdx)
+                }
+            }
+        }
+        
+        // Calculate in dependency order (topological sort)
+        var calculated = Set<Int>()
+        var maxIterations = filteredContent.count
+        var iteration = 0
+        
+        while calculated.count < filteredContent.count && iteration < maxIterations {
+            iteration += 1
+            var madeProgress = false
             
             for i in 0..<filteredContent.count {
-                if Double(filteredResult[i]) != nil { continue }
+                if calculated.contains(i) { continue }
                 
+                // Check if all dependencies are calculated
+                var canCalculate = true
+                if let deps = dependencies[i] {
+                    for dep in deps {
+                        if !calculated.contains(dep) {
+                            canCalculate = false
+                            break
+                        }
+                    }
+                }
+                
+                if !canCalculate { continue }
+                
+                madeProgress = true
                 filteredResult[i] = "error"
                 
                 var currentFormula = filteredContent[i].replacingOccurrences(of: "=", with: "")
@@ -6161,58 +6170,41 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 
                 for j in 0..<filteredResult.count {
-                    if let val = Double(filteredResult[j]) {
+                    if calculated.contains(j), let val = Double(filteredResult[j]) {
                         currentFormula = applyValue(formula: currentFormula, ref: filteredLocationInExcel[j], value: String(val))
                     }
                 }
                 
                 if currentFormula.contains("SUM(") || currentFormula.contains("AVERAGE(") || currentFormula.contains("MAX(") || currentFormula.contains("MIN(") {
-                    
+                    let rltstr: String
                     switch currentFormula {
                     case _ where currentFormula.contains("SUM("):
-                        let rltstr = excel_sum_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                        if Double(rltstr) != nil{
-                            filteredResult[i] = rltstr
-                        }
-                        break
-                        
+                        rltstr = excel_sum_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
                     case _ where currentFormula.contains("AVERAGE("):
-                        let rltstr = excel_average_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                        if Double(rltstr) != nil{
-                            filteredResult[i] = rltstr
-                        }
-                        break
-                        
+                        rltstr = excel_average_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
                     case _ where currentFormula.contains("MIN("):
-                        let rltstr = excel_min_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                        if Double(rltstr) != nil{
-                            filteredResult[i] = rltstr
-                        }
-                        break
-                        
+                        rltstr = excel_min_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
                     case _ where currentFormula.contains("MAX("):
-                        let rltstr = excel_max_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
-                        if Double(rltstr) != nil{
-                            filteredResult[i] = rltstr
-                        }
-                        break
-                        
+                        rltstr = excel_max_each(fidx: i, fc: filteredContent, fl: filteredLocation, fle: filteredLocationInExcel, fr: filteredResult, lc: literalContent, ll: literalLocation, lle: literalLocationInExcel, lr: literalResult)
                     default:
-                        break
+                        rltstr = "error"
                     }
-                    
-                }else if isReadyToCalculate(expression: currentFormula) {
+                    if Double(rltstr) != nil {
+                        filteredResult[i] = rltstr
+                    }
+                } else if isReadyToCalculate(expression: currentFormula) {
                     let res = cs.execute(expression: currentFormula)
                     if let doubleVal = Double(res ?? "") {
                         filteredResult[i] = String(doubleVal)
                     } else {
                         filteredResult[i] = "Error"
                     }
-                } else {
-                    allCalculated = false
                 }
+                
+                calculated.insert(i)
             }
-            if allCalculated { break }
+            
+            if !madeProgress { break }
         }
 
         //update
