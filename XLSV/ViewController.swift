@@ -6175,7 +6175,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                 }
                 
-                if currentFormula.contains("SUM(") || currentFormula.contains("AVERAGE(") || currentFormula.contains("MAX(") || currentFormula.contains("MIN(") {
+                // Check if formula has already been fully resolved to a numeric value (e.g., "=B1" -> "1")
+                if let numericValue = Double(currentFormula) {
+                    filteredResult[i] = String(numericValue)
+                } else if currentFormula.contains("SUM(") || currentFormula.contains("AVERAGE(") || currentFormula.contains("MAX(") || currentFormula.contains("MIN(") {
                     let rltstr: String
                     switch currentFormula {
                     case _ where currentFormula.contains("SUM("):
