@@ -1291,7 +1291,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         selection_bool = false
         myCollectionView.reloadData()
-        self.rsview.removeFromSuperview()
+        if self.rsview != nil{
+            self.rsview.removeFromSuperview()
+        }
     }
     
     
@@ -2854,6 +2856,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         calculatormode_update_main()
         myCollectionView.reloadData()
+        backRS2()
     }
     
     @objc func fillFunctionInSelectedCellContent(direction: Int) {
@@ -2921,6 +2924,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if !isExcel { saveAsLocalJson(filename: "csv_sheet1") }
         calculatormode_update_main()
         myCollectionView.reloadData()
+        backRS2()
     }
 
     func shiftFormula(_ formula: String, colOffset: Int, rowOffset: Int) -> String {
