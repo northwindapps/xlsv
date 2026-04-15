@@ -6042,10 +6042,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return true
     }
     
-    @objc func calculatormode_update_main(){
-        f_calculated.removeAll()
-        f_location.removeAll()
-        f_location_alphabet.removeAll()
+    @objc func calculatormode_update_main(isFullupdate: Bool = true){
+        if isFullupdate {
+            f_calculated.removeAll()
+            f_location.removeAll()
+            f_location_alphabet.removeAll()
+        }
       
         // these are all made of formula records
         var filteredContent: [String] = []
