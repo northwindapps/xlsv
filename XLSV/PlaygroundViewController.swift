@@ -14,6 +14,8 @@ import Zip
 import SSZipArchive
 import CoreFoundation
 //import GoogleMobileAds
+import SwiftUI
+import SceneKit
 
 let reuseIdentifier2 = "customCell"
 var SCREENSIZE_w2 = ScreenSize.SCREEN_WIDTH
@@ -23,7 +25,187 @@ var fontcolorClass2 = colorclass()
 
 var pasteboard2 = UIPasteboard.general
 
+
+struct SceneKitGraphView: UIViewRepresentable {
+    var onDataGenerated: (([String: Float]) -> Void)?
+    var selectedIndices: Set<String> = []
+    
+    func makeUIView(context: Context) -> SCNView {
+        let scnView = SCNView()
+        scnView.scene = SCNScene()
+        scnView.allowsCameraControl = true
+        scnView.autoenablesDefaultLighting = true
+        
+        // --- 1. 背景を透明にする ---
+        scnView.backgroundColor = .clear // 背景透過
+        
+        // --- 2. 3軸 (Axis) の追加 ---
+        addAxes(to: scnView.scene!.rootNode)
+        // --- 3. グラフの生成 (デフォルト範囲 -5 to 5) ---
+        let resolution = 50
+        var vertices = [SCNVector3]()
+        var results: [String: Float] = [:]
+        for x in 0..<resolution {
+            for y in 0..<resolution {
+                let xf = Float(x) / Float(resolution - 1) * 10 - 5
+                let yf = Float(y) / Float(resolution - 1) * 10 - 5
+                let zf = sin(xf) * cos(yf)
+                
+                vertices.append(SCNVector3(xf, zf, yf)) // SceneKitのYを高さとして使用
+                results["\(x),\(y)"] = zf
+            }
+        }
+        //
+        onDataGenerated?(results)
+        
+        var indices = [Int32]()
+        for y in 0..<resolution-1 {
+            for x in 0..<resolution-1 {
+                let r = Int32(resolution)
+                let i = Int32(y * resolution + x)
+                indices.append(contentsOf: [i, i+r, i+1, i+1, i+r, i+r+1])
+            }
+        }
+        
+        let source = SCNGeometrySource(vertices: vertices)
+        let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+        let geometry = SCNGeometry(sources: [source], elements: [element])
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.systemCyan.withAlphaComponent(0.8) // 少し透けさせる
+        material.specular.contents = UIColor(white: 0.2, alpha: 0.8)
+        material.isDoubleSided = true
+        geometry.materials = [material]
+        
+        let node = SCNNode(geometry: geometry)
+        
+        node.name = "GraphNode"
+        
+        scnView.scene?.rootNode.addChildNode(node)
+        
+        return scnView
+    }
+    
+    //func updateUIView(_ uiView: SCNView, context: Context) {}
+    
+    // 軸を追加するヘルパー関数
+    private func addAxes(to rootNode: SCNNode) {
+        let axisLength: Float = 10.0
+        let radius: CGFloat = 0.02
+        let tickLength: CGFloat = 0.025
+        
+        func createText(_ text: String, color: UIColor, pos: SCNVector3, size: CGFloat = 0.3) {
+            let textGeo = SCNText(string: text, extrusionDepth: 0.01)
+            textGeo.font = UIFont.boldSystemFont(ofSize: size)
+            textGeo.firstMaterial?.diffuse.contents = color
+            
+            // 修正ポイント：テキストのバウンディングボックスを取得して中心を割り出す
+            let (min, max) = textGeo.boundingBox
+            let dx = (max.x - min.x) / 2.0
+            let dy = (max.y - min.y) / 2.0
+            
+            let node = SCNNode(geometry: textGeo)
+            // 中心を合わせるためにオフセットを引く
+            node.pivot = SCNMatrix4MakeTranslation(min.x + dx, min.y + dy, 0)
+            node.position = pos
+            node.constraints = [SCNBillboardConstraint()]
+            rootNode.addChildNode(node)
+        }
+
+        // すべて原点 (0,0,0) を中心に配置
+        let center = SCNVector3(0, 0, 0)
+
+        // X軸 (赤)
+        let xNode = SCNNode(geometry: SCNCylinder(radius: radius, height: CGFloat(axisLength)))
+        xNode.geometry?.firstMaterial?.diffuse.contents = UIColor.red
+        xNode.eulerAngles.z = Float.pi / 2
+        xNode.position = center
+        rootNode.addChildNode(xNode)
+        createText("X", color: .red, pos: SCNVector3(5.5, 0, 0), size: 0.5)
+
+        // Z軸 (緑: 高さ) -> SceneKitのY方向
+        let zNode = SCNNode(geometry: SCNCylinder(radius: radius, height: CGFloat(axisLength)))
+        zNode.geometry?.firstMaterial?.diffuse.contents = UIColor.green
+        zNode.position = center
+        rootNode.addChildNode(zNode)
+        createText("Z", color: .green, pos: SCNVector3(0, 5.5, 0), size: 0.5)
+
+        // Y軸 (青: 奥行き) -> SceneKitのZ方向
+        let yNode = SCNNode(geometry: SCNCylinder(radius: radius, height: CGFloat(axisLength)))
+        yNode.geometry?.firstMaterial?.diffuse.contents = UIColor.blue
+        yNode.eulerAngles.x = Float.pi / 2
+        yNode.position = center
+        rootNode.addChildNode(yNode)
+        createText("Y", color: .blue, pos: SCNVector3(0, 0, 5.5), size: 0.5)
+
+        // 目盛りループ
+        for i in stride(from: -5, through: 5, by: 1) {
+            if i == 0 { continue }
+            let val = Float(i)
+            
+            // X軸
+            let xTick = SCNNode(geometry: SCNBox(width: CGFloat(tickLength), height: 0.2, length: 0.05, chamferRadius: 0))
+            xTick.position = SCNVector3(val, 0, 0)
+            rootNode.addChildNode(xTick)
+            createText("\(i)", color: .red, pos: SCNVector3(val, -0.4, 0))
+            
+            // Z軸 (高さ)
+            let zTick = SCNNode(geometry: SCNBox(width: 0.2, height: CGFloat(tickLength), length: 0.05, chamferRadius: 0))
+            zTick.position = SCNVector3(0, val, 0)
+            rootNode.addChildNode(zTick)
+            createText("\(i)", color: .green, pos: SCNVector3(-0.6, val, 0))
+
+            // Y軸 (奥行き)
+            let yTick = SCNNode(geometry: SCNBox(width: 0.05, height: 0.2, length: CGFloat(tickLength), chamferRadius: 0))
+            yTick.position = SCNVector3(0, 0, val)
+            rootNode.addChildNode(yTick)
+            createText("\(i)", color: .blue, pos: SCNVector3(0, -0.4, val))
+        }
+    }
+    
+    func updateUIView(_ uiView: SCNView, context: Context) {
+        guard let graphNode = uiView.scene?.rootNode.childNode(withName: "GraphNode", recursively: true),
+              let geometry = graphNode.geometry else { return }
+        
+        graphNode.childNode(withName: "SelectionContainer", recursively: true)?.removeFromParentNode()
+        
+        let selectionContainer = SCNNode()
+        selectionContainer.name = "SelectionContainer"
+        graphNode.addChildNode(selectionContainer)
+        
+        for indexStr in selectedIndices {
+            let components = indexStr.split(separator: ",")
+            if components.count == 2, let x = Int(components[0]), let y = Int(components[1]) {
+                let resolution: Float = 50
+                let xf = Float(x) / (resolution - 1) * 10 - 5
+                let yf = Float(y) / (resolution - 1) * 10 - 5
+                let zf = sin(xf) * cos(yf)
+                
+                let dot = SCNSphere(radius: 0.08)
+                dot.firstMaterial?.diffuse.contents = UIColor.systemRed
+                let dotNode = SCNNode(geometry: dot)
+                dotNode.position = SCNVector3(xf, zf, yf)
+                selectionContainer.addChildNode(dotNode)
+            }
+        }
+    }
+
+
+}
+
+struct ContentView: View {
+    var body: some View {
+        SceneKitGraphView()
+            .edgesIgnoringSafeArea(.all)
+    }
+}
+
+
 class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
+    
+    var hostingController: UIHostingController<SceneKitGraphView>?
+    var selectedStrings: Set<String> = []
+
     
 //    @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
@@ -1861,6 +2043,8 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         //Finally calculate
         calculatormode_update_main()
+
+        
         
         DispatchQueue.main.async() {
             appd.collectionViewCellSizeChanged = 1
@@ -1879,7 +2063,172 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
+
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        //new graph creation feature
+        let alert = UIAlertController(
+            title: "3D Graph Visualization",
+            message: "Would you like to display the 3D surface graph?",
+            preferredStyle: .alert
+        )
+        
+        // Show Graph Action
+        let showAction = UIAlertAction(title: "Display", style: .default) { _ in
+            self.setupGraphView()
+        }
+        
+        // Cancel Action
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(showAction)
+        alert.addAction(cancelAction)
+        
+        // Present the alert
+        self.present(alert, animated: true, completion: nil)
+        
+    }
+    
+ 
+        func setupGraphView() {
+            var graphData: [String: Float] = [:]
+            self.content = [] // クラスのプロパティを初期化
+            self.location = []
+            self.locationInExcel = []
+            
+            self.textsize = []
+            self.tcolor = []
+            self.bgcolor = []
+
+            let swiftUIView = SceneKitGraphView { data in
+                graphData = data
+                //sort is needed for keeping constistancy
+                for key in data.keys.sorted() {
+                    if let val = data[key] {
+                        self.content.append(String(val))    // "0.841"
+                        let components = key.split(separator: ",")
+                        
+                        if components.count == 2,
+                           let colNum = Int(components[0]),
+                           let rowNum = Int(components[1]) {
+                            
+                            let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: colNum)
+                            
+                            let excelRow = rowNum
+                            
+                            self.locationInExcel.append("\(excelCol)\(excelRow)")
+                            
+                            let adjustedKey = "\(colNum + 1),\(rowNum + 1)"
+                            self.location.append(adjustedKey)
+                            
+                        }
+                        
+                        self.textsize.append(String(self.selectingSize))
+                        self.bgcolor.append(self.selectingBgColor)
+                        self.tcolor.append(self.selectingColor)
+                    }
+                }
+
+                
+                print("csv_sheet1 saved")
+                self.saveAsLocalJson(filename: "csv_sheet1")
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                let initialIdx = appd.sheetNameIds.first ?? "-1"
+                self.isExcelSheetData(sheetIdx: Int(initialIdx)!)
+                self.initSheetData()
+                //self.fontcolorClass2.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+                //self.initExcelLocation()
+                print("データ格納完了: \(self.location.count)件")
+                self.myCollectionView.reloadData()
+                
+            }
+            
+            let hc = UIHostingController(rootView: swiftUIView)
+            self.hostingController = hc
+
+            addChildViewController(hc)
+            view.addSubview(hc.view)
+            
+            hc.view.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                hc.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+                hc.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                hc.view.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5),
+                hc.view.heightAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5)
+            ])
+            hc.didMove(toParent: self)
+            
+            //
+            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+            hc.view.addGestureRecognizer(panGesture)
+            hc.view.isUserInteractionEnabled = true
+
+            //pseudo button
+            let dragButton = UIButton(type: .system)
+            dragButton.setTitle("●", for: .normal)
+            dragButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            dragButton.setTitleColor(.white, for: .normal)
+            dragButton.layer.cornerRadius = 15
+            dragButton.translatesAutoresizingMaskIntoConstraints = false
+            hc.view.addSubview(dragButton)
+            
+            let closeButton = UIButton(type: .system)
+            closeButton.setTitle("✕", for: .normal)
+            closeButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            closeButton.setTitleColor(.white, for: .normal)
+            closeButton.layer.cornerRadius = 15
+            closeButton.translatesAutoresizingMaskIntoConstraints = false
+            closeButton.addTarget(self, action: #selector(closeGraph), for: .touchUpInside)
+
+            hc.view.addSubview(closeButton)
+            NSLayoutConstraint.activate([
+                closeButton.topAnchor.constraint(equalTo: hc.view.topAnchor, constant: 8),
+                closeButton.trailingAnchor.constraint(equalTo: hc.view.trailingAnchor, constant: -8),
+                closeButton.widthAnchor.constraint(equalToConstant: 30),
+                closeButton.heightAnchor.constraint(equalToConstant: 30),
+                
+                dragButton.topAnchor.constraint(equalTo: hc.view.topAnchor, constant: 8),
+                dragButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -8),
+                dragButton.widthAnchor.constraint(equalToConstant: 30),
+                dragButton.heightAnchor.constraint(equalToConstant: 30)
+            ])
+        }
+    
+    
+        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+            guard let targetView = gesture.view else { return }
+            let translation = gesture.translation(in: view)
+            
+            if gesture.state == .began {
+                targetView.translatesAutoresizingMaskIntoConstraints = true
+            }
+            
+            if gesture.state == .changed {
+                targetView.center = CGPoint(
+                    x: targetView.center.x + translation.x,
+                    y: targetView.center.y + translation.y
+                )
+                gesture.setTranslation(.zero, in: view)
+            }
+        }
+
+        @objc func closeGraph() {
+            guard let hc = hostingController else { return }
+            
+            UIView.animate(withDuration: 0.3, animations: {
+                hc.view.alpha = 0
+            }) { _ in
+                hc.willMove(toParent: nil)
+                hc.view.removeFromSuperview()
+                hc.removeFromParentViewController()
+                self.hostingController = nil
+            }
+        }
+    
+
     
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
         let calendar = Calendar.current
@@ -2009,10 +2358,17 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                         tempRangeSelected.append(newIndexPath)
                     }
                 }
-            }
+                
+                //for 3D Graph
+                let indexStr = "\(newIndexPath.item - 1),\(newIndexPath.section - 1)"
+                    selectedStrings.insert(indexStr)
+                    
+                }
             break
             
         case .ended, .cancelled:
+            
+            updateGraphSelection()
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
                 tempRangeSelected.append(newIndexPath)
@@ -2021,15 +2377,14 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             // Restore the original background color
             print("ended")
             
-            // 重複を排除してソート（選択順ではなく座標順にするため）
             let sortedSelection = Array(Set(tempRangeSelected)).sorted {
                 $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section
             }
             
-            // 全てのIndexPathが同じ行（section）にあるか
+            // on the same row 
             let isSingleRow = tempRangeSelected.allSatisfy { $0.section == tempRangeSelected.first?.section }
 
-            // 全てのIndexPathが同じ列（item）にあるか
+            // on the same column
             let isSingleCol = tempRangeSelected.allSatisfy { $0.item == tempRangeSelected.first?.item }
 
             if isSingleRow && isSingleCol {
@@ -2137,9 +2492,30 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         }
     }
     
+    func updateGraphSelection() {
+        self.hostingController?.rootView.selectedIndices = selectedStrings
+    }
+    
     func isValidDate(text: String) -> Bool {
         let pattern = "^\\d{4}/\\d{2}/\\d{2}$"
         return text.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    func fillTempRangeSelectedWithRange(fromCol: Int = 3, toCol: Int = 123, fromRow: Int = 3, toRow: Int = 123) {
+        tempRangeSelected = []
+        for row in fromRow...toRow {
+            for col in fromCol...toCol {
+                tempRangeSelected.append(IndexPath(item: col, section: row))
+            }
+        }
+    }
+    
+    func mapZToTempRangeSelected() -> [Double] {
+        return tempRangeSelected.map { indexPath in
+            let x = Double(indexPath.item)
+            let y = Double(indexPath.section)
+            return sin(x) * cos(y)
+        }
     }
     
     func panGestureShow2() {
@@ -2679,7 +3055,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     }
 
     @objc func copyPasteSelectedCellContent() {
-        if isExcel && currentindex != nil {
+        
+            //
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            //this
+            fillTempRangeSelectedWithRange()
+      
             let ecol = ExcelHelper().GetExcelColumnName(columnNumber: currentindex.item)
             let alert = UIAlertController(
                 title: "Copy & Paste Selected Cell Values",
@@ -2688,12 +3069,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             )
             
             alert.addAction(UIAlertAction(title: "Yes", style: .default) { _ in
-                self.takeDailyBackup(msg: "before_copyPaste_")
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-                appd.wsSheetIndex = sheetIdx!
-                print("wsSheetIndex",appd.wsSheetIndex)
-
 
                 //find copy origin point(left top)
                 let minCol = self.tempRangeSelected.map { $0.item }.min() ?? 0
@@ -2706,13 +3081,11 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
                 
                 for each in self.tempRangeSelected {
-                    if let idx = self.location.firstIndex(of: "\(each.item),\(each.section)") {
                         copyBuffer.append((
                             colOffset: each.item - minCol,
                             rowOffset: each.section - minRow,
-                            value: self.content[idx]
+                            value: "test"
                         ))
-                    }
                 }
                 
                 //start copying
@@ -2722,36 +3095,17 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     let destLocStr = "\(destCol),\(destRow)"
                     
                     if let existingIdx = self.location.firstIndex(of: destLocStr) {
-                        self.content[existingIdx] = item.value
+                        self.content[existingIdx] = "test"//item.value
                     } else {
                         self.location.append(destLocStr)
-                        self.content.append(item.value)
+                        self.content.append("test")
                         let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: destCol)
                         self.locationInExcel.append("\(excelCol)\(destRow)")
                     }
                 }
 
-                let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel )
-                
-                if rlt == nil{
-                    print("Something went wrong")
-                    return
-                }
-                
-                //sheet cell get touched
-                appd.collectionViewCellSizeChanged = 1
-                appd.cswLocation.removeAll()
-                appd.customSizedWidth.removeAll()
-                appd.cshLocation.removeAll()
-                appd.customSizedHeight.removeAll()
-                
-                
-                self.f_calculated.removeAll()
-                self.f_content.removeAll()
-                self.content.removeAll()
-                self.location.removeAll()
-                self.f_location_alphabet.removeAll()
+              
+
                 
                 //print("sheet changed",indexPath.item)
                 self.stringboxText = ""
@@ -2762,26 +3116,21 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 
                 // Present the target view controller after LoadingFileController's view has appeared
                 DispatchQueue.main.async {
-                    //                self.present(targetViewController, animated: true, completion: nil)
-                    self.loadExcelSheet(idx: appd.wsSheetIndex){
-                        // Assuming `collectionView` is your UICollectionView instance
-                        if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
-                            customLayout.resetCellAttrsDictionaryItemZindex()
-                            customLayout.prepare()
-                            customLayout.invalidateLayout() // Call the method on the instance
-                            self.myCollectionView.reloadData()
-                        } else {
-                            print("CustomCollectionViewLayout is not set as the current layout")
-                        }
+                    if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        customLayout.resetCellAttrsDictionaryItemZindex()
+                        customLayout.prepare()
+                        customLayout.invalidateLayout() // Call the method on the instance
+                        self.myCollectionView.reloadData()
+                    } else {
+                        print("CustomCollectionViewLayout is not set as the current layout")
                     }
-                    
                 }
                 
             })
             alert.addAction(UIAlertAction(title: "No", style: .cancel){ _ in
             })
             self.present(alert, animated: true)
-        }
+        
         backRS2()
     }
     
@@ -4669,12 +5018,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     @objc func input(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.collectionViewCellSizeChanged = 0
-        //let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-        //appd.wsSheetIndex = sheetIdx!
-        //print("wsSheetIndex",appd.wsSheetIndex)
         
-        //let pasteboard2 = UIPasteboard.general
-        //pasteboard2.string = ""
         
         fontcolorClass2.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         

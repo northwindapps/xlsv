@@ -10,298 +10,309 @@ import Foundation
 
 
 class CalculationService{
-    // Testcase Examples
-    // let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
-    // let cs = CalculationService()
-    // let result = cs.execute(expression:tempStr) ?? ""
-    // print("final",result)
-    static let reservedWords: [String] = [
-        "pi",
-        "e",
-        "asin",
-        "acos",
-        "atan",
-        "sin",
-        "cos",
-        "tan",
-        "exp",
-        "logb",
-        "logd",
-        "log",
-        "abs",
-        "sqrt",
-        //These excel expressions should be transformed earlier
-        //           "PI()",
-        //           "EXP(1)",
-        //           "ASIN",
-        //           "ACOS",
-        //           "ATAN",
-        //           "SIN",
-        //           "COS",
-        //           "TAN",
-        //           "EXP",
-        //           "LOG",
-        //           "LOG10",
-        //           "LN",
-        //           "ABS",
-        //           "SQRT"
-    ]
+        // Testcase Examples
+        // let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
+        // let cs = CalculationService()
+        // let result = cs.execute(expression:tempStr) ?? ""
+        // print("final",result)
+        static let reservedWords: [String] = [
+           "pi",
+           "e",
+           "asin",
+           "acos",
+           "atan",
+           "sin",
+           "cos",
+           "tan",
+           "exp",
+           "logb",
+           "logd",
+           "log",
+           "abs",
+           "sqrt",
+           //These excel expressions should be transformed earlier
+//           "PI()",
+//           "EXP(1)",
+//           "ASIN",
+//           "ACOS",
+//           "ATAN",
+//           "SIN",
+//           "COS",
+//           "TAN",
+//           "EXP",
+//           "LOG",
+//           "LOG10",
+//           "LN",
+//           "ABS",
+//           "SQRT"
+       ]
+
+       var propertyMap: [String: Any] = [:]
+
+       func setProperties(propertyMap: [String: Any]) {
+           for (key, value) in propertyMap {
+               self.propertyMap[key] = value
+           }
+       }
+
+       func getProperty(key: String) -> Any? {
+           return propertyMap[key]
+       }
     
-    static let floatRegex = try? NSRegularExpression(pattern: "^-?\\d+(\\.\\d+)?$")
-    
-    var propertyMap: [String: Any] = [:]
-    
-    func setProperties(propertyMap: [String: Any]) {
-        for (key, value) in propertyMap {
-            self.propertyMap[key] = value
-        }
-    }
-    
-    func getProperty(key: String) -> Any? {
-        return propertyMap[key]
-    }
-    
-    func replaceConstant(source: String) -> String {
-        var input = source
-        input = input.replacingOccurrences(of: "pi", with: String(Double.pi))
-        input = input.replacingOccurrences(of: "e", with: String(M_E))
-        let regex = try! NSRegularExpression(pattern: #"(?<![a-zA-Z])e(?![a-zA-Z])"#)
-        input = regex.stringByReplacingMatches(in: input, range: NSRange(input.startIndex..., in: input), withTemplate: String(M_E))
-        
-        let words = input.match(regex: #"[a-zA-Z][0-9]*\b"#) ?? []
-        for word in words {
-            if !CalculationService.reservedWords.contains(word) {
-                if let value = getProperty(key: word) {
-                    let valueString = String(describing: value)
-                    input = input.replacingOccurrences(of: word, with: valueString)
+       func replaceConstant(source: String) -> String {
+            var input = source
+            input = input.replacingOccurrences(of: "pi", with: String(Double.pi))
+            input = input.replacingOccurrences(of: "e", with: String(M_E))
+            let regex = try! NSRegularExpression(pattern: #"(?<![a-zA-Z])e(?![a-zA-Z])"#)
+            input = regex.stringByReplacingMatches(in: input, range: NSRange(input.startIndex..., in: input), withTemplate: String(M_E))
+
+            let words = input.match(regex: #"[a-zA-Z][0-9]*\b"#) ?? []
+            for word in words {
+                if !CalculationService.reservedWords.contains(word) {
+                    if let value = getProperty(key: word) {
+                        let valueString = String(describing: value)
+                        input = input.replacingOccurrences(of: word, with: valueString)
+                    }
                 }
             }
-        }
-        return input
-    }
+            return input
+       }
     
     func replacePattern(input: String) -> String {
-        // Define the regular expression pattern
-        let pattern = "(\\d+)\\("
-        // Create a regular expression object
-        if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-            // Replace matches in the input string
-            let modified = regex.stringByReplacingMatches(
-                in: input,
-                options: [],
-                range: NSRange(location: 0, length: input.utf16.count),
-                withTemplate: "$1 *("
-            )
-            return modified
-        }
-        return input;
+            // Define the regular expression pattern
+            let pattern = "(\\d+)\\("
+            // Create a regular expression object
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                // Replace matches in the input string
+                let modified = regex.stringByReplacingMatches(
+                    in: input,
+                    options: [],
+                    range: NSRange(location: 0, length: input.utf16.count),
+                    withTemplate: "$1 *("
+                )
+                
+                // Print the modified string
+                print(modified)
+                return modified
+            }
+            return input;
     }
     
     func replacePattern2(input:String) -> String{
-        
+
         // Define the regular expression pattern
         let pattern = "(\\d+)([a-zA-Z]+)"
         let regex = try! NSRegularExpression(pattern: pattern, options: [])
-        
+
         // Replace matches in the input string
         let modifiedString = regex.stringByReplacingMatches(in: input, options: [], range: NSRange(location: 0, length: input.utf16.count), withTemplate: "$1 * $2")
+
+        // Print the modified string
+        print(modifiedString)
         return modifiedString
     }
     
     
-    func numCheck(source: String) -> String {
-        let regex = try! NSRegularExpression(pattern: "[^-0123456789.]+", options: [])
-        let numOnly = regex.stringByReplacingMatches(in: source, options: [], range: NSRange(source.startIndex..., in: source), withTemplate: "")
-        return numOnly
-    }
-    
-    func extractMostNestedBraces(input: String) -> String? {
-        var depth = 0
-        var currentDepth = 0
-        var startIndex = -1
-        var endIndex = -1
-        
-        for (index, character) in input.enumerated() {
-            if character == "(" {
-                currentDepth += 1
-                if currentDepth > depth {
-                    depth = currentDepth
-                    startIndex = index
+       func numCheck(source: String) -> String {
+            let regex = try! NSRegularExpression(pattern: "[^-0123456789.]+", options: [])
+            let numOnly = regex.stringByReplacingMatches(in: source, options: [], range: NSRange(source.startIndex..., in: source), withTemplate: "")
+            return numOnly
+       }
+
+       func extractMostNestedBraces(input: String) -> String? {
+            var depth = 0
+            var currentDepth = 0
+            var startIndex = -1
+            var endIndex = -1
+
+            for (index, character) in input.enumerated() {
+                if character == "(" {
+                    currentDepth += 1
+                    if currentDepth > depth {
+                        depth = currentDepth
+                        startIndex = index
+                    }
+                } else if character == ")" {
+                    if currentDepth == depth {
+                        endIndex = index
+                        break
+                    }
+                    currentDepth -= 1
                 }
-            } else if character == ")" {
-                if currentDepth == depth {
-                    endIndex = index
-                    break
-                }
-                currentDepth -= 1
             }
-        }
-        
-        if startIndex != -1, endIndex != -1 {
-            let start = input.index(input.startIndex, offsetBy: startIndex + 1)
-            let end = input.index(input.startIndex, offsetBy: endIndex)
-            return String(input[start..<end])
-        }
-        
-        return nil
-        
-    }
+
+            if startIndex != -1, endIndex != -1 {
+                let start = input.index(input.startIndex, offsetBy: startIndex + 1)
+                let end = input.index(input.startIndex, offsetBy: endIndex)
+                return String(input[start..<end])
+            }
+            
+           return nil
+            
+      }
     
-    
-    
+    //   func isFloat(_ str: String) -> Bool {
+    //         let floatRegex = #"^-?\d+(\.\d+)?$"#
+    //         let range = NSRange(str.startIndex..<str.endIndex, in: str)
+    //         return NSPredicate(format: "SELF MATCHES %@", floatRegex).evaluate(with: str)
+    //   }
+
     func isFloat(_ str: String) -> Bool {
-        guard let regex = CalculationService.floatRegex else { return false }
-        let range = NSRange(location: 0, length: str.utf16.count)
-        return regex.firstMatch(in: str, options: [], range: range) != nil
-    }
+    let pattern = "^-?\\d+(\\.\\d+)?$"
+    // NSRegularExpression over NSPredicate
+    guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
     
+    let range = NSRange(location: 0, length: str.utf16.count)
+    return regex.firstMatch(in: str, options: [], range: range) != nil
+}
+
     func areAllFloats(_ item: String) -> Bool {
         return Float(item) != nil
     }
-    
+
     func containsAlphabetChars(_ str: String) -> Bool {
         let lettersSet = CharacterSet.letters
         return str.rangeOfCharacter(from: lettersSet) != nil
     }
-    
-    
+
+
     func radianToString(_ degrees: Double) -> String {
         //let radians = degrees * (.pi / 180.0)
         return String(degrees)
     }
-    
+
     
     func execute(expression: String) -> String? {
-        var tempStr: String? = nil
-        let charset: Set<Character> = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        var isInfinity = false;
-        let ERROR = "error";
-        
-        if expression.contains { charset.contains($0) } {
-            return nil
-        } else {
-            tempStr = expression.replacingOccurrences(of: "=", with: "")
-        }
-        
-        if let firstChar = tempStr?.first {
-            if firstChar == "^" || firstChar == "/" || firstChar == "*"  || firstChar == "+" {
+            var tempStr: String? = nil
+            let charset: Set<Character> = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+            var isInfinity = false;
+            let ERROR = "error";
+            
+            if expression.contains { charset.contains($0) } {
                 return nil
+            } else {
+                tempStr = expression.replacingOccurrences(of: "=", with: "")
             }
-        }
-        
-        let MAXIMUM_LOOP_NUM = 50
-        var loopCounter = MAXIMUM_LOOP_NUM
-        
-        // PREPARATION
-        tempStr = replaceConstant(source: tempStr!)
-        tempStr = replacePattern(input: tempStr!)
-        tempStr = replacePattern2(input: tempStr!)
-        
-        
-        
-        // Comma Free
-        tempStr = tempStr?.replacingOccurrences(of: ",", with: "")
-        
-        if !(tempStr?.contains("(") ?? false) {
-            loopCounter = 50
-            // No braces
-            if let unwrappedTempStr = tempStr, !isFloat(unwrappedTempStr) {
-                while loopCounter > 0 {
-                    tempStr = scientificOperation(tempStr!)
-                    tempStr = basicOperation(source: tempStr!)
+            
+            if let firstChar = tempStr?.first {
+                if firstChar == "^" || firstChar == "/" || firstChar == "*"  || firstChar == "+" {
+                    return nil
+                }
+            }
+            
+            let MAXIMUM_LOOP_NUM = 50
+            var loopCounter = MAXIMUM_LOOP_NUM
+            
+            // PREPARATION
+            tempStr = replaceConstant(source: tempStr!)
+            tempStr = replacePattern(input: tempStr!)
+            tempStr = replacePattern2(input: tempStr!)
+            
+            
+            
+            // Comma Free
+            tempStr = tempStr?.replacingOccurrences(of: ",", with: "")
+            
+            if !(tempStr?.contains("(") ?? false) {
+                loopCounter = 50
+                // No braces
+                if let unwrappedTempStr = tempStr, !isFloat(unwrappedTempStr) {
+                    while loopCounter > 0 {
+                        tempStr = scientificOperation(tempStr!)
+                        tempStr = basicOperation(source: tempStr!)
+                        tempStr = slashDotPowerPlusCase(tempStr!)
+                        print("tempStr",tempStr)
+                        if tempStr == ERROR{
+                            isInfinity = true;
+                        }
+                        if isFloat(tempStr ?? "") {
+                            loopCounter = 0
+                        }
+                        loopCounter -= 1
+                    }
+                }
+            }
+            
+            while loopCounter > 0 {
+                tempStr = tempStr?.replacingOccurrences(of: " ", with: "")
+                if let match = extractMostNestedBraces(input: tempStr ?? "") {
+                    let cloned = "(\(match))"
+                    var result: String? = nil
+                    var j = 10
+                    print("match",cloned)
+                    for i in 0..<cloned.count {
+                        if containsAlphabetChars(cloned) {
+                            result = scientificOperation(cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: ""))
+                            while j > 0 {
+                                if let unwrappedResult = result, isFloat(unwrappedResult) {
+                                    tempStr = tempStr?.replacingOccurrences(of: cloned, with: unwrappedResult)
+                                    j = 0
+                                } else {
+                                    if containsAlphabetChars(result ?? "") {
+                                        result = scientificOperation(result ?? "")
+                                    } else {
+                                        result = basicOperation(source: result ?? "")
+                                        tempStr = slashDotPowerPlusCase(tempStr!)
+                                        if result == ERROR{
+                                            isInfinity = true;
+                                        }
+                                    }
+                                }
+                                j -= 1
+                            }
+                        } else {
+                            var k = 50
+                            var basicExp = cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
+                            print("basicExp",basicExp)
+                            while k > 0 {
+                                result = basicOperation(source: basicExp)
+                                tempStr = slashDotPowerPlusCase(tempStr!)
+                                print("result",result)
+                                if result == ERROR{
+                                    isInfinity = true;
+                                }
+                                if isFloat(result ?? "") {
+                                    k = 0
+                                }
+                                basicExp = result ?? ""
+                                k -= 1
+                            }
+                            
+                            if let unwrappedResult = result {
+                                let ptn = cloned
+                                tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
+                                print(tempStr)
+                            }
+                        }
+                    }
+                }
+                
+                let match = extractMostNestedBraces(input: tempStr ?? "")
+                if match == nil{
+                    tempStr = scientificOperation(tempStr ?? "")
+                    tempStr = basicOperation(source: tempStr ?? "")
                     tempStr = slashDotPowerPlusCase(tempStr!)
                     if tempStr == ERROR{
                         isInfinity = true;
                     }
-                    if isFloat(tempStr ?? "") {
-                        loopCounter = 0
-                    }
-                    loopCounter -= 1
                 }
-            }
-        }
-        
-        while loopCounter > 0 {
-            tempStr = tempStr?.replacingOccurrences(of: " ", with: "")
-            if let match = extractMostNestedBraces(input: tempStr ?? "") {
-                let cloned = "(\(match))"
-                var result: String? = nil
-                var j = 10
-                if containsAlphabetChars(cloned) {
-                    result = scientificOperation(cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: ""))
-                    while j > 0 {
-                        if let unwrappedResult = result, isFloat(unwrappedResult) {
-                            tempStr = tempStr?.replacingOccurrences(of: cloned, with: unwrappedResult)
-                            j = 0
-                        } else {
-                            if containsAlphabetChars(result ?? "") {
-                                result = scientificOperation(result ?? "")
-                            } else {
-                                result = basicOperation(source: result ?? "")
-                                tempStr = slashDotPowerPlusCase(tempStr!)
-                                if result == ERROR{
-                                    isInfinity = true;
-                                }
-                            }
-                        }
-                        j -= 1
-                    }
-                } else {
-                    var k = 50
-                    var basicExp = cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-                    while k > 0 {
-                        result = basicOperation(source: basicExp)
-                        tempStr = slashDotPowerPlusCase(tempStr!)
-                        if result == ERROR{
-                            isInfinity = true;
-                        }
-                        if isFloat(result ?? "") {
-                            k = 0
-                        }
-                        basicExp = result ?? ""
-                        k -= 1
-                    }
-                    
-                    if let unwrappedResult = result {
-                        let ptn = cloned
-                        tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
-                    }
+                if isInfinity{
+                    tempStr = "nil";
                 }
+                
+                
+                if isFloat(tempStr ?? "") {
+                    loopCounter = 0
+                }
+                loopCounter -= 1
             }
-        }
-        
-        let match = extractMostNestedBraces(input: tempStr ?? "")
-        if match == nil{
-            tempStr = scientificOperation(tempStr ?? "")
-            tempStr = basicOperation(source: tempStr ?? "")
-            tempStr = slashDotPowerPlusCase(tempStr!)
-            if tempStr == ERROR{
-                isInfinity = true;
+            
+            if tempStr ?? "" == "nil"{
+              return "error"
             }
+            
+            return isFloat(tempStr ?? "") ? tempStr : nil
         }
-        if isInfinity{
-            tempStr = "nil";
-        }
-        
-        
-        if isFloat(tempStr ?? "") {
-            loopCounter = 0
-        }
-        loopCounter -= 1
-        
-        
-        
-        
-        if tempStr ?? "" == "nil"{
-            return "error"
-        }
-        
-        
-        return isFloat(tempStr ?? "") ? tempStr : nil
-    }
-
-
-
     
     func basicOperation(source: String) -> String {
         var resultvalue = Decimal(0.0)
@@ -344,6 +355,7 @@ class CalculationService{
         } else {
             if elements.contains("^") {
                 for i in 1..<elements.count {
+                    print("element",elements[i])
                     if elements[i] == "^" && i - 1 >= 0 && isFloat(String(elements[i - 1])) && i + 1 < elements.count && isFloat(String(elements[i + 1])) {
                         let a = Double(elements[i-1])
                         let b = Double(elements[i+1])
@@ -393,6 +405,7 @@ class CalculationService{
             elements = elements.filter { item in
                 return item != "nil"
             }
+            print("joined",elements.joined(separator: ""))
             return elements.joined(separator: "")
         }
     }
@@ -526,3 +539,4 @@ extension Decimal {
 // let cs = CalculationService()
 // let result = cs.execute(expression:tempStr) ?? ""
 // print("final",result)
+
