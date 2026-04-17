@@ -27,36 +27,79 @@ var pasteboard2 = UIPasteboard.general
 
 
 struct SceneKitGraphView: UIViewRepresentable {
+    var functionExpression: String
     var onDataGenerated: (([String: Float]) -> Void)?
     var selectedIndices: Set<String> = []
     
     func makeUIView(context: Context) -> SCNView {
-        let scnView = SCNView()
-        scnView.scene = SCNScene()
-        scnView.allowsCameraControl = true
-        scnView.autoenablesDefaultLighting = true
+//        var fstring = functionExpression
+//        let cs = CalculationService()
+//        let scnView = SCNView()
+//        scnView.scene = SCNScene()
+//        scnView.allowsCameraControl = true
+//        scnView.autoenablesDefaultLighting = true
+//        
+//        scnView.backgroundColor = .clear // 背景透過
+//        
+//        // --- 2. 3軸 (Axis) の追加 ---
+//        addAxes(to: scnView.scene!.rootNode)
+//        // --- 3. グラフの生成 (デフォルト範囲 -5 to 5) ---
+//        let resolution = 50
+//        var vertices = [SCNVector3]()
+//        var results: [String: Float] = [:]
+//        for x in 0..<resolution {
+//            for y in 0..<resolution {
+//                let xf = Float(x) / Float(resolution - 1) * 10 - 5
+//                let yf = Float(y) / Float(resolution - 1) * 10 - 5
+//                fstring = fstring.replacingOccurrences(of: "x", with: String(xf)).replacingOccurrences(of: "y", with: String(yf))
+//                let res = cs.execute(expression: fstring)
+//                let zf: Float
+//                if let resString = res, let doubleVal = Double(resString) {
+//                    zf = Float(doubleVal)
+//                } else {
+//                    zf = 0.0
+//                }
+//                vertices.append(SCNVector3(xf, zf, yf))
+//                results["\(x),\(y)"] = zf
+//            }
+//        }
+//        //
+//        onDataGenerated?(results)
         
-        // --- 1. 背景を透明にする ---
-        scnView.backgroundColor = .clear // 背景透過
-        
-        // --- 2. 3軸 (Axis) の追加 ---
-        addAxes(to: scnView.scene!.rootNode)
-        // --- 3. グラフの生成 (デフォルト範囲 -5 to 5) ---
-        let resolution = 50
-        var vertices = [SCNVector3]()
-        var results: [String: Float] = [:]
-        for x in 0..<resolution {
+            let cs = CalculationService()
+            let scnView = SCNView()
+            scnView.scene = SCNScene()
+            scnView.allowsCameraControl = true
+            scnView.autoenablesDefaultLighting = true
+            scnView.backgroundColor = .clear
+            
+            addAxes(to: scnView.scene!.rootNode)
+            
+            let resolution = 51
+            var vertices = [SCNVector3]()
+            var results: [String: Float] = [:]
+            
+            // 元の式を保持
+            let baseExpression = functionExpression
+
             for y in 0..<resolution {
-                let xf = Float(x) / Float(resolution - 1) * 10 - 5
-                let yf = Float(y) / Float(resolution - 1) * 10 - 5
-                let zf = sin(xf) * cos(yf)
-                
-                vertices.append(SCNVector3(xf, zf, yf)) // SceneKitのYを高さとして使用
-                results["\(x),\(y)"] = zf
+                for x in 0..<resolution {
+                    let xf = Float(x) / Float(resolution - 1) * 10 - 5
+                    let yf = Float(y) / Float(resolution - 1) * 10 - 5
+                    
+                    // 毎回元の式から新しく置換する
+                    var currentExpr = baseExpression
+                        .replacingOccurrences(of: "x", with: "(\(xf))") // 括弧をつけると負の数でも安全
+                        .replacingOccurrences(of: "y", with: "(\(yf))")
+                    
+                    let res = cs.execute(expression: currentExpr)
+                    let zf = Float(Double(res ?? "") ?? 0.0)
+                    
+                    // 軸が -5...5 なので、zf が大きすぎる場合は clamp するか検討
+                    vertices.append(SCNVector3(xf, zf, yf))
+                    results["\(x),\(y)"] = zf
+                }
             }
-        }
-        //
-        onDataGenerated?(results)
         
         var indices = [Int32]()
         for y in 0..<resolution-1 {
@@ -83,10 +126,15 @@ struct SceneKitGraphView: UIViewRepresentable {
         
         scnView.scene?.rootNode.addChildNode(node)
         
-        return scnView
+//        return scnView
+        
+        // 最後に親へ通知（SwiftUIの更新サイクルに合わせる）
+            DispatchQueue.main.async {
+                self.onDataGenerated?(results)
+            }
+            
+            return scnView
     }
-    
-    //func updateUIView(_ uiView: SCNView, context: Context) {}
     
     // 軸を追加するヘルパー関数
     private func addAxes(to rootNode: SCNNode) {
@@ -163,9 +211,37 @@ struct SceneKitGraphView: UIViewRepresentable {
         }
     }
     
+//    func updateUIView(_ uiView: SCNView, context: Context) {
+//        guard let graphNode = uiView.scene?.rootNode.childNode(withName: "GraphNode", recursively: true),
+//              let geometry = graphNode.geometry else { return }
+//        
+//        graphNode.childNode(withName: "SelectionContainer", recursively: true)?.removeFromParentNode()
+//        
+//        let selectionContainer = SCNNode()
+//        selectionContainer.name = "SelectionContainer"
+//        graphNode.addChildNode(selectionContainer)
+//        
+//        for indexStr in selectedIndices {
+//            let components = indexStr.split(separator: ",")
+//            if components.count == 2, let x = Int(components[0]), let y = Int(components[1]) {
+//                let resolution: Float = 50
+//                let xf = Float(x) / (resolution - 1) * 10 - 5
+//                let yf = Float(y) / (resolution - 1) * 10 - 5
+//                let zf = sin(xf) * cos(yf)
+//                
+//                let dot = SCNSphere(radius: 0.08)
+//                dot.firstMaterial?.diffuse.contents = UIColor.systemRed
+//                let dotNode = SCNNode(geometry: dot)
+//                dotNode.position = SCNVector3(xf, zf, yf)
+//                selectionContainer.addChildNode(dotNode)
+//            }
+//        }
+//    }
     func updateUIView(_ uiView: SCNView, context: Context) {
-        guard let graphNode = uiView.scene?.rootNode.childNode(withName: "GraphNode", recursively: true),
-              let geometry = graphNode.geometry else { return }
+        guard let graphNode = uiView.scene?.rootNode.childNode(withName: "GraphNode", recursively: true) else { return }
+        
+        let cs = CalculationService()
+        let baseExpression = functionExpression
         
         graphNode.childNode(withName: "SelectionContainer", recursively: true)?.removeFromParentNode()
         
@@ -179,9 +255,15 @@ struct SceneKitGraphView: UIViewRepresentable {
                 let resolution: Float = 50
                 let xf = Float(x) / (resolution - 1) * 10 - 5
                 let yf = Float(y) / (resolution - 1) * 10 - 5
-                let zf = sin(xf) * cos(yf)
                 
-                let dot = SCNSphere(radius: 0.08)
+                var currentExpr = baseExpression
+                    .replacingOccurrences(of: "x", with: "(\(xf))")
+                    .replacingOccurrences(of: "y", with: "(\(yf))")
+                
+                let res = cs.execute(expression: currentExpr)
+                let zf = Float(Double(res ?? "") ?? 0.0)
+                
+                let dot = SCNSphere(radius: 0.1)
                 dot.firstMaterial?.diffuse.contents = UIColor.systemRed
                 let dotNode = SCNNode(geometry: dot)
                 dotNode.position = SCNVector3(xf, zf, yf)
@@ -191,13 +273,22 @@ struct SceneKitGraphView: UIViewRepresentable {
     }
 
 
+
 }
 
 struct ContentView: View {
-    var body: some View {
-        SceneKitGraphView()
+    @State var functionExpression: String = "sin(xf) * cos(yf)"
+        @State private var results: [String: Float] = [:]
+
+        var body: some View {
+            SceneKitGraphView(
+                functionExpression: functionExpression,
+                onDataGenerated: { data in
+                    self.results = data
+                }
+            )
             .edgesIgnoringSafeArea(.all)
-    }
+        }
 }
 
 
@@ -2072,28 +2163,34 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         //new graph creation feature
         let alert = UIAlertController(
             title: "3D Graph Visualization",
-            message: "Would you like to display the 3D surface graph?",
+            message: "Enter a function expression (e.g., sin(xx) * cos(y))",
             preferredStyle: .alert
         )
-        
-        // Show Graph Action
-        let showAction = UIAlertAction(title: "Display", style: .default) { _ in
-            self.setupGraphView()
+
+        alert.addTextField { textField in
+            textField.placeholder = "sin(x) * cos(y)"
+            textField.text = "sin(x) * cos(y)"
         }
-        
-        // Cancel Action
+
+        let showAction = UIAlertAction(title: "Display", style: .default) { _ in
+            if let expression = alert.textFields?.first?.text {
+                print("User entered: \(expression)")
+                self.setupGraphView(expression: expression)
+            }
+        }
+
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
+
         alert.addAction(showAction)
         alert.addAction(cancelAction)
-        
-        // Present the alert
+
         self.present(alert, animated: true, completion: nil)
+
         
     }
     
  
-        func setupGraphView() {
+    func setupGraphView(expression:String) {
             var graphData: [String: Float] = [:]
             self.content = [] // クラスのプロパティを初期化
             self.location = []
@@ -2103,7 +2200,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             self.tcolor = []
             self.bgcolor = []
 
-            let swiftUIView = SceneKitGraphView { data in
+        let swiftUIView = SceneKitGraphView(functionExpression: expression) { data in
                 graphData = data
                 //sort is needed for keeping constistancy
                 for key in data.keys.sorted() {
@@ -2121,7 +2218,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                             
                             self.locationInExcel.append("\(excelCol)\(excelRow)")
                             
-                            let adjustedKey = "\(colNum + 1),\(rowNum + 1)"
+                            let adjustedKey = "\(colNum + 2),\(rowNum + 2)"
                             self.location.append(adjustedKey)
                             
                         }
@@ -2131,6 +2228,48 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                         self.tcolor.append(self.selectingColor)
                     }
                 }
+            
+            let resolution = 51
+            for x in 1...resolution {
+                let xf = Float(x - 1) / Float(resolution - 1) * 10 - 5
+                let colName = ExcelHelper().GetExcelColumnName(columnNumber: x + 1) // 2列目(B)から開始
+                let cellAddress = "\(colName)1" // 1行目固定
+                
+                self.content.append(String(format: "%.2f", xf))
+                self.locationInExcel.append(cellAddress)
+                self.location.append("\(x + 1),1") // 管理用インデックス
+                
+                self.textsize.append(String(self.selectingSize))
+                self.bgcolor.append(self.selectingBgColor)
+                self.tcolor.append(self.selectingColor)
+            }
+
+            
+
+            for y in 1...resolution {
+                let yf = Float(y - 1) / Float(resolution - 1) * 10 - 5
+                let colName = ExcelHelper().GetExcelColumnName(columnNumber: 1) // 1列目(A)固定
+                let cellAddress = "\(colName)\(y + 1)" // 2行目から開始
+                
+                self.content.append(String(format: "%.2f", yf))
+                self.locationInExcel.append(cellAddress)
+                self.location.append("1,\(y + 1)") // 管理用インデックス
+                
+                // スタイル設定
+                self.textsize.append(String(self.selectingSize))
+                self.bgcolor.append(self.selectingBgColor)
+                self.tcolor.append(self.selectingColor)
+            }
+            
+            
+            self.content.append("x/y")
+            self.locationInExcel.append("A1")
+            self.location.append("1,1") // 管理用インデックス
+            
+            self.textsize.append(String(self.selectingSize))
+            self.bgcolor.append(self.selectingBgColor)
+            self.tcolor.append(self.selectingColor)
+
 
                 
                 print("csv_sheet1 saved")
@@ -2195,6 +2334,29 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 dragButton.widthAnchor.constraint(equalToConstant: 30),
                 dragButton.heightAnchor.constraint(equalToConstant: 30)
             ])
+        
+        
+            // 1. ラベルの作成
+            let expressionLabel = UILabel()
+            expressionLabel.text = expression // 渡されている数式を入れる
+            expressionLabel.textColor = .white
+            expressionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4) // 背景を少し暗くして読みやすく
+            expressionLabel.font = .systemFont(ofSize: 12, weight: .medium)
+            expressionLabel.textAlignment = .center
+            expressionLabel.layer.cornerRadius = 4
+            expressionLabel.clipsToBounds = true
+            expressionLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            hc.view.addSubview(expressionLabel)
+
+            // 2. レイアウト設定（下部に固定）
+            NSLayoutConstraint.activate([
+                expressionLabel.bottomAnchor.constraint(equalTo: hc.view.bottomAnchor, constant: -8),
+                expressionLabel.leadingAnchor.constraint(equalTo: hc.view.leadingAnchor, constant: 8),
+                expressionLabel.trailingAnchor.constraint(equalTo: hc.view.trailingAnchor, constant: -8),
+                expressionLabel.heightAnchor.constraint(equalToConstant: 20)
+            ])
+
         }
     
     
@@ -2360,7 +2522,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 }
                 
                 //for 3D Graph
-                let indexStr = "\(newIndexPath.item - 1),\(newIndexPath.section - 1)"
+                let indexStr = "\(newIndexPath.item - 2),\(newIndexPath.section - 2)"
                     selectedStrings.insert(indexStr)
                     
                 }

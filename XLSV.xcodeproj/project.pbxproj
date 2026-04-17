@@ -10,12 +10,13 @@
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
 		2B0FEED02F782629005BF38E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* Main.storyboard */; };
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
+		2B6704142F9100B500CBBBB3 /* PlaygroundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
 		2BC71A9C2F87475A00E14EB4 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
-		2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController.swift */; };
+		2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
 		3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22A79621DCD860001ADDD9 /* Input4Pad.xib */; };
 		3C40887121D6321D005D0E6D /* colorclass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C40887021D6321D005D0E6D /* colorclass.swift */; };
@@ -90,6 +91,7 @@
 		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSelectionOpsView.swift; sourceTree = "<group>"; };
+		2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController.swift; sourceTree = "<group>"; };
 		2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXlsxSheet1.xlsx; sourceTree = "<group>"; };
 		2BB809742F72DF74009666B6 /* BackupTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTableViewController.swift; sourceTree = "<group>"; };
 		2BBF55252F8B991E008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard2.xib; sourceTree = "<group>"; };
@@ -98,7 +100,7 @@
 		2BBF552C2F8B9C19008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/RangeSelectionOpsView.xcstrings; sourceTree = "<group>"; };
 		2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewController.swift; sourceTree = "<group>"; };
-		2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController.swift; sourceTree = "<group>"; };
+		2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController_ajustingAxiesScales.swift; sourceTree = "<group>"; };
 		3C22A75F21D79003001ADDD9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Datainput.strings; sourceTree = "<group>"; };
 		3C22A76321D7904F001ADDD9 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Datainput.strings; sourceTree = "<group>"; };
 		3C22A76521D79071001ADDD9 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -346,7 +348,8 @@
 				8DF796AD1E4E799500BE7D38 /* NilController.swift */,
 				6AC8322B24663D3E006FA917 /* JSONModel.swift */,
 				6AB0A81A245B320B007703C0 /* ViewController.swift */,
-				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController.swift */,
+				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
+				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
 				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
 				6AC83230246658C2006FA917 /* ReadWriteJSON.swift */,
 				6AD456152AF4F8B20049198C /* CalculationService.swift */,
@@ -598,9 +601,10 @@
 				6AD9361223E59D2E00479881 /* mergedCellStyle.swift in Sources */,
 				8D6A11361E4D6A3D00019BEA /* formatview.swift in Sources */,
 				6AC83231246658C2006FA917 /* ReadWriteJSON.swift in Sources */,
-				2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController.swift in Sources */,
+				2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift in Sources */,
 				6AB0A811245B14D3007703C0 /* SharedReadFile.swift in Sources */,
 				6A1F5E0D2542D728002796C0 /* sheet.swift in Sources */,
+				2B6704142F9100B500CBBBB3 /* PlaygroundViewController.swift in Sources */,
 				6A1F5E0F2542D728002796C0 /* calcChain.swift in Sources */,
 				6A1F5E182542D734002796C0 /* rels.swift in Sources */,
 				2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */,
