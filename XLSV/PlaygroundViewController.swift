@@ -983,15 +983,17 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
               
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
-                            self.myCollectionView.collectionViewLayout.invalidateLayout()
-                            self.myCollectionView.reloadData()
-                            
-                            self.myCollectionView.selectItem(at: self.currentindex,
-                                                             animated: true,
-                                                             scrollPosition: [.centeredVertically, .centeredHorizontally])
-                            self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
-
+                        self.csvSheetLoad(){
+                            if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
+                                self.myCollectionView.collectionViewLayout.invalidateLayout()
+                                self.myCollectionView.reloadData()
+                                
+                                self.myCollectionView.selectItem(at: self.currentindex,
+                                                                 animated: true,
+                                                                 scrollPosition: [.centeredVertically, .centeredHorizontally])
+                                self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
+                                
+                            }
                         }
                     }
             
@@ -2261,14 +2263,14 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 self.tcolor.append(self.selectingColor)
             }
             
-            
-            self.content.append("x/y")
-            self.locationInExcel.append("A1")
-            self.location.append("1,1") // 管理用インデックス
-            
-            self.textsize.append(String(self.selectingSize))
-            self.bgcolor.append(self.selectingBgColor)
-            self.tcolor.append(self.selectingColor)
+           
+         
+                self.content.append("x/y")
+                self.locationInExcel.append("A1")
+                self.location.append("1,1") // 管理用インデックス
+                self.textsize.append(String(self.selectingSize))
+                self.bgcolor.append(self.selectingBgColor)
+                self.tcolor.append(self.selectingColor)
 
 
                 
@@ -2746,12 +2748,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     }
     
     @objc func rowInsertOperation() {
-        if isExcel {
-            takeDailyBackup(msg: "before_rowInsert_")
+        if isCSV {
+//            takeDailyBackup(msg: "before_rowInsert_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
+//            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+//            appd.wsSheetIndex = sheetIdx!
+//            print("wsSheetIndex",appd.wsSheetIndex)
             
             let rowsToInsert = Set(tempRangeSelected.map { $0.section })
             let minRow = rowsToInsert.min() ?? 0
@@ -2789,12 +2791,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             print("newExcellocation(col,row)",locationInExcel)
             
             
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            
+//            if rlt == nil{
+//                print("Something went wrong")
+//                return
+//            }
             
-            if rlt == nil{
-                print("Something went wrong")
-                return
+            if !isExcel {
+                saveAsLocalJson(filename: "csv_sheet1")
+                let initialIdx = appd.sheetNameIds.first ?? "-1"
+                isExcelSheetData(sheetIdx: Int(initialIdx)!)
             }
             
             //sheet cell get touched
@@ -2821,7 +2829,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                //self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
@@ -2831,7 +2839,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
-                }
+                //}
                 
             }
         }
@@ -2839,13 +2847,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     
     
     @objc func rowDeleteOperation() {
-        if isExcel {
-            takeDailyBackup(msg: "before_rowDelete_")
+        if isCSV {
+//            takeDailyBackup(msg: "before_rowDelete_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
-            
+//            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+//            appd.wsSheetIndex = sheetIdx!
+//            print("wsSheetIndex",appd.wsSheetIndex)
+//            
             let rowsToDelete = Set(tempRangeSelected.map { $0.section })
             let minRow = rowsToDelete.min() ?? 0
             let numberOfRowsToDelete = rowsToDelete.count
@@ -2889,12 +2897,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             print("newExcellocation(col,row)",locationInExcel)
             
             
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
-            
-            if rlt == nil{
-                print("Something went wrong")
-                return
+//            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            
+//            if rlt == nil{
+//                print("Something went wrong")
+//                return
+//            }
+            if !isExcel {
+                saveAsLocalJson(filename: "csv_sheet1")
+                let initialIdx = appd.sheetNameIds.first ?? "-1"
+                isExcelSheetData(sheetIdx: Int(initialIdx)!)
+                initExcelLocation()
             }
             
             //sheet cell get touched
@@ -2921,7 +2935,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                //self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
@@ -2931,7 +2945,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
-                }
+                //}
                 
             }
         }
@@ -2939,12 +2953,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
     
     @objc func columnInsertOperation(){
-        if isExcel {
-            takeDailyBackup(msg: "before_colInsert_")
+        if isCSV {
+//            takeDailyBackup(msg: "before_colInsert_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
+//            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+//            appd.wsSheetIndex = sheetIdx!
+//            print("wsSheetIndex",appd.wsSheetIndex)
             let columnsToInsert = Set(tempRangeSelected.map { $0.item })
             let minCol = columnsToInsert.min() ?? 0
             let numberOfColsToInsert = columnsToInsert.count
@@ -2978,12 +2992,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             print("newExcellocation(col,row)",locationInExcel)
             
             
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
-            
-            if rlt == nil{
-                print("Something went wrong")
-                return
+//            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            
+//            if rlt == nil{
+//                print("Something went wrong")
+//                return
+//            }
+            if !isExcel {
+                saveAsLocalJson(filename: "csv_sheet1")
+                let initialIdx = appd.sheetNameIds.first ?? "-1"
+                isExcelSheetData(sheetIdx: Int(initialIdx)!)
+                initExcelLocation()
             }
             
             //sheet cell get touched
@@ -3010,7 +3030,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex){
+//                self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
@@ -3020,19 +3040,19 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
-                }
+//                }
                 
             }
         }
     }
     
     @objc func columnDeleteOperation() {
-        if isExcel {
-            takeDailyBackup(msg: "before_colDel_")
+        if isCSV {
+//            takeDailyBackup(msg: "before_colDel_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
+//            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+//            appd.wsSheetIndex = sheetIdx!
+//            print("wsSheetIndex",appd.wsSheetIndex)
             let columnsToDelete = Set(tempRangeSelected.map { $0.item })
             let minCol = columnsToDelete.min() ?? 0
             let numberOfColsToDelete = columnsToDelete.count
@@ -3073,12 +3093,19 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             print("newExcellocation(col,row)",locationInExcel)
             
             
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            
+//            if rlt == nil{
+//                print("Something went wrong")
+//                return
+//            }
             
-            if rlt == nil{
-                print("Something went wrong")
-                return
+            if !isExcel {
+                saveAsLocalJson(filename: "csv_sheet1")
+                let initialIdx = appd.sheetNameIds.first ?? "-1"
+                isExcelSheetData(sheetIdx: Int(initialIdx)!)
+                initExcelLocation()
             }
             
             //sheet cell get touched
@@ -3105,7 +3132,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                //self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
@@ -3115,7 +3142,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
                     }
-                }
+                //}
                 
             }
         }
@@ -3123,12 +3150,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     }
     
     @objc func clearSelectedCellContent(){
-        if isExcel {
-            takeDailyBackup(msg: "before_cellDel_")
+        if isCSV {
+//            takeDailyBackup(msg: "before_cellDel_")
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
-            appd.wsSheetIndex = sheetIdx!
-            print("wsSheetIndex",appd.wsSheetIndex)
+//            let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+//            appd.wsSheetIndex = sheetIdx!
+//            print("wsSheetIndex",appd.wsSheetIndex)
             
             for (i,each) in tempRangeSelected.enumerated() {
                 let column = each.item
@@ -3138,10 +3165,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 if locIndex == nil{
                     continue
                 }
-                if !isExcel{
-                    print("saved")
-                    saveAsLocalJson(filename: "csv_sheet1")
-                }
+                
                 
                 //excel
                 changeaffected.removeAll()
@@ -3167,13 +3191,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             content = content.filter { $0 != "" }
             locationInExcel = locationInExcel.filter { $0 != "" }
+            location = location.filter { $0 != "" }
+            f_calculated = f_calculated.filter { $0 != "" }
             
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
-            
-            if rlt == nil{
-                print("Something went wrong")
-                return
+//            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+//            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+//            
+//            if rlt == nil{
+//                print("Something went wrong")
+//                return
+//            }
+            if !isExcel {
+                saveAsLocalJson(filename: "csv_sheet1")
             }
             
             //sheet cell get touched
@@ -3182,6 +3211,8 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             appd.customSizedWidth.removeAll()
             appd.cshLocation.removeAll()
             appd.customSizedHeight.removeAll()
+            
+            
             
             
             f_calculated.removeAll()
@@ -3197,10 +3228,14 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             tempRangeSelected = []
             
             
+            
+            
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
                 //                self.present(targetViewController, animated: true, completion: nil)
-                self.loadExcelSheet(idx: appd.wsSheetIndex){
+                
+               
+                self.csvSheetLoad(){
                     // Assuming `collectionView` is your UICollectionView instance
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
                         customLayout.resetCellAttrsDictionaryItemZindex()
@@ -3215,14 +3250,20 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             }
         }
     }
+    
+    func csvSheetLoad(completion: (() -> Void)? = nil) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let initialIdx = appd.sheetNameIds.first ?? "-1"
+        isExcelSheetData(sheetIdx: Int(initialIdx)!)
+        initExcelLocation()
+        calculatormode_update_main()
+        completion?()
+    }
 
     @objc func copyPasteSelectedCellContent() {
         
             //
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            //this
-            fillTempRangeSelectedWithRange()
-      
             let ecol = ExcelHelper().GetExcelColumnName(columnNumber: currentindex.item)
             let alert = UIAlertController(
                 title: "Copy & Paste Selected Cell Values",
@@ -3275,6 +3316,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 print("go to file view")
                 self.tempRangeSelected = []
                 
+                if !self.isExcel {
+                    self.saveAsLocalJson(filename: "csv_sheet1")
+                    let initialIdx = appd.sheetNameIds.first ?? "-1"
+                    self.isExcelSheetData(sheetIdx: Int(initialIdx)!)
+                    self.initExcelLocation()
+                }
+                
                 
                 // Present the target view controller after LoadingFileController's view has appeared
                 DispatchQueue.main.async {
@@ -3297,6 +3345,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     }
     
     @objc func fillDateInSelectedCellContent(direction:Int ) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         guard let firstIndexPath = tempRangeSelected.first,
               let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
         
@@ -3365,6 +3414,9 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
         if !isExcel {
             saveAsLocalJson(filename: "csv_sheet1")
+            let initialIdx = appd.sheetNameIds.first ?? "-1"
+            isExcelSheetData(sheetIdx: Int(initialIdx)!)
+            initExcelLocation()
         }
 
         calculatormode_update_main()
@@ -3373,6 +3425,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     }
     
     @objc func fillFunctionInSelectedCellContent(direction: Int) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         guard let firstIndexPath = tempRangeSelected.sorted(by: { $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section }).first,
               let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
         
@@ -3434,7 +3487,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
         
 
-        if !isExcel { saveAsLocalJson(filename: "csv_sheet1") }
+        if !isExcel {
+            saveAsLocalJson(filename: "csv_sheet1")
+            let initialIdx = appd.sheetNameIds.first ?? "-1"
+            isExcelSheetData(sheetIdx: Int(initialIdx)!)
+            initExcelLocation()
+        }
         calculatormode_update_main()
         myCollectionView.reloadData()
         backRS2()
@@ -5387,7 +5445,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         f_calculated.removeAll()
         f_location_alphabet.removeAll()
         f_location.removeAll()
-        calculatormode_update_main()
+        
 
         
         //always excel, no such thing as csv case
@@ -6583,14 +6641,19 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             }
             //42
             if !item.hasPrefix("=") {
-                literalContent.append(item)
-                literalLocation.append(location[index])
-                literalLocationInExcel.append(locationInExcel[index])
-                if Double(item) != nil{
-                    literalResult.append(item)
+                if index<locationInExcel.count{
+                    literalContent.append(item)
+                    literalLocation.append(location[index])
+                    literalLocationInExcel.append(locationInExcel[index])
+                    if Double(item) != nil{
+                        literalResult.append(item)
+                    }else{
+                        literalResult.append("")
+                    }
                 }else{
-                    literalResult.append("")
+                    print("Error at calculationmain "+item,location[index])
                 }
+                
             }
         }
         
@@ -7159,27 +7222,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 appd.cshLocation = sheet1Json.cchLocation
                 return true
             }
-            
-            //the workbook is corrupted?
-//            if localFileNames.count > 0 && sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-//                content = sheet1Json.content
-//                location = sheet1Json.location
-//                textsize = sheet1Json.fontsize
-//                bgcolor = sheet1Json.bgcolor
-//                tcolor = sheet1Json.fontcolor
-//                COLUMNSIZE = sheet1Json.columnsize
-//                ROWSIZE = sheet1Json.rowsize
-//                appd.customSizedWidth = sheet1Json.customcellWidth
-//                appd.customSizedHeight = sheet1Json.customcellHeight
-//                appd.cswLocation = sheet1Json.ccwLocation
-//                appd.cshLocation = sheet1Json.cchLocation
-//                return true
-//            }
-//            
-//            //
-//            if localFileNames.count > 0 && !sheet1Json.readJsonFile(title: "sheet" + String(appd.wsIndex)){
-//                print("something went wrong. maybe corrupt file.")
-//            }
         }else{
             isExcel = false
             let sheet1Json = ReadWriteJSON()

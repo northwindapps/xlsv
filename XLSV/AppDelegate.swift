@@ -181,7 +181,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         
         
-        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2")
+        var initialViewController = storyboard.instantiateViewController(withIdentifier: "StartLine")
         
         
         
