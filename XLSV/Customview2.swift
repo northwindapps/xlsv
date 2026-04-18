@@ -18,6 +18,7 @@ class Customview2: UIView {
     
     @IBOutlet weak var resetStyling: UIButton!
 
+    @IBOutlet weak var playgroundMode: UIButton!
     @IBOutlet weak var xlsxSheetExportOniCloudDrive: UIButton!
     @IBOutlet weak var localLoad: UIButton!
     @IBOutlet weak var localSave: UIButton!

@@ -281,7 +281,7 @@ class CalculationService{
                             if let unwrappedResult = result {
                                 let ptn = cloned
                                 tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
-                                print(tempStr)
+                                print("unwrappedResult",tempStr)
                             }
                         }
                     }
@@ -313,6 +313,28 @@ class CalculationService{
             
             return isFloat(tempStr ?? "") ? tempStr : nil
         }
+    
+    func replaceSquared(_ str: String) -> String {
+        let pattern = #"(-?\d+(\.\d+)?)\^2"#
+        let regex = try! NSRegularExpression(pattern: pattern)
+        
+        var result = str
+        let matches = regex.matches(in: str, range: NSRange(str.startIndex..., in: str)).reversed()
+        
+        for match in matches {
+            if let range = Range(match.range(at: 1), in: str) {
+                let numberStr = String(str[range])
+                if let value = Double(numberStr) {
+                    let squared = value * value
+                    if let fullRange = Range(match.range, in: result) {
+                        result.replaceSubrange(fullRange, with: "\(squared)")
+                    }
+                }
+            }
+        }
+        
+        return result
+    }
     
     func basicOperation(source: String) -> String {
         var resultvalue = Decimal(0.0)
@@ -356,19 +378,26 @@ class CalculationService{
             if elements.contains("^") {
                 for i in 1..<elements.count {
                     print("element",elements[i])
+                    
                     if elements[i] == "^" && i - 1 >= 0 && isFloat(String(elements[i - 1])) && i + 1 < elements.count && isFloat(String(elements[i + 1])) {
-                        let a = Double(elements[i-1])
-                        let b = Double(elements[i+1])
-                        let cd = Decimal(string: String(elements[i-1])) ?? Decimal(0.0)
-                        if cd.isEqual(to: Decimal(0.0)) {
-                            isInfinity = true;
+                        if elements[i - 1] == "0.0" || elements[i - 1] == "0"{
+                            elements[i + 1] = "0.0"
+                            elements[i - 1] = "nil"
+                            elements[i] = "+"
+                        }else{
+                            let a = Double(elements[i-1])
+                            let b = Double(elements[i+1])
+                            let cd = Decimal(string: String(elements[i-1])) ?? Decimal(0.0)
+                            if cd.isEqual(to: Decimal(0.0)) {
+                                isInfinity = true;
+                            }
+                            //let c = pow(a as Decimal, b!)
+                            let c = pow(a!, b!)
+                            let result = Decimal(c)
+                            elements[i + 1] = "\(result)"
+                            elements[i - 1] = "nil"
+                            elements[i] = "+"
                         }
-                        //let c = pow(a as Decimal, b!)
-                        let c = pow(a!, b!)
-                        let result = Decimal(c)
-                        elements[i + 1] = "\(result)"
-                        elements[i - 1] = "nil"
-                        elements[i] = "+"
                     }
                 }
             } else {
@@ -383,18 +412,26 @@ class CalculationService{
                     }
 
                     if elements[i] == "/" && isFloat(String(elements[i - 1])) && isFloat(String(elements[i + 1])) {
-                        let a = Decimal(string: String(elements[i - 1])) ?? Decimal(0.0)
-                        let b = Decimal(string: String(elements[i + 1])) ?? Decimal(0.0)
-                        if b.isEqual(to: Decimal(0.0)) {
+                        
+                        if elements[i+1] == "0" || elements[i+1] == "0.0"{
                             elements[i - 1] = "nil"
                             elements[i] = "+"
                             elements[i + 1] = "nil"
                             isInfinity = true;
-                        } else {
-                            resultvalue = a / b
-                            elements[i + 1] = "\(resultvalue)"
-                            elements[i - 1] = "nil"
-                            elements[i] = "+"
+                        }else{
+                            let a = Decimal(string: String(elements[i - 1])) ?? Decimal(0.0)
+                            let b = Decimal(string: String(elements[i + 1])) ?? Decimal(0.0)
+                            if b.isEqual(to: Decimal(0.0)) {
+                                elements[i - 1] = "nil"
+                                elements[i] = "+"
+                                elements[i + 1] = "nil"
+                                isInfinity = true;
+                            } else {
+                                resultvalue = a / b
+                                elements[i + 1] = "\(resultvalue)"
+                                elements[i - 1] = "nil"
+                                elements[i] = "+"
+                            }
                         }
                     }
                 }
@@ -428,15 +465,25 @@ class CalculationService{
                     if element.contains("asin") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "asin", with: "")),
                            let arg = Decimal(string:radianToString(exp.doubleValue)) {
-                            let resultValue = Decimal(asin(arg.doubleValue))
-                            input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            let val = arg.doubleValue
+                            if val >= -1.0 && val <= 1.0 {
+                                let resultValue = Decimal(asin(val))
+                                input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            } else {
+                                input = input.replacingOccurrences(of: element, with: "NaN")
+                            }
                         }
                     }
                     if element.contains("acos") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "acos", with: "")),
                            let arg = Decimal(string:radianToString(exp.doubleValue)) {
-                            let resultValue = Decimal(acos(arg.doubleValue))
-                            input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            let val = arg.doubleValue
+                            if val >= -1.0 && val <= 1.0 {
+                                let resultValue = Decimal(acos(val))
+                                input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            } else {
+                                input = input.replacingOccurrences(of: element, with: "NaN")
+                            }
                         }
                     }
                     if element.contains("atan") {

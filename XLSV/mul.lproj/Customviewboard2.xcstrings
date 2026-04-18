@@ -253,6 +253,18 @@
         }
       }
     },
+    "wJQ-PG-a3x.normalTitle" : {
+      "comment" : "Class = \"UIButton\"; normalTitle = \"Playground Mode\"; ObjectID = \"wJQ-PG-a3x\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Playground Mode"
+          }
+        }
+      }
+    },
     "x2D-Hd-mUz.normalTitle" : {
       "comment" : "Class = \"UIButton\"; normalTitle = \"Import\"; ObjectID = \"x2D-Hd-mUz\";",
       "extractionState" : "extracted_with_value",

@@ -3123,22 +3123,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 310))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 310))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 310))
             break
             
             
@@ -3146,7 +3146,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 288))
+            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 310))
             break
             
         }
@@ -3177,10 +3177,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
+        customview2.playgroundMode.addTarget(self, action: #selector(ViewController.moveToPlayground), for: UIControl.Event.touchUpInside)
+        
   
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
         self.view.addSubview(customview2)
+    }
+    
+    @objc func moveToPlayground(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        //       postAction()
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine2" ) as! PlaygroundViewController
+        if isExcel{
+            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+        }
+        targetViewController.modalPresentationStyle = .fullScreen
+        self.present( targetViewController, animated: true, completion: nil)
+        
+        self.customview2.removeFromSuperview()
     }
     
     @objc func saveOniCloudAction(){

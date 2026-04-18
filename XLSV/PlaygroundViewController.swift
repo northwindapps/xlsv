@@ -17,6 +17,7 @@ import CoreFoundation
 import SwiftUI
 import SceneKit
 
+
 let reuseIdentifier2 = "customCell"
 var SCREENSIZE_w2 = ScreenSize.SCREEN_WIDTH
 var SCREENSIZE2 = ScreenSize.SCREEN_HEIGHT
@@ -32,40 +33,6 @@ struct SceneKitGraphView: UIViewRepresentable {
     var selectedIndices: Set<String> = []
     
     func makeUIView(context: Context) -> SCNView {
-//        var fstring = functionExpression
-//        let cs = CalculationService()
-//        let scnView = SCNView()
-//        scnView.scene = SCNScene()
-//        scnView.allowsCameraControl = true
-//        scnView.autoenablesDefaultLighting = true
-//        
-//        scnView.backgroundColor = .clear // 背景透過
-//        
-//        // --- 2. 3軸 (Axis) の追加 ---
-//        addAxes(to: scnView.scene!.rootNode)
-//        // --- 3. グラフの生成 (デフォルト範囲 -5 to 5) ---
-//        let resolution = 50
-//        var vertices = [SCNVector3]()
-//        var results: [String: Float] = [:]
-//        for x in 0..<resolution {
-//            for y in 0..<resolution {
-//                let xf = Float(x) / Float(resolution - 1) * 10 - 5
-//                let yf = Float(y) / Float(resolution - 1) * 10 - 5
-//                fstring = fstring.replacingOccurrences(of: "x", with: String(xf)).replacingOccurrences(of: "y", with: String(yf))
-//                let res = cs.execute(expression: fstring)
-//                let zf: Float
-//                if let resString = res, let doubleVal = Double(resString) {
-//                    zf = Float(doubleVal)
-//                } else {
-//                    zf = 0.0
-//                }
-//                vertices.append(SCNVector3(xf, zf, yf))
-//                results["\(x),\(y)"] = zf
-//            }
-//        }
-//        //
-//        onDataGenerated?(results)
-        
             let cs = CalculationService()
             let scnView = SCNView()
             scnView.scene = SCNScene()
@@ -78,6 +45,7 @@ struct SceneKitGraphView: UIViewRepresentable {
             let resolution = 51
             var vertices = [SCNVector3]()
             var results: [String: Float] = [:]
+            var valid = [Bool]()
             
             // 元の式を保持
             let baseExpression = functionExpression
@@ -93,20 +61,49 @@ struct SceneKitGraphView: UIViewRepresentable {
                         .replacingOccurrences(of: "y", with: "(\(yf))")
                     
                     let res = cs.execute(expression: currentExpr)
-                    let zf = Float(Double(res ?? "") ?? 0.0)
+                    if(Double(res ?? "") == nil ){
+                        print("res is nil", "\(x),\(y)")
+                    }
+        
+                    var zf: Float = 0.0
+
+                    if let val = Double(res ?? ""), val.isFinite {
+                        zf = Float(val)
+                        // ✅ clamp to [-5, 5] i personally like withough clamp but ..
+                        zf = max(-5.0, min(5.0, zf))
+                        vertices.append(SCNVector3(xf, zf, yf))
+                        valid.append(true)
+                    } else {
+                        zf = 0.0 // or skip point
+                        vertices.append(SCNVector3(xf, 0, yf)) // placeholder
+                        valid.append(false)
+                    }
                     
-                    // 軸が -5...5 なので、zf が大きすぎる場合は clamp するか検討
-                    vertices.append(SCNVector3(xf, zf, yf))
                     results["\(x),\(y)"] = zf
                 }
             }
         
         var indices = [Int32]()
+
         for y in 0..<resolution-1 {
             for x in 0..<resolution-1 {
-                let r = Int32(resolution)
-                let i = Int32(y * resolution + x)
-                indices.append(contentsOf: [i, i+r, i+1, i+1, i+r, i+r+1])
+                let i = y * resolution + x
+                
+                let i0 = i
+                let i1 = i + 1
+                let i2 = i + resolution
+                let i3 = i + resolution + 1
+                
+                // ❌ Skip if any corner is invalid
+                if !valid[i0] || !valid[i1] || !valid[i2] || !valid[i3] {
+                    continue
+                }
+                
+                // ✅ Add triangles
+                indices.append(contentsOf: [
+                    Int32(i0), Int32(i2), Int32(i1),
+                    Int32(i1), Int32(i2), Int32(i3)
+                ])
             }
         }
         
@@ -126,14 +123,14 @@ struct SceneKitGraphView: UIViewRepresentable {
         
         scnView.scene?.rootNode.addChildNode(node)
         
-//        return scnView
-        
-        // 最後に親へ通知（SwiftUIの更新サイクルに合わせる）
             DispatchQueue.main.async {
                 self.onDataGenerated?(results)
             }
             
             return scnView
+
+    
+
     }
     
     // 軸を追加するヘルパー関数
@@ -297,7 +294,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     var hostingController: UIHostingController<SceneKitGraphView>?
     var selectedStrings: Set<String> = []
 
-    
+    var idx:Int?
 //    @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
