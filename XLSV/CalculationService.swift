@@ -341,6 +341,7 @@ class CalculationService{
         var input = source
         var isInfinity = false;
         input = input.replacingOccurrences(of: "——", with: "+")
+        input = input.replacingOccurrences(of: "--", with: "+")
         input = input.replacingOccurrences(of: "-+", with: " -")
         input = input.replacingOccurrences(of: "+", with: " + ")
         input = input.replacingOccurrences(of: "/", with: " / ")
@@ -471,6 +472,7 @@ class CalculationService{
             input = input.replacingOccurrences(of: "*+", with: "*")
             input = input.replacingOccurrences(of: "^+", with: "^")
             input = input.replacingOccurrences(of: "-+", with: "-")
+            input = input.replacingOccurrences(of: "--", with: "+")
         
         return input
     }

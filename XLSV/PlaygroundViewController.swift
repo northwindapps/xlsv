@@ -253,7 +253,7 @@ struct SceneKitGraphView: UIViewRepresentable {
         for indexStr in selectedIndices {
             let components = indexStr.split(separator: ",")
             if components.count == 2, let x = Int(components[0]), let y = Int(components[1]) {
-                let resolution: Float = 50
+                let resolution: Float = 51
                 let xf = Float(x) / (resolution - 1) * 10 - 5
                 let yf = Float(y) / (resolution - 1) * 10 - 5
                 
