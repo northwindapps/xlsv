@@ -49,7 +49,9 @@ struct SceneKitGraphView: UIViewRepresentable {
             
             // 元の式を保持
             let baseExpression = functionExpression
-
+            
+            
+            
             for y in 0..<resolution {
                 for x in 0..<resolution {
                     let xf = Float(x) / Float(resolution - 1) * 10 - 5
@@ -64,9 +66,9 @@ struct SceneKitGraphView: UIViewRepresentable {
                     if(Double(res ?? "") == nil ){
                         print("res is nil", "\(x),\(y)")
                     }
-        
+                    
                     var zf: Float = 0.0
-
+                    
                     if let val = Double(res ?? ""), val.isFinite {
                         zf = Float(val)
                         // ✅ clamp to [-5, 5] i personally like withough clamp but ..
@@ -82,50 +84,52 @@ struct SceneKitGraphView: UIViewRepresentable {
                     results["\(x),\(y)"] = zf
                 }
             }
-        
-        var indices = [Int32]()
-
-        for y in 0..<resolution-1 {
-            for x in 0..<resolution-1 {
-                let i = y * resolution + x
-                
-                let i0 = i
-                let i1 = i + 1
-                let i2 = i + resolution
-                let i3 = i + resolution + 1
-                
-                // ❌ Skip if any corner is invalid
-                if !valid[i0] || !valid[i1] || !valid[i2] || !valid[i3] {
-                    continue
+            
+            var indices = [Int32]()
+            
+            for y in 0..<resolution-1 {
+                for x in 0..<resolution-1 {
+                    let i = y * resolution + x
+                    
+                    let i0 = i
+                    let i1 = i + 1
+                    let i2 = i + resolution
+                    let i3 = i + resolution + 1
+                    
+                    // ❌ Skip if any corner is invalid
+                    if !valid[i0] || !valid[i1] || !valid[i2] || !valid[i3] {
+                        continue
+                    }
+                    
+                    // ✅ Add triangles
+                    indices.append(contentsOf: [
+                        Int32(i0), Int32(i2), Int32(i1),
+                        Int32(i1), Int32(i2), Int32(i3)
+                    ])
                 }
-                
-                // ✅ Add triangles
-                indices.append(contentsOf: [
-                    Int32(i0), Int32(i2), Int32(i1),
-                    Int32(i1), Int32(i2), Int32(i3)
-                ])
             }
-        }
-        
-        let source = SCNGeometrySource(vertices: vertices)
-        let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        let geometry = SCNGeometry(sources: [source], elements: [element])
-        
-        let material = SCNMaterial()
-        material.diffuse.contents = UIColor.systemCyan.withAlphaComponent(0.8) // 少し透けさせる
-        material.specular.contents = UIColor(white: 0.2, alpha: 0.8)
-        material.isDoubleSided = true
-        geometry.materials = [material]
-        
-        let node = SCNNode(geometry: geometry)
-        
-        node.name = "GraphNode"
-        
-        scnView.scene?.rootNode.addChildNode(node)
-        
+            
+            let source = SCNGeometrySource(vertices: vertices)
+            let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+            let geometry = SCNGeometry(sources: [source], elements: [element])
+            
+            let material = SCNMaterial()
+            material.diffuse.contents = UIColor.systemCyan.withAlphaComponent(0.8) // 少し透けさせる
+            material.specular.contents = UIColor(white: 0.2, alpha: 0.8)
+            material.isDoubleSided = true
+            geometry.materials = [material]
+            
+            let node = SCNNode(geometry: geometry)
+            
+            node.name = "GraphNode"
+            
+            scnView.scene?.rootNode.addChildNode(node)
+            
             DispatchQueue.main.async {
                 self.onDataGenerated?(results)
             }
+            
+        
             
             return scnView
 

@@ -14,7 +14,7 @@ class CalculationService{
         // let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
         // let cs = CalculationService()
         // let result = cs.execute(expression:tempStr) ?? ""
-        // print("final",result)
+        // //print("final",result)
         static let reservedWords: [String] = [
            "pi",
            "e",
@@ -92,7 +92,7 @@ class CalculationService{
                 )
                 
                 // Print the modified string
-                print(modified)
+                //print(modified)
                 return modified
             }
             return input;
@@ -108,7 +108,7 @@ class CalculationService{
         let modifiedString = regex.stringByReplacingMatches(in: input, options: [], range: NSRange(location: 0, length: input.utf16.count), withTemplate: "$1 * $2")
 
         // Print the modified string
-        print(modifiedString)
+        //print(modifiedString)
         return modifiedString
     }
     
@@ -221,7 +221,7 @@ class CalculationService{
                         tempStr = scientificOperation(tempStr!)
                         tempStr = basicOperation(source: tempStr!)
                         tempStr = slashDotPowerPlusCase(tempStr!)
-                        print("tempStr",tempStr)
+                        //print("tempStr",tempStr)
                         if tempStr == ERROR{
                             isInfinity = true;
                         }
@@ -239,7 +239,7 @@ class CalculationService{
                     let cloned = "(\(match))"
                     var result: String? = nil
                     var j = 10
-                    print("match",cloned)
+                    //print("match",cloned)
                     for i in 0..<cloned.count {
                         if containsAlphabetChars(cloned) {
                             result = scientificOperation(cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: ""))
@@ -263,11 +263,11 @@ class CalculationService{
                         } else {
                             var k = 50
                             var basicExp = cloned.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-                            print("basicExp",basicExp)
+                            //print("basicExp",basicExp)
                             while k > 0 {
                                 result = basicOperation(source: basicExp)
                                 tempStr = slashDotPowerPlusCase(tempStr!)
-                                print("result",result)
+                                //print("result",result)
                                 if result == ERROR{
                                     isInfinity = true;
                                 }
@@ -281,7 +281,7 @@ class CalculationService{
                             if let unwrappedResult = result {
                                 let ptn = cloned
                                 tempStr = tempStr?.replacingOccurrences(of: ptn, with: unwrappedResult)
-                                print("unwrappedResult",tempStr)
+                                //print("unwrappedResult",tempStr)
                             }
                         }
                     }
@@ -340,23 +340,25 @@ class CalculationService{
         var resultvalue = Decimal(0.0)
         var input = source
         var isInfinity = false;
-        input = input.replacingOccurrences(of: "--", with: "+")
+        input = input.replacingOccurrences(of: "——", with: "+")
+        input = input.replacingOccurrences(of: "-+", with: " -")
         input = input.replacingOccurrences(of: "+", with: " + ")
         input = input.replacingOccurrences(of: "/", with: " / ")
         input = input.replacingOccurrences(of: "-", with: " -")
+        input = input.replacingOccurrences(of: "–", with: " -")
         input = input.replacingOccurrences(of: "*", with: " * ")
         input = input.replacingOccurrences(of: "^", with: " ^ ")
-
+        
         var elements = input.split(separator: " ")
         elements = elements.filter { item in
             return item != "nil" && item != "" && item != "nil"
         }
-
         var checkings = Array(elements)
         checkings = checkings.filter { item in
             return item != "+"
         }
-
+        
+        
         if checkings.allSatisfy({ isFloat(String($0)) }) {
             elements = checkings
             if elements.count > 1 {
@@ -377,7 +379,7 @@ class CalculationService{
         } else {
             if elements.contains("^") {
                 for i in 1..<elements.count {
-                    print("element",elements[i])
+                    //print("element",elements[i])
                     
                     if elements[i] == "^" && i - 1 >= 0 && isFloat(String(elements[i - 1])) && i + 1 < elements.count && isFloat(String(elements[i + 1])) {
                         if elements[i - 1] == "0.0" || elements[i - 1] == "0"{
@@ -385,18 +387,34 @@ class CalculationService{
                             elements[i - 1] = "nil"
                             elements[i] = "+"
                         }else{
-                            let a = Double(elements[i-1])
-                            let b = Double(elements[i+1])
-                            let cd = Decimal(string: String(elements[i-1])) ?? Decimal(0.0)
-                            if cd.isEqual(to: Decimal(0.0)) {
-                                isInfinity = true;
+                            if elements[i-1].hasPrefix("-") && i-2>0 && elements[i-2].hasPrefix("-") {
+                                let base = Double(elements[i-1].dropFirst())!
+                                let exp = Double(elements[i+1])!
+                                let result = pow(base, exp) // apply minus AFTER power
+                                elements[i + 1] = "\(result)"
+                                elements[i - 1] = "nil"
+                                elements[i] = "+"
+                            }else if elements[i-1].hasPrefix("-") {
+                                let base = Double(elements[i-1].dropFirst())!
+                                let exp = Double(elements[i+1])!
+                                let result = -pow(base, exp) // apply minus AFTER power
+                                elements[i + 1] = "\(result)"
+                                elements[i - 1] = "nil"
+                                elements[i] = "+"
+                            }else{
+                                let a = Double(elements[i-1])
+                                let b = Double(elements[i+1])
+                                let cd = Decimal(string: String(elements[i-1])) ?? Decimal(0.0)
+                                if cd.isEqual(to: Decimal(0.0)) {
+                                    isInfinity = true;
+                                }
+                                //let c = pow(a as Decimal, b!)
+                                let c = pow(a!, b!)
+                                let result = Decimal(c)
+                                elements[i + 1] = "\(result)"
+                                elements[i - 1] = "nil"
+                                elements[i] = "+"
                             }
-                            //let c = pow(a as Decimal, b!)
-                            let c = pow(a!, b!)
-                            let result = Decimal(c)
-                            elements[i + 1] = "\(result)"
-                            elements[i - 1] = "nil"
-                            elements[i] = "+"
                         }
                     }
                 }
@@ -442,7 +460,7 @@ class CalculationService{
             elements = elements.filter { item in
                 return item != "nil"
             }
-            print("joined",elements.joined(separator: ""))
+            //print("joined",elements.joined(separator: ""))
             return elements.joined(separator: "")
         }
     }
@@ -452,6 +470,8 @@ class CalculationService{
             input = input.replacingOccurrences(of: "/+", with: "/")
             input = input.replacingOccurrences(of: "*+", with: "*")
             input = input.replacingOccurrences(of: "^+", with: "^")
+            input = input.replacingOccurrences(of: "-+", with: "-")
+        
         return input
     }
     
@@ -534,8 +554,14 @@ class CalculationService{
                     }
                     if element.contains("logd") {
                         if let exp = Decimal(string: element.replacingOccurrences(of: "logd", with: "")) {
-                            let resultValue = Decimal(log10(exp.doubleValue))
-                            input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            let val = exp.doubleValue
+                                    
+                            if val > 0 {
+                                let resultValue = Decimal(log10(val))
+                                input = input.replacingOccurrences(of: element, with: resultValue.description)
+                            } else {
+                                input = input.replacingOccurrences(of: element, with: "NaN")
+                            }
                         }
                     }
                     if element.contains("logb") {
@@ -585,5 +611,5 @@ extension Decimal {
 // let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
 // let cs = CalculationService()
 // let result = cs.execute(expression:tempStr) ?? ""
-// print("final",result)
+// //print("final",result)
 
