@@ -2,7 +2,6 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="lYo-SA-o9a">
     <device id="retina5_5" orientation="portrait" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -296,11 +295,11 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <viewControllerLayoutGuide type="bottom" id="FaW-A5-hoz"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="UlV-pG-fMV">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="716"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" delaysContentTouches="NO" bouncesZoom="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="CsX-PN-Uzh">
-                                <rect key="frame" x="0.0" y="50" width="414" height="581"/>
+                                <rect key="frame" x="0.0" y="50" width="414" height="601"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <collectionViewLayout key="collectionViewLayout" id="ezH-y6-BUk" customClass="CustomCollectionViewLayout" customModule="XLSV" customModuleProvider="target"/>
                                 <cells>
@@ -379,7 +378,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="G1f-VI-PIW" customClass="GADBannerView">
-                                <rect key="frame" x="0.0" y="666" width="320" height="50"/>
+                                <rect key="frame" x="0.0" y="686" width="320" height="50"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="PVM-uo-mUs"/>
@@ -387,7 +386,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 </constraints>
                             </view>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="tiV-cz-if5">
-                                <rect key="frame" x="0.0" y="631" width="414" height="35"/>
+                                <rect key="frame" x="0.0" y="651" width="414" height="35"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="u7M-u0-IKW"/>
@@ -468,7 +467,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Mvo-5o-ub7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1628" y="-7797"/>
+            <point key="canvasLocation" x="-2455" y="-7671"/>
         </scene>
         <!--Backup Table View Controller-->
         <scene sceneID="DAx-j8-Lax">
@@ -850,11 +849,11 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zDI-Px-o2u" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1628" y="-7797"/>
+            <point key="canvasLocation" x="-1774" y="-8152"/>
         </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="fcW-IA-rhV"/>
+        <segue reference="79h-GP-i6y"/>
     </inferredMetricsTieBreakers>
     <resources>
         <systemColor name="darkTextColor">

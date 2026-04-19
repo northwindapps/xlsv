@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Customview3" customModule="XLSV" customModuleProvider="target">
+            <connections>
+                <outlet property="closebutton" destination="GEp-YV-JCq" id="DPm-v4-7SV"/>
+                <outlet property="graphbutton" destination="8KN-c5-9fr" id="Jw1-R5-P5O"/>
+                <outlet property="quitbutton" destination="wIp-dO-Z2X" id="Jfv-eN-Khx"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="250" height="155"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8KN-c5-9fr">
+                    <rect key="frame" x="94" y="40" width="62" height="34"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="34" id="m9P-QP-hDY"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <state key="normal" title="3D Graph"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wIp-dO-Z2X">
+                    <rect key="frame" x="59" y="95" width="133" height="30"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <state key="normal" title="Exit Playground"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GEp-YV-JCq">
+                    <rect key="frame" x="186" y="6" width="64" height="38"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="38" id="NWC-g1-RDx"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                    <state key="normal" title="×">
+                        <color key="titleColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="wIp-dO-Z2X" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="59" id="3Rx-48-HbO"/>
+                <constraint firstItem="8KN-c5-9fr" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="40" id="64X-ki-6ES"/>
+                <constraint firstItem="GEp-YV-JCq" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="6" id="9yJ-NS-xKX"/>
+                <constraint firstAttribute="bottom" secondItem="wIp-dO-Z2X" secondAttribute="bottom" constant="30" id="JfD-Wf-qjQ"/>
+                <constraint firstItem="wIp-dO-Z2X" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="Pho-dK-b9r"/>
+                <constraint firstItem="wIp-dO-Z2X" firstAttribute="top" secondItem="8KN-c5-9fr" secondAttribute="bottom" constant="21" id="V3S-7M-rmA"/>
+                <constraint firstItem="GEp-YV-JCq" firstAttribute="leading" secondItem="8KN-c5-9fr" secondAttribute="trailing" constant="30" id="Xwj-H4-RA2"/>
+                <constraint firstAttribute="trailing" secondItem="GEp-YV-JCq" secondAttribute="trailing" id="hjR-in-O72"/>
+                <constraint firstItem="wIp-dO-Z2X" firstAttribute="centerX" secondItem="8KN-c5-9fr" secondAttribute="centerX" id="hyy-9q-W3i"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="-979.20000000000005" y="-174.96251874062969"/>
+        </view>
+    </objects>
+</document>

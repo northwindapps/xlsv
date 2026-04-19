@@ -398,7 +398,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     @IBOutlet weak var myCollectionView: UICollectionView!
     
     
-    var customview2 :Customview2!
+    var customview2 :Customview3!
     var Fview :formatview!
     var datainputview :Datainputview!
     var Hintview:Hint!
@@ -2103,26 +2103,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         }
         
         //checkSheet
-        let initialIdx = appd.sheetNameIds.first ?? "-1"
+        let initialIdx = "-1" //appd.sheetNameIds.first ?? "-1"
         isExcelSheetData(sheetIdx: Int(initialIdx)!)
         initSheetData()
         fontcolorClass2.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
         
-        //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillShow),
-            name: NSNotification.Name.UIKeyboardWillShow,
-            object: nil
-        )
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillHide),
-            name: NSNotification.Name.UIKeyboardWillHide,
-            object: nil
-        )
         
        
 //        bannerview.isHidden = true
@@ -2136,7 +2123,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         myCollectionView.setContentOffset(pointA, animated: true)
         myCollectionView.scrollToNextItem()
         
-        localFileNames = appd.sheetNames //sheet1,sheet2
+        localFileNames = []//appd.sheetNames //sheet1,sheet2
         FileCollectionView.reloadData()
         
         
@@ -2169,17 +2156,38 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         doubleTapGesture2.numberOfTapsRequired = 2
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
-        checkAndUpdateLaunchDateAlsoTakeDailyBackup()
+        //checkAndUpdateLaunchDateAlsoTakeDailyBackup()
 
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        graphViewAlert()
+        
+        //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: NSNotification.Name.UIKeyboardWillShow,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: NSNotification.Name.UIKeyboardWillHide,
+            object: nil
+        )
+
+        
+    }
+    
+    @objc func graphViewAlert(){
         //new graph creation feature
         let alert = UIAlertController(
             title: "3D Graph Visualization",
-            message: "Enter a function expression (e.g., sin(xx) * cos(y))",
+            message: "Enter a function expression (e.g., sin(x) * cos(y))",
             preferredStyle: .alert
         )
 
@@ -2190,8 +2198,20 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
         let showAction = UIAlertAction(title: "Display", style: .default) { _ in
             if let expression = alert.textFields?.first?.text {
-                print("User entered: \(expression)")
-                self.setupGraphView(expression: expression)
+                if expression.contains("x") && expression.contains("y"){
+                    print("User entered: \(expression)")
+                    self.setupGraphView(expression: expression)
+                }else{
+                    let errorAlert = UIAlertController(
+                            title: "Invalid Input",
+                            message: "Expression must contain both x and y.",
+                            preferredStyle: .alert
+                        )
+                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                            self.graphViewAlert()
+                        })
+                        self.present(errorAlert, animated: true)
+                }
             }
         }
 
@@ -2201,8 +2221,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         alert.addAction(cancelAction)
 
         self.present(alert, animated: true, completion: nil)
-
-        
     }
     
  
@@ -2566,7 +2584,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             let isSingleCol = tempRangeSelected.allSatisfy { $0.item == tempRangeSelected.first?.item }
 
             if isSingleRow && isSingleCol {
-                panGestureShow2()
+                //TODO panGestureShow2()
                 print("single cell selection")
                 
             } else if isSingleRow || isSingleCol {
@@ -2648,17 +2666,17 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                                 self.present(alert, animated: true)
                             }
                             else{
-                                //TODO improve UX
-                                panGestureShow2()
+                                //TODO
+                                //panGestureShow2()
                             }
                 }else{
                     //TODO improve UX
-                    panGestureShow2()
+                    //panGestureShow2()
                 }
                
             } else {
-                //TODO improve UX
-                panGestureShow2()
+                //TODO
+                //panGestureShow2()
             }
 
            
@@ -3298,11 +3316,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
                 
                 for each in self.tempRangeSelected {
+                    if let idx = self.location.firstIndex(of: "\(each.item),\(each.section)") {
                         copyBuffer.append((
                             colOffset: each.item - minCol,
                             rowOffset: each.section - minRow,
-                            value: "test"
+                            value: self.content[idx]
                         ))
+                    }
                 }
                 
                 //start copying
@@ -3312,10 +3332,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     let destLocStr = "\(destCol),\(destRow)"
                     
                     if let existingIdx = self.location.firstIndex(of: destLocStr) {
-                        self.content[existingIdx] = "test"//item.value
+                        self.content[existingIdx] = item.value
                     } else {
                         self.location.append(destLocStr)
-                        self.content.append("test")
+                        self.content.append(item.value)
+                        self.textsize.append(String(self.selectingSize))
+                        self.tcolor.append(self.selectingColor)
+                        self.bgcolor.append(self.selectingBgColor)
                         let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: destCol)
                         self.locationInExcel.append("\(excelCol)\(destRow)")
                     }
@@ -3700,7 +3723,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     
     
     @IBAction func show2(_ sender: AnyObject) {
-        
         if customview2 != nil{
             
             customview2.removeFromSuperview()
@@ -3708,22 +3730,22 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
             break
             
             
@@ -3731,7 +3753,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 288))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 235,height: 155))
             break
             
         }
@@ -3746,26 +3768,35 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         customview2.layer.borderColor = UIColor.black.cgColor
         
-        customview2.back.addTarget(self, action: #selector(PlaygroundViewController.back2(_:)), for: UIControl.Event.touchUpInside)
+        customview2.closebutton.addTarget(self, action: #selector(close), for: UIControl.Event.touchUpInside)
         
-        customview2.localLoad.addTarget(self, action: #selector(PlaygroundViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
+        customview2.quitbutton.addTarget(self, action: #selector(quitPlaygroundAction), for: UIControl.Event.touchUpInside)
         
-        customview2.reset.addTarget(self, action: #selector(PlaygroundViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
+        customview2.graphbutton.addTarget(self, action: #selector(graphViewAlert), for: UIControl.Event.touchUpInside)
         
-        customview2.resetStyling.addTarget(self, action: #selector(PlaygroundViewController.goSettings), for: UIControl.Event.touchUpInside)
+        //customview3.backbutton.addTarget(self, action: #selector(back2(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.emailButton.addTarget(self, action: #selector(PlaygroundViewController.excelEmail), for: UIControl.Event.touchUpInside)
+       
         
-        customview2.savefile.addTarget(self, action: #selector(PlaygroundViewController.filesave), for: UIControl.Event.touchUpInside)
-        
-        customview2.localSave.addTarget(self, action: #selector(PlaygroundViewController.loadCreditview), for: UIControl.Event.touchUpInside)
-        
-        customview2.backups.addTarget(self, action: #selector(PlaygroundViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
-        
-  
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
         self.view.addSubview(customview2)
+        
+    }
+    
+    
+    @objc func quitPlaygroundAction(){
+//        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+
+        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+            
+            window.rootViewController = targetViewController
+            
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
+
     }
     
     @objc func saveOniCloudAction(){
@@ -7408,7 +7439,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
             saveAsLocalJson(filename: "csv_sheet1")//localFileNames[selectedSheet])
         }
-        self.customview3.removeFromSuperview()
+        self.customview2.removeFromSuperview()
     }
     
     //sendEmail

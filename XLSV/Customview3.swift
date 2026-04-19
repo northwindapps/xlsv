@@ -13,10 +13,10 @@ class Customview3: UIView {
     var view2:UIView!
     
     @IBOutlet weak var closebutton: UIButton!
-    @IBOutlet weak var backbutton: UIButton!
+    @IBOutlet weak var graphbutton: UIButton!
     @IBOutlet weak var mcselector: UISegmentedControl!
     
-    @IBOutlet weak var save: UIButton!
+    @IBOutlet weak var quitbutton: UIButton!
     
     @IBOutlet weak var searchfield: UITextField!
     

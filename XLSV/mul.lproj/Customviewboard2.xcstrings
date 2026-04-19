@@ -257,10 +257,46 @@
       "comment" : "Class = \"UIButton\"; normalTitle = \"Playground Mode\"; ObjectID = \"wJQ-PG-a3x\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testtilstand"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playground-Modus"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Playground Mode"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de Prueba"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Playground"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実験モード"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "练习模式"
           }
         }
       }

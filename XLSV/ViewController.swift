@@ -2724,6 +2724,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     } else {
                         self.location.append(destLocStr)
                         self.content.append(item.value)
+                        self.textsize.append(String(self.selectingSize))
+                        self.tcolor.append(self.selectingColor)
+                        self.bgcolor.append(self.selectingBgColor)
                         let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: destCol)
                         self.locationInExcel.append("\(excelCol)\(destRow)")
                     }
@@ -6071,11 +6074,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func calculatormode_update_main(isFullupdate: Bool = true){
-        if isFullupdate {
+//        if isFullupdate {
             f_calculated.removeAll()
             f_location.removeAll()
             f_location_alphabet.removeAll()
-        }
+//        } TODO is this needed?
       
         // these are all made of formula records
         var filteredContent: [String] = []

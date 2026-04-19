@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
 		2B0FEED02F782629005BF38E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* Main.storyboard */; };
+		2B2E18852F94E60300E243D9 /* Customviewboard3.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B2E18842F94E60200E243D9 /* Customviewboard3.xib */; };
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
 		2B6704142F9100B500CBBBB3 /* PlaygroundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
@@ -64,7 +65,6 @@
 		8D3014511F0A74720026E961 /* Datainputview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3014501F0A74720026E961 /* Datainputview.swift */; };
 		8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8D3863D61F0C4C3C00F2220D /* Datainput.xib */; };
 		8D6A11361E4D6A3D00019BEA /* formatview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D6A11351E4D6A3D00019BEA /* formatview.swift */; };
-		8D8201001E3AC9D60039540A /* Customviewboard3.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8D8201021E3AC9D60039540A /* Customviewboard3.xib */; };
 		8DB0D36E1E5023C80075E103 /* numberkey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB0D36D1E5023C80075E103 /* numberkey.swift */; };
 		8DB176C91E1492AA009DCD75 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */; };
 		8DB176CC1E1492AA009DCD75 /* CreditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB176C21E1492AA009DCD75 /* CreditViewController.swift */; };
@@ -90,6 +90,7 @@
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2B2E18842F94E60200E243D9 /* Customviewboard3.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Customviewboard3.xib; sourceTree = "<group>"; };
 		2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSelectionOpsView.swift; sourceTree = "<group>"; };
 		2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController.swift; sourceTree = "<group>"; };
 		2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXlsxSheet1.xlsx; sourceTree = "<group>"; };
@@ -142,7 +143,6 @@
 		6A60D4B1245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		6A60D4B2245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Input4Pad.strings; sourceTree = "<group>"; };
 		6A60D4B4245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Datainput.strings; sourceTree = "<group>"; };
-		6A60D4B6245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		6A60D4B7245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/formatviewboard.strings; sourceTree = "<group>"; };
 		6A60D4B8245E64890091C5EC /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/numberkeyView.strings; sourceTree = "<group>"; };
 		6A6E851E245DA132008AFA03 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -156,7 +156,6 @@
 		6A92A8D0251DF22000DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		6A92A8D1251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Input4Pad.strings; sourceTree = "<group>"; };
 		6A92A8D3251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Datainput.strings; sourceTree = "<group>"; };
-		6A92A8D5251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
 		6A92A8D6251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/formatviewboard.strings; sourceTree = "<group>"; };
 		6A92A8D7251DF22100DC8BF1 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/numberkeyView.strings; sourceTree = "<group>"; };
 		6A9743BC2BB3A74E005D341C /* helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = helper.swift; sourceTree = "<group>"; };
@@ -184,7 +183,6 @@
 		8D3014501F0A74720026E961 /* Datainputview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Datainputview.swift; sourceTree = "<group>"; };
 		8D3863D51F0C4C3C00F2220D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Datainput.xib; sourceTree = "<group>"; };
 		8D6A11351E4D6A3D00019BEA /* formatview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = formatview.swift; sourceTree = "<group>"; };
-		8D8201011E3AC9D60039540A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard3.xib; sourceTree = "<group>"; };
 		8DB0D36D1E5023C80075E103 /* numberkey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = numberkey.swift; sourceTree = "<group>"; };
 		8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8DB176C21E1492AA009DCD75 /* CreditViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreditViewController.swift; sourceTree = "<group>"; };
@@ -192,10 +190,6 @@
 		8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomCollectionViewLayout.swift; sourceTree = "<group>"; };
 		8DB176C71E1492AA009DCD75 /* Customview2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Customview2.swift; sourceTree = "<group>"; };
 		8DB177B61E1499F0009DCD75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		8DF476D11E6C242E0006D940 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
-		8DF476D31E6C24730006D940 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
-		8DF476D51E6C249E0006D940 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Customviewboard3.strings; sourceTree = "<group>"; };
-		8DF476D91E6C25110006D940 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Customviewboard3.strings"; sourceTree = "<group>"; };
 		8DF476F11E6C2B020006D940 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/formatviewboard.xib; sourceTree = "<group>"; };
 		8DF476F41E6C2B090006D940 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/formatviewboard.strings; sourceTree = "<group>"; };
 		8DF476F61E6C2B530006D940 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/formatviewboard.strings; sourceTree = "<group>"; };
@@ -376,7 +370,7 @@
 				8D3863D61F0C4C3C00F2220D /* Datainput.xib */,
 				2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */,
 				2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */,
-				8D8201021E3AC9D60039540A /* Customviewboard3.xib */,
+				2B2E18842F94E60200E243D9 /* Customviewboard3.xib */,
 				8DF476F21E6C2B020006D940 /* formatviewboard.xib */,
 				6A6E8529245DB566008AFA03 /* numberkeyView.xib */,
 				FB5D95391ABE5E6B00E7C8CD /* Supporting Files */,
@@ -499,7 +493,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D8201001E3AC9D60039540A /* Customviewboard3.xib in Resources */,
+				2B2E18852F94E60300E243D9 /* Customviewboard3.xib in Resources */,
 				2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
 				2B0FEED02F782629005BF38E /* Main.storyboard in Resources */,
@@ -726,20 +720,6 @@
 			name = Datainput.xib;
 			sourceTree = "<group>";
 		};
-		8D8201021E3AC9D60039540A /* Customviewboard3.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				8D8201011E3AC9D60039540A /* Base */,
-				8DF476D11E6C242E0006D940 /* ja */,
-				8DF476D31E6C24730006D940 /* de */,
-				8DF476D51E6C249E0006D940 /* fr */,
-				8DF476D91E6C25110006D940 /* zh-Hans */,
-				6A60D4B6245E64890091C5EC /* es */,
-				6A92A8D5251DF22100DC8BF1 /* da */,
-			);
-			name = Customviewboard3.xib;
-			sourceTree = "<group>";
-		};
 		8DB177B71E1499F0009DCD75 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -950,7 +930,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.24;
+				CURRENT_PROJECT_VERSION = 3.1.0;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -971,7 +951,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.24;
+				MARKETING_VERSION = 3.1.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1006,7 +986,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.0.24;
+				CURRENT_PROJECT_VERSION = 3.1.0;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1023,7 +1003,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.24;
+				MARKETING_VERSION = 3.1.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
