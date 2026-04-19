@@ -2157,13 +2157,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         //checkAndUpdateLaunchDateAlsoTakeDailyBackup()
-
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-        graphViewAlert()
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(
@@ -2179,6 +2172,15 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             name: NSNotification.Name.UIKeyboardWillHide,
             object: nil
         )
+
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        //graphViewAlert()
+        
+        
 
         
     }
@@ -2584,7 +2586,8 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             let isSingleCol = tempRangeSelected.allSatisfy { $0.item == tempRangeSelected.first?.item }
 
             if isSingleRow && isSingleCol {
-                //TODO panGestureShow2()
+                //TODO
+                panGestureShow2()
                 print("single cell selection")
                 
             } else if isSingleRow || isSingleCol {
@@ -2667,11 +2670,11 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                             }
                             else{
                                 //TODO
-                                //panGestureShow2()
+                                panGestureShow2()
                             }
                 }else{
                     //TODO improve UX
-                    //panGestureShow2()
+                    panGestureShow2()
                 }
                
             } else {
@@ -2763,13 +2766,15 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         rsview.deletevalues.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
                 
-        rsview.deleterow.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
+        rsview.deleterow.isHidden = true //addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
         
-        rsview.insertrow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertrow.isHidden = true// addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
         
-        rsview.insertcol.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertcol.isHidden = true //addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
         
-        rsview.deletecol.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
+        rsview.deletecol.isHidden = true//.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
+        
+        
         
         rsview.copyandpaste.addTarget(self, action: #selector(copyPasteSelectedCellContent), for: UIControl.Event.touchUpInside)
 
@@ -7127,7 +7132,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         if let keyboardFrame: NSValue = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
-            UIView.animate(withDuration: 0.9) {
+            UIView.animate(withDuration: 0.2) {
                 if self.KEYBOARDLOCATION < 1.0{
                     self.KEYBOARDLOCATION = keyboardHeight
                 }
