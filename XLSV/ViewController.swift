@@ -3186,16 +3186,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func moveToPlayground(){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        //       postAction()
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine2" ) as! PlaygroundViewController
-        if isExcel{
-            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
-        }
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
-        
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        //       postAction()
+//        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine2" ) as! PlaygroundViewController
+//        if isExcel{
+//            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+//        }
+//        targetViewController.modalPresentationStyle = .fullScreen
+//        self.present( targetViewController, animated: true, completion: nil)
+//        
         self.customview2.removeFromSuperview()
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
+        
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
+
     }
     
     @objc func saveOniCloudAction(){
@@ -6141,6 +6150,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let cs = CalculationService()
         
+        
         // Build dependency graph: which formulas does each formula depend on?
         var dependencies: [Int: Set<Int>] = [:]
         for i in 0..<filteredContent.count {
@@ -6217,10 +6227,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         filteredResult[i] = rltstr
                     }
                 } else if isReadyToCalculate(expression: currentFormula) {
-                    let res = cs.execute(expression: currentFormula)
-                    if let doubleVal = Double(res ?? "") {
-                        filteredResult[i] = String(doubleVal)
-                    } else {
+                    let service = ASTCalculationService()
+
+                    do {
+                        if let ast = service.parseExpression(currentFormula) {
+                            print("Parsed successfully!")
+                            let result = try service.evaluate(currentFormula)
+                            filteredResult[i] = String(result)
+                        }
+                    } catch {
+                        print("Error evaluating formula:", error)
                         filteredResult[i] = "Error"
                     }
                 }
@@ -7184,7 +7200,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var formatted = src
         for i in 0..<formatted.count{
             formatted[i] = formatted[i].replacingOccurrences(of: "SQRT", with: "sqrt")
-            formatted[i] = formatted[i].replacingOccurrences(of: "LOG10", with: "logd")
+            formatted[i] = formatted[i].replacingOccurrences(of: "LOG10", with: "log10")
             formatted[i] = formatted[i].replacingOccurrences(of: "LOG", with: "log")
             formatted[i] = formatted[i].replacingOccurrences(of: "PI()", with: "pi")
             formatted[i] = formatted[i].replacingOccurrences(of: "EXP", with: "exp^")
@@ -7250,9 +7266,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func logdAction(){
         let check = datainputview.stringbox.text.replacingOccurrences(of: " ", with: "")
         if check.count == 0  {
-            datainputview.stringbox.text = "=logd("
+            datainputview.stringbox.text = "=log10("
         }else{
-            datainputview.stringbox.text = datainputview.stringbox.text + "logd("
+            datainputview.stringbox.text = datainputview.stringbox.text + "log10("
         }
     }
     

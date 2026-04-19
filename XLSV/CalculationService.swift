@@ -606,12 +606,520 @@ extension Decimal {
 }
 
 
+// CalculationService.swift
+// Swift counterpart of the TypeScript math expression parser
+// MARK: - AST Node Types
 
+protocol ASTNode {
+    var type: String { get }
+}
 
+struct BinaryOp: ASTNode {
+    let type = "BinaryOp"
+    let left: ASTNode
+    let right: ASTNode
+    let operation: String
+}
 
+struct FunctionCall: ASTNode {
+    let type = "FunctionCall"
+    let name: String
+    let args: [ASTNode]
+}
 
-// let tempStr = "10/(3-3)"//"2 ^ 1000"//"3 + ( )"//"3.1.4 + 2"//"5 + - - 2"//"2 ^ 3 ^ 2"//"10 / ( 5 - 5 )"//"-2 ^ 2"//"10 + ( 2 * ( 3 + ( 4 ^ 2 / 8 ) ) - 5 )"//"( -2 + 5 ) ^ ( 3 * 2 / 3 )"//"asin(1) * 2 / pi"//"asin(1)"//"asin(1.0000000001)"//"2(3+4)"//"-4^2"//"3 + 4 * 2 / ( 1 - 5 ) ^ 2"
-// let cs = CalculationService()
-// let result = cs.execute(expression:tempStr) ?? ""
-// //print("final",result)
+struct Variable: ASTNode {
+    let type = "Variable"
+    let name: String
+}
 
+struct NumberLiteral: ASTNode {
+    let type = "NumberLiteral"
+    let value: Double
+}
+
+struct UnaryOp: ASTNode {
+    let type = "UnaryOp"
+    let operation: String
+    let operand: ASTNode
+}
+
+// MARK: - Math Parser
+
+class MathParser {
+    private let input: String
+    private var pos: String.Index
+
+    init(input: String) {
+        // Remove spaces for simplicity
+        self.input = input.replacingOccurrences(of: "\\s+", with: "", options: .regularExpression)
+        self.pos = self.input.startIndex
+    }
+
+    func parse() throws -> ASTNode {
+        return try parseExpression()
+    }
+
+    private func parseExpression() throws -> ASTNode {
+        var left = try parseTerm()
+        while peek() == "+" || peek() == "-" {
+            let op = String(consume())
+            let right = try parseTerm()
+            left = BinaryOp(left: left, right: right, operation: op)
+        }
+        return left
+    }
+
+    private func parseTerm() throws -> ASTNode {
+        var left = try parseFactor()
+        while peek() == "*" || peek() == "/" || peek() == "%" {
+            let op = String(consume())
+            let right = try parseFactor()
+            left = BinaryOp(left: left, right: right, operation: op)
+        }
+        return left
+    }
+
+    private func parseFactor() throws -> ASTNode {
+        return try parsePower()
+    }
+
+    private func parseAtom() throws -> ASTNode {
+        var sign = 1
+        if peek() == "-" {
+            consume()
+            sign = -1
+        } else if peek() == "+" {
+            consume()
+        }
+
+        var atom: ASTNode
+        if peek() == "(" {
+            consume() // "("
+            atom = try parseExpression()
+            try expect(")")
+        } else if isDigit(String(peek())) || peek() == "." {
+            atom = try parseNumber()
+        } else if isLetter(String(peek())) {
+            let name = try parseIdentifier()
+            if peek() == "(" {
+                consume() // "("
+                var args: [ASTNode] = []
+                if peek() != ")" {
+                    args.append(try parseExpression())
+                    while peek() == "," {
+                        consume()
+                        args.append(try parseExpression())
+                    }
+                }
+                try expect(")")
+                atom = FunctionCall(name: name, args: args)
+            } else {
+                atom = Variable(name: name)
+            }
+        } else {
+            throw ParseError.unexpectedCharacter(String(peek()))
+        }
+
+        if sign == -1 {
+            return UnaryOp(operation: "-", operand: atom)
+        }
+        return atom
+    }
+
+    private func parsePower() throws -> ASTNode {
+        var left = try parseAtom()
+        if peek() == "^" {
+            consume()
+            let right = try parsePower()
+            return BinaryOp(left: left, right: right, operation: "^")
+        }
+        return left
+    }
+
+    private func parseNumber() throws -> NumberLiteral {
+        var num = ""
+        while pos < input.endIndex && (isDigit(String(peek())) || peek() == ".") {
+            num.append(consume())
+        }
+        guard let value = Double(num) else {
+            throw ParseError.invalidNumber(num)
+        }
+        return NumberLiteral(value: value)
+    }
+
+    private func parseIdentifier() throws -> String {
+        var id = ""
+        if isLetter(String(peek())) || peek() == "_" {
+            id.append(consume())
+            while pos < input.endIndex && (isLetter(String(peek())) || isDigit(String(peek())) || peek() == "_") {
+                id.append(consume())
+            }
+        }
+        return id
+    }
+
+    private func peek() -> Character {
+        return pos < input.endIndex ? input[pos] : "\0"
+    }
+
+    private func consume() -> Character {
+        let char = peek()
+        pos = input.index(after: pos)
+        return char
+    }
+
+    private func expect(_ char: Character) throws {
+        if peek() != char {
+            throw ParseError.expectedCharacter(String(char), got: String(peek()))
+        }
+        consume()
+    }
+
+    private func isDigit(_ char: String) -> Bool {
+        return char.range(of: "\\d", options: .regularExpression) != nil
+    }
+
+    private func isLetter(_ char: String) -> Bool {
+        return char.range(of: "[a-zA-Z]", options: .regularExpression) != nil
+    }
+}
+
+// MARK: - Errors
+
+enum ParseError: Error {
+    case unexpectedCharacter(String)
+    case invalidNumber(String)
+    case expectedCharacter(String, got: String)
+}
+
+enum EvaluationError: Error, CustomStringConvertible {
+    case divisionByZero
+    case moduloByZero
+    case domainError(String)
+    case unknownVariable(String)
+    case unknownFunction(String)
+    case invalidBinaryOperator(String)
+    case invalidArgumentCount(String)
+    case undefinedOperation(String)
+
+    var description: String {
+        switch self {
+        case .divisionByZero:
+            return "Division by zero"
+        case .moduloByZero:
+            return "Modulo by zero"
+        case .domainError(let message):
+            return message
+        case .unknownVariable(let name):
+            return "Unknown variable: \(name)"
+        case .unknownFunction(let name):
+            return "Unknown function: \(name)"
+        case .invalidBinaryOperator(let op):
+            return "Invalid binary operator: \(op)"
+        case .invalidArgumentCount(let message):
+            return message
+        case .undefinedOperation(let message):
+            return message
+        }
+    }
+}
+
+// MARK: - AST Utilities
+
+func printCustomAST(_ node: ASTNode, indent: String = "") {
+    print("\(indent)\(node.type)")
+    if let bin = node as? BinaryOp {
+        print("\(indent)  Operator: \(bin.operation)")
+        printCustomAST(bin.left, indent: indent + "  ")
+        printCustomAST(bin.right, indent: indent + "  ")
+    } else if let un = node as? UnaryOp {
+        print("\(indent)  Operator: \(un.operation)")
+        printCustomAST(un.operand, indent: indent + "  ")
+    } else if let function = node as? FunctionCall {
+        print("\(indent)  Name: \(function.name)")
+        for (i, arg) in function.args.enumerated() {
+            print("\(indent)  Arg \(i):")
+            printCustomAST(arg, indent: indent + "    ")
+        }
+    } else if let variable = node as? Variable {
+        print("\(indent)  Name: \(variable.name)")
+    } else if let number = node as? NumberLiteral {
+        print("\(indent)  Value: \(number.value)")
+    }
+}
+
+func toRPN(_ node: ASTNode) -> String {
+    if let bin = node as? BinaryOp {
+        return "\(toRPN(bin.left)) \(toRPN(bin.right)) \(bin.operation)"
+    } else if let un = node as? UnaryOp {
+        return "\(toRPN(un.operand)) \(un.operation)"
+    } else if let function = node as? FunctionCall {
+        let args = function.args.map { toRPN($0) }.joined(separator: " ")
+        return "\(args) \(function.name)"
+    } else if let variable = node as? Variable {
+        return variable.name
+    } else if let number = node as? NumberLiteral {
+        return String(number.value)
+    }
+    return ""
+}
+
+// MARK: - Calculation Service
+
+final class ASTCalculationService: Sendable {
+
+    func parseExpression(_ expression: String) -> ASTNode? {
+        let parser = MathParser(input: expression)
+        do {
+            return try parser.parse()
+        } catch {
+            print("Parse error: \(error)")
+            return nil
+        }
+    }
+
+    func parseExpressionThrowing(_ expression: String) throws -> ASTNode {
+        let parser = MathParser(input: expression)
+        return try parser.parse()
+    }
+
+    func evaluate(_ expression: String) throws -> Double {
+        let ast = try parseExpressionThrowing(expression)
+        return try evaluate(ast)
+    }
+
+    func evaluate(_ node: ASTNode) throws -> Double {
+        if let bin = node as? BinaryOp {
+            return try evaluateBinaryOp(bin)
+        } else if let un = node as? UnaryOp {
+            return try evaluateUnaryOp(un)
+        } else if let function = node as? FunctionCall {
+            return try evaluateFunctionCall(function)
+        } else if let variable = node as? Variable {
+            return try evaluateVariable(variable)
+        } else if let number = node as? NumberLiteral {
+            return number.value
+        }
+        throw EvaluationError.undefinedOperation("Unsupported AST node: \(node.type)")
+    }
+
+    private func evaluateBinaryOp(_ bin: BinaryOp) throws -> Double {
+        let leftValue = try evaluate(bin.left)
+        let rightValue = try evaluate(bin.right)
+
+        switch bin.operation {
+        case "+":
+            return leftValue + rightValue
+        case "-":
+            return leftValue - rightValue
+        case "*":
+            return leftValue * rightValue
+        case "/":
+            if rightValue == 0 {
+                throw EvaluationError.divisionByZero
+            }
+            return leftValue / rightValue
+        case "%":
+            if rightValue == 0 {
+                throw EvaluationError.moduloByZero
+            }
+            return leftValue.truncatingRemainder(dividingBy: rightValue)
+        case "^":
+            let result = pow(leftValue, rightValue)
+            if result.isNaN {
+                throw EvaluationError.domainError("\(leftValue)^\(rightValue) is undefined")
+            }
+            return result
+        default:
+            throw EvaluationError.invalidBinaryOperator(bin.operation)
+        }
+    }
+
+    private func evaluateUnaryOp(_ un: UnaryOp) throws -> Double {
+        let value = try evaluate(un.operand)
+        switch un.operation {
+        case "-":
+            return -value
+        case "+":
+            return value
+        default:
+            throw EvaluationError.invalidBinaryOperator(un.operation)
+        }
+    }
+
+    private func evaluateFunctionCall(_ function: FunctionCall) throws -> Double {
+        let args = try function.args.map { try evaluate($0) }
+        switch function.name.lowercased() {
+        case "abs":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("abs() requires 1 argument")
+            }
+            return abs(args[0])
+        case "sqrt":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("sqrt() requires 1 argument")
+            }
+            if args[0] < 0 {
+                throw EvaluationError.domainError("sqrt domain error: argument \(args[0]) must be non-negative")
+            }
+            return sqrt(args[0])
+        case "sin":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("sin() requires 1 argument")
+            }
+            return sin(args[0])
+        case "cos":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("cos() requires 1 argument")
+            }
+            return cos(args[0])
+        case "tan":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("tan() requires 1 argument")
+            }
+            return tan(args[0])
+        case "asin":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("asin() requires 1 argument")
+            }
+            if args[0] < -1 || args[0] > 1 {
+                throw EvaluationError.domainError("asin domain error: argument \(args[0]) must be in [-1, 1]")
+            }
+            return asin(args[0])
+        case "acos":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("acos() requires 1 argument")
+            }
+            if args[0] < -1 || args[0] > 1 {
+                throw EvaluationError.domainError("acos domain error: argument \(args[0]) must be in [-1, 1]")
+            }
+            return acos(args[0])
+        case "atan":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("atan() requires 1 argument")
+            }
+            return atan(args[0])
+        case "log":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("log() requires 1 argument")
+            }
+            if args[0] <= 0 {
+                throw EvaluationError.domainError("log domain error: argument \(args[0]) must be positive")
+            }
+            return log(args[0])
+        case "log10":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("log10() requires 1 argument")
+            }
+            if args[0] <= 0 {
+                throw EvaluationError.domainError("log10 domain error: argument \(args[0]) must be positive")
+            }
+            return log10(args[0])
+        case "log2":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("log2() requires 1 argument")
+            }
+            if args[0] <= 0 {
+                throw EvaluationError.domainError("log2 domain error: argument \(args[0]) must be positive")
+            }
+            return log2(args[0])
+        case "exp":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("exp() requires 1 argument")
+            }
+            return exp(args[0])
+        case "floor":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("floor() requires 1 argument")
+            }
+            return floor(args[0])
+        case "ceil":
+            guard args.count == 1 else {
+                throw EvaluationError.invalidArgumentCount("ceil() requires 1 argument")
+            }
+            return ceil(args[0])
+        case "max":
+            guard !args.isEmpty else {
+                throw EvaluationError.invalidArgumentCount("max() requires at least 1 argument")
+            }
+            return args.max() ?? 0
+        case "min":
+            guard !args.isEmpty else {
+                throw EvaluationError.invalidArgumentCount("min() requires at least 1 argument")
+            }
+            return args.min() ?? 0
+        default:
+            throw EvaluationError.unknownFunction(function.name)
+        }
+    }
+
+    private func evaluateVariable(_ variable: Variable) throws -> Double {
+        switch variable.name.lowercased() {
+        case "pi":
+            return Double.pi
+        case "e":
+            return exp(1)
+        default:
+            throw EvaluationError.unknownVariable(variable.name)
+        }
+    }
+
+    func printAST(for expression: String) {
+        guard let ast = parseExpression(expression) else { return }
+
+        print("=== Expression: \(expression) ===")
+        print("Custom Math AST:")
+        printCustomAST(ast)
+
+        print("\nReverse Polish Notation (RPN):")
+        print(toRPN(ast))
+    }
+
+    // Test expressions (equivalent to TypeScript version)
+    func runTests() {
+        let testExpressions = [
+            "(-5)^2 + 7^-2.5 - 3*4/2 + pi",
+            "sqrt(16) + abs(-5)",
+            "sin(0) + cos(0)",
+            "floor(3.7) + ceil(3.2)",
+            "(2+3)*(4-1)",
+            "log10(100) + log2(8)",
+            "max(5,10,3) - min(5,10,3)",
+            "sqrt((3^2)+(4^2))",
+            "(pi/2)*180",
+            "log10(1.0^2-1.0^2)",
+            "-5^2+25",
+            "asin(1)",
+            "acos(-1)",
+            "17%5",
+            "10%3",
+            "7%7"
+        ]
+
+        for expression in testExpressions {
+            printAST(for: expression)
+            do {
+                let result = try evaluate(expression)
+                print("\nEvaluated Result:")
+                print(result)
+            } catch {
+                print("\nEvaluated Result:")
+                print("Error: \(error)")
+            }
+            print("\n")
+        }
+    }
+}
+
+// MARK: - Usage Example
+/*
+ // In your Swift code:
+ let service = CalculationService()
+ service.runTests()
+
+ // Or parse individual expressions:
+ if let ast = CalculationService.parseExpression("2+3*4") {
+     print("Parsed successfully!")
+     CalculationService.printAST(for: "2+3*4")
+ }
+ */

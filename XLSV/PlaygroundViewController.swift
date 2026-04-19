@@ -34,6 +34,7 @@ struct SceneKitGraphView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> SCNView {
             let cs = CalculationService()
+            let service = ASTCalculationService()
             let scnView = SCNView()
             scnView.scene = SCNScene()
             scnView.allowsCameraControl = true
@@ -62,20 +63,28 @@ struct SceneKitGraphView: UIViewRepresentable {
                         .replacingOccurrences(of: "x", with: "(\(xf))") // 括弧をつけると負の数でも安全
                         .replacingOccurrences(of: "y", with: "(\(yf))")
                     
-                    let res = cs.execute(expression: currentExpr)
-                    if(Double(res ?? "") == nil ){
-                        print("res is nil", "\(x),\(y)")
-                    }
+   
                     
                     var zf: Float = 0.0
-                    
-                    if let val = Double(res ?? ""), val.isFinite {
-                        zf = Float(val)
-                        // ✅ clamp to [-5, 5] i personally like withough clamp but ..
-                        zf = max(-5.0, min(5.0, zf))
-                        vertices.append(SCNVector3(xf, zf, yf))
-                        valid.append(true)
-                    } else {
+                    do {
+                        if let ast = service.parseExpression(currentExpr) {
+                            print("Parsed successfully!")
+                            let result = try service.evaluate(currentExpr)
+                            if result.isFinite {
+                                zf = Float(result)
+                                // ✅ clamp to [-5, 5] i personally like withough clamp but ..
+                                zf = max(-5.0, min(5.0, zf))
+                                vertices.append(SCNVector3(xf, zf, yf))
+                                valid.append(true)
+                            } else {
+                                zf = 0.0 // or skip point
+                                vertices.append(SCNVector3(xf, 0, yf)) // placeholder
+                                valid.append(false)
+                            }
+                        }
+                    } catch {
+                        print("Error evaluating formula:", error)
+                        print("res is nil", "\(x),\(y)")
                         zf = 0.0 // or skip point
                         vertices.append(SCNVector3(xf, 0, yf)) // placeholder
                         valid.append(false)
@@ -1059,8 +1068,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                         if (locationIdx == nil && datainputview != nil){
                             datainputview.stringbox.text = ""
                         }
-                        
-                        self.myCollectionView.reloadData()
+                        DispatchQueue.main.async() {
+                            let appd = UIApplication.shared.delegate as! AppDelegate
+                            appd.collectionViewCellSizeChanged = 1
+                            self.myCollectionView.collectionViewLayout.invalidateLayout()
+                            self.myCollectionView.reloadData()
+                        }
                     }
                 }
             
@@ -6774,10 +6787,22 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                         filteredResult[i] = rltstr
                     }
                 } else if isReadyToCalculate(expression: currentFormula) {
-                    let res = cs.execute(expression: currentFormula)
-                    if let doubleVal = Double(res ?? "") {
-                        filteredResult[i] = String(doubleVal)
-                    } else {
+//                    let res = cs.execute(expression: currentFormula)
+//                    if let doubleVal = Double(res ?? "") {
+//                        filteredResult[i] = String(doubleVal)
+//                    } else {
+//                        filteredResult[i] = "Error"
+//                    }
+                    let service = ASTCalculationService()
+
+                    do {
+                        if let ast = service.parseExpression(currentFormula) {
+                            print("Parsed successfully!")
+                            let result = try service.evaluate(currentFormula)
+                            filteredResult[i] = String(result)
+                        }
+                    } catch {
+                        print("Error evaluating formula:", error)
                         filteredResult[i] = "Error"
                     }
                 }
@@ -7720,7 +7745,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         var formatted = src
         for i in 0..<formatted.count{
             formatted[i] = formatted[i].replacingOccurrences(of: "SQRT", with: "sqrt")
-            formatted[i] = formatted[i].replacingOccurrences(of: "LOG10", with: "logd")
+            formatted[i] = formatted[i].replacingOccurrences(of: "LOG10", with: "log10")
             formatted[i] = formatted[i].replacingOccurrences(of: "LOG", with: "log")
             formatted[i] = formatted[i].replacingOccurrences(of: "PI()", with: "pi")
             formatted[i] = formatted[i].replacingOccurrences(of: "EXP", with: "exp^")
@@ -7786,9 +7811,9 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     @objc func logdAction(){
         let check = datainputview.stringbox.text.replacingOccurrences(of: " ", with: "")
         if check.count == 0  {
-            datainputview.stringbox.text = "=logd("
+            datainputview.stringbox.text = "=log10("
         }else{
-            datainputview.stringbox.text = datainputview.stringbox.text + "logd("
+            datainputview.stringbox.text = datainputview.stringbox.text + "log10("
         }
     }
     
