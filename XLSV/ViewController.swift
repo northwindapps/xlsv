@@ -1873,9 +1873,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 //        #endif
         
         //Filename Change ops
-        let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
-        doubleTapGesture2.numberOfTapsRequired = 1
-        FileCollectionView.addGestureRecognizer(doubleTapGesture2)
+//        let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
+//        doubleTapGesture2.numberOfTapsRequired = 1
+//        FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
     }
