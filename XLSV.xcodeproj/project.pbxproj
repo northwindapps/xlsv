@@ -101,6 +101,7 @@
 		2BBF552C2F8B9C19008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/RangeSelectionOpsView.xcstrings; sourceTree = "<group>"; };
 		2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewController.swift; sourceTree = "<group>"; };
+		2BE0EB922F9850F9001FBD72 /* XLSV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = XLSV.entitlements; sourceTree = "<group>"; };
 		2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController_ajustingAxiesScales.swift; sourceTree = "<group>"; };
 		3C22A75F21D79003001ADDD9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Datainput.strings; sourceTree = "<group>"; };
 		3C22A76321D7904F001ADDD9 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -335,6 +336,7 @@
 		FB5D95381ABE5E6B00E7C8CD /* XLSV */ = {
 			isa = PBXGroup;
 			children = (
+				2BE0EB922F9850F9001FBD72 /* XLSV.entitlements */,
 				8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */,
 				6AD9361123E59D2E00479881 /* mergedCellStyle.swift */,
 				3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */,
@@ -927,7 +929,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 3.1.0;
@@ -967,7 +969,7 @@
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -983,7 +985,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 3.1.0;
@@ -1019,7 +1021,7 @@
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;

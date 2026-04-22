@@ -292,11 +292,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.textAlignment = .center
             }
             
-            if selection_bool {
+//            if selection_bool {
                 //number or fx only
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
                 cell.addGestureRecognizer(panGesture)
-            }
+//            }
             
             
             //Border
@@ -1866,14 +1866,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.myCollectionView.reloadData()
         }
         
-        //Cell selection ops
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-        doubleTapGesture.numberOfTapsRequired = 2
-        myCollectionView.addGestureRecognizer(doubleTapGesture)
+//        #if !targetEnvironment(macCatalyst)
+//        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+//        doubleTapGesture.numberOfTapsRequired = 2
+//        myCollectionView.addGestureRecognizer(doubleTapGesture)
+//        #endif
         
         //Filename Change ops
         let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
-        doubleTapGesture2.numberOfTapsRequired = 2
+        doubleTapGesture2.numberOfTapsRequired = 1
         FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
@@ -1895,6 +1896,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
     }
+    
+    
     
     @objc private func localSave(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -4566,7 +4569,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 storeInput(IPd: IP, elementd: element)
                 break
             }
-            pasteboard.string = clipboard
+            XLSV.pasteboard.string = clipboard
         }
         
         stringboxText = ""
@@ -4881,7 +4884,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 excelEntry(srcString: element, cellId: alphabet + String(IP_s))
                 break
             }
-            pasteboard.string = clipboard
+            XLSV.pasteboard.string = clipboard
             //It makes better UX by shiftting the selected cell
             changeaffected.removeAll()
             if right_bool{
@@ -5092,7 +5095,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 excelEntry(srcString: element, cellId: alphabet + String(IP_s))
                 break
             }
-            pasteboard.string = clipboard
+            XLSV.pasteboard.string = clipboard
             //It makes better UX
             changeaffected.removeAll()
             if right_bool{
