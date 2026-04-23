@@ -575,11 +575,11 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 cell.label2?.textAlignment = .center
             }
             
-            if selection_bool {
+
                 //number or fx only
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
                 cell.addGestureRecognizer(panGesture)
-            }
+        
             
             
             //Border
@@ -1318,16 +1318,9 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 datainputview.lnButton.addTarget(self, action: #selector(lnAction), for: UIControl.Event.touchUpInside)
                 datainputview.expButton.addTarget(self, action: #selector(expAction), for: UIControl.Event.touchUpInside)
                 datainputview.powButton.addTarget(self, action: #selector(powAction), for: UIControl.Event.touchUpInside)
-                datainputview.sqrtButton.addTarget(self, action: #selector(sqrtAction), for: UIControl.Event.touchUpInside)
-                datainputview.complexButton.addTarget(self, action: #selector(complexAction), for: UIControl.Event.touchUpInside)
+            
                 datainputview.piButton.addTarget(self, action: #selector(piAction), for: UIControl.Event.touchUpInside)
-                datainputview.imsumButton.addTarget(self, action: #selector(imsumAction), for: UIControl.Event.touchUpInside)
-                datainputview.imsubButton.addTarget(self, action: #selector(imsubAction), for: UIControl.Event.touchUpInside)
-                datainputview.improButton.addTarget(self, action: #selector(improAction), for: UIControl.Event.touchUpInside)
-                datainputview.imargButton.addTarget(self, action: #selector(imargAction), for: UIControl.Event.touchUpInside)
-                datainputview.imdivButton.addTarget(self, action: #selector(imdivAction), for: UIControl.Event.touchUpInside)
-                datainputview.imabsButton.addTarget(self, action: #selector(imabsAction), for: UIControl.Event.touchUpInside)
-                datainputview.imrectButton.addTarget(self, action: #selector(imrectAction), for: UIControl.Event.touchUpInside)
+               
                 datainputview.plusButton.addTarget(self, action: #selector(plusmarkAction), for: UIControl.Event.touchUpInside)
                 datainputview.crossButton.addTarget(self, action: #selector(crossAction), for: UIControl.Event.touchUpInside)
                 datainputview.openBraceButton.addTarget(self, action: #selector(openBraceAction), for: UIControl.Event.touchUpInside)
@@ -1338,6 +1331,9 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
                 
+                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+                datainputview.addGestureRecognizer(panGesture)
+                datainputview.isUserInteractionEnabled = true
                 
                 break
             case .unspecified:
@@ -2145,16 +2141,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             self.myCollectionView.collectionViewLayout.invalidateLayout()
             self.myCollectionView.reloadData()
         }
-        
-        //Cell selection ops
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-        doubleTapGesture.numberOfTapsRequired = 2
-        myCollectionView.addGestureRecognizer(doubleTapGesture)
-        
-        //Filename Change ops
-        let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
-        doubleTapGesture2.numberOfTapsRequired = 2
-        FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         //checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         

@@ -1029,16 +1029,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.lnButton.addTarget(self, action: #selector(lnAction), for: UIControl.Event.touchUpInside)
                 datainputview.expButton.addTarget(self, action: #selector(expAction), for: UIControl.Event.touchUpInside)
                 datainputview.powButton.addTarget(self, action: #selector(powAction), for: UIControl.Event.touchUpInside)
-                datainputview.sqrtButton.addTarget(self, action: #selector(sqrtAction), for: UIControl.Event.touchUpInside)
-                datainputview.complexButton.addTarget(self, action: #selector(complexAction), for: UIControl.Event.touchUpInside)
+                //datainputview.dragbutton.addTarget(self, action: #selector(handlePan), for: UIControl.Event.touchUpInside)
+                
+
                 datainputview.piButton.addTarget(self, action: #selector(piAction), for: UIControl.Event.touchUpInside)
-                datainputview.imsumButton.addTarget(self, action: #selector(imsumAction), for: UIControl.Event.touchUpInside)
-                datainputview.imsubButton.addTarget(self, action: #selector(imsubAction), for: UIControl.Event.touchUpInside)
-                datainputview.improButton.addTarget(self, action: #selector(improAction), for: UIControl.Event.touchUpInside)
-                datainputview.imargButton.addTarget(self, action: #selector(imargAction), for: UIControl.Event.touchUpInside)
-                datainputview.imdivButton.addTarget(self, action: #selector(imdivAction), for: UIControl.Event.touchUpInside)
-                datainputview.imabsButton.addTarget(self, action: #selector(imabsAction), for: UIControl.Event.touchUpInside)
-                datainputview.imrectButton.addTarget(self, action: #selector(imrectAction), for: UIControl.Event.touchUpInside)
+
                 datainputview.plusButton.addTarget(self, action: #selector(plusmarkAction), for: UIControl.Event.touchUpInside)
                 datainputview.crossButton.addTarget(self, action: #selector(crossAction), for: UIControl.Event.touchUpInside)
                 datainputview.openBraceButton.addTarget(self, action: #selector(openBraceAction), for: UIControl.Event.touchUpInside)
@@ -1049,6 +1044,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
                 
+                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+                datainputview.addGestureRecognizer(panGesture)
+                datainputview.isUserInteractionEnabled = true
+               
                 
                 break
             case .unspecified:
@@ -1081,37 +1080,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         datainputview.returnbutton.addTarget(self, action: #selector(ViewController.restore), for: UIControl.Event.touchUpInside)
         
-//        datainputview.copyButton.addTarget(self, action: #selector(ViewController.copyText), for: UIControl.Event.touchUpInside)
-        
-//        datainputview.fontbutton.addTarget(self, action: #selector(endterDelete), for: UIControl.Event.touchUpInside)
+
         
         //give user a hint
         datainputview.getValuesButton.addTarget(self, action: #selector(showHint), for: UIControl.Event.touchUpInside)
         
-//        datainputview.getRefButton.addTarget(self, action: #selector(getRef), for: UIControl.Event.touchUpInside)
+
         
         datainputview.stringbox.becomeFirstResponder()
         
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-//        if locationstr.contains("ja"){
-//            datainputview.fontbutton.setTitle("消去", for: .normal)
-//        }else if locationstr.contains("fr"){
-//            datainputview.fontbutton.setTitle("supprimer", for: .normal)
-//        }else if locationstr.contains("zh"){
-//            datainputview.fontbutton.setTitle("删除", for: .normal)
-//        }else if locationstr.contains("de"){
-//            datainputview.fontbutton.setTitle("Löschen", for: .normal)
-//        }else if locationstr.contains("it"){
-//            datainputview.fontbutton.setTitle("Cancellare", for: .normal)
-//        }else if locationstr.contains("ru"){
-//            datainputview.fontbutton.setTitle("удалить", for: .normal)
-//        }else if locationstr.contains("es"){
-//            datainputview.fontbutton.setTitle("borrar", for: .normal)
-//        }else if locationstr == "sv"{
-//            datainputview.fontbutton.setTitle("radera", for: .normal)
-//        }else{
-//            datainputview.fontbutton.setTitle("Delete", for: .normal)
-//        }
+
         
         
         if sum_str.count > 0 {
@@ -1120,6 +1099,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         self.view.addSubview(datainputview)
+
         
         
         //http://studyswift.blogspot.jp/2015/01/showhide-keyboard-while-using.html
@@ -1127,6 +1107,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         
+    }
+    
+    @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+        guard let targetView = gesture.view else { return }
+        let translation = gesture.translation(in: view)
+        
+        if gesture.state == .began {
+            targetView.translatesAutoresizingMaskIntoConstraints = true
+        }
+        
+        if gesture.state == .changed {
+            targetView.center = CGPoint(
+                x: targetView.center.x + translation.x,
+                y: targetView.center.y + translation.y
+            )
+            gesture.setTranslation(.zero, in: view)
+        }
     }
     
     //https://stackoverflow.com/questions/30937342/check-if-a-subview-is-in-a-view-using-swift
@@ -1865,17 +1862,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.myCollectionView.collectionViewLayout.invalidateLayout()
             self.myCollectionView.reloadData()
         }
-        
-//        #if !targetEnvironment(macCatalyst)
-//        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-//        doubleTapGesture.numberOfTapsRequired = 2
-//        myCollectionView.addGestureRecognizer(doubleTapGesture)
-//        #endif
-        
-        //Filename Change ops
-//        let doubleTapGesture2 = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap2(_:)))
-//        doubleTapGesture2.numberOfTapsRequired = 1
-//        FileCollectionView.addGestureRecognizer(doubleTapGesture2)
         
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
     }
