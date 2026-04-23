@@ -292,11 +292,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.textAlignment = .center
             }
             
-//            if selection_bool {
+         
+            #if !targetEnvironment(macCatalyst)
+            if selection_bool {
                 //number or fx only
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
                 cell.addGestureRecognizer(panGesture)
-//            }
+            }
+            #else
+            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+            cell.addGestureRecognizer(panGesture)
+            #endif
+     
+                
+           
+            
+            
             
             
             //Border
@@ -1864,6 +1875,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
+        
+        #if !targetEnvironment(macCatalyst)
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+        doubleTapGesture.numberOfTapsRequired = 2
+        myCollectionView.addGestureRecognizer(doubleTapGesture)
+        #endif
+        
+        
     }
     
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
