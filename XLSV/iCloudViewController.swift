@@ -970,7 +970,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             }
                 
         } catch {
-            print("sorry pal cant copy it.")
+            print("sorry pal cant copy it.",error)
         }
     }
     

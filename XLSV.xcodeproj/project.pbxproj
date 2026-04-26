@@ -9,13 +9,13 @@
 /* Begin PBXBuildFile section */
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
 		2B0FEED02F782629005BF38E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* Main.storyboard */; };
+		2B26DDA32F9E3E4700109430 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B26DDA22F9E3E4700109430 /* initialXLSX.xlsx */; };
 		2B2E18852F94E60300E243D9 /* Customviewboard3.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B2E18842F94E60200E243D9 /* Customviewboard3.xib */; };
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
 		2B6704142F9100B500CBBBB3 /* PlaygroundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
-		2BC71A9C2F87475A00E14EB4 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
 		2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
@@ -89,6 +89,7 @@
 /* Begin PBXFileReference section */
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		2B26DDA22F9E3E4700109430 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B2E18842F94E60200E243D9 /* Customviewboard3.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Customviewboard3.xib; sourceTree = "<group>"; };
 		2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSelectionOpsView.swift; sourceTree = "<group>"; };
@@ -99,7 +100,6 @@
 		2BBF55282F8B991E008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Customviewboard2.xcstrings; sourceTree = "<group>"; };
 		2BBF55292F8B9C18008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/RangeSelectionOpsView.xib; sourceTree = "<group>"; };
 		2BBF552C2F8B9C19008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/RangeSelectionOpsView.xcstrings; sourceTree = "<group>"; };
-		2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewController.swift; sourceTree = "<group>"; };
 		2BE0EB922F9850F9001FBD72 /* XLSV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = XLSV.entitlements; sourceTree = "<group>"; };
 		2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController_ajustingAxiesScales.swift; sourceTree = "<group>"; };
@@ -356,6 +356,7 @@
 				2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */,
 				3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */,
 				6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */,
+				2B26DDA22F9E3E4700109430 /* initialXLSX.xlsx */,
 				6A9743C22BB436FD005D341C /* LoadingFileController.swift */,
 				8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */,
 				6A1F5E062542D70E002796C0 /* xmlProject */,
@@ -363,7 +364,6 @@
 				6AC8322A24663CA8006FA917 /* boards */,
 				6A50326A24276688008F62C5 /* XLSX_MAKING */,
 				6A496CA623B8ED1A00E7AE0F /* Images.xcassets */,
-				2BC71A9B2F87475A00E14EB4 /* initialXLSX.xlsx */,
 				6AAFEA07255D6A96000612B8 /* Hint.xib */,
 				6A6E8520245DA1D5008AFA03 /* LaunchScreen.xib */,
 				8DB177B71E1499F0009DCD75 /* InfoPlist.strings */,
@@ -501,11 +501,11 @@
 				2B0FEED02F782629005BF38E /* Main.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
+				2B26DDA32F9E3E4700109430 /* initialXLSX.xlsx in Resources */,
 				2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */,
 				6A6E8527245DB566008AFA03 /* numberkeyView.xib in Resources */,
 				3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */,
 				6A6E8522245DA1D5008AFA03 /* LaunchScreen.xib in Resources */,
-				2BC71A9C2F87475A00E14EB4 /* initialXLSX.xlsx in Resources */,
 				6AAFEA05255D6A96000612B8 /* Hint.xib in Resources */,
 				6A496CA723B8ED1B00E7AE0F /* Images.xcassets in Resources */,
 				8DB177B51E1499F0009DCD75 /* InfoPlist.strings in Resources */,
