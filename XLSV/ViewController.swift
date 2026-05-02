@@ -7535,12 +7535,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func barcodeAction(){
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "BarcodeView")
+        #if !targetEnvironment(macCatalyst)
+            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "BarcodeView")
 
-        targetViewController.modalPresentationStyle = .overCurrentContext
-        targetViewController.view.backgroundColor = UIColor.clear
+            targetViewController.modalPresentationStyle = .overCurrentContext
+            targetViewController.view.backgroundColor = UIColor.clear
 
-        self.present(targetViewController, animated: true, completion: nil)
+            self.present(targetViewController, animated: true, completion: nil)
+        #endif
 
     }
     

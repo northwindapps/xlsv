@@ -50,11 +50,11 @@
                     <color key="textColor" systemColor="scrollViewTexturedBackgroundColor"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AlB-65-1Zv">
-                    <rect key="frame" x="493" y="81" width="36" height="35"/>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AlB-65-1Zv">
+                    <rect key="frame" x="501" y="88" width="21" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
-                    <state key="normal" title="↩︎">
+                    <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <state key="normal" image="barcode.viewfinder" catalog="system">
                         <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </state>
                 </button>
@@ -260,6 +260,7 @@
         </view>
     </objects>
     <resources>
+        <image name="barcode.viewfinder" catalog="system" width="128" height="115"/>
         <image name="downArwWhite" width="136" height="136"/>
         <image name="handWriting" width="258" height="137"/>
         <image name="rightArwWhite" width="136" height="136"/>
