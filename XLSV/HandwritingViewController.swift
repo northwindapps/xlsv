@@ -177,6 +177,13 @@ class HandwritingViewController: UIViewController {
     func showAlert(text: String) {
         if !text.isEmpty {
             UIPasteboard.general.string = text
+            
+            // 1. 親のViewControllerを取得してキャスト
+            if let parentVC = self.presentingViewController as? ViewController {
+                // 2. 親のメソッドを呼び出す
+                parentVC.datainputFromOtherComtroller(sourceText: text)
+            }
+                
         }
 
         let alert = UIAlertController(

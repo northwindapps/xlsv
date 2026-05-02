@@ -65,7 +65,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Af9-Sy-kaB" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2378.2608695652175" y="-6549.4565217391309"/>
+            <point key="canvasLocation" x="-3216" y="-6461"/>
         </scene>
         <!--Credit Controller-->
         <scene sceneID="DDk-AB-5cd">
@@ -295,11 +295,11 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <viewControllerLayoutGuide type="bottom" id="FaW-A5-hoz"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="UlV-pG-fMV">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="716"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" delaysContentTouches="NO" bouncesZoom="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="CsX-PN-Uzh">
-                                <rect key="frame" x="0.0" y="50" width="414" height="601"/>
+                                <rect key="frame" x="0.0" y="50" width="414" height="581"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <collectionViewLayout key="collectionViewLayout" id="ezH-y6-BUk" customClass="CustomCollectionViewLayout" customModule="XLSV" customModuleProvider="target"/>
                                 <cells>
@@ -378,7 +378,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <nil key="highlightedColor"/>
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="G1f-VI-PIW" customClass="GADBannerView">
-                                <rect key="frame" x="0.0" y="686" width="320" height="50"/>
+                                <rect key="frame" x="0.0" y="666" width="320" height="50"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="PVM-uo-mUs"/>
@@ -386,7 +386,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 </constraints>
                             </view>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="tiV-cz-if5">
-                                <rect key="frame" x="0.0" y="651" width="414" height="35"/>
+                                <rect key="frame" x="0.0" y="631" width="414" height="35"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="u7M-u0-IKW"/>
@@ -562,7 +562,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Wxh-sz-vnu" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1380" y="-6683"/>
+            <point key="canvasLocation" x="-2064" y="-6673"/>
         </scene>
         <!--Settings View Controller-->
         <scene sceneID="5Na-Q6-sWO">
@@ -851,9 +851,27 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
             </objects>
             <point key="canvasLocation" x="-1774" y="-8152"/>
         </scene>
+        <!--Barcode View Controller-->
+        <scene sceneID="3kv-G8-UqY">
+            <objects>
+                <viewController storyboardIdentifier="BarcodeView" id="lLf-oI-YMR" customClass="BarcodeViewController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="0nO-GI-xcq"/>
+                        <viewControllerLayoutGuide type="bottom" id="XMn-oH-pTW"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="YLN-dx-f6Z">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="3Vb-Yk-n7k" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1429" y="-6546"/>
+        </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="79h-GP-i6y"/>
+        <segue reference="QFe-iC-dgK"/>
     </inferredMetricsTieBreakers>
     <resources>
         <systemColor name="darkTextColor">

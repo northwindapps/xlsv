@@ -46,6 +46,8 @@
 	<true/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Barcode Scan</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
 		<key>iCloud.com.yumiya.xlsv2</key>

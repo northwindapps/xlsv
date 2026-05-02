@@ -689,6 +689,112 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return 0
     }
     
+    func datainputFromOtherComtroller(sourceText:String,isBarcode:Bool=false){
+        changeaffected.removeAll()
+        
+        //data input
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.collectionViewCellSizeChanged = 0
+        let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
+        appd.wsSheetIndex = sheetIdx!
+        print("wsSheetIndex",appd.wsSheetIndex)
+        
+        //let pasteboard = UIPasteboard.general
+        //pasteboard.string = ""
+        
+        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        
+        var element: String = sourceText
+
+        if element.hasPrefix("=") {
+            let targets = ["sum", "average", "min", "max"]
+            for target in targets {
+                // （options: .caseInsensitive）
+                element = element.replacingOccurrences(
+                    of: target,
+                    with: target.uppercased(),
+                    options: .caseInsensitive
+                )
+            }
+        }
+        
+        //add more complicated functionality
+        if autoComplete(src: element).count > 1 {
+            element = autoComplete(src: element)
+        }
+        
+        
+        let IP :String = cursor   //String(currentindex!.item) + String(currentindex!.section)
+        let t_item = IP.components(separatedBy: ",")[0]
+        let t_section = IP.components(separatedBy: ",")[1]
+        
+        let IP_i = Int(t_item)!
+        let IP_s = Int(t_section)!
+        
+        if isBarcode{
+            let padAry = element.components(separatedBy: ";")
+            for idx in 0..<padAry.count{
+                let IPl = String(IP_i+idx) + "," + String(IP_s)
+                if IP_i+idx <= 0 {
+                    //it's
+                }else{
+                    var each = padAry[idx]
+                    if each == "-"{
+                        if location.contains(IPl){
+                            let i = location.index(of: IPl)
+                            each = content[i!]
+                        }
+                    }
+                    storeInput(IPd: IPl, elementd: each)
+                    let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
+                    excelEntry(srcString: each, cellId: alphabet + String(IP_s))
+                }
+            }
+        }else{
+            storeInput(IPd: IP, elementd: element)
+            let alphabet = getExcelColumnName(columnNumber: IP_i)
+            excelEntry(srcString: element, cellId: alphabet + String(IP_s))
+        }
+        XLSV.pasteboard.string = clipboard
+        //It makes better UX by shiftting the selected cell
+        changeaffected.removeAll()
+        
+        //update cursor
+        if isBarcode{
+            currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+        }else{
+            if right_bool{
+                currentindex = IndexPath(item:currentindex.item+1, section: currentindex.section)
+            }
+            
+            if down_bool{
+                currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
+            }
+        }
+        cursor = String(currentindex.item) + "," + String(currentindex.section)
+            
+        saveuserF()
+        saveuserD()
+        
+        if !isExcel{
+            print("saved")
+            saveAsLocalJson(filename: "csv_sheet1")
+        }
+   
+        DispatchQueue.main.async {
+            let appd = UIApplication.shared.delegate as! AppDelegate
+           
+            self.loadExcelSheet(idx: appd.wsSheetIndex) {
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
+                        self.myCollectionView.collectionViewLayout.invalidateLayout()
+                        self.myCollectionView.reloadData()
+                    }
+                }
+            }
+        }
+    }
     
     //Hiding Keyboard
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
@@ -1052,7 +1158,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.commaButton.addTarget(self, action: #selector(commaAction), for: UIControl.Event.touchUpInside)
                 datainputview.colonButton.addTarget(self, action: #selector(colonAction), for: UIControl.Event.touchUpInside)
                 
-            
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
                 
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
@@ -1089,8 +1194,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         datainputview.okbutton.addTarget(self, action: #selector(ViewController.terminate), for: UIControl.Event.touchUpInside)
         
-        datainputview.returnbutton.addTarget(self, action: #selector(ViewController.restore), for: UIControl.Event.touchUpInside)
-        
+//        datainputview.returnbutton.addTarget(self, action: #selector(ViewController.restore), for: UIControl.Event.touchUpInside)
+//
+        datainputview.returnbutton.addTarget(self, action: #selector(barcodeAction), for: UIControl.Event.touchUpInside)
 
         
         //give user a hint
@@ -7416,13 +7522,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
+    
+    
     @objc func hwAction(){
         let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "HandwritingView")
 
-        // 1. プレゼンテーションスタイルを「重ね合わせ」に設定
         targetViewController.modalPresentationStyle = .overCurrentContext
+        targetViewController.view.backgroundColor = UIColor.clear
 
-        // 2. 遷移先の背景を透明にする（Storyboard側で設定してもOK）
+        self.present(targetViewController, animated: true, completion: nil)
+
+    }
+    
+    @objc func barcodeAction(){
+        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "BarcodeView")
+
+        targetViewController.modalPresentationStyle = .overCurrentContext
         targetViewController.view.backgroundColor = UIColor.clear
 
         self.present(targetViewController, animated: true, completion: nil)
