@@ -23,6 +23,8 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     private var userName = ""
     private var okAction: UIAlertAction?
     
+    
+    
     // MARK: - UI Elements
     // スキャン位置の目安となる枠線（ターゲットボックス）
     let scanBox: UIView = {
@@ -69,33 +71,120 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     }()
     
     // MARK: - User Name Prompt
+//    private func promptForUserName() {
+//        let alert = UIAlertController(
+//            title: "Name Required",
+//            message: "Please enter your name to start scanning.",
+//            preferredStyle: .alert
+//        )
+//        
+//        let ok = UIAlertAction(title: "OK", style: .default) { _ in
+//            guard let name = alert.textFields?.first?.text, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+//            
+//            self.userName = name
+//            
+//          
+//        }
+//        
+//        ok.isEnabled = false // Disabled by default
+//        self.okAction = ok
+//        alert.addAction(ok)
+//        
+//        alert.addTextField { textField in
+//            textField.placeholder = "Enter your name"
+//            textField.autocapitalizationType = .words
+//            
+//            // MODERN APPROACH: Use UIAction for editingChanged
+//            textField.addAction(UIAction { _ in
+//                let text = textField.text ?? ""
+//                // Enable OK button only if the field is not empty
+//                self.okAction?.isEnabled = !text.trimmingCharacters(in: .whitespaces).isEmpty
+//            }, for: .editingChanged)
+//        }
+//        
+//        present(alert, animated: true)
+//    }
+    private func localizedText() -> (title: String, message: String, placeholder: String, ok: String) {
+        let lang = Locale.current.languageCode ?? "en"
+        
+        switch lang {
+        case "ja": // Japanese
+            return ("名前が必要です", "スキャンを開始するには名前を入力してください。", "名前を入力", "OK")
+            
+        case "zh": // Chinese (Simplified)
+            return ("需要姓名", "请输入您的姓名以开始扫描。", "输入您的姓名", "确定")
+            
+        case "es": // Spanish
+            return ("Nombre requerido", "Por favor ingrese su nombre para comenzar a escanear.", "Ingrese su nombre", "Aceptar")
+            
+        case "da": // Danish
+            return ("Navn påkrævet", "Indtast dit navn for at starte scanning.", "Indtast dit navn", "OK")
+            
+        case "de": // German
+            return ("Name erforderlich", "Bitte geben Sie Ihren Namen ein, um den Scan zu starten.", "Name eingeben", "OK")
+            
+        case "fr": // French
+            return ("Nom requis", "Veuillez entrer votre nom pour commencer le scan.", "Entrez votre nom", "OK")
+            
+        default: // English fallback
+            return ("Name Required", "Please enter your name to start scanning.", "Enter your name", "OK")
+        }
+    }
+    
+    private func localizedButtonTitles() -> (scan: String, retake: String, back: String) {
+        let lang = Locale.current.languageCode ?? "en"
+        
+        switch lang {
+        case "ja": // Japanese
+            return ("スキャン", "再撮影", "戻る")
+            
+        case "zh": // Chinese (Simplified)
+            return ("扫描", "重拍", "返回")
+            
+        case "es": // Spanish
+            return ("Escanear", "Reintentar", "Volver")
+            
+        case "da": // Danish
+            return ("Scan", "Tag igen", "Tilbage")
+            
+        case "de": // German
+            return ("Scannen", "Erneut aufnehmen", "Zurück")
+            
+        case "fr": // French
+            return ("Scanner", "Reprendre", "Retour")
+            
+        default: // English
+            return ("Scan", "Retake", "Back")
+        }
+    }
+
+    // MARK: - User Name Prompt
     private func promptForUserName() {
+        let text = localizedText()
+        
         let alert = UIAlertController(
-            title: "Name Required",
-            message: "Please enter your name to start scanning.",
+            title: text.title,
+            message: text.message,
             preferredStyle: .alert
         )
         
-        let ok = UIAlertAction(title: "OK", style: .default) { _ in
-            guard let name = alert.textFields?.first?.text, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let ok = UIAlertAction(title: text.ok, style: .default) { _ in
+            guard let name = alert.textFields?.first?.text,
+                  !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
             
             self.userName = name
-            
-          
         }
         
-        ok.isEnabled = false // Disabled by default
+        ok.isEnabled = false
         self.okAction = ok
         alert.addAction(ok)
         
         alert.addTextField { textField in
-            textField.placeholder = "Enter your name"
+            textField.placeholder = text.placeholder
             textField.autocapitalizationType = .words
             
-            // MODERN APPROACH: Use UIAction for editingChanged
             textField.addAction(UIAction { _ in
                 let text = textField.text ?? ""
-                // Enable OK button only if the field is not empty
                 self.okAction?.isEnabled = !text.trimmingCharacters(in: .whitespaces).isEmpty
             }, for: .editingChanged)
         }
@@ -254,6 +343,13 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         parseButton.addTarget(self, action: #selector(parseTapped), for: .touchUpInside)
         clearButton.addTarget(self, action: #selector(clearTapped), for: .touchUpInside)
         backButton.addTarget(self, action: #selector(backAction), for: .touchUpInside)
+        
+        let titles = localizedButtonTitles()
+
+        // Set titles AFTER init (important)
+        parseButton.setTitle(titles.scan, for: .normal)
+        clearButton.setTitle(titles.retake, for: .normal)
+        backButton.setTitle(titles.back, for: .normal)
     }
 
     // MARK: - Actions
@@ -322,7 +418,7 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 parentVC.datainputFromOtherComtroller(sourceText: combinedText, isBarcode: true)
             }
 
-            self.clearTapped()
+            //self.clearTapped()
         })
         
         present(alert, animated: true)
