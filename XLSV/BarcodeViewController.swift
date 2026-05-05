@@ -383,28 +383,57 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
             }
         }
     }
+    
+    private func localizedAlertText() -> (title: String, cancel: String, ok: String, placeholder: String) {
+        let lang = Locale.current.languageCode ?? "en"
+        
+        switch lang {
+        case "ja": // Japanese
+            return ("スキャン完了（コピー済み）", "キャンセル", "OK", "数量を入力")
+            
+        case "zh": // Chinese (Simplified)
+            return ("扫描完成（已复制）", "取消", "确定", "输入数量")
+            
+        case "es": // Spanish
+            return ("¡Escaneado! (Copiado)", "Cancelar", "Aceptar", "Ingrese cantidad")
+            
+        case "da": // Danish
+            return ("Scannet! (Kopieret)", "Annuller", "OK", "Indtast antal")
+            
+        case "de": // German
+            return ("Gescannt! (Kopiert)", "Abbrechen", "OK", "Menge eingeben")
+            
+        case "fr": // French
+            return ("Scanné ! (Copié)", "Annuler", "OK", "Entrer la quantité")
+            
+        default: // English
+            return ("Scanned! (Copied)", "Cancel", "OK", "Enter inventory volume")
+        }
+    }
 
 
     func showAlert(text: String) {
+        let loc = localizedAlertText()
+        
         let alert = UIAlertController(
-            title: "Scanned! (Copied)",
+            title: loc.title,
             message: text,
             preferredStyle: .alert
         )
         
-        // 1. Add a Cancel action to dismiss the alert and resume scanning
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
-                self.clearTapped() // Resets scanning state
-            })
+        // Cancel
+        alert.addAction(UIAlertAction(title: loc.cancel, style: .cancel) { _ in
+            self.clearTapped()
+        })
         
-        // 1. Add a text field for inventory volume
+        // Input field
         alert.addTextField { textField in
-            textField.placeholder = "Enter inventory volume"
-            textField.keyboardType = .numberPad // Shows number pad for easy input
+            textField.placeholder = loc.placeholder
+            textField.keyboardType = .numberPad
         }
         
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-            // 2. Safely get the entered volume text
+        // OK
+        alert.addAction(UIAlertAction(title: loc.ok, style: .default) { _ in
             let volume = alert.textFields?.first?.text ?? "0"
             
             if let parentVC = self.presentingViewController as? ViewController {
@@ -412,13 +441,9 @@ class BarcodeViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
                 formatter.dateFormat = "yyyy/MM/dd:HH:mm:ss"
                 let timestamp = formatter.string(from: Date())
                 
-                // 3. Concatenate timestamp, barcode text, and volume using ";"
                 let combinedText = "\(timestamp);\(text);\(volume);\(self.userName)"
-                
                 parentVC.datainputFromOtherComtroller(sourceText: combinedText, isBarcode: true)
             }
-
-            //self.clearTapped()
         })
         
         present(alert, animated: true)
