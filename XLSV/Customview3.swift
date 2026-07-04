@@ -28,6 +28,8 @@ class Customview3: UIView {
     
     @IBOutlet weak var replaceokbutton: UIButton!
     
+    @IBOutlet weak var csvexportbutton: UIButton!
+    
     @IBOutlet weak var searchlabel: UILabel!
     
     @IBOutlet weak var replacelabel: UILabel!

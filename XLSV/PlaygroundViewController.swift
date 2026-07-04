@@ -3734,22 +3734,22 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         switch tag_int {
         case 0:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
         case 1:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
         case 2:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
         case 3:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
         case 4:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
         case 5:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 250,height: 200))
             break
             
             
@@ -3757,7 +3757,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             
         default:
-            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 235,height: 155))
+            customview2 = Customview3(frame: CGRect(x:5,y:50, width: 235,height: 200))
             break
             
         }
@@ -3779,6 +3779,8 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         customview2.graphbutton.addTarget(self, action: #selector(graphViewAlert), for: UIControl.Event.touchUpInside)
         
         //customview3.backbutton.addTarget(self, action: #selector(back2(_:)), for: UIControl.Event.touchUpInside)
+        
+        customview2.csvexportbutton.addTarget(self, action: #selector(exportCSVFromSearchPopup), for: UIControl.Event.touchUpInside)
         
        
         
@@ -6585,6 +6587,36 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         }
         saveuserD()
         myCollectionView.reloadData()
+    }
+    
+    @objc func exportCSVFromSearchPopup() {
+        var result = content
+        for idx in 0..<f_calculated.count {
+            if let l_idx = location.index(of: f_location[idx]) {
+                result[l_idx] = f_calculated[idx]
+            }
+        }
+        csvexport(result: result)
+
+        if customview2 != nil {
+            customview2.removeFromSuperview()
+        }
+        if customview3 != nil {
+            customview3.removeFromSuperview()
+        }
+
+        guard MFMailComposeViewController.canSendMail() else { return }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+        let date = dateFormatter.string(from: Date())
+
+        let mail = MFMailComposeViewController()
+        mail.mailComposeDelegate = self
+        mail.setSubject("from ios")
+        mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
+
+        present(mail, animated: true)
     }
     
     @objc func replace(){
