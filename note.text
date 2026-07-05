@@ -1,0 +1,36 @@
+CSV Export Performance Fix (csvexport)
+=========================================================================
+
+Problem:
+- Exporting a ~0.5MB CSV from the Playground popup took about 1 minute on a real iPhone.
+
+Root cause:
+- csvexport(result:) loops over every grid cell (ROWSIZE x COLUMNSIZE = 1001 x 201 =~ 201,000 cells).
+- For each cell it called:
+    location.contains(PATH)      // scans the whole `location` array
+    location.index(of: PATH)     // scans the whole `location` array again
+- Both calls are O(n) linear scans over the `location` array (n = number of filled cells).
+- Doing this for every one of the ~201,000 grid cells means total work is
+  roughly O(cells * n), i.e. hundreds of millions of string comparisons for a
+  sheet with a few thousand filled cells. That matches the ~1 minute stall.
+
+Fix:
+- Build a [String: Int] dictionary once before the loops, mapping each
+  location string to its index in `location` (O(n) to build).
+- Inside the loops, look up each cell's PATH in that dictionary (O(1))
+  instead of scanning the array twice.
+- This changes the overall cost from O(cells * n) to O(cells + n), which is
+  the difference between the 1-minute stall and a near-instant export.
+- Behavior is unchanged: if a location string appears more than once (which
+  shouldn't normally happen), the dictionary keeps the first occurrence,
+  matching the original location.index(of:) semantics.
+
+Fixed in:
+- PlaygroundViewController.swift (csvexport, used by the Playground popup export)
+- ViewController.swift (csvexport, used by the app's live "Email" export button)
+
+Note:
+- The exact same O(n^2)-style pattern still exists in the duplicated csvexport(result:)
+  copies in EditiViewController.swift, CalcViewController.swift, SearchController.swift,
+  and inDevViewController.swift. Apply the same dictionary-lookup fix there if/when
+  those export paths are used.

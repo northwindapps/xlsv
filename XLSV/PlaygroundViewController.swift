@@ -1474,32 +1474,37 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         }
         //http://stackoverflow.com/questions/32593516/how-do-i-exactly-export-a-csv-file-from-ios-written-in-swift
         let mailString = NSMutableString()
-        
+
+        var locationIndex: [String: Int] = [:]
+        locationIndex.reserveCapacity(location.count)
+        for (idx, loc) in location.enumerated() {
+            if locationIndex[loc] == nil {
+                locationIndex[loc] = idx
+            }
+        }
+
         for i in (1..<ROWSIZE)
         {
             for j in (1..<COLUMNSIZE)
             {
                 let PATH :String =  String(j) + "," + String(i)//String(i) + "," + String(j)
-                
-                if location.contains(PATH){
-                    let k = location.index(of: PATH)
-                    
-                    
-                    if result[k!].contains(","){
-                        mailString.append(result[k!].replacingOccurrences(of: ",", with: "#comma#"))
-                    }else if result[k!].contains("\n"){
-                        
+
+                if let k = locationIndex[PATH] {
+                    if result[k].contains(","){
+                        mailString.append(result[k].replacingOccurrences(of: ",", with: "#comma#"))
+                    }else if result[k].contains("\n"){
+
                     }else{
-                        
-                        mailString.append(result[k!])
-                        
+
+                        mailString.append(result[k])
+
                     }
-                    
+
                 }
                 else{
-                    
+
                     mailString.append(" ")
-                    
+
                 }
                 
                 if j == COLUMNSIZE-1 {
