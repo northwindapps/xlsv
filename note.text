@@ -34,3 +34,24 @@ Note:
   copies in EditiViewController.swift, CalcViewController.swift, SearchController.swift,
   and inDevViewController.swift. Apply the same dictionary-lookup fix there if/when
   those export paths are used.
+
+Blank cell fix (same csvexport):
+- Empty grid cells were written as a literal space (" ") instead of an empty
+  field. Standard CSV represents a blank cell as nothing between the commas,
+  and a stray space can make spreadsheet apps/parsers treat the cell as
+  non-blank. Changed mailString.append(" ") to mailString.append("") in both
+  PlaygroundViewController.swift and ViewController.swift.
+
+Same O(n) lookup bug found in copyPasteSelectedCellContent()
+=========================================================================
+- Same anti-pattern: location.firstIndex(of:) called inside two separate
+  loops (once per selected source cell, once per destination cell during
+  paste). With a large tempRangeSelected (a big copy/paste range) and a
+  sheet with many filled cells, this is the same O(cells * n) shape as the
+  csvexport bug, just with `tempRangeSelected.count` standing in for `cells`.
+- Fix: build the same [String: Int] locationIndex dictionary once up front,
+  use it for both the source lookup and the destination-exists check, and
+  keep it updated when new cells are appended during the paste loop (so
+  later iterations still see correct indices).
+- Fixed in: ViewController.swift and PlaygroundViewController.swift
+  (copyPasteSelectedCellContent).

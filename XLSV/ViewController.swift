@@ -1325,7 +1325,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 else{
 
-                    mailString.append(" ")
+                    mailString.append("")
 
                 }
                 
@@ -2820,10 +2820,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let destBaseCol = self.currentindex.item
                 let destBaseRow = self.currentindex.section
                 
+                var locationIndex: [String: Int] = [:]
+                locationIndex.reserveCapacity(self.location.count)
+                for (idx, loc) in self.location.enumerated() {
+                    if locationIndex[loc] == nil {
+                        locationIndex[loc] = idx
+                    }
+                }
+
                 var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
-                
+
                 for each in self.tempRangeSelected {
-                    if let idx = self.location.firstIndex(of: "\(each.item),\(each.section)") {
+                    if let idx = locationIndex["\(each.item),\(each.section)"] {
                         copyBuffer.append((
                             colOffset: each.item - minCol,
                             rowOffset: each.section - minRow,
@@ -2831,16 +2839,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         ))
                     }
                 }
-                
+
                 //start copying
                 for item in copyBuffer {
                     let destCol = destBaseCol + item.colOffset
                     let destRow = destBaseRow + item.rowOffset
                     let destLocStr = "\(destCol),\(destRow)"
-                    
-                    if let existingIdx = self.location.firstIndex(of: destLocStr) {
+
+                    if let existingIdx = locationIndex[destLocStr] {
                         self.content[existingIdx] = item.value
                     } else {
+                        locationIndex[destLocStr] = self.location.count
                         self.location.append(destLocStr)
                         self.content.append(item.value)
                         self.textsize.append(String(self.selectingSize))

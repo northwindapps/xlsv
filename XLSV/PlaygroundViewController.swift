@@ -66,30 +66,29 @@ struct SceneKitGraphView: UIViewRepresentable {
    
                     
                     var zf: Float = 0.0
+                    var isValid = false
                     do {
-                        if let ast = service.parseExpression(currentExpr) {
-                            print("Parsed successfully!")
-                            let result = try service.evaluate(currentExpr)
-                            if result.isFinite {
-                                zf = Float(result)
-                                // ✅ clamp to [-5, 5] i personally like withough clamp but ..
-                                zf = max(-5.0, min(5.0, zf))
-                                vertices.append(SCNVector3(xf, zf, yf))
-                                valid.append(true)
-                            } else {
-                                zf = 0.0 // or skip point
-                                vertices.append(SCNVector3(xf, 0, yf)) // placeholder
-                                valid.append(false)
-                            }
+                        let result = try service.evaluate(currentExpr)
+                        if result.isFinite {
+                            zf = Float(result)
+                            // ✅ clamp to [-5, 5] i personally like withough clamp but ..
+                            zf = max(-5.0, min(5.0, zf))
+                            isValid = true
+                        } else {
+                            zf = 0.0 // or skip point
                         }
                     } catch {
                         print("Error evaluating formula:", error)
                         print("res is nil", "\(x),\(y)")
                         zf = 0.0 // or skip point
-                        vertices.append(SCNVector3(xf, 0, yf)) // placeholder
-                        valid.append(false)
                     }
-                    
+
+                    // Always append exactly one entry per (x,y) so `vertices`/`valid`
+                    // stay perfectly aligned with the i = y * resolution + x indexing
+                    // used below — appending conditionally caused index-out-of-range
+                    // crashes whenever parsing/evaluation failed for a point.
+                    vertices.append(SCNVector3(xf, zf, yf))
+                    valid.append(isValid)
                     results["\(x),\(y)"] = zf
                 }
             }
@@ -104,7 +103,11 @@ struct SceneKitGraphView: UIViewRepresentable {
                     let i1 = i + 1
                     let i2 = i + resolution
                     let i3 = i + resolution + 1
-                    
+
+                    // Defensive bounds guard: if vertices/valid ever end up shorter
+                    // than resolution*resolution again, skip instead of crashing.
+                    guard i3 < valid.count else { continue }
+
                     // ❌ Skip if any corner is invalid
                     if !valid[i0] || !valid[i1] || !valid[i2] || !valid[i3] {
                         continue
@@ -1503,7 +1506,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 }
                 else{
 
-                    mailString.append(" ")
+                    mailString.append("")
 
                 }
                 
@@ -2181,19 +2184,67 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
-        //graphViewAlert()
-        
-        
 
-        
+        graphViewAlert()
+
+
+
+
     }
     
     @objc func graphViewAlert(){
         //new graph creation feature
+        var title = "3D Graph Visualization"
+        var message = "Enter a function expression (e.g., sin(x) * cos(y))"
+        var display = "Display"
+        var cancel = "Cancel"
+        var invalidTitle = "Invalid Input"
+        var invalidMessage = "Expression must contain both x and y."
+        var ok = "OK"
+
+        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+
+        if locationstr.contains("fr")
+        {
+            title = "Visualisation graphique 3D"
+            message = "Entrez une expression de fonction (ex : sin(x) * cos(y))"
+            display = "Afficher"
+            cancel = "Annuler"
+            invalidTitle = "Entrée invalide"
+            invalidMessage = "L'expression doit contenir x et y."
+            ok = "OK"
+        }else if locationstr.contains("de")
+        {
+            title = "3D-Grafikvisualisierung"
+            message = "Geben Sie einen Funktionsausdruck ein (z. B. sin(x) * cos(y))"
+            display = "Anzeigen"
+            cancel = "Abbrechen"
+            invalidTitle = "Ungültige Eingabe"
+            invalidMessage = "Der Ausdruck muss sowohl x als auch y enthalten."
+            ok = "OK"
+        }else if locationstr.contains("da")
+        {
+            title = "3D-grafvisualisering"
+            message = "Indtast et funktionsudtryk (f.eks. sin(x) * cos(y))"
+            display = "Vis"
+            cancel = "Annuller"
+            invalidTitle = "Ugyldigt input"
+            invalidMessage = "Udtrykket skal indeholde både x og y."
+            ok = "OK"
+        }else if locationstr.contains("es")
+        {
+            title = "Visualización de gráfico 3D"
+            message = "Introduce una expresión de función (p. ej., sin(x) * cos(y))"
+            display = "Mostrar"
+            cancel = "Cancelar"
+            invalidTitle = "Entrada no válida"
+            invalidMessage = "La expresión debe contener tanto x como y."
+            ok = "OK"
+        }
+
         let alert = UIAlertController(
-            title: "3D Graph Visualization",
-            message: "Enter a function expression (e.g., sin(x) * cos(y))",
+            title: title,
+            message: message,
             preferredStyle: .alert
         )
 
@@ -2202,18 +2253,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             textField.text = "sin(x) * cos(y)"
         }
 
-        let showAction = UIAlertAction(title: "Display", style: .default) { _ in
+        let showAction = UIAlertAction(title: display, style: .default) { _ in
             if let expression = alert.textFields?.first?.text {
                 if expression.contains("x") && expression.contains("y"){
                     print("User entered: \(expression)")
                     self.setupGraphView(expression: expression)
                 }else{
                     let errorAlert = UIAlertController(
-                            title: "Invalid Input",
-                            message: "Expression must contain both x and y.",
+                            title: invalidTitle,
+                            message: invalidMessage,
                             preferredStyle: .alert
                         )
-                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                        errorAlert.addAction(UIAlertAction(title: ok, style: .default) { _ in
                             self.graphViewAlert()
                         })
                         self.present(errorAlert, animated: true)
@@ -2221,7 +2272,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             }
         }
 
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        let cancelAction = UIAlertAction(title: cancel, style: .cancel, handler: nil)
 
         alert.addAction(showAction)
         alert.addAction(cancelAction)
@@ -2303,7 +2354,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
            
          
-                self.content.append("x/y")
+                self.content.append(expression)
                 self.locationInExcel.append("A1")
                 self.location.append("1,1") // 管理用インデックス
                 self.textsize.append(String(self.selectingSize))
@@ -3322,10 +3373,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 let destBaseCol = self.currentindex.item
                 let destBaseRow = self.currentindex.section
                 
+                var locationIndex: [String: Int] = [:]
+                locationIndex.reserveCapacity(self.location.count)
+                for (idx, loc) in self.location.enumerated() {
+                    if locationIndex[loc] == nil {
+                        locationIndex[loc] = idx
+                    }
+                }
+
                 var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
-                
+
                 for each in self.tempRangeSelected {
-                    if let idx = self.location.firstIndex(of: "\(each.item),\(each.section)") {
+                    if let idx = locationIndex["\(each.item),\(each.section)"] {
                         copyBuffer.append((
                             colOffset: each.item - minCol,
                             rowOffset: each.section - minRow,
@@ -3333,16 +3392,17 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                         ))
                     }
                 }
-                
+
                 //start copying
                 for item in copyBuffer {
                     let destCol = destBaseCol + item.colOffset
                     let destRow = destBaseRow + item.rowOffset
                     let destLocStr = "\(destCol),\(destRow)"
-                    
-                    if let existingIdx = self.location.firstIndex(of: destLocStr) {
+
+                    if let existingIdx = locationIndex[destLocStr] {
                         self.content[existingIdx] = item.value
                     } else {
+                        locationIndex[destLocStr] = self.location.count
                         self.location.append(destLocStr)
                         self.content.append(item.value)
                         self.textsize.append(String(self.selectingSize))
