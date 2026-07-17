@@ -51,7 +51,13 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     }
     
     override func prepare() {
-        
+        let __prepareStart = CFAbsoluteTimeGetCurrent()
+        var __tookFullRebuildPath = false
+        defer {
+            let __elapsed = CFAbsoluteTimeGetCurrent() - __prepareStart
+            print(String(format: "PERF CustomCollectionViewLayout.prepare: %.3fs (fullRebuild=%@, gridCells=%d, merged=%d)", __elapsed, "\(__tookFullRebuildPath)", c*r, merged.count))
+        }
+
         var excel_cell_width_margin = 30
         
         if (UserDefaults.standard.object(forKey: "cellSize") != nil) {
@@ -119,6 +125,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         }
      
         if dataSourceDidUpdate == true{
+        __tookFullRebuildPath = true
 
         //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         c = appd.DEFAULT_COLUMN_NUMBER//30
@@ -216,55 +223,55 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             // Determine current content offsets.
             let xOffset = collectionView!.contentOffset.x
             let yOffset = collectionView!.contentOffset.y
-            
-            if let sectionCount = collectionView?.numberOfSections, sectionCount > 0 {
-                for section in 0...sectionCount-1 {
-                    
-                    // Confirm the section has items.
-                    if let rowCount = collectionView?.numberOfItems(inSection: section), rowCount > 0 {
-                        
-                        // Update all items in the first row.
-                        if section == 0 {
-                            for item in 0...rowCount-1 {
-                                
-                                // Build indexPath to get attributes from dictionary.
-                                let indexPath = IndexPath(item: item, section: section)
-                                
-                                // Update y-position to follow user.
-                                if let attrs = cellAttrsDictionary[indexPath] {
-                                    var frame = attrs.frame
-                                    
-                                    // Also update x-position for corner cell.
-                                    if item == 0 {
-                                        frame.origin.x = xOffset
-                                    }
-                                    
-                                    frame.origin.y = yOffset
-                                    attrs.frame = frame
-                                }
-                                
-                            }
-                            
-                            // For all other sections, we only need to update
-                            // the x-position for the fist item.
-                        } else {
-                            
-                            // Build indexPath to get attributes from dictionary.
-                            let indexPath = IndexPath(item: 0, section: section)
-                            
-                            // Update y-position to follow user.
-                            if let attrs = cellAttrsDictionary[indexPath] {
-                                var frame = attrs.frame
-                                frame.origin.x = xOffset
-                                attrs.frame = frame
-                            }
-                            
-                        } // else
-                    } // num of items in section > 0
-                } // sections for loop
-            } // num of sections > 0
-            
-            
+
+            // Reuse the already-known row/column counts (r, c) instead of querying
+            // collectionView.numberOfSections / numberOfItems(inSection:) once per
+            // row here. Those calls go through the data source, which re-reads
+            // UserDefaults every time (see ViewController.numberOfSections /
+            // numberOfItemsInSection) -- for a sheet with hundreds/thousands of
+            // rows that made this "cheap" fast path cost nearly as much as a full
+            // layout rebuild. r/c are only stale here if dataSourceDidUpdate is
+            // true, which is the other branch of this if.
+            if r > 0 && c > 0 {
+
+                // Update all items in the first row.
+                for item in 0...c-1 {
+
+                    // Build indexPath to get attributes from dictionary.
+                    let indexPath = IndexPath(item: item, section: 0)
+
+                    // Update y-position to follow user.
+                    if let attrs = cellAttrsDictionary[indexPath] {
+                        var frame = attrs.frame
+
+                        // Also update x-position for corner cell.
+                        if item == 0 {
+                            frame.origin.x = xOffset
+                        }
+
+                        frame.origin.y = yOffset
+                        attrs.frame = frame
+                    }
+                }
+
+                // For all other sections, we only need to update
+                // the x-position for the first item.
+                if r > 1 {
+                    for section in 1...r-1 {
+
+                        // Build indexPath to get attributes from dictionary.
+                        let indexPath = IndexPath(item: 0, section: section)
+
+                        // Update y-position to follow user.
+                        if let attrs = cellAttrsDictionary[indexPath] {
+                            var frame = attrs.frame
+                            frame.origin.x = xOffset
+                            attrs.frame = frame
+                        }
+                    }
+                }
+            }
+
             // Do not run attribute generation code
             // unless data source has been updated.
             return
@@ -272,7 +279,19 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         
         // Acknowledge data source change, and disable for next time.
         dataSourceDidUpdate = false
-   
+
+        // Merged-cell lookup, built once per layout pass instead of scanning
+        // appd.diff_start_index for every one of the c*r grid cells below
+        // (that made prepare() O(gridCells * mergedCellCount)).
+        let mergedRangesValid = appd.diff_start_index.count == appd.diff_end_index.count
+        var mergedStartIndex: [String: Int] = [:]
+        if mergedRangesValid {
+            mergedStartIndex.reserveCapacity(appd.diff_start_index.count)
+            for (idx, start) in appd.diff_start_index.enumerated() where mergedStartIndex[start] == nil {
+                mergedStartIndex[start] = idx
+            }
+        }
+
         // Cycle through each section of the data source.
         if c > 0 {
             for section in 0...c-1 {
@@ -320,12 +339,10 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                             //merged cells
                             var EACH_HEIGHT = 0.0
                             var EACH_WIDTH = 0.0
-                            if appd.diff_start_index.contains(getExcelColumnName(columnNumber: section) + String(item)) && appd.diff_start_index.count == appd.diff_end_index.count{
-                                //print(getExcelColumnName(columnNumber: section) + String(item))
-                                
-                                let id = appd.diff_start_index.firstIndex(of: getExcelColumnName(columnNumber: section) + String(item))
-                                let end_column_aphabet_int = alphabetOnlyString(text: appd.diff_end_index[id!])
-                                let end_row_int = Int(numberOnlyString(text: appd.diff_end_index[id!]))
+                            if let id = mergedStartIndex[getExcelColumnName(columnNumber: section) + String(item)] {
+
+                                let end_column_aphabet_int = alphabetOnlyString(text: appd.diff_end_index[id])
+                                let end_row_int = Int(numberOnlyString(text: appd.diff_end_index[id]))
                                 let end_column_int = getExcelColumnNumber(columnName: end_column_aphabet_int)
  
                                 if(section > end_column_int || item > end_row_int!){

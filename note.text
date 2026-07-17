@@ -55,3 +55,148 @@ Same O(n) lookup bug found in copyPasteSelectedCellContent()
   later iterations still see correct indices).
 - Fixed in: ViewController.swift and PlaygroundViewController.swift
   (copyPasteSelectedCellContent).
+
+2026-07-18: Large-sheet import hang (~20s -> ~4.5s) + rendering/layout perf
+=========================================================================
+
+Starting point: importing a real-world .xlsx with 618 merged cells and a
+202,202-cell grid caused an ~11-20s main-thread hang (caught by Xcode's
+hang detector), plus visible lag while editing/scrolling. Fixed across
+several independent layers, each confirmed with before/after timing (see
+"PERF instrumentation" below).
+
+0) Cell rendering cleanup (not perf, readability)
+------------------------------------------------------
+- collectionView(_:cellForItemAt:) had two ~45-line identical switch
+  statements mapping color-name strings ("green", "water", ... ) to
+  UIColor, one for background and one for text color.
+- Collapsed into a static `namedCellColors: [String: UIColor]` dictionary
+  and a `namedCellColor(_:default:)` helper, used by both.
+- Fixed in: ViewController.swift.
+
+1) Blocking UserDefaults.synchronize() calls
+---------------------------------------------
+Problem:
+- saveuserAll() (ReadWriteJSON.swift) wrote ~10 UserDefaults keys, calling
+  the deprecated .synchronize() after every single one -- each call forces
+  a synchronous disk flush on the calling thread (main thread here).
+- Same pattern found in GetRowSize() (ExcelHelper.swift,
+  iCloudViewController.swift, BackupTableViewController.swift), plus a
+  dead content1.synchronize() call in ExcelHelper.swift and
+  iCloudViewController.swift where the .set() call right above it was
+  already commented out (i.e. flushing nothing, for no reason).
+Fix:
+- Removed all of the above .synchronize() calls; UserDefaults.set() already
+  persists on its own -- .synchronize() is deprecated specifically because
+  it's unnecessary and forces this kind of blocking I/O.
+
+2) O(n) linear scans in cell rendering (cellForItemAt)
+--------------------------------------------------------
+Problem:
+- collectionView(_:cellForItemAt:) did location.contains(key) +
+  location.index(of:key) (and the same for f_location and
+  appd.excelStyleLocation) per visible cell, per render pass -- the same
+  O(cells * n) shape as the original csvexport bug above, just triggered
+  by scrolling/reloading instead of export.
+Fix:
+- Added locationIndex(for:)/fLocationIndex(for:)/excelStyleLocationIndex(_:key:)
+  helpers backed by [String: Int] caches, rebuilt only when the backing
+  array's count changes. Added explicit cache invalidation at the ~10 call
+  sites where location/f_location are mutated in place (same count,
+  different value -- e.g. row/column insert/delete) rather than via
+  append/remove, since a count-only staleness check would miss those.
+  storeInput() (the per-cell-edit commit path) got the same fix as a bonus,
+  since it had the identical .contains + .index(of:) double-scan twice.
+Fixed in: ViewController.swift.
+
+3) O(gridCells * mergedCellCount) merged-cell layout lookup
+--------------------------------------------------------------
+Problem:
+- CustomCollectionViewLayout.prepare() looped over the *entire* grid
+  (COLUMNSIZE x ROWSIZE, up to 202,202 cells) and for every cell did
+  appd.diff_start_index.contains(...) + .firstIndex(of:...) to check for a
+  merged-cell range -- O(gridCells * mergedCount). With 618 merged ranges
+  that's up to ~125M comparisons per full layout rebuild.
+Fix:
+- Build a [String: Int] dictionary from diff_start_index once per prepare()
+  pass instead of scanning per cell. Full-grid rebuild dropped to ~0.9-1.0s
+  (now essentially just the cost of allocating 202K
+  UICollectionViewLayoutAttributes objects).
+Fixed in: CustomCollectionViewLayout.swift.
+
+4) Hidden per-row UserDefaults reads in the "cheap" layout fast path
+------------------------------------------------------------------------
+Problem:
+- prepare()'s header-only fast path (runs when nothing structural changed)
+  called collectionView.numberOfSections / numberOfItems(inSection:) once
+  per row (~1000+ times) just to check "> 0". Those delegate methods
+  (ViewController.swift) re-read UserDefaults("NEWRsize"/"NEWCsize") on
+  *every* call, so a path that should cost microseconds was costing ~0.9s.
+Fix:
+- Reuse the layout's own already-known r/c (row/column count) instead of
+  re-querying the data source at all in this path -- safe because this
+  branch only runs when dataSourceDidUpdate is false, i.e. r/c are known
+  current. Deliberately did NOT touch the UserDefaults reads themselves,
+  since 15+ files across the codebase write NEWRsize/NEWCsize and there was
+  no safe way to confirm they'd all invalidate a new cache.
+Fixed in: CustomCollectionViewLayout.swift.
+
+5) Duplicate XML parsing + O(columns * totalCells) cell lookups on import
+------------------------------------------------------------------------------
+Problem (the dominant cost -- readExcel2 alone was ~18.8s of the ~20s hang):
+- ExcelHelper.readExcel2 (and near-identical copies in
+  iCloudViewController.readExcel and BackupTableViewController.readExcel)
+  called file.parseWorksheet(at: path) 3 separate times for the same path.
+  CoreXLSX re-extracts the zip entry and re-runs the XML decoder from
+  scratch on every call (confirmed in Pods/CoreXLSX -- no caching), so this
+  was decoding the same large XML file 3x over.
+- ws.cells(atColumns: [ColumnReference(k)!]) was called 2-3x per column
+  inside a `for column in columnName` loop; CoreXLSX's implementation
+  (Worksheet.cells(atColumns:)) rescans every row/cell in the sheet on
+  every call -- O(columns * totalCells).
+- uniquing(src:) (each file had its own copy) used unique.contains(...) in
+  a loop -- O(n^2) -- to dedupe container.map{ column }, where container
+  has one entry per raw XML cell (not per unique column), so this scaled
+  with total cell count in the file, not the final ~180-column count.
+- columnsInAlphabet.firstIndex(of:) was called once per row across
+  valueLocation/stringLocation (potentially thousands of rows), each an
+  O(columnsize) scan -- O(rows * columns).
+Fix:
+- Parse the worksheet once, reuse the Worksheet for container/mergeCells/ws.
+- Bucket all cells by column once (Dictionary(grouping:)) instead of
+  rescanning the whole sheet per column.
+- uniquing() now uses a Set for O(1) membership checks.
+- columnsInAlphabet lookups now go through a precomputed [String: Int] map.
+Fixed in: ExcelHelper.swift, iCloudViewController.swift,
+BackupTableViewController.swift (readExcel/readExcel2, uniquing, GetRowSize).
+
+Result (measured via temporary PERF timing prints on a real device):
+- readExcel2: 18.857s -> 9.082s (dedup XML parse + cells(atColumns:) fix)
+              -> 3.357s (uniquing + columnsInAlphabet fix)
+- Overall import hang: ~20.26s -> ~10.19s -> ~4.47s
+
+PERF instrumentation (temporary, still in the tree as of this writing):
+- ViewController.swift: loadExcelSheet() has PERF prints bracketing
+  readExcel2 / testReadXMLSandBox / isExcelSheetData / initSheetData /
+  storeValues / initExcelLocation / calculatormode_update_main.
+- CustomCollectionViewLayout.swift: prepare() has a PERF print reporting
+  elapsed time, whether it took the full-rebuild or fast path, grid cell
+  count, and merged cell count.
+- Useful for the next round of profiling; consider removing (or gating
+  behind a debug flag) before shipping.
+
+Not yet done / known remaining work:
+- CustomCollectionViewLayout.prepare()'s full rebuild (~0.9-1.0s) is the
+  inherent cost of eagerly building UICollectionViewLayoutAttributes for
+  the *entire* grid (202,202 cells) instead of just what's near the
+  viewport. Fixing this properly means moving to a lazy/virtualized layout
+  -- a bigger, separate architectural change, not attempted today.
+- calculatormode_update_main() (the formula recalculation engine) still has
+  several O(n^2)/O(n^3)-shaped loops (regex-based substitution over every
+  formula x literal cell pair, linear-scan dependency lookups, an iterative
+  topological sort that re-scans every literal cell per formula per pass).
+  It wasn't the bottleneck on today's test sheet (few formulas), but is
+  worth the same treatment if a formula-heavy sheet turns out to be slow.
+- The same ws.cells(atColumns:)-per-column pattern may exist in other,
+  less-used import/export paths not covered today -- same fix applies if
+  one of those turns out to be slow.

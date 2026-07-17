@@ -301,55 +301,27 @@ class ReadWriteJSON {
     func saveuserAll() {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
-        let location1 = UserDefaults.standard
-        location1.set(location, forKey: "NEWTMLOCATION")
-        location1.synchronize()
-        
-        let content1 = UserDefaults.standard
-        content1.set(content, forKey: "NEWTMCONTENT")
-        content1.synchronize()
-        
-        let appheight = UserDefaults.standard
-        appheight.set(columnsize, forKey: "NEWCsize")
-        appheight.synchronize()
-        
-        let appheight2 = UserDefaults.standard
-        appheight2.set(rowsize, forKey: "NEWRsize")
-        appheight2.synchronize()
-        
-        let content2 = UserDefaults.standard
-        content2.set(bgcolor, forKey: "NEWTMBGCOLOR")
-        content2.synchronize()
-        
-        
-        let content3 = UserDefaults.standard
-        content3.set(fontcolor, forKey: "NEWTMTCOLOR")
-        content3.synchronize()
-        
-        let content4 = UserDefaults.standard
-        content4.set(fontsize, forKey: "NEWTMSIZE")
-        content4.synchronize()
-        
+        let defaults = UserDefaults.standard
+        defaults.set(location, forKey: "NEWTMLOCATION")
+        defaults.set(content, forKey: "NEWTMCONTENT")
+        defaults.set(columnsize, forKey: "NEWCsize")
+        defaults.set(rowsize, forKey: "NEWRsize")
+        defaults.set(bgcolor, forKey: "NEWTMBGCOLOR")
+        defaults.set(fontcolor, forKey: "NEWTMTCOLOR")
+        defaults.set(fontsize, forKey: "NEWTMSIZE")
+
         appd.customSizedWidth = customcellWidth
-        let r2 = UserDefaults.standard
-        r2.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
-        r2.synchronize()
-        
+        defaults.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
+
         appd.cswLocation = ccwLocation
-        let r3 = UserDefaults.standard
-        r3.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
-        r3.synchronize()
-        
+        defaults.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
+
         appd.customSizedHeight = customcellHeight
-        let r4 = UserDefaults.standard
-        r4.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
-        r4.synchronize()
-        
+        defaults.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
+
         appd.cshLocation = cchLocation
-        let r5 = UserDefaults.standard
-        r5.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
-        r5.synchronize()
-        
+        defaults.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
+
         print("saved on userdefault")
     }
     

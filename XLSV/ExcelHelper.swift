@@ -240,12 +240,26 @@ class ExcelHelper{
                valueLocation = []
                valueContent = []
                
-               let container = try file!.parseWorksheet(at: path).data?.rows.flatMap { $0.cells } ?? []
+               // parseWorksheet(at:) re-extracts the zip entry and re-runs the XML decoder
+               // from scratch on every call (no caching inside CoreXLSX) -- it was being
+               // called 3 separate times below for the same path. For a large sheet, decoding
+               // that XML three times instead of once was a big chunk of the remaining import
+               // cost. Parse it once and reuse the result.
+               let ws = try file!.parseWorksheet(at: path)
+
+               let container = ws.data?.rows.flatMap { $0.cells } ?? []
                columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
-               
-               
+
+               // Cells bucketed by column, built once from the already-flattened `container`.
+               // ws.cells(atColumns:) rescans every row/cell in the sheet on every call, and
+               // it was being called twice per column below -- O(columns * totalCells). For a
+               // sheet with ~180 columns and thousands of cells that's millions of scans and
+               // was the dominant cost of importing a file (~19s on a real sheet).
+               let cellsByColumn = Dictionary(grouping: container) { $0.reference.column.value }
+
+
                //mergedcells initialization
-               let mergedCells = try file?.parseWorksheet(at: path).mergeCells
+               let mergedCells = ws.mergeCells
                if mergedCells?.items.first != nil {
                    let mergedCellFirstReferences = mergedCells!.items.map { $0.reference }
                    var tmpDictionary = [String: String]()
@@ -258,18 +272,18 @@ class ExcelHelper{
                        appd.diff_end_index.append(end_index)
                    }
                }
-               
+
                let sharedStrings = try file!.parseSharedStrings()
-               let ws = try file!.parseWorksheet(at: path)
                appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
                appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
-               
+
                //Getting strings
                for i in 0..<columnName.count {
                    //you need to update sharedstring count and use count or it throws out of index error
                    let k = String(columnName[i])
                    if k.count != 0 {
-                       let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                       let columnCells = cellsByColumn[k] ?? []
+                       let columnCStrings = columnCells
                        // in format internals "s" stands for "shared"
                            .filter { $0.type?.rawValue ?? nil == "s" }
                            .filter { $0.value != nil }
@@ -302,7 +316,7 @@ class ExcelHelper{
                        }
                        
                        //get style
-                       let allCells = ws.cells(atColumns: [ColumnReference(k)!])
+                       let allCells = columnCells
                        for l in 0..<allCells.count {
                            //get styleindex
                            let styleIdx = allCells[l].styleIndex ?? -1
@@ -337,9 +351,9 @@ class ExcelHelper{
                for i in 0..<columnName.count {
                    let k = String(columnName[i])
                    if k.count != 0 {
-                       let columnCStrings = ws.cells(atColumns: [ColumnReference(k)!])
+                       let columnCStrings = (cellsByColumn[k] ?? [])
                            .filter { $0.type?.rawValue ?? nil != "s"  }
-                           .filter { $0.value != nil || $0.formula != nil } 
+                           .filter { $0.value != nil || $0.formula != nil }
                        
                        var formulaCheck = [String]()
                        for i in 0..<columnCStrings.count {
@@ -368,10 +382,6 @@ class ExcelHelper{
                }
                
                
-               let content1 = UserDefaults.standard
-               //content1.set(valueContent + stringContent, forKey: "NEWTMCONTENT")
-               content1.synchronize()
-               
                //heavy
                //print("content",valueContent+stringContent)
                
@@ -387,22 +397,30 @@ class ExcelHelper{
                for index in 0..<columnsize {
                    columnsInAlphabet.append(GetExcelColumnName(columnNumber: index))
                }
-               
+
+               // columnsInAlphabet.firstIndex(of:) was an O(columnsize) scan called once per
+               // row below (valueLocation.count + stringLocation.count times) -- O(rows *
+               // columnsize). Build an index once and look up in O(1) instead.
+               var columnIndexInAlphabet = [String: Int]()
+               columnIndexInAlphabet.reserveCapacity(columnsInAlphabet.count)
+               for (idx, name) in columnsInAlphabet.enumerated() {
+                   columnIndexInAlphabet[name] = idx
+               }
 
                for i in 0..<valueLocation.count {
                    let columnL_value = valueLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
-               
-                   let columnL = columnsInAlphabet.firstIndex(of: columnL_value)!
+
+                   let columnL = columnIndexInAlphabet[columnL_value]!
                    let rowL = valueLocation[i].filter("0123456789.".contains)
                    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
                    //colum index 0 is empty. empty, A,B,C ...
                    finalL_value.append(String(columnL) + "," + rowL)
                }
-               
+
                for i in 0..<stringLocation.count {
                    let columnL_value = stringLocation[i].components(separatedBy: CharacterSet.decimalDigits).joined()
-                   
-                   let columnL = columnsInAlphabet.firstIndex(of: columnL_value)!
+
+                   let columnL = columnIndexInAlphabet[columnL_value]!
                    let rowL = stringLocation[i].filter("0123456789.".contains)
                    //https://stackoverflow.com/questions/36594179/remove-all-non-numeric-characters-from-a-string-in-swift
                    //colum index 0 is empty. empty, A,B,C ...
@@ -482,13 +500,12 @@ class ExcelHelper{
     //Making the array with unique values
     func uniquing(src:[String]) -> [String]{
        var unique = [String]()
-       
-       for i in 0 ..< src.count {
-           if unique.contains(src[i])
-           {
-               
-           }else{
-               unique.append(src[i])
+       unique.reserveCapacity(src.count)
+       var seen = Set<String>()
+
+       for item in src {
+           if seen.insert(item).inserted {
+               unique.append(item)
            }
        }
        return unique
@@ -583,13 +600,10 @@ class ExcelHelper{
             maxrow = 0
         }
         
-        let rowsize = UserDefaults.standard
-        rowsize.set(maxrow!+10, forKey: "NEWRsize")
-        rowsize.synchronize()
-   
-        
+        UserDefaults.standard.set(maxrow!+10, forKey: "NEWRsize")
+
         return maxrow!+10
-        
+
     }
 
 

@@ -230,6 +230,82 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
+    //render part
+    static let namedCellColors: [String: UIColor] = [
+        "green": UIColor(red: 0/255, green: 102/255, blue: 0/255, alpha: 1),
+        "water": UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha: 1),
+        "yellow": UIColor(red: 255/255, green: 255/255, blue: 0/255, alpha: 1),
+        "orange": UIColor(red: 255/255, green: 102/255, blue: 0/255, alpha: 1),
+        "lightGray": UIColor.lightGray,
+        "magenta": UIColor(red: 255/255, green: 0/255, blue: 255/255, alpha: 1),
+        "blue": UIColor(red: 51/255, green: 153/255, blue: 255/255, alpha: 1),
+        "red": UIColor(red: 255/255, green: 0/255, blue: 0/255, alpha: 1),
+        "brown": UIColor(red: 102/255, green: 61/255, blue: 0/255, alpha: 1),
+        "purple": UIColor(red: 40/255, green: 0/255, blue: 100/255, alpha: 1),
+        "gray": UIColor.gray,
+        "white": UIColor.white
+    ]
+
+    func namedCellColor(_ name: String, default defaultColor: UIColor) -> UIColor {
+        return ViewController.namedCellColors[name] ?? defaultColor
+    }
+
+    // location/f_location/excelStyleLocation are scanned per-cell during rendering (up to
+    // hundreds of visible cells per reload). Linear .contains/.index(of:) scans over these
+    // arrays made rendering O(visibleCells * n). These caches make repeat lookups O(1);
+    // call invalidateLocationIndexCache()/invalidateFLocationIndexCache() after any in-place
+    // write to location[i]/f_location[i] (appends/removeAll are already detected via count).
+    private var locationIndexCache: [String: Int] = [:]
+    private var locationIndexCacheCount = -1
+    private var fLocationIndexCache: [String: Int] = [:]
+    private var fLocationIndexCacheCount = -1
+    private var excelStyleLocationIndexCache: [String: Int] = [:]
+    private var excelStyleLocationIndexCacheCount = -1
+
+    private func invalidateLocationIndexCache() {
+        locationIndexCacheCount = -1
+    }
+
+    private func invalidateFLocationIndexCache() {
+        fLocationIndexCacheCount = -1
+    }
+
+    private func locationIndex(for key: String) -> Int? {
+        if locationIndexCacheCount != location.count {
+            locationIndexCache.removeAll(keepingCapacity: true)
+            locationIndexCache.reserveCapacity(location.count)
+            for (idx, loc) in location.enumerated() where locationIndexCache[loc] == nil {
+                locationIndexCache[loc] = idx
+            }
+            locationIndexCacheCount = location.count
+        }
+        return locationIndexCache[key]
+    }
+
+    private func fLocationIndex(for key: String) -> Int? {
+        if fLocationIndexCacheCount != f_location.count {
+            fLocationIndexCache.removeAll(keepingCapacity: true)
+            fLocationIndexCache.reserveCapacity(f_location.count)
+            for (idx, loc) in f_location.enumerated() where fLocationIndexCache[loc] == nil {
+                fLocationIndexCache[loc] = idx
+            }
+            fLocationIndexCacheCount = f_location.count
+        }
+        return fLocationIndexCache[key]
+    }
+
+    private func excelStyleLocationIndex(_ locations: [String], key: String) -> Int? {
+        if excelStyleLocationIndexCacheCount != locations.count {
+            excelStyleLocationIndexCache.removeAll(keepingCapacity: true)
+            excelStyleLocationIndexCache.reserveCapacity(locations.count)
+            for (idx, loc) in locations.enumerated() where excelStyleLocationIndexCache[loc] == nil {
+                excelStyleLocationIndexCache[loc] = idx
+            }
+            excelStyleLocationIndexCacheCount = locations.count
+        }
+        return excelStyleLocationIndexCache[key]
+    }
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //something went wrong maybe fix it in future..maybe
@@ -253,34 +329,31 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             cell.label2?.numberOfLines = 0
             
             removePanGestureRecognizerFromCell(cell)
-            
+
+            let key = String(indexPath.item)+","+String(indexPath.section)
+
             //content
-            if location.contains(String(indexPath.item)+","+String(indexPath.section)){
-                
-                let i = location.index(of: String(indexPath.item)+","+String(indexPath.section))
-                
-                //cell.label2?.text = content[i!].replacingOccurrences(of: "\"\"", with: "\n")
-                let notFunc = content[i!]//.replacingOccurrences(of: "\"\"", with: "\n").replacingOccurrences(of: "\n", with: "\n")
-                if f_location.contains(String(indexPath.item)+","+String(indexPath.section)){
-                    let idx = f_location.index(of: String(indexPath.item)+","+String(indexPath.section))
-                    if f_calculated.count-1 < idx!{
+            if let i = locationIndex(for: key) {
+
+                let notFunc = content[i]
+                if let idx = fLocationIndex(for: key) {
+                    if f_calculated.count-1 < idx{
                         cell.label2?.text = "error"
                     }else{
-                        cell.label2?.text = f_calculated[idx!]
+                        cell.label2?.text = f_calculated[idx]
                     }
-                    let fl: CGFloat = CGFloat((textsize[i!] as NSString).doubleValue)
+                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
                     cell.label2?.font = UIFont.italicSystemFont(ofSize: fl)
-                    //                tcolor[i!] = "gray"
                     cell.label2?.textAlignment = .right
-                    
+
                 }else if Double(notFunc) != nil {
                     cell.label2?.text = notFunc
-                    let fl: CGFloat = CGFloat((textsize[i!] as NSString).doubleValue)
+                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
                     cell.label2?.font = UIFont.systemFont(ofSize: fl)
                     cell.label2?.textAlignment = .right
                 }else{
                     cell.label2?.text = notFunc
-                    let fl: CGFloat = CGFloat((textsize[i!] as NSString).doubleValue)
+                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
                     cell.label2?.font = UIFont.systemFont(ofSize: fl)
                     cell.label2?.textAlignment = .left
                 }
@@ -311,11 +384,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             //Border
-            if cursor == (String(indexPath.item)+","+String(indexPath.section)) {
+            if cursor == key {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 3.0
-            }else if(changeaffected.contains(String(indexPath.item)+","+String(indexPath.section))){
-                    
+            }else if(changeaffected.contains(key)){
+
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 3.0
             }
@@ -323,101 +396,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.layer.borderColor = UIColor.orange.cgColor
                 cell.label2?.layer.borderWidth = 0.5
             }
-            
-            
+
+
             //BG
-            if location.contains(String(indexPath.item)+","+String(indexPath.section)){
-                let i = location.index(of: String(indexPath.item)+","+String(indexPath.section))
-                
-                if bgcolor[i!].count > 0 {
-                    
-                    switch bgcolor[i!] {
-                    case "green":
-                        cell.label2?.backgroundColor  = UIColor(red: 0/255, green: 102/255, blue: 0/255, alpha: 1)
-                        
-                    case "water":
-                        cell.label2?.backgroundColor  = UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha: 1)
-                        
-                    case "yellow":
-                        cell.label2?.backgroundColor = UIColor(red: 255/255, green: 255/255, blue: 0/255, alpha: 1)
-                        
-                    case "orange":
-                        cell.label2?.backgroundColor = UIColor(red: 255/255, green: 102/255, blue: 0/255, alpha: 1)
-                        
-                    case "lightGray":
-                        cell.label2?.backgroundColor  = UIColor.lightGray
-                        
-                    case "magenta":
-                        cell.label2?.backgroundColor = UIColor(red: 255/255, green: 0/255, blue: 255/255, alpha: 1)
-                        
-                    case "blue":
-                        cell.label2?.backgroundColor  = UIColor(red: 51/255, green: 153/255, blue: 255/255, alpha: 1)
-                        
-                    case "red":
-                        cell.label2?.backgroundColor  = UIColor(red: 255/255, green: 0/255, blue: 0/255, alpha: 1)
-                        
-                    case "brown":
-                        cell.label2?.backgroundColor  = UIColor(red: 102/255, green: 61/255, blue: 0/255, alpha: 1)
-                        
-                    case "purple":
-                        cell.label2?.backgroundColor  = UIColor(red: 40/255, green: 0/255, blue: 100/255, alpha: 1)
-                        
-                    case "gray":
-                        cell.label2?.backgroundColor = UIColor.gray
-                        
-                    case "white":
-                        cell.label2?.backgroundColor  = UIColor.white
-                        
-                    default:
-                        cell.label2?.backgroundColor  = UIColor.white
-                        
-                    }
+            if let i = locationIndex(for: key) {
+
+                if bgcolor[i].count > 0 {
+                    cell.label2?.backgroundColor = namedCellColor(bgcolor[i], default: UIColor.white)
                 }
-                
-                if tcolor[i!].count > 0{
-                    
-                    //textcolor
-                    switch tcolor[i!] {
-                    case "green":
-                        cell.label2?.textColor  = UIColor(red: 0/255, green: 102/255, blue: 0/255, alpha: 1)
-                        
-                    case "water":
-                        cell.label2?.textColor  = UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha: 1)
-                        
-                    case "yellow":
-                        cell.label2?.textColor = UIColor(red: 255/255, green: 255/255, blue: 0/255, alpha: 1)
-                        
-                    case "orange":
-                        cell.label2?.textColor = UIColor(red: 255/255, green: 102/255, blue: 0/255, alpha: 1)
-                        
-                    case "lightGray":
-                        cell.label2?.textColor   = UIColor.lightGray
-                        
-                    case "magenta":
-                        cell.label2?.textColor = UIColor(red: 255/255, green: 0/255, blue: 255/255, alpha: 1)
-                        
-                    case "blue":
-                        cell.label2?.textColor  = UIColor(red: 51/255, green: 153/255, blue: 255/255, alpha: 1)
-                        
-                    case "red":
-                        cell.label2?.textColor   = UIColor(red: 255/255, green: 0/255, blue: 0/255, alpha: 1)
-                        
-                    case "brown":
-                        cell.label2?.textColor  = UIColor(red: 102/255, green: 61/255, blue: 0/255, alpha: 1)
-                        
-                    case "purple":
-                        cell.label2?.textColor  = UIColor(red: 40/255, green: 0/255, blue: 100/255, alpha: 1)
-                        
-                    case "gray":
-                        cell.label2?.textColor = UIColor.gray
-                        
-                    case "white":
-                        cell.label2?.textColor  = UIColor.white
-                    default:
-                        cell.label2?.textColor  = UIColor.black
-                        
-                    }
-                    
+
+                if tcolor[i].count > 0{
+                    cell.label2?.textColor = namedCellColor(tcolor[i], default: UIColor.black)
                 }
                 
             }else{
@@ -460,7 +449,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //print("width size",cell.frame.width)
             let predifinedIds = [31]
             let ipstr = String(indexPath.section) + "," + String(indexPath.row)
-            let styleId = appd.excelStyleLocation.firstIndex(of: ipstr)
+            let styleId = excelStyleLocationIndex(appd.excelStyleLocation, key: ipstr)
             if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1) && appd.cellXfs.count != 0 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0 && appd.excelStyleIdx.count != 0){
                 var c = 0
                 if appd.cellXfs.count <= appd.excelStyleIdx[styleId!] || appd.numFmtIds.count <= appd.excelStyleIdx[styleId!] {
@@ -1029,37 +1018,54 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if appd.imported_xlsx_file_path != "" {
                 print("yourExcelfile",appd.imported_xlsx_file_path)
                 let ehp = ExcelHelper()
+                let __readExcel2Start = CFAbsoluteTimeGetCurrent()
                 ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: idx)
+                print(String(format: "PERF loadExcelSheet.readExcel2: %.3fs", CFAbsoluteTimeGetCurrent() - __readExcel2Start))
                 // Do any additional setup after loading the view.
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                let __testReadXMLStart = CFAbsoluteTimeGetCurrent()
                 let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-                
+                print(String(format: "PERF loadExcelSheet.testReadXMLSandBox: %.3fs", CFAbsoluteTimeGetCurrent() - __testReadXMLStart))
+
                 self.isExcel = true
             }
-            
+
             //checkSheet
+            let __isExcelSheetDataStart = CFAbsoluteTimeGetCurrent()
             isExcelSheetData(sheetIdx: idx)
+            print(String(format: "PERF loadExcelSheet.isExcelSheetData: %.3fs", CFAbsoluteTimeGetCurrent() - __isExcelSheetDataStart))
+
+            let __initSheetDataStart = CFAbsoluteTimeGetCurrent()
             initSheetData()
+            print(String(format: "PERF loadExcelSheet.initSheetData: %.3fs", CFAbsoluteTimeGetCurrent() - __initSheetDataStart))
+
+            let __storeValuesStart = CFAbsoluteTimeGetCurrent()
             fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+            print(String(format: "PERF loadExcelSheet.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
+
+            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
             initExcelLocation()
-            
-            
+            print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+
+
             localFileNames = appd.sheetNames //sheet1,sheet2
             FileCollectionView.reloadData()
-            
-            
-            
-            
-            
+
+
+
+
+
             for idx in 0..<COLUMNSIZE {
                 let letters = getExcelColumnName(columnNumber: idx)
                 columnNames.append(letters)
             }
-            
+
             //Finally calculate
+            let __calcMainStart = CFAbsoluteTimeGetCurrent()
             calculatormode_update_main()
+            print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
             completion?()
             
         }catch {
@@ -1978,7 +1984,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         //Finally calculate
         calculatormode_update_main()
-        
+
         DispatchQueue.main.async() {
             appd.collectionViewCellSizeChanged = 1
             self.myCollectionView.collectionViewLayout.invalidateLayout()
@@ -2345,9 +2351,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 if row >= minRow {
                     let newRow = row + numberOfRowsToInsert
-                    
+
                     location[i] = "\(col),\(newRow)"
-                    
+                    invalidateLocationIndexCache()
+
                     //"A7" -> "A8"
                     let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: col)
                     locationInExcel[i] = "\(excelCol)\(newRow)"
@@ -2438,6 +2445,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 if rowsToDelete.contains(row) {
                     location[i] = ""
+                    invalidateLocationIndexCache()
                     locationInExcel[i] = ""
                     content[i] = ""
                     tcolor[i] = ""
@@ -2447,7 +2455,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     //shift + 1
                     let newRow = row - numberOfRowsToDelete
                     location[i] = "\(col),\(newRow)"
-                    
+                    invalidateLocationIndexCache()
+
                     //"A10" -> "A9")
                     let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: col)
                     locationInExcel[i] = "\(excelCol)\(newRow)"
@@ -2538,6 +2547,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 if col >= minCol {
                     let newCol = col + numberOfColsToInsert
                     location[i] = "\(newCol),\(row)"
+                    invalidateLocationIndexCache()
                     let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: newCol)
                     locationInExcel[i] = "\(excelCol)\(row)"
                 }
@@ -2625,6 +2635,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 if columnsToDelete.contains(col) {
                     location[i] = ""
+                    invalidateLocationIndexCache()
                     locationInExcel[i] = ""
                     content[i] = ""
                     tcolor[i] = ""
@@ -2633,6 +2644,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 } else if col > minCol {
                     let newCol = col - numberOfColsToDelete
                     location[i] = "\(newCol),\(row)"
+                    invalidateLocationIndexCache()
                     let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: newCol)
                     locationInExcel[i] = "\(excelCol)\(row)"//AB1,G12
                 }
@@ -2728,19 +2740,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
                 if location.count > locIndex!{
                     location[locIndex!] = ""
+                    invalidateLocationIndexCache()
                     locationInExcel[locIndex!] = ""
                     content[locIndex!] = ""
                     tcolor[locIndex!] = ""
                     textsize[locIndex!] = ""
                     bgcolor[locIndex!] = ""
-                    
+
                 }
-                
+
                 let k = f_location.firstIndex(of: String(column)+","+String(row))
                 if k != nil && f_calculated.count > k!{
                     f_calculated[k!] = ""
                     f_location_alphabet[k!] = ""
                     f_location[k!] = ""
+                    invalidateFLocationIndexCache()
                 }
             }
             
@@ -2989,7 +3003,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.reloadData()
         backRS2()
     }
-    
+
     @objc func fillFunctionInSelectedCellContent(direction: Int) {
         guard let firstIndexPath = tempRangeSelected.sorted(by: { $0.section == $1.section ? $0.item < $1.item : $0.section < $1.section }).first,
               let firstIdx = location.firstIndex(of: "\(firstIndexPath.item),\(firstIndexPath.section)") else { return }
@@ -5947,13 +5961,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func storeInput(IPd:String, elementd:String)
     {
         if elementd.replacingOccurrences(of: " ", with: "").count > 0{
-            if location.contains(IPd){
-                let i = location.index(of: IPd)
-                
-                content[i!] = elementd
-                location[i!] = IPd
-                
-                
+            if let i = locationIndex(for: IPd) {
+
+                content[i] = elementd
+                location[i] = IPd
+
+
             }else{
                 content.append(elementd)
                 location.append(IPd)
@@ -5976,18 +5989,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 
             }
         }else{
-            if location.contains(IPd){
-                if let i = location.index(of: IPd){
-                    content.remove(at: i)
-                    location.remove(at: i)
-                    textsize.remove(at: i)
-                    bgcolor.remove(at: i)
-                    tcolor.remove(at: i)
-                }
-                
+            if let i = locationIndex(for: IPd) {
+                content.remove(at: i)
+                location.remove(at: i)
+                textsize.remove(at: i)
+                bgcolor.remove(at: i)
+                tcolor.remove(at: i)
             }
         }
-        
+
         //updating locationInExcel
         initExcelLocation()
     }
@@ -6552,10 +6562,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let tempStr = InputArray[i]
             
             if tempStr.count == 0{
-                
+
                 location[i] = "null"
+                invalidateLocationIndexCache()
                 content[i] = "null"
-                
+
             }
             
             
@@ -7274,7 +7285,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             calcPrep()
             calculatormode_update_main()
-            
+
             DispatchQueue.main.async() {
                 appd.collectionViewCellSizeChanged = 1
                 self.myCollectionView.collectionViewLayout.invalidateLayout()
