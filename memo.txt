@@ -1,0 +1,64 @@
+Border color bug (the "gold/brown border mystery") - root cause and why it was missed
+======================================================================================
+
+Symptom: cell borders in the main sheet view rendered as a muddy gold/brown
+color instead of clean black/gray, and Playground mode showed unwanted gray
+shading/borders on some rows even after content, merged cells, and custom
+row/column sizes were all cleared.
+
+Root cause
+----------
+ViewController.swift's cellForItemAt renders xlsx borders correctly via
+setEdgeBorders(...)/edgeSpec(...), which draws per-edge CALayer sublayers
+(leftBorderLayer, rightBorderLayer, etc.) and sets the cell's base
+layer.borderWidth to 0 whenever any real xlsx border is present
+(hasExcelBorder / defaultGridBorderWidth in CustomCollectionViewCell.swift).
+
+Further down in the SAME cellForItemAt function, an older, cruder block was
+still running after that:
+
+    if borderId < appd.border_lefts.count && appd.border_lefts[borderId] > 0{
+        cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .left)
+        c+=1
+    }
+    ... (same for .right, .top, .bottom) ...
+    if c == 0{
+        cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
+    }
+
+cell.setBorder(...) sets the cell's base layer.borderWidth/borderColor
+directly -- the exact same property setEdgeBorders had just zeroed. So this
+legacy block unconditionally repainted a 0.5-0.8pt light gray border on top
+of (or around) the correct per-edge accent border on every single cell. The
+"gold" appearance was two borders (correct black/colored accent layer +
+leftover light gray base layer) blending together, not a theme-color
+resolution bug.
+
+The exact same leftover block existed, duplicated, in
+PlaygroundViewController.swift's own older/separate copy of cellForItemAt --
+which is why Playground mode (meant to be a blank, style-free canvas) kept
+showing gray borders/shading even after every other leak (content, merged
+cells, custom sizes) had been fixed.
+
+Fix: removed the borderId-driven block and the width:0.5 lightGray fallback
+from both files. Border rendering is now solely setEdgeBorders' job. Kept
+the numId/date-format logic that shared the same styleId lookup block in
+ViewController.swift (that part is real, active functionality, not dead
+code).
+
+Why it was missed for so long
+------------------------------
+When setEdgeBorders/edgeSpec was added earlier in the session to fix border
+rendering, the old block it superseded was never deleted -- only the new
+code was added alongside it. Later, when the border color still looked off,
+the investigation found and fixed two other real contributors (an old
+orange 0.5pt "not selected" indicator border, and <color auto="1"/>
+defaulting to black instead of gray) and stopped once the symptom looked
+better, rather than grepping the whole function for every remaining writer
+of cell.layer.borderWidth/borderColor to confirm only one code path was
+setting it.
+
+Lesson: when a new implementation supersedes an old one touching the same
+state, remove the old path in the same change. Don't call a visual bug
+fixed just because it looks better -- confirm there's exactly one writer
+left.

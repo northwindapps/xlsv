@@ -537,6 +537,15 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
             cell.label2?.numberOfLines = 0
+            // Reset here so a reused cell that was previously a row/column header
+            // (which turns this on below) doesn't carry auto-shrinking into a
+            // regular content cell.
+            cell.label2?.adjustsFontSizeToFitWidth = false
+            cell.layer.borderWidth = 0.0
+            cell.backgroundColor = UIColor.white
+            cell.layer.borderColor = UIColor.white.cgColor
+            cell.label2?.layer.borderColor = UIColor.white.cgColor
+            cell.label2?.layer.borderWidth = 0.0
             
             removePanGestureRecognizerFromCell(cell)
             
@@ -593,6 +602,11 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             
             //Border
+            cell.layer.borderWidth = 0.3
+            cell.layer.borderColor = UIColor.lightGray.cgColor
+            cell.label2?.layer.borderWidth = 0.0
+            cell.label2?.layer.borderColor = nil
+            
             if cursor == (String(indexPath.item)+","+String(indexPath.section)) {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 3.0
@@ -602,12 +616,16 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 cell.label2?.layer.borderWidth = 3.0
             }
             else{
-                cell.label2?.layer.borderColor = UIColor.orange.cgColor
-                cell.label2?.layer.borderWidth = 0.5
+                // Matches the same fix in ViewController.swift: this 0.5pt orange
+                // "not selected" indicator, drawn on every non-cursor cell,
+                // blended with the cell's own gray grid border into a muddy
+                // gold/yellow line rather than reading as two separate lines.
+                cell.label2?.layer.borderWidth = 0
             }
             
             
             //BG
+            cell.label2?.backgroundColor  = UIColor.white
             if location.contains(String(indexPath.item)+","+String(indexPath.section)){
                 let i = location.index(of: String(indexPath.item)+","+String(indexPath.section))
                 
@@ -719,20 +737,34 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
+                    // The row-number/column-letter columns share INDEX_WIDTH/
+                    // INDEX_HEIGHT, which can shrink well below what a fixed
+                    // font size needs for 2-3 digit row numbers -- shrink the
+                    // text to fit instead of clipping it (matches ViewController.swift).
+                    cell.label2?.adjustsFontSizeToFitWidth = true
+                    cell.label2?.minimumScaleFactor = 0.4
+                    cell.label2?.numberOfLines = 1
                 }else if indexPath.section == 0{
-                    
-                    
-                    
+
+
+
                     if indexPath.item > 0{//0,0 == greyzone
                         cell.label2?.text = getExcelColumnName(columnNumber: indexPath.item)//ABCDE...
                         columninNumber.append(getExcelColumnName(columnNumber: indexPath.item))
                     }
-                    
+
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
+                    cell.label2?.adjustsFontSizeToFitWidth = true
+                    cell.label2?.minimumScaleFactor = 0.4
+                    cell.label2?.numberOfLines = 1
+                }else{
+                    //normal cells
+                    cell.label2?.backgroundColor = UIColor.white
+                    cell.label2?.textColor = UIColor.black
                 }
             }
             
@@ -895,31 +927,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                     }
                     
                 }
-                if borderId < appd.border_lefts.count && appd.border_lefts[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .left)
-                    c+=1
-                }
-                
-                if borderId < appd.border_rights.count && appd.border_rights[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .right)
-                    c+=1
-                }
-                
-                if borderId < appd.border_tops.count && appd.border_tops[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .top)
-                    c+=1
-                }
-                
-                if borderId < appd.border_bottoms.count && appd.border_bottoms[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
-                    c+=1
-                }
-                
-                if c == 0{
-                    cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
-                }
-            }else{
-                cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
+                // Playground mode is a blank, xlsx-style-free canvas -- this whole
+                // borderId-driven block (and the width:0.5 lightGray fallback below)
+                // used to draw a grid border on every cell by default. Removed: no
+                // border should ever be drawn here except the cursor/selection one
+                // set further up in this method.
+                _ = borderId
             }
             
             return cell
@@ -945,6 +958,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
             cell.FileLabel.backgroundColor = UIColor.white
             cell.FileLabel.textColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1)
+            
             return cell
         }
     }
@@ -1212,12 +1226,21 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 print("yourExcelfile",appd.imported_xlsx_file_path)
                 let ehp = ExcelHelper()
                 ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: idx)
+                // Playground mode is meant to be a plain, xlsx-style-free canvas,
+                // but CustomCollectionViewLayout (shared with the main
+                // ViewController) renders merged cells purely from
+                // appd.diff_start_index/diff_end_index, which readExcel2 just
+                // repopulated from the real file with no notion of which view
+                // controller is asking -- clear them so playground mode never
+                // shows merged cells.
+                appd.diff_start_index.removeAll()
+                appd.diff_end_index.removeAll()
                 // Do any additional setup after loading the view.
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
                 let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-                
+
                 self.isExcel = true
             }
             
@@ -2116,10 +2139,61 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         //checkSheet
         let initialIdx = "-1" //appd.sheetNameIds.first ?? "-1"
         isExcelSheetData(sheetIdx: Int(initialIdx)!)
+
+        // Playground mode is meant to be a blank canvas, not a copy of whatever
+        // was last on screen -- isExcelSheetData(-1) reads "csv_sheet1", which
+        // the main ViewController keeps in sync with its live editing session
+        // (saveAsLocalJson gets called after nearly every edit there), so
+        // without this, playground mode opened with that content already filled
+        // in. Clear before initSheetData/storeValues/initExcelLocation run, so
+        // every downstream lookup they build is derived from the empty arrays
+        // rather than the just-loaded real content.
+        content.removeAll()
+        location.removeAll()
+
         initSheetData()
         fontcolorClass2.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
         initExcelLocation()
-        
+
+        // Playground mode is meant to be a plain, xlsx-style-free canvas, but
+        // CustomCollectionViewLayout (shared with the main ViewController)
+        // renders merged cells purely from appd.diff_start_index/diff_end_index
+        // -- this viewDidLoad never re-parses the file, so those arrays just
+        // carry over unchanged from whatever the main ViewController last set.
+        // Clear them so playground mode never shows merged cells.
+        appd.diff_start_index.removeAll()
+        appd.diff_end_index.removeAll()
+
+        // isExcelSheetData(-1) just set these from "csv_sheet1"'s stored custom
+        // row/column size overrides -- same leftover-state problem as the merge
+        // ranges above, just for sizing instead of merging. Without this, some
+        // rows/columns rendered at whatever size they last had in the main
+        // ViewController instead of the uniform default.
+        appd.customSizedWidth.removeAll()
+        appd.customSizedHeight.removeAll()
+        appd.cswLocation.removeAll()
+        appd.cshLocation.removeAll()
+        appd.customSizedWidth_temp.removeAll()
+        appd.customSizedHeight_temp.removeAll()
+        appd.cswLocation_temp.removeAll()
+        appd.cshLocation_temp.removeAll()
+
+        // The gray shading the user was still seeing was xlsx style data, not
+        // a border: cellForItemAt (further down in this file) looks up
+        // appd.excelStyleLocation for every cell and, on a match, applies
+        // appd.border_lefts/rights/tops/bottoms via cell.setBorder(...). None
+        // of that state is ever populated by Playground mode itself -- it's
+        // whatever the main ViewController last parsed from the real xlsx
+        // file. Clearing excelStyleLocation makes that lookup miss for every
+        // cell (styleId == nil), so the whole legacy style/border block is
+        // skipped entirely.
+        appd.excelStyleLocation.removeAll()
+        appd.excelStyleLocationAlphabet.removeAll()
+        appd.excelStyleIdx.removeAll()
+
+        appd.collectionViewCellSizeChanged = 1
+
+
         
         
        

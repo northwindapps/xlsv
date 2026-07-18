@@ -305,17 +305,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func borderWidth(forStyle style: String) -> CGFloat {
         switch style {
         case "hair":
-            return 0.0
+            return 0.3
         case "thin", "dashed", "dotted", "dashDot", "dashDotDot", "slantDashDot":
-            return 0.0
+            return 0.75
         case "medium", "mediumDashed", "mediumDashDot", "mediumDashDotDot":
-            return 0.015
+            return 1.5
         case "thick":
-            return 0.025
+            return 2.0
         case "double":
-            return 0.02
+            return 2.5
         default:
-            return style.isEmpty ? 0 : 0.01
+            return style.isEmpty ? 0 : 0.3
         }
     }
 
@@ -638,8 +638,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             
-            //Border
-            cell.label2?.layer.borderWidth = 0
+           //Border
+           cell.clearAllEdgeBorders()
+           cell.label2?.layer.borderWidth = 0.0
+           cell.label2?.layer.borderColor = nil
+         
+            
             if cursor == key {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 2.0
@@ -675,7 +679,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
+                    //cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
+                    cell.label2?.layer.borderWidth = 0.7
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
                     // The row-number/column-letter columns share INDEX_WIDTH/
@@ -702,6 +707,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     cell.label2?.adjustsFontSizeToFitWidth = true
                     cell.label2?.minimumScaleFactor = 0.4
                     cell.label2?.numberOfLines = 1
+                }else {
+                    //normal cells
+                    cell.label2?.backgroundColor = UIColor.white
+                    cell.label2?.textColor = UIColor.black
                 }
             }
 
@@ -727,9 +736,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.attributedText = NSAttributedString(string: text, attributes: attrs)
             }
 
-            //xlsx per-side borders, resolved onto cellBorder*Style/Color by
-            // resolveCellStyles(). Must reset every side on every cell (dequeued
-            // cells keep whatever a previous index path last set).
+//            //xlsx per-side borders, resolved onto cellBorder*Style/Color by
+//            // resolveCellStyles(). Must reset every side on every cell (dequeued
+//            // cells keep whatever a previous index path last set).
             if let i = locationIndex(for: key) {
                 func edgeSpec(style: [String], color: [String]) -> (width: CGFloat, color: UIColor)? {
                     guard i < style.count, !style[i].isEmpty else { return nil }
@@ -914,58 +923,48 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                     
                 }
-                if borderId < appd.border_lefts.count && appd.border_lefts[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .left)
-                    c+=1
-                }
-                
-                if borderId < appd.border_rights.count && appd.border_rights[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .right)
-                    c+=1
-                }
-                
-                if borderId < appd.border_tops.count && appd.border_tops[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .top)
-                    c+=1
-                }
-                
-                if borderId < appd.border_bottoms.count && appd.border_bottoms[borderId] > 0{
-                    cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
-                    c+=1
-                }
-                
-                if c == 0{
-                    cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
-                }
-            }else{
-                cell.setBorder(width: 0.5, color: UIColor.lightGray, sides: .all)
+                // This block used to call cell.setBorder(...), which sets the
+                // whole-cell layer.borderWidth/borderColor directly -- a second,
+                // cruder border system running after setEdgeBorders(...) above
+                // already drew the accurate per-edge xlsx borders via sublayers.
+                // Since setEdgeBorders leaves layer.borderWidth at 0 (via
+                // hasExcelBorder/defaultGridBorderWidth), this always painted an
+                // extra 0.5-0.8pt lightGray border on every cell on top of/around
+                // the real accent borders -- blending into the "gold/brown"
+                // border color that was chased earlier in this file. Removed;
+                // border rendering is now solely setEdgeBorders' responsibility.
+                _ = borderId
             }
             
             return cell
-            
-        }else{
-            //sheet cell
+
+                } else {
+            // sheet cell tab menu
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! FileCollectionViewCell
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
-            if isExcel && currentFileNameCollectionViewIdx != IndexPath() && indexPath.item == currentFileNameCollectionViewIdx.item{
-                cell.FileLabel.backgroundColor = UIColor.lightGray
-                cell.FileLabel.textColor = UIColor.white
-                return cell
+           
+            let isSelected: Bool
+            if isExcel {
+                isSelected = (currentFileNameCollectionViewIdx != IndexPath() && indexPath.item == currentFileNameCollectionViewIdx.item)
+            } else {
+                isSelected = (indexPath.item == selectedSheet)
             }
             
-            //if !isExcel && indexPath.item == selectedSheet {
-            if !isExcel && indexPath.item == selectedSheet {
+            if isSelected {
+                // 選択されているタブのスタイル
                 cell.FileLabel.backgroundColor = UIColor.lightGray
                 cell.FileLabel.textColor = UIColor.white
-                return cell
+            } else {
+                // 選択されていないタブのスタイル（ここで確実に白背景にリセット！）
+                cell.FileLabel.backgroundColor = UIColor.white 
+                cell.FileLabel.textColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1)
             }
-
-            cell.FileLabel.backgroundColor = UIColor.white
-            cell.FileLabel.textColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1)
+            
             return cell
         }
+
     }
     
     // Method to remove the pan gesture recognizer from a cell
@@ -2210,7 +2209,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
-        
+
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         fileTitle.text = ""
         super.viewDidLoad()

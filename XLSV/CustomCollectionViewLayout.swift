@@ -216,7 +216,28 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             
             xPos += each_width[j]
             xPOS.append(xPos)
-            
+
+        }
+
+        // Snap the accumulated positions to the physical pixel grid, then derive
+        // each cell's rendered width/height from the difference between two
+        // already-snapped positions. Rounding origin and size independently (the
+        // previous behavior) could round two adjacent cells' shared edge to two
+        // different physical pixels, opening a hairline gap that let the
+        // collection view's own background color show through as a thin line
+        // between every cell.
+        let pixelScale = UIScreen.main.scale
+        for i in 0..<yPOS.count {
+            yPOS[i] = (yPOS[i] * pixelScale).rounded() / pixelScale
+        }
+        for i in 0..<each_height.count {
+            each_height[i] = yPOS[i + 1] - yPOS[i]
+        }
+        for j in 0..<xPOS.count {
+            xPOS[j] = (xPOS[j] * pixelScale).rounded() / pixelScale
+        }
+        for j in 0..<each_width.count {
+            each_width[j] = xPOS[j + 1] - xPOS[j]
         }
 
             appd.numberofRow = r

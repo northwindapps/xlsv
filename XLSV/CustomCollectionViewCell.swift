@@ -13,7 +13,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
    
     
     @IBOutlet weak var label2: UIMarginLabel!
-    private let defaultGridBorderWidth: CGFloat = 0
+    private let defaultGridBorderWidth: CGFloat = 0.3 //0 this is useful. 
     var indexPath: IndexPath? {
             didSet {
             }
@@ -46,8 +46,8 @@ class CustomCollectionViewCell: UICollectionViewCell {
 
     func setup() {
         self.layer.borderWidth = defaultGridBorderWidth
-        // self.layer.borderColor = UIColor(white: 0.85, alpha: 1.0).cgColor
-        self.layer.borderColor = UIColor.white.cgColor
+        self.layer.borderColor = UIColor(white: 0.85, alpha: 1.0).cgColor
+        //self.layer.borderColor = UIColor.white.cgColor
         //updateBorder()
         for edgeLayer in [leftBorderLayer, rightBorderLayer, topBorderLayer, bottomBorderLayer] {
             edgeLayer.isHidden = true
@@ -73,14 +73,21 @@ class CustomCollectionViewCell: UICollectionViewCell {
 
     @discardableResult
     private func applyEdge(_ spec: (width: CGFloat, color: UIColor)?, to edgeLayer: CALayer) -> CGFloat {
-        let minimumVisibleWidth = 1 / UIScreen.main.scale
-        guard let spec = spec, spec.width >= minimumVisibleWidth else {
+        guard let spec = spec, spec.width > 0 else {
             edgeLayer.isHidden = true
             return 0
         }
+        // Sub-pixel widths don't rasterize to a fixed pixel row/column -- as the
+        // cell's frame shifts by fractional points during scroll, CALayer has to
+        // re-anti-alias the line against a different pixel offset each frame,
+        // which reads as the border shifting/flickering while scrolling. Snap up
+        // to a whole device pixel so any width > 0 still renders, but always as
+        // the same crisp line regardless of scroll offset.
+        let onePixel = 1 / UIScreen.main.scale
+        let renderedWidth = max(spec.width, onePixel)
         edgeLayer.backgroundColor = spec.color.cgColor
         edgeLayer.isHidden = false
-        return spec.width
+        return renderedWidth
     }
 
     override func layoutSubviews() {
@@ -90,6 +97,31 @@ class CustomCollectionViewCell: UICollectionViewCell {
         topBorderLayer.frame = CGRect(x: 0, y: 0, width: bounds.width, height: topBorderWidth)
         bottomBorderLayer.frame = CGRect(x: 0, y: bounds.height - bottomBorderWidth, width: bounds.width, height: bottomBorderWidth)
     }
+    
+    // 再利用時に呼ばれるシステムメソッド
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        // 枠線の状態をデフォルトの初期状態（枠線なし）に戻す
+        clearAllEdgeBorders()
+    }
+
+    // 4辺のカスタム枠線をすべてクリアしてデフォルトの薄い網線に戻すメソッド
+    func clearAllEdgeBorders() {
+        leftBorderWidth = 0
+        rightBorderWidth = 0
+        topBorderWidth = 0
+        bottomBorderWidth = 0
+        
+        leftBorderLayer.isHidden = true
+        rightBorderLayer.isHidden = true
+        topBorderLayer.isHidden = true
+        bottomBorderLayer.isHidden = true
+        
+        // デフォルトの網線表示に戻す
+        layer.borderWidth = defaultGridBorderWidth
+        layer.borderColor = UIColor(white: 0.85, alpha: 1.0).cgColor
+    }
+
 
 }
 
