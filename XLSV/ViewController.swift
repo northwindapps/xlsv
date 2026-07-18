@@ -23,6 +23,23 @@ var fontcolorClass = colorclass()
 
 var pasteboard = UIPasteboard.general
 
+extension UIColor {
+    // Parses "#RRGGBB" strings, used for cell colors imported from an xlsx file's
+    // actual font/fill color (as opposed to the app's fixed named color palette).
+    convenience init?(hexString: String) {
+        var hex = hexString
+        if hex.hasPrefix("#") {
+            hex.removeFirst()
+        }
+        guard hex.count == 6, let value = UInt32(hex, radix: 16) else { return nil }
+
+        let r = CGFloat((value & 0xFF0000) >> 16) / 255
+        let g = CGFloat((value & 0x00FF00) >> 8) / 255
+        let b = CGFloat(value & 0x0000FF) / 255
+        self.init(red: r, green: g, blue: b, alpha: 1)
+    }
+}
+
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
     
 //    @IBOutlet weak var bannerview: GADBannerView!
@@ -57,7 +74,33 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var tcolor = [String]()
     var textsize = [String]()
     var bgcolor = [String]()
-    
+
+    // Raw per-cell style index from the original xlsx (Cell.styleIndex / the "s"
+    // attribute), loaded straight from the saved sheet JSON. "" when a cell has no
+    // explicit style.
+    var cellStyleId = [String]()
+
+    // Resolved from cellStyleId + appd's style tables (populated by
+    // Service.testExtractStyle) once per sheet load -- see resolveCellStyles().
+    // Kept for a later xlsx export to re-emit close to the original formatting, and
+    // not currently rendered anywhere else.
+    var cellBold = [String]()
+    var cellItalic = [String]()
+    var cellUnderline = [String]()
+    var cellStrike = [String]()
+    var cellBorderLeftStyle = [String]()
+    var cellBorderLeftColor = [String]()
+    var cellBorderRightStyle = [String]()
+    var cellBorderRightColor = [String]()
+    var cellBorderTopStyle = [String]()
+    var cellBorderTopColor = [String]()
+    var cellBorderBottomStyle = [String]()
+    var cellBorderBottomColor = [String]()
+    var cellHorizontalAlign = [String]()
+    var cellVerticalAlign = [String]()
+    var cellWrapText = [String]()
+
+
     var columninNumber = [String]()
     var rowinNumber = [String]()
     
@@ -247,7 +290,157 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     ]
 
     func namedCellColor(_ name: String, default defaultColor: UIColor) -> UIColor {
+        if name.hasPrefix("#"), let color = UIColor(hexString: name) {
+            return color
+        }
         return ViewController.namedCellColors[name] ?? defaultColor
+    }
+
+    // Maps an xlsx <left/right/top/bottom style="..."> name to a screen border
+    // width. Values are scaled down from Excel's own relative weights (hair <
+    // thin < medium < thick) to stay legible against this app's dense grid --
+    // dash/dot patterns (dashed, dotted, dashDot, ...) aren't rendered as dashes
+    // yet, just as a solid line at their base weight.
+    func borderWidth(forStyle style: String) -> CGFloat {
+        switch style {
+        case "hair":
+            return 0.125
+        case "thin", "dashed", "dotted", "dashDot", "dashDotDot", "slantDashDot":
+            return 0.25
+        case "medium", "mediumDashed", "mediumDashDot", "mediumDashDotDot":
+            return 1.5
+        case "thick":
+            return 2.5
+        case "double":
+            return 2.0
+        default:
+            return style.isEmpty ? 0 : 0.5
+        }
+    }
+
+    // UIFont.systemFont(ofSize:).fontDescriptor.withSymbolicTraits(...) is unreliable
+    // for the *dynamic* system font descriptor on iOS -- it can silently return nil
+    // for bold/italic combinations, which made bold/italic quietly fall back to plain
+    // regular. Apple's own boldSystemFont constructor doesn't have that problem, so
+    // it's used directly for bold.
+    //
+    // Italic is handled separately via a synthetic shear on the font's own matrix,
+    // not via the .traitItalic symbolic trait (what italicSystemFont/withSymbolicTraits
+    // use under the hood). The trait only slants glyphs when the resolved font family
+    // actually ships an italic face -- for non-Latin text (Japanese/Chinese/Korean),
+    // iOS falls back to a CJK font (Hiragino Sans/PingFang) that has no italic design
+    // at all, so the trait request silently renders upright. A shear matrix works at
+    // the glyph-rendering level regardless of script or which font ends up handling
+    // the actual glyphs, so it slants Latin and CJK text alike.
+    private static let syntheticItalicMatrix = CGAffineTransform(a: 1, b: 0, c: CGFloat(tan(14.0 * Double.pi / 180)), d: 1, tx: 0, ty: 0)
+
+    func cellFont(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
+        let base = bold ? UIFont.boldSystemFont(ofSize: size) : UIFont.systemFont(ofSize: size)
+        guard italic else { return base }
+        let slantedDescriptor = base.fontDescriptor.withMatrix(ViewController.syntheticItalicMatrix)
+        return UIFont(descriptor: slantedDescriptor, size: size)
+    }
+
+    // Resolves cellStyleId (the raw per-cell style index saved at import time) into
+    // actual font size/color, background color, and bold/italic/underline/strike,
+    // using the style tables Service.testExtractStyle populates on appd. Must run
+    // after both isExcelSheetData (location/cellStyleId) and testReadXMLSandBox
+    // (appd's font/fill tables) -- see loadExcelSheet, where testReadXMLSandBox
+    // already runs before isExcelSheetData, so the tables are ready in time.
+    func resolveCellStyles() {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        print("DEBUG-RESOLVE table sizes: xfFontIds=\(appd.xfFontIds.count) xfFillIds=\(appd.xfFillIds.count)",
+              "fontSizes=\(appd.fontSizes.count) fontColors=\(appd.fontColors.count) fillColors=\(appd.fillColors.count)")
+        guard cellStyleId.count == location.count else {
+            print("DEBUG-RESOLVE bailing: cellStyleId.count=\(cellStyleId.count) location.count=\(location.count)")
+            return
+        }
+
+        cellBold = [String](repeating: "0", count: location.count)
+        cellItalic = [String](repeating: "0", count: location.count)
+        cellUnderline = [String](repeating: "0", count: location.count)
+        cellStrike = [String](repeating: "0", count: location.count)
+        cellBorderLeftStyle = [String](repeating: "", count: location.count)
+        cellBorderLeftColor = [String](repeating: "", count: location.count)
+        cellBorderRightStyle = [String](repeating: "", count: location.count)
+        cellBorderRightColor = [String](repeating: "", count: location.count)
+        cellBorderTopStyle = [String](repeating: "", count: location.count)
+        cellBorderTopColor = [String](repeating: "", count: location.count)
+        cellBorderBottomStyle = [String](repeating: "", count: location.count)
+        cellBorderBottomColor = [String](repeating: "", count: location.count)
+        cellHorizontalAlign = [String](repeating: "", count: location.count)
+        cellVerticalAlign = [String](repeating: "", count: location.count)
+        cellWrapText = [String](repeating: "0", count: location.count)
+
+        var debugInBoundsHits = 0
+        var debugNonDefaultColor = 0
+        var debugWithBorder = 0
+        var debugWithAlign = 0
+        var debugWithBold = 0
+        var debugWithItalic = 0
+        for i in 0..<cellStyleId.count {
+            guard let styleIdx = Int(cellStyleId[i]),
+                  styleIdx >= 0,
+                  styleIdx < appd.xfFontIds.count,
+                  styleIdx < appd.xfFillIds.count else {
+                continue
+            }
+            debugInBoundsHits += 1
+
+            let fontId = appd.xfFontIds[styleIdx]
+            if fontId >= 0 && fontId < appd.fontSizes.count {
+                if !appd.fontSizes[fontId].isEmpty {
+                    textsize[i] = appd.fontSizes[fontId]
+                }
+                if !appd.fontColors[fontId].isEmpty {
+                    tcolor[i] = appd.fontColors[fontId]
+                }
+                cellBold[i] = appd.fontBolds[fontId] ? "1" : "0"
+                cellItalic[i] = appd.fontItalics[fontId] ? "1" : "0"
+                cellUnderline[i] = appd.fontUnderlines[fontId] ? "1" : "0"
+                cellStrike[i] = appd.fontStrikes[fontId] ? "1" : "0"
+                if cellBold[i] == "1" { debugWithBold += 1 }
+                if cellItalic[i] == "1" { debugWithItalic += 1 }
+            }
+
+            let fillId = appd.xfFillIds[styleIdx]
+            if fillId >= 0 && fillId < appd.fillColors.count && !appd.fillColors[fillId].isEmpty {
+                bgcolor[i] = appd.fillColors[fillId]
+            }
+
+            // appd.cellXfs[styleIdx] holds the borderId for this style (the position
+            // into <borders>) -- same lookup cellForItemAt's older excelStyleLocation
+            // path already uses for border-presence detection.
+            if styleIdx < appd.cellXfs.count {
+                let borderId = appd.cellXfs[styleIdx]
+                if borderId >= 0 && borderId < appd.borderLeftStyles.count {
+                    cellBorderLeftStyle[i] = appd.borderLeftStyles[borderId]
+                    cellBorderLeftColor[i] = appd.borderLeftColors[borderId]
+                    cellBorderRightStyle[i] = appd.borderRightStyles[borderId]
+                    cellBorderRightColor[i] = appd.borderRightColors[borderId]
+                    cellBorderTopStyle[i] = appd.borderTopStyles[borderId]
+                    cellBorderTopColor[i] = appd.borderTopColors[borderId]
+                    cellBorderBottomStyle[i] = appd.borderBottomStyles[borderId]
+                    cellBorderBottomColor[i] = appd.borderBottomColors[borderId]
+                    if !cellBorderLeftStyle[i].isEmpty || !cellBorderRightStyle[i].isEmpty ||
+                        !cellBorderTopStyle[i].isEmpty || !cellBorderBottomStyle[i].isEmpty {
+                        debugWithBorder += 1
+                    }
+                }
+            }
+
+            // Alignment is inline on the <xf> itself, so it's indexed directly by
+            // styleIdx -- no separate id table to look up like font/fill/border.
+            if styleIdx < appd.xfHorizontalAligns.count {
+                cellHorizontalAlign[i] = appd.xfHorizontalAligns[styleIdx]
+                cellVerticalAlign[i] = appd.xfVerticalAligns[styleIdx]
+                cellWrapText[i] = appd.xfWrapTexts[styleIdx] ? "1" : "0"
+                if !cellHorizontalAlign[i].isEmpty || !cellVerticalAlign[i].isEmpty { debugWithAlign += 1 }
+            }
+
+            if tcolor[i] != "black" || bgcolor[i] != "white" { debugNonDefaultColor += 1 }
+        }
+        print("DEBUG-RESOLVE cells=\(cellStyleId.count) inBoundsStyleIndex=\(debugInBoundsHits) withNonDefaultColor=\(debugNonDefaultColor) withBorder=\(debugWithBorder) withAlign=\(debugWithAlign) withBold=\(debugWithBold) withItalic=\(debugWithItalic)")
     }
 
     // location/f_location/excelStyleLocation are scanned per-cell during rendering (up to
@@ -336,6 +529,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if let i = locationIndex(for: key) {
 
                 let notFunc = content[i]
+                let isBold = i < cellBold.count && cellBold[i] == "1"
+                let isItalic = i < cellItalic.count && cellItalic[i] == "1"
                 if let idx = fLocationIndex(for: key) {
                     if f_calculated.count-1 < idx{
                         cell.label2?.text = "error"
@@ -343,19 +538,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         cell.label2?.text = f_calculated[idx]
                     }
                     let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
-                    cell.label2?.font = UIFont.italicSystemFont(ofSize: fl)
+                    // Formula cells are always italicized regardless of xlsx style,
+                    // to visually flag them as computed -- xlsx bold still applies.
+                    cell.label2?.font = cellFont(size: fl, bold: isBold, italic: true)
                     cell.label2?.textAlignment = .right
 
                 }else if Double(notFunc) != nil {
                     cell.label2?.text = notFunc
                     let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
-                    cell.label2?.font = UIFont.systemFont(ofSize: fl)
+                    cell.label2?.font = cellFont(size: fl, bold: isBold, italic: isItalic)
                     cell.label2?.textAlignment = .right
                 }else{
                     cell.label2?.text = notFunc
                     let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
-                    cell.label2?.font = UIFont.systemFont(ofSize: fl)
+                    cell.label2?.font = cellFont(size: fl, bold: isBold, italic: isItalic)
                     cell.label2?.textAlignment = .left
+                }
+
+                if (isBold || isItalic) && i < 30 {
+                    print("DEBUG-FONT key=\(key) i=\(i) isBold=\(isBold) isItalic=\(isItalic)",
+                          "resultFont=\(cell.label2?.font.fontName ?? "nil")",
+                          "traits=\(cell.label2?.font.fontDescriptor.symbolicTraits.rawValue ?? 0)")
                 }
             }else{
                 //empty
@@ -364,8 +567,48 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.text = ""
                 cell.label2?.textAlignment = .center
             }
-            
-         
+
+            //xlsx alignment, resolved onto cellHorizontalAlign/cellVerticalAlign/
+            // cellWrapText by resolveCellStyles(). Only overrides the content-type
+            // default (numbers right, text left) when the xlsx explicitly sets a
+            // horizontal alignment other than "general" -- matching how Excel itself
+            // treats "General" as "use the type-based default", not an explicit value.
+            if let i = locationIndex(for: key) {
+                if i < cellHorizontalAlign.count {
+                    switch cellHorizontalAlign[i] {
+                    case "left", "fill":
+                        cell.label2?.textAlignment = .left
+                    case "center", "centerContinuous", "distributed":
+                        cell.label2?.textAlignment = .center
+                    case "right":
+                        cell.label2?.textAlignment = .right
+                    case "justify":
+                        cell.label2?.textAlignment = .justified
+                    default:
+                        break // "general" or unset -- keep the type-based default above
+                    }
+                }
+
+                if i < cellVerticalAlign.count {
+                    switch cellVerticalAlign[i] {
+                    case "top":
+                        cell.label2?.verticalAlignment = .top
+                    case "center", "distributed":
+                        cell.label2?.verticalAlignment = .center
+                    default:
+                        cell.label2?.verticalAlignment = .bottom // xlsx's own default
+                    }
+                }
+
+                // Always wrap (numberOfLines/lineBreakMode set at the top of this
+                // function already do this) rather than switching to single-line
+                // clipping when wrapText isn't explicitly "1" -- most real sheets
+                // don't set wrapText on every cell, so a strict xlsx-faithful
+                // single-line default made previously-readable wrapped cells clip.
+            } else {
+                cell.label2?.verticalAlignment = .bottom
+            }
+
             #if !targetEnvironment(macCatalyst)
             if selection_bool {
                 //number or fx only
@@ -442,7 +685,52 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     cell.label2?.textAlignment = .center
                 }
             }
-            
+
+            // UILabel has no bool for underline/strikethrough -- unlike bold/italic
+            // those aren't font traits, they're paragraph-level text attributes, so
+            // they need an NSAttributedString built from the label's already-final
+            // text/font/color. When neither applies, leave plain .text alone: UILabel
+            // resets its attributed storage whenever .text is set (already done above
+            // for every cell), so a reused cell won't carry over a previous cell's
+            // underline/strike.
+            if let i = locationIndex(for: key),
+               i < cellUnderline.count, i < cellStrike.count,
+               (cellUnderline[i] == "1" || cellStrike[i] == "1"),
+               let text = cell.label2?.text, let font = cell.label2?.font,
+               let color = cell.label2?.textColor {
+                var attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
+                // Raw value 1 == NSUnderlineStyle.single (a single line) -- written as
+                // a literal instead of referencing the enum case by name because this
+                // project's toolchain is flagging that name as needing a rename in both
+                // directions depending on the day; the raw Int is unambiguous either way.
+                if cellUnderline[i] == "1" { attrs[.underlineStyle] = 1 }
+                if cellStrike[i] == "1" { attrs[.strikethroughStyle] = 1 }
+                cell.label2?.attributedText = NSAttributedString(string: text, attributes: attrs)
+            }
+
+            //xlsx per-side borders, resolved onto cellBorder*Style/Color by
+            // resolveCellStyles(). Must reset every side on every cell (dequeued
+            // cells keep whatever a previous index path last set).
+            if let i = locationIndex(for: key) {
+                func edgeSpec(style: [String], color: [String]) -> (width: CGFloat, color: UIColor)? {
+                    guard i < style.count, !style[i].isEmpty else { return nil }
+                    let width = borderWidth(forStyle: style[i])
+                    guard width > 0 else { return nil }
+                    let edgeColor = (i < color.count && !color[i].isEmpty)
+                        ? namedCellColor(color[i], default: UIColor.black)
+                        : UIColor.black
+                    return (width, edgeColor)
+                }
+                cell.setEdgeBorders(
+                    left: edgeSpec(style: cellBorderLeftStyle, color: cellBorderLeftColor),
+                    right: edgeSpec(style: cellBorderRightStyle, color: cellBorderRightColor),
+                    top: edgeSpec(style: cellBorderTopStyle, color: cellBorderTopColor),
+                    bottom: edgeSpec(style: cellBorderBottomStyle, color: cellBorderBottomColor)
+                )
+            } else {
+                cell.setEdgeBorders(left: nil, right: nil, top: nil, bottom: nil)
+            }
+
             //http://stackoverflow.com/questions/29381994/swift-check-string-for-nil-empty
             //http://qiita.com/satomyumi/items/b0d071cc906574086ac4
             
@@ -1048,6 +1336,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
             initExcelLocation()
             print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+
+            let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
+            resolveCellStyles()
+            print(String(format: "PERF loadExcelSheet.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
 
 
             localFileNames = appd.sheetNames //sheet1,sheet2
@@ -1909,6 +2201,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.delegate = self
         orientaion = "P"
         
+        // Tracks whether loadExcelSheet() already ran below, so the "checkSheet"
+        // fallback further down knows whether it still needs to load anything.
+        var didLoadSheetInViewDidLoad = false
+
         if appd.imported_xlsx_file_path == "" && isCSV == false{
             let pathDirectory = getRootDocumentsDirectory()
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
@@ -1916,9 +2212,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             isExcel = true
             if fileExists{
                 appd.imported_xlsx_file_path=filePath.path
-                let icc = iCloudViewController()
-                icc.readExcel(path: filePath.path)
-                
+                // iCloudViewController.readExcel is a separate, older duplicate
+                // parse+JSON-save that never learned about styleId -- loadExcelSheet
+                // already does its own fresh ExcelHelper.readExcel2 parse (the one
+                // with styleId) every time it's called, so routing through the
+                // duplicate here was just wasted work parsing the file twice on
+                // every cold launch.
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                didLoadSheetInViewDidLoad = true
             }
             if !fileExists {
                 print("File doesn't exist at path: \(filePath.path)")
@@ -1927,6 +2228,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     do {
                         let icc = iCloudViewController()
                         icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath2))
+                        // loadInitialXLSX only copies the bundled file into place and
+                        // sets appd.imported_xlsx_file_path now -- it no longer parses
+                        // it itself, so loadExcelSheet does the (styleId-aware) parse.
+                        self.loadExcelSheet(idx: appd.wsSheetIndex)
+                        didLoadSheetInViewDidLoad = true
                         //                    appd.imported_xlsx_file_path=filePath.path
                         //                    icc.readExcel(path: filePath.path)
                     } catch {
@@ -1935,13 +2241,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
             }
         }
-        
-        //checkSheet
-        let initialIdx = appd.sheetNameIds.first ?? "-1"
-        isExcelSheetData(sheetIdx: Int(initialIdx)!)
-        initSheetData()
-        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        initExcelLocation()
+
+        //checkSheet -- loadExcelSheet() above already runs isExcelSheetData/
+        // initSheetData/storeValues/initExcelLocation *and* resolveCellStyles.
+        // Calling those four again unconditionally (the old code) re-read the same
+        // JSON and reset textsize/tcolor/bgcolor/cellBold back to plain defaults
+        // with no resolveCellStyles() afterward to fix them back up -- so styling
+        // never actually showed up on the first frame after a cold launch. Only
+        // fall back to loading here when imported_xlsx_file_path was already set
+        // *before* this viewDidLoad ran (e.g. presented straight from the
+        // document-picker import flow, which sets the path itself beforehand).
+        if !didLoadSheetInViewDidLoad {
+            let initialIdx = appd.sheetNameIds.first ?? "-1"
+            self.loadExcelSheet(idx: Int(initialIdx) ?? appd.wsSheetIndex)
+        }
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(
@@ -3498,27 +3811,38 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var filterFontSize = [String]()
         var filterFontColor = [String]()
         var filterBgColor = [String]()
+        // cellStyleId is loaded from the saved sheet JSON in the same order/length as
+        // location/content (see ExcelHelper.readExcel2), but only when a fresh import
+        // populated it -- guard against a shorter/absent array from an older save.
+        let hasStyleId = cellStyleId.count == content.count
+        var filterStyleId = [String]()
         for i in 0..<content.count {
             let check = content[i].replacingOccurrences(of: " ", with: "")
             if check.count != 0{
                 filterContent.append(content[i])
                 filterLocation.append(location[i])
-                
+
                 filterFontSize.append(textsize[i])
-                
-                
-                
+
+
+
                 filterFontColor.append(tcolor[i])
                 filterBgColor.append(bgcolor[i])
+                if hasStyleId {
+                    filterStyleId.append(cellStyleId[i])
+                }
             }
-            
+
         }
-        
+
         content = filterContent
         location = filterLocation
         textsize = filterFontSize
         tcolor = filterFontColor
         bgcolor = filterBgColor
+        if hasStyleId {
+            cellStyleId = filterStyleId
+        }
     }
     @objc func saveAsLocalJson(filename:String) {
         filterEmptyContent()
@@ -6817,6 +7141,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 print("textsize",textsize)
                 bgcolor = sheet1Json.bgcolor
                 tcolor = sheet1Json.fontcolor
+                cellStyleId = sheet1Json.styleId
                 COLUMNSIZE = sheet1Json.columnsize
                 ROWSIZE = sheet1Json.rowsize
                 appd.customSizedWidth = sheet1Json.customcellWidth
@@ -7672,18 +7997,40 @@ extension UICollectionView {
 
 
 @IBDesignable class UIMarginLabel: UILabel {
-    
+
     @IBInspectable var topInset:       CGFloat = 0
     @IBInspectable var rightInset:     CGFloat = 0
     @IBInspectable var bottomInset:    CGFloat = 0
     @IBInspectable var leftInset:      CGFloat = 0
-    
-    
-    
+
+    // UILabel has no vertical-alignment API of its own -- its default drawText(in:)
+    // already centers text within whatever rect it's given, which is why .center
+    // below is a no-op. .top/.bottom work by shrinking the rect passed to super down
+    // to the text's own natural height and pinning it to that edge, since a rect
+    // exactly as tall as the text leaves super nothing to center within.
+    enum VerticalAlignment {
+        case top, center, bottom
+    }
+    var verticalAlignment: VerticalAlignment = .bottom
+
     override func drawText(in rect: CGRect) {
         let insets: UIEdgeInsets = UIEdgeInsets(top: self.topInset, left: self.leftInset, bottom: self.bottomInset, right: self.rightInset)
         self.setNeedsLayout()
-        return super.drawText(in: UIEdgeInsetsInsetRect(rect, insets))
+        let insetRect = UIEdgeInsetsInsetRect(rect, insets)
+
+        switch verticalAlignment {
+        case .center:
+            return super.drawText(in: insetRect)
+        case .top, .bottom:
+            let naturalHeight = self.sizeThatFits(CGSize(width: insetRect.width, height: .greatestFiniteMagnitude)).height
+            let textHeight = min(naturalHeight, insetRect.height)
+            var alignedRect = insetRect
+            alignedRect.size.height = textHeight
+            if verticalAlignment == .bottom {
+                alignedRect.origin.y = insetRect.maxY - textHeight
+            }
+            return super.drawText(in: alignedRect)
+        }
     }
 }
 extension Collection {

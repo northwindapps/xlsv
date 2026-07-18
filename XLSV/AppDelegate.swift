@@ -61,10 +61,45 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var border_rights = [Int]()
     var border_bottoms = [Int]()
     var border_tops = [Int]()
+    // Actual per-side border style name (e.g. "thin") and "#RRGGBB" color, indexed
+    // by borderId in lockstep with border_lefts/rights/tops/bottoms above.
+    var borderLeftStyles = [String]()
+    var borderLeftColors = [String]()
+    var borderRightStyles = [String]()
+    var borderRightColors = [String]()
+    var borderTopStyles = [String]()
+    var borderTopColors = [String]()
+    var borderBottomStyles = [String]()
+    var borderBottomColors = [String]()
     var formatCodes = [String]()
     var numFmts = [String]()
     var numFmtIds = [Int]()
-    
+
+    // fontId/fillId per style index (position in <cellXfs>), parallel to cellXfs/numFmtIds.
+    var xfFontIds = [Int]()
+    var xfFillIds = [Int]()
+    // Alignment, also per style index -- unlike font/fill/border, <alignment> is inline
+    // on each <xf> rather than a separate lookup table, so these read directly off the
+    // style index with no extra id indirection.
+    var xfHorizontalAligns = [String]()
+    var xfVerticalAligns = [String]()
+    var xfWrapTexts = [Bool]()
+    // Font table, indexed by fontId (position in <fonts>).
+    var fontSizes = [String]()
+    var fontColors = [String]()
+    var fontBolds = [Bool]()
+    var fontItalics = [Bool]()
+    var fontUnderlines = [Bool]()
+    var fontStrikes = [Bool]()
+    // Fill table, indexed by fillId (position in <fills>) -- only solid-pattern fills
+    // resolve to a color; others are left as "".
+    var fillColors = [String]()
+    // xl/theme/theme1.xml's clrScheme resolved into a 12-slot "#RRGGBB" table, indexed
+    // the way <color theme="N"/> actually refers to slots (lt1, dk1, lt2, dk2, accent1-6,
+    // hlink, folHlink) -- see Service.testExtractTheme.
+    var themeColors = [String]()
+
+
     //
     var CELL_HEIGHT_INIT = 40.0
     var CELL_WIDTH_INIT = 100.0

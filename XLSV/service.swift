@@ -140,7 +140,8 @@ class Service {
                     
                     
                     let xml = XMLHash.parse(xmlString!)
-                    
+                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
                     var numFmts = [String]()
                     var formatCodes = [String]()
                     // Assuming `xml` is your XML object
@@ -191,6 +192,31 @@ class Service {
                     var border_rights = [Int]()
                     var border_bottoms = [Int]()
                     var border_tops = [Int]()
+                    // Actual per-side border style (e.g. "thin", "medium", "dashed") and
+                    // color, indexed by borderId in lockstep with border_lefts/rights/
+                    // tops/bottoms above (same append pattern, so they stay aligned with
+                    // that pre-existing borderId indexing already used by cellForItemAt).
+                    var borderLeftStyles = [String]()
+                    var borderLeftColors = [String]()
+                    var borderRightStyles = [String]()
+                    var borderRightColors = [String]()
+                    var borderTopStyles = [String]()
+                    var borderTopColors = [String]()
+                    var borderBottomStyles = [String]()
+                    var borderBottomColors = [String]()
+                    func borderSideColor(_ sideElement: XMLIndexer) -> String {
+                        guard let colorEl = sideElement.children.first(where: { $0.element?.name == "color" }) else { return "" }
+                        if let rgb = colorEl.element?.allAttributes["rgb"]?.text {
+                            return hexColorString(fromARGB: rgb) ?? ""
+                        } else if let themeStr = colorEl.element?.allAttributes["theme"]?.text,
+                                  let themeIdx = Int(themeStr),
+                                  themeIdx >= 0, themeIdx < appd.themeColors.count,
+                                  !appd.themeColors[themeIdx].isEmpty {
+                            let tint = Double(colorEl.element?.allAttributes["tint"]?.text ?? "0") ?? 0
+                            return applyThemeTint(hex: appd.themeColors[themeIdx], tint: tint)
+                        }
+                        return ""
+                    }
                     // Assuming `xml` is your XML object
                     for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
                         if child.children.count > 0{
@@ -198,42 +224,176 @@ class Service {
                             border_rights.append(0)
                             border_bottoms.append(0)
                             border_tops.append(0)
+                            borderLeftStyles.append("")
+                            borderLeftColors.append("")
+                            borderRightStyles.append("")
+                            borderRightColors.append("")
+                            borderTopStyles.append("")
+                            borderTopColors.append("")
+                            borderBottomStyles.append("")
+                            borderBottomColors.append("")
                             for gChild in child.children{
                                 if gChild.element?.name == "left"{
                                     let leftCount = gChild.children.count
                                     border_lefts[border_lefts.count - 1] = leftCount
+                                    borderLeftStyles[borderLeftStyles.count - 1] = gChild.element?.allAttributes["style"]?.text ?? ""
+                                    borderLeftColors[borderLeftColors.count - 1] = borderSideColor(gChild)
                                 }
-                                
+
                                 if gChild.element?.name == "right"{
                                     let rightCount = gChild.children.count
                                     border_rights[border_rights.count - 1] = rightCount
+                                    borderRightStyles[borderRightStyles.count - 1] = gChild.element?.allAttributes["style"]?.text ?? ""
+                                    borderRightColors[borderRightColors.count - 1] = borderSideColor(gChild)
                                 }
-                                
+
                                 if gChild.element?.name == "top"{
                                     let topCount = gChild.children.count
                                     border_tops[border_tops.count - 1] = topCount
+                                    borderTopStyles[borderTopStyles.count - 1] = gChild.element?.allAttributes["style"]?.text ?? ""
+                                    borderTopColors[borderTopColors.count - 1] = borderSideColor(gChild)
                                 }
-                                
+
                                 if gChild.element?.name == "bottom"{
                                     let bottomCount = gChild.children.count
                                     border_bottoms[border_bottoms.count - 1] = bottomCount
+                                    borderBottomStyles[borderBottomStyles.count - 1] = gChild.element?.allAttributes["style"]?.text ?? ""
+                                    borderBottomColors[borderBottomColors.count - 1] = borderSideColor(gChild)
                                 }
-                                
+
                             }
                         }
                     }
                     
-                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    // fontId/fillId/alignment per style index, parallel to cellXfs/numFmtIds
+                    // above. <alignment> is inline on the <xf> itself (not a separate
+                    // table like fonts/fills/borders), so it's read in the same pass.
+                    var xfFontIds = [Int]()
+                    var xfFillIds = [Int]()
+                    var xfHorizontalAligns = [String]()
+                    var xfVerticalAligns = [String]()
+                    var xfWrapTexts = [Bool]()
+                    for child in xml.children.first!.children.first(where: { $0.element?.name == "cellXfs" })!.children {
+                        xfFontIds.append(Int(child.element?.allAttributes["fontId"]?.text ?? "") ?? -1)
+                        xfFillIds.append(Int(child.element?.allAttributes["fillId"]?.text ?? "") ?? -1)
+                        if let alignmentEl = child.children.first(where: { $0.element?.name == "alignment" }) {
+                            xfHorizontalAligns.append(alignmentEl.element?.allAttributes["horizontal"]?.text ?? "")
+                            xfVerticalAligns.append(alignmentEl.element?.allAttributes["vertical"]?.text ?? "")
+                            xfWrapTexts.append((alignmentEl.element?.allAttributes["wrapText"]?.text ?? "0") != "0")
+                        } else {
+                            xfHorizontalAligns.append("")
+                            xfVerticalAligns.append("")
+                            xfWrapTexts.append(false)
+                        }
+                    }
+
+                    // Font table (size/color/bold/italic/underline/strike), indexed by fontId.
+                    var fontSizes = [String]()
+                    var fontColors = [String]()
+                    var fontBolds = [Bool]()
+                    var fontItalics = [Bool]()
+                    var fontUnderlines = [Bool]()
+                    var fontStrikes = [Bool]()
+                    if let fontsSection = xml.children.first!.children.first(where: { $0.element?.name == "fonts" }) {
+                        for fontChild in fontsSection.children {
+                            var size = ""
+                            var color = ""
+                            var bold = false
+                            var italic = false
+                            var underline = false
+                            var strike = false
+                            for prop in fontChild.children {
+                                switch prop.element?.name {
+                                case "sz":
+                                    size = prop.element?.allAttributes["val"]?.text ?? ""
+                                case "color":
+                                    if let rgb = prop.element?.allAttributes["rgb"]?.text {
+                                        color = hexColorString(fromARGB: rgb) ?? ""
+                                    } else if let themeStr = prop.element?.allAttributes["theme"]?.text,
+                                              let themeIdx = Int(themeStr),
+                                              themeIdx >= 0, themeIdx < appd.themeColors.count,
+                                              !appd.themeColors[themeIdx].isEmpty {
+                                        let tint = Double(prop.element?.allAttributes["tint"]?.text ?? "0") ?? 0
+                                        color = applyThemeTint(hex: appd.themeColors[themeIdx], tint: tint)
+                                    }
+                                case "b":
+                                    bold = (prop.element?.allAttributes["val"]?.text ?? "1") != "0"
+                                case "i":
+                                    italic = (prop.element?.allAttributes["val"]?.text ?? "1") != "0"
+                                case "u":
+                                    underline = (prop.element?.allAttributes["val"]?.text ?? "single") != "none"
+                                case "strike":
+                                    strike = (prop.element?.allAttributes["val"]?.text ?? "1") != "0"
+                                default:
+                                    break
+                                }
+                            }
+                            fontSizes.append(size)
+                            fontColors.append(color)
+                            fontBolds.append(bold)
+                            fontItalics.append(italic)
+                            fontUnderlines.append(underline)
+                            fontStrikes.append(strike)
+                        }
+                    }
+
+                    // Fill table (background color), indexed by fillId. Only solid-pattern
+                    // fills have a meaningful cell background -- fgColor is the visible
+                    // color for patternType="solid" (bgColor is used for other pattern
+                    // types like stripes, which we don't render).
+                    var fillColors = [String]()
+                    if let fillsSection = xml.children.first!.children.first(where: { $0.element?.name == "fills" }) {
+                        for fillChild in fillsSection.children {
+                            var color = ""
+                            if let patternFill = fillChild.children.first(where: { $0.element?.name == "patternFill" }) {
+                                let patternType = patternFill.element?.allAttributes["patternType"]?.text ?? ""
+                                if patternType == "solid",
+                                   let fgColor = patternFill.children.first(where: { $0.element?.name == "fgColor" }) {
+                                    if let rgb = fgColor.element?.allAttributes["rgb"]?.text {
+                                        color = hexColorString(fromARGB: rgb) ?? ""
+                                    } else if let themeStr = fgColor.element?.allAttributes["theme"]?.text,
+                                              let themeIdx = Int(themeStr),
+                                              themeIdx >= 0, themeIdx < appd.themeColors.count,
+                                              !appd.themeColors[themeIdx].isEmpty {
+                                        let tint = Double(fgColor.element?.allAttributes["tint"]?.text ?? "0") ?? 0
+                                        color = applyThemeTint(hex: appd.themeColors[themeIdx], tint: tint)
+                                    }
+                                }
+                            }
+                            fillColors.append(color)
+                        }
+                    }
+
                     appd.cellXfs = cellXfs
                     appd.cellStyleXfs = cellStyleXfs
                     appd.border_lefts = border_lefts
                     appd.border_rights  = border_rights
                     appd.border_bottoms = border_bottoms
                     appd.border_tops = border_tops
+                    appd.borderLeftStyles = borderLeftStyles
+                    appd.borderLeftColors = borderLeftColors
+                    appd.borderRightStyles = borderRightStyles
+                    appd.borderRightColors = borderRightColors
+                    appd.borderTopStyles = borderTopStyles
+                    appd.borderTopColors = borderTopColors
+                    appd.borderBottomStyles = borderBottomStyles
+                    appd.borderBottomColors = borderBottomColors
                     appd.formatCodes = formatCodes
                     appd.numFmts = numFmts
                     appd.numFmtIds = numFmtIds
-                    
+                    appd.xfFontIds = xfFontIds
+                    appd.xfFillIds = xfFillIds
+                    appd.xfHorizontalAligns = xfHorizontalAligns
+                    appd.xfVerticalAligns = xfVerticalAligns
+                    appd.xfWrapTexts = xfWrapTexts
+                    appd.fontSizes = fontSizes
+                    appd.fontColors = fontColors
+                    appd.fontBolds = fontBolds
+                    appd.fontItalics = fontItalics
+                    appd.fontUnderlines = fontUnderlines
+                    appd.fontStrikes = fontStrikes
+                    appd.fillColors = fillColors
+
                     return xmlString
                 }
             }catch{
@@ -243,7 +403,142 @@ class Service {
         }
         return nil
     }
-     
+
+    // xlsx <color rgb="..."/> is an 8-digit ARGB hex string (e.g. "FFFF0000"), or
+    // occasionally 6-digit RGB. Returns a "#RRGGBB" string the renderer can use, or
+    // nil if the value isn't a well-formed hex color.
+    func hexColorString(fromARGB rgb: String) -> String? {
+        let hex = rgb.count == 8 ? String(rgb.suffix(6)) : rgb
+        guard hex.count == 6, UInt32(hex, radix: 16) != nil else { return nil }
+        return "#" + hex.uppercased()
+    }
+
+    // Resolves xl/theme/theme1.xml's <a:clrScheme> into appd.themeColors, a 12-slot
+    // "#RRGGBB" table indexed the way <color theme="N"/> actually refers to slots.
+    // Note this is NOT the literal <a:clrScheme> child order (dk1, lt1, dk2, lt2, ...) --
+    // Excel swaps the first two pairs when resolving a theme index, so index 0 is lt1
+    // (Background 1), 1 is dk1 (Text 1), 2 is lt2, 3 is dk2; this is a well-documented
+    // OOXML quirk, not a bug here.
+    func testExtractTheme(url: URL? = nil) {
+        guard let url2 = url, let xmlString = try? String(contentsOf: url2) else { return }
+        let xml = XMLHash.parse(xmlString)
+        guard let root = xml.children.first,
+              let clrScheme = findElement(root, named: "clrScheme") else { return }
+
+        let slotNames: Set<String> = ["dk1", "lt1", "dk2", "lt2", "accent1", "accent2",
+                                       "accent3", "accent4", "accent5", "accent6",
+                                       "hlink", "folHlink"]
+        var schemeColors = [String: String]()
+        for child in clrScheme.children {
+            let slot = localName(child.element?.name)
+            guard slotNames.contains(slot), let colorChild = child.children.first else { continue }
+            let colorName = localName(colorChild.element?.name)
+            var hex = ""
+            if colorName == "srgbClr" {
+                hex = colorChild.element?.allAttributes["val"]?.text ?? ""
+            } else if colorName == "sysClr" {
+                hex = colorChild.element?.allAttributes["lastClr"]?.text ?? ""
+            }
+            if let resolved = hexColorString(fromARGB: hex) {
+                schemeColors[slot] = resolved
+            }
+        }
+
+        let indexOrder = ["lt1", "dk1", "lt2", "dk2", "accent1", "accent2", "accent3",
+                           "accent4", "accent5", "accent6", "hlink", "folHlink"]
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.themeColors = indexOrder.map { schemeColors[$0] ?? "" }
+    }
+
+    // Strips a namespace prefix ("a:dk1" -> "dk1") since XMLHash's element name may or
+    // may not retain it depending on how the parser handles theme1.xml's "a:" prefix.
+    private func localName(_ name: String?) -> String {
+        guard let name = name else { return "" }
+        if let colonIdx = name.firstIndex(of: ":") {
+            return String(name[name.index(after: colonIdx)...])
+        }
+        return name
+    }
+
+    // theme1.xml nests clrScheme a couple of levels down (theme > themeElements >
+    // clrScheme); search rather than hardcode the depth so minor structural
+    // differences between Excel versions don't break this.
+    private func findElement(_ indexer: XMLIndexer, named target: String) -> XMLIndexer? {
+        for child in indexer.children {
+            if localName(child.element?.name) == target {
+                return child
+            }
+            if let found = findElement(child, named: target) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    // Excel's <color theme="N" tint="..."/> tint/shade is a luminance (HSL) adjustment --
+    // not the HSB adjustment UIKit's own hue/brightness APIs use -- so this is done by
+    // hand to match what Excel actually renders. tint is in [-1, 1]; negative darkens,
+    // positive lightens, both by scaling toward black/white in HSL lightness space.
+    func applyThemeTint(hex: String, tint: Double) -> String {
+        guard tint != 0, hex.hasPrefix("#"), hex.count == 7,
+              let rgbValue = UInt32(hex.dropFirst(), radix: 16) else { return hex }
+
+        let r = Double((rgbValue >> 16) & 0xFF) / 255.0
+        let g = Double((rgbValue >> 8) & 0xFF) / 255.0
+        let b = Double(rgbValue & 0xFF) / 255.0
+
+        let maxC = max(r, g, b)
+        let minC = min(r, g, b)
+        var h = 0.0
+        var s = 0.0
+        let l = (maxC + minC) / 2.0
+        if maxC != minC {
+            let d = maxC - minC
+            s = l > 0.5 ? d / (2.0 - maxC - minC) : d / (maxC + minC)
+            if maxC == r {
+                h = (g - b) / d + (g < b ? 6.0 : 0.0)
+            } else if maxC == g {
+                h = (b - r) / d + 2.0
+            } else {
+                h = (r - g) / d + 4.0
+            }
+            h /= 6.0
+        }
+
+        let newL = tint < 0 ? l * (1.0 + tint) : l * (1.0 - tint) + tint
+        let clampedL = min(max(newL, 0.0), 1.0)
+
+        func hue2rgb(_ p: Double, _ q: Double, _ t0: Double) -> Double {
+            var t = t0
+            if t < 0 { t += 1 }
+            if t > 1 { t -= 1 }
+            if t < 1.0 / 6.0 { return p + (q - p) * 6.0 * t }
+            if t < 1.0 / 2.0 { return q }
+            if t < 2.0 / 3.0 { return p + (q - p) * (2.0 / 3.0 - t) * 6.0 }
+            return p
+        }
+
+        let outR: Double
+        let outG: Double
+        let outB: Double
+        if s == 0 {
+            outR = clampedL
+            outG = clampedL
+            outB = clampedL
+        } else {
+            let q = clampedL < 0.5 ? clampedL * (1.0 + s) : clampedL + s - clampedL * s
+            let p = 2.0 * clampedL - q
+            outR = hue2rgb(p, q, h + 1.0 / 3.0)
+            outG = hue2rgb(p, q, h)
+            outB = hue2rgb(p, q, h - 1.0 / 3.0)
+        }
+
+        let ri = Int((outR * 255.0).rounded())
+        let gi = Int((outG * 255.0).rounded())
+        let bi = Int((outB * 255.0).rounded())
+        return String(format: "#%02X%02X%02X", ri, gi, bi)
+    }
+
     //making now
     func testDeleteString(url:URL? = nil, index:String?) -> String?{
         if let url2 = url{
@@ -1589,6 +1884,8 @@ class Service {
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
                     //extract sytles read only
+                    let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+                    testExtractTheme(url: themeXMLURL)
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                     let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                     //update to it contains date numFmt and other format
@@ -1724,6 +2021,8 @@ class Service {
                     let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet1.xml")
                     
                     //extract sytles
+                    let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+                    testExtractTheme(url: themeXMLURL)
                     let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                     let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                     //update to it contains date numFmt and other format
@@ -1993,6 +2292,8 @@ class Service {
                 }
                 
                 //TODO update sytle.xml here
+                let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+                testExtractTheme(url: themeXMLURL)
                 let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                 let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                 //update to it contains date numFmt and other format
@@ -2272,6 +2573,8 @@ class Service {
                 }
                 
                 //TODO update sytle.xml here
+                let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+                testExtractTheme(url: themeXMLURL)
                 let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                 let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
                 //update to it contains date numFmt and other format

@@ -257,6 +257,21 @@ class ExcelHelper{
                // was the dominant cost of importing a file (~19s on a real sheet).
                let cellsByColumn = Dictionary(grouping: container) { $0.reference.column.value }
 
+               // Per-cell style index (Cell.styleIndex, i.e. the "s" attribute -- position
+               // into xl/styles.xml's cellXfs table). CoreXLSX's own parseStyles() throws
+               // on files with a <dxfs> section (conditional-formatting deltas whose
+               // numFmtId/fontId are legitimately absent -- CoreXLSX requires them anyway),
+               // so we don't resolve the actual font/fill color here. Instead we just keep
+               // the raw style index per cell; ViewController resolves it into real
+               // colors/sizes later using the app's own tolerant styles.xml parser
+               // (Service.testExtractStyle, extended to also read fonts/fills).
+               var styleIndexByLocation = [String: Int]()
+               styleIndexByLocation.reserveCapacity(container.count)
+               for cell in container {
+                   if let styleIndex = cell.styleIndex {
+                       styleIndexByLocation[cell.reference.description] = styleIndex
+                   }
+               }
 
                //mergedcells initialization
                let mergedCells = ws.mergeCells
@@ -377,11 +392,30 @@ class ExcelHelper{
                        }
                        valueContent.append(contentsOf: formulaCheck)//$0.value
                        valueLocation.append(contentsOf: columnCStrings.compactMap { $0.reference.description })
-                       
+
                    }
                }
-               
-               
+
+               // Anchor cells of merged ranges are often empty (no value) -- Excel still
+               // writes them into <sheetData> with just an "s" (style) attribute so the
+               // merged block's fill/border render correctly. valueLocation/stringLocation
+               // only capture cells with actual content, so such anchors were silently
+               // dropped and their fill never made it into "location"/"styleId" -- the
+               // merged rect then fell back to ViewController's plain-white default. Pull
+               // in just the anchor cells that carry a style but no value, as blank-content
+               // entries, so cellForItemAt() finds them.
+               if mergedCells?.items.first != nil {
+                   let existingContentRefs = Set(valueLocation + stringLocation)
+                   for item in mergedCells!.items {
+                       let anchorRef = item.reference.description.components(separatedBy: ":").first ?? ""
+                       if anchorRef.isEmpty || existingContentRefs.contains(anchorRef) { continue }
+                       guard styleIndexByLocation[anchorRef] != nil else { continue }
+                       valueLocation.append(anchorRef)
+                       valueContent.append("")
+                   }
+               }
+
+
                //heavy
                //print("content",valueContent+stringContent)
                
@@ -450,16 +484,24 @@ class ExcelHelper{
                let date = dateFormatter.string(from: today)
                
                
+               // Font size/color, background color, bold/italic/etc. and border/alignment
+               // are NOT resolved here -- only the raw per-cell style index is stored.
+               // Resolving fontId/fillId/borderId into actual colors/sizes happens later,
+               // app-side, in ViewController once Service.testExtractStyle (a tolerant,
+               // non-Codable styles.xml parser -- see that function for why) has populated
+               // the font/fill tables. Until that resolution pass runs, these default.
                var fontSize = [String]()
                var fontColor = [String]()
                var bgColor = [String]()
-               for i in 0..<finalL_value.count+finalL_string.count{
+               var styleId = [String]()
+               for locationKey in valueLocation + stringLocation {
                    fontSize.append(DEFAULT_FONTSIZE)
-                   bgColor.append("white")
                    fontColor.append("black")
+                   bgColor.append("white")
+                   styleId.append(styleIndexByLocation[locationKey].map { String($0) } ?? "")
                }
-               
-               
+
+
                let dict : [String:Any] = ["filename": "sheet" + String(wsIndex) + ".xml",
                                           "date": date,
                                           "content": valueContent+stringContent,
@@ -467,6 +509,7 @@ class ExcelHelper{
                                           "fontsize": fontSize,
                                           "fontcolor": fontColor,
                                           "bgcolor": bgColor,
+                                          "styleId": styleId,
                                           "rowsize": rowsize,
                                           "columnsize": columnsize+1,
                                           "customcellWidth":[String](),

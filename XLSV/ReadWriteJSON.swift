@@ -17,6 +17,11 @@ class ReadWriteJSON {
     var fontsize = [String]()
     var fontcolor = [String]()
     var bgcolor = [String]()
+    // Raw per-cell style index (Cell.styleIndex / the "s" attribute -- position into
+    // xl/styles.xml's cellXfs table), "" when a cell has no explicit style. Actual
+    // font/fill/border/alignment resolution from this index happens app-side using
+    // Service.testExtractStyle's tables, not at import time -- see ExcelHelper.readExcel2.
+    var styleId = [String]()
     var rowsize = Int()
     var columnsize = Int()
     var customcellWidth = [Double]()
@@ -123,6 +128,9 @@ class ReadWriteJSON {
                     case "bgcolor":
                         bgcolor = value as! [String]
                         break
+                    case "styleId":
+                        styleId = value as! [String]
+                        break
                     case "rowsize":
                         rowsize = value as! Int
                         break
@@ -141,7 +149,7 @@ class ReadWriteJSON {
                     case "cchLocation":
                         cchLocation = value as! [Int]
                         break
-                    
+
                     default:
                         break
                     }
