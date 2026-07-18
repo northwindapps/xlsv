@@ -677,548 +677,148 @@ class Service {
     }
 
     
-    //making now
-    func testUpdateString(url:URL? = nil, vIndex:String?, index:String?) -> String?{
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if let url2 = url{
-            //get style id
-            var styleIdx = -1
-            let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: String(index!))
-            
-            if (slocatinIdx != nil){
-                styleIdx = appd.excelStyleIdx[slocatinIdx!]
-            }
-            
-            let xmlData = try? Data(contentsOf: url2)
-            if xmlData == nil{
-                return nil
-            }
-            let parser = XMLParser(data: xmlData!)
-            // Set XMLParserDelegate
-            let delegate = CustomXMLParserDelegate()
-            parser.delegate = delegate
-            
-            
-            var patternFound = false
-            // Start parsing
-            if parser.parse() {
-                // Retrieve the extracted part
-                let extractedPart = delegate.extractedPart
-                //print(extractedPart)
-            }
-            
-            //regular expression
-            var xmlString = try? String(contentsOf: url2)
-            let backUpXmlString = xmlString
-            var xml = XMLHash.parse(xmlString!)
-            
-            let pattern4 = "<c[^>]*r=\"\(String(index!))\"[^>]*/>"
-            
-            // Create the regular expression object
-            guard let regex4 = try? NSRegularExpression(pattern: pattern4, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range4 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches4 = regex4.matches(in: xmlString!, range: range4)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches4.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    
-                    if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    }
-                    
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            
-            
-            
-            // Define the regular expression pattern D3
-            let pattern3 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"//"<c r=\"\(String(index!))\".*?/>"
-            //#"<c\s+r="B1".*?</c>"#
-            
-            // Create the regular expression object
-            guard let regex3 = try? NSRegularExpression(pattern: pattern3, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range3 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches3 = regex3.matches(in: xmlString!, range: range3)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches3.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    
-                    if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    }
-                    
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            
-            // Define the regular expression pattern D3
-            //let pattern = "<c.*?r=\"\(String(index!))\".*?>(.*?)</c>"
-            //#"<c\s+r="B1".*?</c>"#
-            let pattern = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
+    // Builds the <c r="..."> fragment for one cell, given its raw content and (if any)
+    // preserved style index. All insertion/replacement paths in testUpdateString below
+    // funnel through this so the formula/numeric/shared-string branching lives in one
+    // place instead of being duplicated at every call site (as the old version did).
+    // content is stored WITH its leading "=" for formula cells (e.g. "=A1+B2") -- xlsx's
+    // own <f> element never includes that marker, so it's dropped here via dropFirst().
+    private func buildCellElement(ref: String, styleIdx: Int, content: String, calculated: [String], calculatedLocation: [String], sharedStringIndex: Int?) -> String {
+        let styleAttr = styleIdx > 0 ? " s=\"\(styleIdx)\"" : ""
+        let trimmed = content.replacingOccurrences(of: " ", with: "")
 
-            
-            // Create the regular expression object
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-                fatalError("Failed to create regular expression")
+        if trimmed.hasPrefix("=") {
+            let formula = String(trimmed.dropFirst())
+            if let fIdx = calculatedLocation.firstIndex(of: ref), fIdx < calculated.count {
+                let cachedValue = calculated[fIdx]
+                let typeAttr = Double(cachedValue) == nil ? " t=\"str\"" : ""
+                return "<c r=\"\(ref)\"\(styleAttr)\(typeAttr)><f>\(formula)</f><v>\(cachedValue)</v></c>"
             }
-            
-            // Find matches in the XML string
-            let range = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches = regex.matches(in: xmlString!, range: range)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            if let match = matches.first{
-            //if let match = matches.first{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
-                    
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                    }
-                    
-                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    
-                    if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    }
-                    
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
-                    
-//                    xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: "")
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-            let pattern2 = "<c[^>]*r=\"\(String(index!))\"[^>]*>(.*?)</c>"
-
-            
-            // Create the regular expression object
-            guard let regex2 = try? NSRegularExpression(pattern: pattern2, options: []) else {
-                fatalError("Failed to create regular expression")
-            }
-            
-            // Find matches in the XML string
-            let range2 = NSRange(xmlString!.startIndex..<xmlString!.endIndex, in: xmlString!)
-            let matches2 = regex2.matches(in: xmlString!, range: range2)
-            
-            // Extract matching substrings
-            //TODO switch sharedString or value here or not?
-            for match in matches2{
-                if let matchRange = Range(match.range, in: xmlString!) {
-                    var matchingSubstring = xmlString![matchRange].description
-                    
-                    if matchingSubstring.contains("<row r"){
-                        matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                    }
-                    
-                    if matchingSubstring.hasSuffix("</row>"){
-                        matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                    }
-                    
-                    var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    
-                    if styleIdx > 0{
-                        newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                    }
-                    
-                    let cCnt = matchingSubstring.components(separatedBy: "r=").count
-                    if cCnt == 2{
-                        xmlString = xmlString?.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    }
-                    
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString!) {
-                        print("XML is valid.")
-                        return xmlString
-                    } else {
-                        print("XML is not valid.")
-                        //print(xmlString)
-                        return backUpXmlString
-                    }
-                }
-            }
-            
-           
-                     
-            //get the list of locations
-            do {
-                let row = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                
-                // Retrieve all row tags
-                let patternRow = "<row r=\"\(row)\".*?>(.*?)</row>"
-                let regexRow = try NSRegularExpression(pattern: patternRow, options: [])
-
-                // Find all matches in the XML snippet
-                let matchesRow = regexRow.matches(in: xmlString!, options: [], range: NSRange(location: 0, length: xmlString!.utf16.count))
-                
-                var targetRowTag = ""
-                for match in matchesRow {
-                    // Extract the row number from the match
-                    let nsRange = match.range(at: 1) // Use the capture group index
-                    if let range = Range(nsRange, in: xmlString!) {
-                        if let matchRange = Range(match.range, in: xmlString!) {
-                            targetRowTag = String(xmlString![matchRange]).description
-                            if targetRowTag.contains("/><row"){
-                                let items = targetRowTag.components(separatedBy: "/><row")
-                                if (items.first != nil){
-                                    targetRowTag = items.first! + "/>"
-                                    print(targetRowTag)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Create a regular expression pattern to match the r attribute C4,C44
-                let pattern = #"r=\"([A-Z]+\d+)\""#
-                
-                // Create a regular expression object
-                let regex = try NSRegularExpression(pattern: pattern, options: [])
-                
-                // Find all matches in the XML snippet
-                let matches = regex.matches(in: targetRowTag, options: [], range: NSRange(location: 0, length: targetRowTag.utf16.count))
-                
-                // Extract the r values from the matches
-                var rValues = matches.map { match -> String in
-                    guard let range = Range(match.range(at: 1), in: xmlString!) else {
-                        return ""
-                    }
-                    return String(targetRowTag[range])
-                }
-                
-                // Output the list of r values D1, G1
-                //rValues.append(String(index!))
-                
-                let rValues2 = rValues.sorted { (r1, r2) -> Bool in
-                    // Extract the alphabetic part of the cell reference
-                    let alphabeticPart1 = r1.prefix(while: { $0.isLetter })
-                    let alphabeticPart2 = r2.prefix(while: { $0.isLetter })
-                    
-                    // If the alphabetic parts are different, compare them
-                    if alphabeticPart1 != alphabeticPart2 {
-                        return alphabeticPart1 < alphabeticPart2
-                    }
-                    
-                    // If the alphabetic parts are the same, compare the numeric parts
-                    let numericPart1 = Int(r1.drop(while: { !$0.isNumber })) ?? 0
-                    let numericPart2 = Int(r2.drop(while: { !$0.isNumber })) ?? 0
-                    
-                    return numericPart1 < numericPart2
-                }
-                
-                //is it first
-                if let idx = rValues2.firstIndex(of: String(index!)) {
-                    print("rowindex",idx)
-                    if idx == rValues2.count-1{
-                        var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                        
-                        if styleIdx > 0{
-                            newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                        }
-                        
-                        var replacing = targetRowTag.replacingOccurrences(of: "</row>", with: "")
-                        replacing = replacing + newElement + "</row>"
-                        let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
-                        print(replaced)
-                        let validator = XMLValidator()
-                        if validator.validateXML(xmlString: replaced!) {
-                            print("XML is valid.")
-                            return replaced
-                        } else {
-                            print("XML is not valid.")
-                            print(replaced)
-                            return backUpXmlString
-                        }
-                    }else{
-                    // Define the regular expression pattern D3
-                        
-                    let pattern1 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*>(.*?)</c>"
-                    let pattern2 = "<c[^>]*r=\"\(rValues2[idx+1])\"[^>]*/>" //#"<c\s+r="B1".*?</c>"#
-                    
-                    let combinedPattern = "\(pattern1)|\(pattern2)"
-
-                        // Create the regular expression object
-                        guard let regex2 = try? NSRegularExpression(pattern: combinedPattern, options: []) else {
-                            fatalError("Failed to create regular expression")
-                        }
-                    
-                    // Find matches in the XML string
-                    let range = NSRange(targetRowTag.startIndex..<targetRowTag.endIndex, in: targetRowTag)
-                    let matches = regex2.matches(in: targetRowTag, range: range)
-                    
-                    // Extract matching substrings
-                        if let match = matches.first{
-                            if let matchRange = Range(match.range, in: targetRowTag) {
-                                var matchingSubstring = targetRowTag[matchRange].description
-                                
-                                if matchingSubstring.contains("<row r"){
-                                    matchingSubstring = matchingSubstring.components(separatedBy: "<row r").first!
-                                }
-                                
-                                if matchingSubstring.hasSuffix("</row>"){
-                                    matchingSubstring = matchingSubstring.replacingOccurrences(of: "</row>", with: "")
-                                }
-                                
-                                let modified = matchingSubstring.replacingOccurrences(of: "<c", with: "!<c")
-                                var items = modified.components(separatedBy: "!")
-                                //first is always ""
-                                let item = items[1] ?? ""
-                                print("item", item)
-                                
-                                var newElement = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                                if styleIdx > 0{
-                                    newElement = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                                }
-                                
-                                // Find the correct position to insert the new element
-                                if let range = xmlString?.range(of: item) {
-                                    // Insert the new element after the element with r="J2"
-                                    xmlString?.insert(contentsOf: newElement, at: range.lowerBound)
-                                    let validator = XMLValidator()
-                                    if validator.validateXML(xmlString: xmlString!) {
-                                        print("XML is valid.")
-                                    } else {
-                                        print("XML is not valid.")
-                                        //print(xmlString)
-                                        return backUpXmlString
-                                    }
-                                }
-                            }
-                        }
-                    }
-                
-                }else{
-                    //first c tag with sharedstring idx == nil no row yet
-                    var sortedRowstr = ""
-                    var sortedRowcnt = [String]()
-                    var sortedRowInt = [Int]()
-                    if targetRowTag == ""{
-                        var newElement = "<sheetData><row r=\"\(row)\"><c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
-                        if styleIdx > 0{
-                            newElement = "<sheetData><row r=\"\(row)\"><c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c></row>"
-                        }
-                        
-                        var replaced = xmlString
-                        
-                        if replaced!.contains("<sheetData/>"){
-                            replaced = replaced!.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
-                        }
-                        
-                        replaced = replaced!.replacingOccurrences(of: "<sheetData>", with: newElement)
-                        
-                        
-                        
-                        xml = XMLHash.parse(replaced!)
-                        
-                        if let sortedRows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children{
-                            // Sort the rows based on some criteria (e.g., the value of the "r" attribute of cells)
-                            let sortedCells = sortedRows.sorted { (row1, row2) -> Bool in
-                                guard
-                                      let text1 = row1.element?.attribute(by: "r")?.text,
-                                      let text2 = row2.element?.attribute(by: "r")?.text
-                                       
-                                else {
-                                    return false
-                                }
-                                print("guard",text1)
-                                print("gurard",text2)
-                                return text1 < text2
-                            }
-                            
-                            // Use the sorted cells
-                            // For example, print them
-                            for cell in sortedCells {
-                                sortedRowstr += cell.description
-                                let idx = cell.element?.attribute(by: "r")?.text.description
-                                sortedRowcnt.append(cell.description)
-                                sortedRowInt.append(Int(idx!)!)
-                            }
-                            print("row",sortedRowstr)
-                        }
-
-                        let sheetDataSubstring = extractSheetDataSubstring(from: replaced!)
-                        if sheetDataSubstring == nil{
-                            return backUpXmlString
-                        }
-                        if (sheetDataSubstring != nil) {
-                            let zippedArray = zip(sortedRowcnt, sortedRowInt)
-
-                            // Sort the zipped array based on the second element (sortedRowInt)
-                            let sortedZippedArray = zippedArray.sorted { $0.1 < $1.1 }
-
-                            // Extract the sorted strings from the sorted zipped array
-                            let sortedStrings = sortedZippedArray.map { $0.0 }
-                            
-                            let rowSortedStr = replaced!.replacingOccurrences(of: sheetDataSubstring!, with:"<sheetData>" + sortedStrings.joined(separator: "") + "</sheetData>")
-                            xml = XMLHash.parse(rowSortedStr)
-                        }
-                        
-                        let validator = XMLValidator()
-                        
-                        if validator.validateXML(xmlString:xml.description) {
-                            print("XML is valid.")
-                            return xml.description
-                        } else {
-                            print("XML is not valid.")
-                            return backUpXmlString
-                        }
-                    }else{
-                        //targetRowTag   "<row r=\"1\"><c r=\"B1\" row exists t=\"s\"><v>78</v></c></row>"
-                        var rowPart = targetRowTag
-                        if rowPart.hasSuffix("/>"){
-                            rowPart = rowPart.replacingOccurrences(of: "/>", with: ">")
-                        }
-                        
-                        //rowPart = rowPart.components(separatedBy: "><c").first!
-                        if !rowPart.hasSuffix(">"){
-                            rowPart = rowPart + ">"
-                        }
-                        let rowNumber = String(index!).components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                        var newElement2 = "<c r=\"\(String(index!))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                        
-                        if styleIdx > 0{
-                            newElement2 = "<c r=\"\(String(index!))\" s=\"\(String(styleIdx))\" t=\"s\"><v>\(String(vIndex!))</v></c>"
-                        }
-                        
-                        var replacing = rowPart.replacingOccurrences(of: "</row>", with: "")
-                        replacing = replacing + newElement2 + "</row>"
-                        let replaced = xmlString?.replacingOccurrences(of: targetRowTag, with: replacing)
-                        
-                        let validator0 = XMLValidator()
-                        if validator0.validateXML(xmlString: replaced!) {
-                            print("XML is valid.")
-                        } else {
-                            print("XML is not valid.")
-                            //print(xmlString)
-                            return backUpXmlString
-                        }
-                        let old = xmlString
-                        rowPart = ""
-                        xml = XMLHash.parse(replaced!)
-                        if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
-                            // Iterate through the rows
-                            for row in rows {
-                                // Sort the child elements (cells) within each row based on some criteria
-                                let sortedCells = row.children.sorted { (cell1: XMLIndexer, cell2: XMLIndexer) -> Bool in
-                                    // Compare cells based on some criteria (e.g., column index)
-                                    if let name1 = cell1.element?.attribute(by: "r")?.text, let name2 = cell2.element?.attribute(by: "r")?.text {
-                                        let indices1 = extractIndices(from: name1)
-                                        let indices2 = extractIndices(from: name2)
-                                        if indices1?.row.description == rowNumber{
-                                            
-                                            // Rows are equal, compare columns
-                                            if indices1!.column < indices2!.column{
-                                                return name1 < name2
-                                            }
-                                        }
-                                    }
-                                        
-                                    return false // Modify as per your sorting criteria
-                                }
-                                
-                                // Convert sortedCells back to an array of XMLIndexer objects
-                                let sortedCellsArray: [XMLIndexer] = sortedCells.map { $0 }
-
-                                
-                                // Print the sorted cells (optional)
-                                for cell in sortedCellsArray {
-                                    let name1 = (cell.element?.attribute(by: "r")?.text)!
-                                    let indices1 = extractIndices(from: name1)
-                                    if indices1?.row.description == rowNumber{
-                                        print(cell)
-                                        rowPart += cell.description
-                                    }
-                                }
-                            }
-                        } else {
-                            print("No rows found or there are no children under the specified path")
-                        }
-                        
-                        rowPart = rowPart.replacingOccurrences(of: "</row>", with: "")
-                        let final = old!.replacingOccurrences(of: targetRowTag, with: "<row r=\"\(row)\">" + rowPart + "</row>")
-                        let validator = XMLValidator()
-                        if validator.validateXML(xmlString: final) {
-                            print("XML is valid.")
-                            return final
-                        } else {
-                            print("XML is not valid.")
-                            print("xmlDESC",final)
-                            return backUpXmlString
-                        }
-                    }
-                }
-                
-            } catch {
-                print("Error: \(error)")
-            }
-            
-            
+            return "<c r=\"\(ref)\"\(styleAttr)><f>\(formula)</f></c>"
+        } else if Double(trimmed) != nil {
+            return "<c r=\"\(ref)\"\(styleAttr)><v>\(trimmed)</v></c>"
+        } else if let ssIdx = sharedStringIndex {
+            return "<c r=\"\(ref)\"\(styleAttr) t=\"s\"><v>\(ssIdx)</v></c>"
+        } else {
+            return "<c r=\"\(ref)\"\(styleAttr) t=\"s\"><v>\(content)</v></c>"
         }
-        return nil
+    }
+
+    // Patches a single cell into sheetN.xml's <sheetData>, leaving every other byte
+    // (row ht=/spans=/customFormat=/thickBot=, sibling cells' s= style, shared-formula
+    // compression, style-only placeholder cells) untouched -- as opposed to
+    // testUpdateStringBox's old behavior of rebuilding the whole <sheetData> from the
+    // whole-sheet content/locationInExcel arrays on every single edit.
+    func testUpdateString(url: URL? = nil, content: String, index: String?, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = []) -> String? {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        guard let url2 = url, let index = index else { return nil }
+
+        // Preserve the cell's original style index across the rewrite -- same
+        // parallel-array lookup already used live by testDeleteRows/testAddRows/testDeleteCols.
+        var styleIdx = -1
+        if let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: index) {
+            styleIdx = appd.excelStyleIdx[slocatinIdx]
+        }
+
+        guard var xmlString = try? String(contentsOf: url2) else { return nil }
+        let backUpXmlString = xmlString
+
+        let newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
+
+        // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
+        // -- splice in just that one element. (?!\d) guards against "B1" also matching
+        // "B10"/"B11" (the same collision testDeleteStringBulk already guards against).
+        let existingPattern = "<c[^>]*r=\"\(index)\"(?!\\d)[^>]*(?:/>|>.*?</c>)"
+        if let regex = try? NSRegularExpression(pattern: existingPattern, options: []) {
+            let range = NSRange(xmlString.startIndex..., in: xmlString)
+            if let match = regex.firstMatch(in: xmlString, range: range),
+               let matchRange = Range(match.range, in: xmlString) {
+                let matchingSubstring = String(xmlString[matchRange])
+                if matchingSubstring.components(separatedBy: "r=").count == 2 {
+                    xmlString = xmlString.replacingOccurrences(of: matchingSubstring, with: newElement)
+                    let validator = XMLValidator()
+                    if validator.validateXML(xmlString: xmlString) {
+                        return xmlString
+                    } else {
+                        return backUpXmlString
+                    }
+                }
+            }
+        }
+
+        // Case 2/3: the cell doesn't exist yet -- find its row, then either insert the
+        // cell in sorted column order within that row, or create the row itself (in
+        // sorted row order) if the row is entirely new.
+        let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        guard let regexRow = try? NSRegularExpression(pattern: "<row r=\"\(rowNumber)\"(?!\\d)[^>]*>(.*?)</row>|<row r=\"\(rowNumber)\"(?!\\d)[^>]*/>", options: []) else {
+            return backUpXmlString
+        }
+        let rowRange = NSRange(xmlString.startIndex..., in: xmlString)
+        let targetRowTag = regexRow.firstMatch(in: xmlString, range: rowRange)
+            .flatMap { Range($0.range, in: xmlString) }
+            .map { String(xmlString[$0]) } ?? ""
+
+        if targetRowTag.isEmpty {
+            // Row doesn't exist at all -- insert a brand-new <row> right after the
+            // <sheetData> open tag, then re-sort all rows by their r= attribute via
+            // XMLHash so it lands in numeric row order.
+            var replaced = xmlString
+            if replaced.contains("<sheetData/>") {
+                replaced = replaced.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
+            }
+            replaced = replaced.replacingOccurrences(of: "<sheetData>", with: "<sheetData><row r=\"\(rowNumber)\">\(newElement)</row>")
+
+            guard let sheetDataSubstring = extractSheetDataSubstring(from: replaced) else { return backUpXmlString }
+            let xml = XMLHash.parse(replaced)
+            guard let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children else {
+                return backUpXmlString
+            }
+            let sortedRows = rows.sorted { r1, r2 -> Bool in
+                guard let t1 = r1.element?.attribute(by: "r")?.text, let n1 = Int(t1),
+                      let t2 = r2.element?.attribute(by: "r")?.text, let n2 = Int(t2) else { return false }
+                return n1 < n2
+            }
+            let rebuiltSheetData = "<sheetData>" + sortedRows.map { $0.description }.joined() + "</sheetData>"
+            let final = replaced.replacingOccurrences(of: sheetDataSubstring, with: rebuiltSheetData)
+            let validator = XMLValidator()
+            return validator.validateXML(xmlString: final) ? final : backUpXmlString
+        } else {
+            // Row exists but this cell doesn't -- append it, then re-sort just this
+            // row's cells by column so the insertion lands in the right place.
+            var rowPart = targetRowTag
+            if rowPart.hasSuffix("/>") {
+                rowPart = String(rowPart.dropLast(2)) + ">"
+            }
+            if !rowPart.hasSuffix(">") {
+                rowPart += ">"
+            }
+            let opened = rowPart.replacingOccurrences(of: "</row>", with: "") + newElement + "</row>"
+            let candidate = xmlString.replacingOccurrences(of: targetRowTag, with: opened)
+
+            let validator0 = XMLValidator()
+            guard validator0.validateXML(xmlString: candidate) else { return backUpXmlString }
+
+            var rebuiltRowPart = ""
+            let xml = XMLHash.parse(candidate)
+            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                for row in rows {
+                    guard row.element?.attribute(by: "r")?.text == rowNumber else { continue }
+                    let sortedCells = row.children.sorted { c1, c2 -> Bool in
+                        guard let n1 = c1.element?.attribute(by: "r")?.text, let i1 = extractIndices(from: n1),
+                              let n2 = c2.element?.attribute(by: "r")?.text, let i2 = extractIndices(from: n2) else { return false }
+                        return i1.column < i2.column
+                    }
+                    for cell in sortedCells {
+                        rebuiltRowPart += cell.description
+                    }
+                }
+            }
+
+            guard !rebuiltRowPart.isEmpty else { return validator0.validateXML(xmlString: candidate) ? candidate : backUpXmlString }
+            let final = candidate.replacingOccurrences(of: opened, with: "<row r=\"\(rowNumber)\">" + rebuiltRowPart + "</row>")
+            let validator = XMLValidator()
+            return validator.validateXML(xmlString: final) ? final : backUpXmlString
+        }
     }
     
     //making row
@@ -2404,7 +2004,11 @@ class Service {
                         
                         if cell.content.hasPrefix("=") {
                             //Formula
-                            let formula = cell.content.replacingOccurrences(of: "=", with: "")
+                            // .replacingOccurrences(of: "=", with: "") strips every "=" in the
+                            // string, not just the leading marker -- corrupts any formula with
+                            // an internal comparison (e.g. IF(MONTH(B13)=MONTH(B13+1), ...)).
+                            // Only the first character is the marker.
+                            let formula = String(cell.content.dropFirst())
                             sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f></c>"
                         } else {
                             //Value
@@ -2652,102 +2256,22 @@ class Service {
                        }
                     }
                     
-                    var oldSheetDataPart = ""
-                    let sheetData = try? Data(contentsOf: worksheetXMLURL)
-                    if sheetData == nil{
+                    // Patches just the one edited cell (cellIdxString) into sheetN.xml in
+                    // place -- preserves every other byte (row ht=/spans=/thickBot=,
+                    // sibling cells' s= style, shared-formula compression, style-only
+                    // placeholder cells) instead of rebuilding the whole <sheetData> from
+                    // the whole-sheet content/locationInExcel arrays on every edit.
+                    guard let patchedXML = testUpdateString(url: worksheetXMLURL, content: input, index: cellIdxString, sharedStringIndex: sharedStringIdAndString.0, calculated: calculated, calculatedLocation: calculated_location) else {
                         return false
                     }
-                    
-                    let xmlString = String(data: sheetData!, encoding: .utf8) ?? ""
-                    let pattern = "<sheetData.*?>.*?</sheetData>|<sheetData ?/>"
-                    if let range = xmlString.range(of: pattern, options: .regularExpression) {
-                        oldSheetDataPart = String(xmlString[range])
-                    } else {
+                    do {
+                        try patchedXML.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+                    } catch {
+                        print("failed to update sheetdata")
                         return false
                     }
-                    
-                    var cells: [ExcelCell] = []
-                    for i in 0..<locationInExcel.count {
-                        cells.append(ExcelCell(excelRef: locationInExcel[i], content: content[i]))
-                    }
-                    
-                  
-                    cells.sort {
-                        if $0.rowNumber != $1.rowNumber {
-                            return $0.rowNumber < $1.rowNumber //ASC
-                        }
-                        return $0.columnName < $1.columnName // ASC(A, B, C...)
-                    }
-                    
-                    print(cells)
-                    let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                    
-                    let currentAry = testStringUniqueAry(url: shardStringXMLURL)
-                    
-                    var sheetXmlString = "<sheetData>"
-                    var lastRowNumber = -1
-                
-                    for cell in cells {
-                        
-                        if cell.rowNumber != lastRowNumber {
-                            if lastRowNumber != -1 {
-                                sheetXmlString += "</row>"
-                            }
-                            sheetXmlString += "<row r=\"\(cell.rowNumber)\">"
-                            lastRowNumber = cell.rowNumber
-                        }
-                        //=A2,=3-1
-                        if cell.content.replacingOccurrences(of: " ", with: "").hasPrefix("=") {
-                            //Formula
-                            let formula = cell.content.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "=", with: "")
-                            let fvalueIndex = calculated_location.firstIndex(of: cell.excelRef)
-//                            var fvalue = "0"
-//                            if fvalueIndex != nil{
-//                                fvalue = calculated[fvalueIndex!]
-//                            }
-                            //it's not a formula just a value
-                            if(Double(formula) != nil){
-                                sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(formula)</v></c>"
-                            }else{
-                                sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f></c>"
-                            }
-                        } else {
-                        //Value
-                        //Txt
-                        //3,4,5,value
-                        if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
-                            //value
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
-                        }
-                        else{
-                            //text
-                            let index = currentAry?.firstIndex(of: cell.content)
-                            if ((index != nil)){
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
-                            }else{
-                                print("something went wrong in data input, not value, not text, not formula")
-                            }
-                        }
-                    }
-                    }
-                    
-                    if lastRowNumber != -1 {
-                        sheetXmlString += "</row>"
-                    }
-                    sheetXmlString += "</sheetData>"
-                
-               
-                    if(oldSheetDataPart != ""){
-                        let updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
-                        do{
-                            try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
-                        } catch{
-                            print("failed to update sheetdata")
-                            return false
-                        }
-                        print("sheet data",updatedString)
-                        print("shared string",sharedStringIdAndString)
-                    }
+                    print("sheet data",patchedXML)
+                    print("shared string",sharedStringIdAndString)
                     check = true
                 }else{
                     //delete values scenario
