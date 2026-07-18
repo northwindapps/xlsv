@@ -528,10 +528,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
             cell.label2?.numberOfLines = 0
-            // Reset here so a reused cell that was previously a row/column header
-            // (which turns this on below) doesn't carry auto-shrinking into a
-            // regular content cell.
-            cell.label2?.adjustsFontSizeToFitWidth = false
+            // Apply to every cell, not just row/column headers -- UILabel only
+            // honors adjustsFontSizeToFitWidth when numberOfLines == 1, so this
+            // is a no-op on multi-line wrapped content cells (numberOfLines stays
+            // 0 above) and only actually shrinks single-line cell content that
+            // would otherwise clip/overflow its column width.
+            cell.label2?.adjustsFontSizeToFitWidth = true
+            cell.label2?.minimumScaleFactor = 0.4
 
             removePanGestureRecognizerFromCell(cell)
 
