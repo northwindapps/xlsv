@@ -13,13 +13,15 @@ class CustomCollectionViewCell: UICollectionViewCell {
    
     
     @IBOutlet weak var label2: UIMarginLabel!
+    private let defaultGridBorderWidth: CGFloat = 0
     var indexPath: IndexPath? {
             didSet {
             }
         }
 
-    // Per-side xlsx border accents, drawn as thin sublayers over the cell's own
-    // uniform 0.5pt gridline border (set below) since CALayer only supports one
+    // Per-side xlsx border accents. When any imported border is present, the
+    // default gridline is hidden so the two systems do not visually stack.
+    // CALayer only supports one
     // borderWidth/borderColor for all four edges at once -- these are independent
     // rects positioned in layoutSubviews() so they track the cell's actual size.
     private let leftBorderLayer = CALayer()
@@ -43,8 +45,9 @@ class CustomCollectionViewCell: UICollectionViewCell {
 
 
     func setup() {
-        self.layer.borderWidth = 0.5
-        self.layer.borderColor = UIColor.gray.cgColor
+        self.layer.borderWidth = defaultGridBorderWidth
+        // self.layer.borderColor = UIColor(white: 0.85, alpha: 1.0).cgColor
+        self.layer.borderColor = UIColor.white.cgColor
         //updateBorder()
         for edgeLayer in [leftBorderLayer, rightBorderLayer, topBorderLayer, bottomBorderLayer] {
             edgeLayer.isHidden = true
@@ -63,12 +66,15 @@ class CustomCollectionViewCell: UICollectionViewCell {
         rightBorderWidth = applyEdge(right, to: rightBorderLayer)
         topBorderWidth = applyEdge(top, to: topBorderLayer)
         bottomBorderWidth = applyEdge(bottom, to: bottomBorderLayer)
+        let hasExcelBorder = leftBorderWidth > 0 || rightBorderWidth > 0 || topBorderWidth > 0 || bottomBorderWidth > 0
+        layer.borderWidth = hasExcelBorder ? 0 : defaultGridBorderWidth
         setNeedsLayout()
     }
 
     @discardableResult
     private func applyEdge(_ spec: (width: CGFloat, color: UIColor)?, to edgeLayer: CALayer) -> CGFloat {
-        guard let spec = spec, spec.width > 0 else {
+        let minimumVisibleWidth = 1 / UIScreen.main.scale
+        guard let spec = spec, spec.width >= minimumVisibleWidth else {
             edgeLayer.isHidden = true
             return 0
         }
@@ -86,7 +92,4 @@ class CustomCollectionViewCell: UICollectionViewCell {
     }
 
 }
-
-
-
 

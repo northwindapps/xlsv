@@ -59,7 +59,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         }
 
         var excel_cell_width_margin = 30
-        
+
         if (UserDefaults.standard.object(forKey: "cellSize") != nil) {
             let size = UserDefaults.standard.object(forKey: "cellSize") as! Int
             switch size {
@@ -101,15 +101,23 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                     default:
                         break
                     }
-            
+
         }
-        
-        
+
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         merged = appd.diff_start_index //["1,1","5,5"]
         
         if appd.CELL_WIDTH_EXCEL_GSHEET > 100{
             CELL_WIDTH = appd.CELL_WIDTH_EXCEL_GSHEET
+        }
+
+        if (UserDefaults.standard.object(forKey: "GLOBAL_CELL_WIDTH") != nil) {
+            CELL_WIDTH = UserDefaults.standard.double(forKey: "GLOBAL_CELL_WIDTH")
+            CELL_HEIGHT = UserDefaults.standard.double(forKey: "GLOBAL_CELL_HEIGHT")
+            let indexSize = UserDefaults.standard.double(forKey: "GLOBAL_INDEX_SIZE")
+            INDEX_WIDTH = indexSize
+            INDEX_HEIGHT = indexSize
+            excel_cell_width_margin = Int(indexSize)
         }
         
         

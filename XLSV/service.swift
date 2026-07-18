@@ -204,18 +204,37 @@ class Service {
                     var borderTopColors = [String]()
                     var borderBottomStyles = [String]()
                     var borderBottomColors = [String]()
+                    var debugBorderColorLogCount = 0
                     func borderSideColor(_ sideElement: XMLIndexer) -> String {
-                        guard let colorEl = sideElement.children.first(where: { $0.element?.name == "color" }) else { return "" }
+                        guard let colorEl = sideElement.children.first(where: { $0.element?.name == "color" }) else {
+                            if debugBorderColorLogCount < 15 {
+                                print("DEBUG-BORDERCOLOR no <color> child at all -- allAttributes=\(sideElement.element?.allAttributes.mapValues { $0.text } ?? [:])")
+                                debugBorderColorLogCount += 1
+                            }
+                            return ""
+                        }
+                        var result = ""
                         if let rgb = colorEl.element?.allAttributes["rgb"]?.text {
-                            return hexColorString(fromARGB: rgb) ?? ""
+                            result = hexColorString(fromARGB: rgb) ?? ""
+                            if debugBorderColorLogCount < 15 {
+                                print("DEBUG-BORDERCOLOR rgb=\(rgb) -> \(result)")
+                                debugBorderColorLogCount += 1
+                            }
                         } else if let themeStr = colorEl.element?.allAttributes["theme"]?.text,
                                   let themeIdx = Int(themeStr),
                                   themeIdx >= 0, themeIdx < appd.themeColors.count,
                                   !appd.themeColors[themeIdx].isEmpty {
                             let tint = Double(colorEl.element?.allAttributes["tint"]?.text ?? "0") ?? 0
-                            return applyThemeTint(hex: appd.themeColors[themeIdx], tint: tint)
+                            result = applyThemeTint(hex: appd.themeColors[themeIdx], tint: tint)
+                            if debugBorderColorLogCount < 15 {
+                                print("DEBUG-BORDERCOLOR theme=\(themeStr) tint=\(tint) themeColors[\(themeIdx)]=\(appd.themeColors[themeIdx]) -> \(result)")
+                                debugBorderColorLogCount += 1
+                            }
+                        } else if debugBorderColorLogCount < 15 {
+                            print("DEBUG-BORDERCOLOR <color> present but neither rgb nor usable theme -- attrs=\(colorEl.element?.allAttributes.mapValues { $0.text } ?? [:])")
+                            debugBorderColorLogCount += 1
                         }
-                        return ""
+                        return result
                     }
                     // Assuming `xml` is your XML object
                     for child in xml.children.first!.children.first(where: { $0.element?.name == "borders" })!.children{
@@ -448,6 +467,7 @@ class Service {
                            "accent4", "accent5", "accent6", "hlink", "folHlink"]
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.themeColors = indexOrder.map { schemeColors[$0] ?? "" }
+        print("DEBUG-THEME schemeColors=\(schemeColors) resolvedThemeColors(index0..11)=\(appd.themeColors)")
     }
 
     // Strips a namespace prefix ("a:dk1" -> "dk1") since XMLHash's element name may or

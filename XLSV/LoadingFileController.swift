@@ -53,15 +53,14 @@ func showAnimate()
     
     if appd.imported_xlsx_file_path != "" {
         print("yourExcelfile",appd.imported_xlsx_file_path)
-        let ehp = ExcelHelper()
-        ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
-        // Do any additional setup after loading the view.
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        // readExcel2/testReadXMLSandBox used to run here too, but their result was
+        // never read -- the freshly-presented ViewController below immediately
+        // redoes the exact same full unzip+parse itself in its own viewDidLoad
+        // (loadExcelSheet), since it's a new instance with empty location/content
+        // arrays. Running it twice just doubled the ~200-350ms parse cost on
+        // every settings change (cell size, etc.) for no benefit.
         print("end LoadingFileController")
-        
+
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
         
         targetViewController.isExcel = true

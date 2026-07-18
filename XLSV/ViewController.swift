@@ -47,6 +47,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @IBOutlet weak var fileTitle: UILabel!
     
     @IBOutlet weak var FileCollectionView: UICollectionView!
+    @IBOutlet weak var cellSizeSlicer: UISlider!
     var KEYBOARDLOCATION:CGFloat = 0.0
     @objc var List: Array<AnyObject> = []
     
@@ -151,8 +152,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var left_bool = false
     
     var selection_bool = false
-    
-    
+
     @IBOutlet weak var label: UILabel!
     
     @IBOutlet weak var myCollectionView: UICollectionView!
@@ -297,24 +297,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
 
     // Maps an xlsx <left/right/top/bottom style="..."> name to a screen border
-    // width. Values are scaled down from Excel's own relative weights (hair <
-    // thin < medium < thick) to stay legible against this app's dense grid --
-    // dash/dot patterns (dashed, dotted, dashDot, ...) aren't rendered as dashes
-    // yet, just as a solid line at their base weight.
+    // width. Scaled down further from Excel's own relative weights (hair < thin
+    // < medium < thick) since this app runs on phone/tablet screens, where
+    // Excel-scale border weights read as disproportionately thick against a much
+    // smaller, denser grid -- dash/dot patterns (dashed, dotted, dashDot, ...)
+    // aren't rendered as dashes yet, just as a solid line at their base weight.
     func borderWidth(forStyle style: String) -> CGFloat {
         switch style {
         case "hair":
-            return 0.125
+            return 0.0
         case "thin", "dashed", "dotted", "dashDot", "dashDotDot", "slantDashDot":
-            return 0.25
+            return 0.0
         case "medium", "mediumDashed", "mediumDashDot", "mediumDashDotDot":
-            return 1.5
+            return 0.015
         case "thick":
-            return 2.5
+            return 0.025
         case "double":
-            return 2.0
+            return 0.02
         default:
-            return style.isEmpty ? 0 : 0.5
+            return style.isEmpty ? 0 : 0.01
         }
     }
 
@@ -425,6 +426,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     if !cellBorderLeftStyle[i].isEmpty || !cellBorderRightStyle[i].isEmpty ||
                         !cellBorderTopStyle[i].isEmpty || !cellBorderBottomStyle[i].isEmpty {
                         debugWithBorder += 1
+                        if debugWithBorder <= 10 {
+                            print("DEBUG-BORDERFINAL i=\(i) borderId=\(borderId)",
+                                  "left=(\(cellBorderLeftStyle[i]),\(cellBorderLeftColor[i]))",
+                                  "right=(\(cellBorderRightStyle[i]),\(cellBorderRightColor[i]))",
+                                  "top=(\(cellBorderTopStyle[i]),\(cellBorderTopColor[i]))",
+                                  "bottom=(\(cellBorderBottomStyle[i]),\(cellBorderBottomColor[i]))")
+                        }
                     }
                 }
             }
@@ -520,7 +528,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
             cell.label2?.numberOfLines = 0
-            
+            // Reset here so a reused cell that was previously a row/column header
+            // (which turns this on below) doesn't carry auto-shrinking into a
+            // regular content cell.
+            cell.label2?.adjustsFontSizeToFitWidth = false
+
             removePanGestureRecognizerFromCell(cell)
 
             let key = String(indexPath.item)+","+String(indexPath.section)
@@ -627,17 +639,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             //Border
+            cell.label2?.layer.borderWidth = 0
             if cursor == key {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
-                cell.label2?.layer.borderWidth = 3.0
+                cell.label2?.layer.borderWidth = 2.0
             }else if(changeaffected.contains(key)){
 
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
-                cell.label2?.layer.borderWidth = 3.0
-            }
-            else{
-                cell.label2?.layer.borderColor = UIColor.orange.cgColor
-                cell.label2?.layer.borderWidth = 0.5
+                cell.label2?.layer.borderWidth = 2.0
             }
 
 
@@ -657,32 +666,42 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.textColor = UIColor.black
                 
                 if indexPath.item == 0{
-                    
+
                     if indexPath.section > 0{
                         cell.label2?.text = String(indexPath.section)
                         rowinNumber.append("r" + String(indexPath.section))
                     }
-                    
+
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
                     cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
+                    // The row-number/column-letter columns share INDEX_WIDTH/
+                    // INDEX_HEIGHT (see cellSizeSlicer), which can shrink well
+                    // below what a fixed font size needs for 2-3 digit row
+                    // numbers -- shrink the text to fit instead of clipping it.
+                    cell.label2?.adjustsFontSizeToFitWidth = true
+                    cell.label2?.minimumScaleFactor = 0.4
+                    cell.label2?.numberOfLines = 1
                 }else if indexPath.section == 0{
-                    
-                    
-                    
+
+
+
                     if indexPath.item > 0{//0,0 == greyzone
                         cell.label2?.text = getExcelColumnName(columnNumber: indexPath.item)//ABCDE...
                         columninNumber.append(getExcelColumnName(columnNumber: indexPath.item))
                     }
-                    
+
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
+                    cell.label2?.adjustsFontSizeToFitWidth = true
+                    cell.label2?.minimumScaleFactor = 0.4
+                    cell.label2?.numberOfLines = 1
                 }
             }
 
@@ -716,9 +735,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     guard i < style.count, !style[i].isEmpty else { return nil }
                     let width = borderWidth(forStyle: style[i])
                     guard width > 0 else { return nil }
+                    // xlsx's own default for a border with no explicit color is
+                    // <color auto="1"/> ("automatic"), which Excel itself renders as
+                    // black -- but a flat black line reads as heavier/harsher than
+                    // this app wants on a phone/tablet screen, so unspecified-color
+                    // borders render as a soft gray instead of true black.
                     let edgeColor = (i < color.count && !color[i].isEmpty)
-                        ? namedCellColor(color[i], default: UIColor.black)
-                        : UIColor.black
+                        ? namedCellColor(color[i], default: UIColor(white: 0.55, alpha: 1.0))
+                        : UIColor(white: 0.55, alpha: 1.0)
                     return (width, edgeColor)
                 }
                 cell.setEdgeBorders(
@@ -2252,10 +2276,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // *before* this viewDidLoad ran (e.g. presented straight from the
         // document-picker import flow, which sets the path itself beforehand).
         if !didLoadSheetInViewDidLoad {
-            let initialIdx = appd.sheetNameIds.first ?? "-1"
-            self.loadExcelSheet(idx: Int(initialIdx) ?? appd.wsSheetIndex)
+            // appd.wsSheetIndex is the actual "currently selected sheet" state --
+            // every other loadExcelSheet call site in this codebase uses it.
+            // sheetNameIds.first (the old code here) is always the *first* sheet
+            // in the workbook, so returning from LoadingFileController (settings
+            // changes, the cell-size slider, etc.) was resetting back to sheet 1
+            // instead of staying on whatever sheet was actually open.
+            self.loadExcelSheet(idx: appd.wsSheetIndex)
+
+            // currentFileNameCollectionViewIdx (drives which FileCollectionView
+            // tab gets the selection highlight) defaults to item 0 for a fresh
+            // ViewController instance -- without this, the tab bar highlighted
+            // the first sheet even though loadExcelSheet above just correctly
+            // loaded the real (previously selected) sheet's content.
+            if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)) {
+                self.currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
+                self.FileCollectionView.reloadData()
+            }
         }
-        
+
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(
             self,
@@ -2311,8 +2350,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         doubleTapGesture.numberOfTapsRequired = 2
         myCollectionView.addGestureRecognizer(doubleTapGesture)
         #endif
-        
-        
+
+        cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
+        cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderChanged(_:)), for: .valueChanged)
+        cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderReleased(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        configureCellSizeSlider()
+
     }
     
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
@@ -4185,8 +4228,80 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
+    private func configureCellSizeSlider() {
+        cellSizeSlicer.minimumValue = 15
+        cellSizeSlicer.maximumValue = 220
+        cellSizeSlicer.isEnabled = true
+
+        if UserDefaults.standard.object(forKey: "GLOBAL_CELL_WIDTH") != nil {
+            cellSizeSlicer.value = UserDefaults.standard.float(forKey: "GLOBAL_CELL_WIDTH")
+        } else if let layout = myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+            cellSizeSlicer.value = Float(layout.CELL_WIDTH)
+        } else {
+            cellSizeSlicer.value = 120
+        }
+    }
+
+    private func applyGlobalCellSizeSliderValue(_ value: Float) {
+        let width = max(Double(cellSizeSlicer.minimumValue), Double(value))
+        let height = max(10.0, width / 4.0)
+        let indexSize = max(10.0, height)
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        UserDefaults.standard.set(width, forKey: "GLOBAL_CELL_WIDTH")
+        UserDefaults.standard.set(height, forKey: "GLOBAL_CELL_HEIGHT")
+        UserDefaults.standard.set(indexSize, forKey: "GLOBAL_INDEX_SIZE")
+
+        appd.cswLocation.removeAll()
+        appd.customSizedWidth.removeAll()
+        appd.cshLocation.removeAll()
+        appd.customSizedHeight.removeAll()
+        UserDefaults.standard.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
+        UserDefaults.standard.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
+        UserDefaults.standard.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
+        UserDefaults.standard.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
+        UserDefaults.standard.synchronize()
+
+        appd.collectionViewCellSizeChanged = 1
+
+        // Matches SettingsViewController.showAnimate() / backactionnum(): global
+        // cell-size changes in this app go through a full LoadingFileController
+        // re-present, not an in-place invalidateLayout()+reloadData() on the
+        // existing collectionView -- that in-place path doesn't fully take here,
+        // so mirror the pattern that's already proven to work.
+        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
+        if isExcel {
+            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+        }
+        targetViewController.modalPresentationStyle = .fullScreen
+        DispatchQueue.main.async {
+            self.present(targetViewController, animated: true, completion: nil)
+        }
+    }
+
+    @objc func cellSizeSliderTouchDown(_ slider: UISlider) {
+        hiddenTextField.resignFirstResponder()
+        myCollectionView.isUserInteractionEnabled = false
+    }
+
+    // .valueChanged fires many times per drag (every point of finger movement).
+    // applyGlobalCellSizeSliderValue does a full collectionViewCellSizeChanged=1 +
+    // invalidateLayout() + reloadData() -- a full rebuild of the whole (possibly
+    // 200k+ cell) grid. Calling that on every tick was firing overlapping reloads
+    // faster than UICollectionView could finish the previous one, which is what
+    // was producing the corrupted-looking grid. Intentionally a no-op here now --
+    // the grid only actually resizes once, in cellSizeSliderReleased below.
+    @objc func cellSizeSliderChanged(_ slider: UISlider) {
+    }
+
+    @objc func cellSizeSliderReleased(_ slider: UISlider) {
+        myCollectionView.isUserInteractionEnabled = true
+        applyGlobalCellSizeSliderValue(slider.value)
+        saveAsLocalJson(filename: "csv_sheet1")
+    }
+
     func numberviewopen() {
-        
+
         if numberview != nil {
             numberview.removeFromSuperview()
         }
