@@ -583,6 +583,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.textAlignment = .center
             }
 
+            // Cells with real embedded newlines still need to wrap across those
+            // lines -- but single-line text that's simply too wide for the column
+            // (e.g. "how are you?" in a narrow column) should shrink to fit
+            // instead of wrapping, since wrapping there just grows the row
+            // unpredictably. adjustsFontSizeToFitWidth (set at the top of this
+            // function) only takes effect when numberOfLines == 1.
+            if let text = cell.label2?.text, !text.contains("\n") {
+                cell.label2?.numberOfLines = 1
+            }
+
             //xlsx alignment, resolved onto cellHorizontalAlign/cellVerticalAlign/
             // cellWrapText by resolveCellStyles(). Only overrides the content-type
             // default (numbers right, text left) when the xlsx explicitly sets a
@@ -6401,6 +6411,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     func storeInput(IPd:String, elementd:String)
     {
+        // storeInput is the single chokepoint every cell content commit passes
+        // through (typing + Enter, paste, formula results, clear), so this is
+        // where runtime edit history gets recorded rather than at each caller.
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let oldValue = locationIndex(for: IPd).map { content[$0] } ?? ""
+        if oldValue != elementd {
+            appd.editHistory.append(CellEditRecord(location: IPd, oldValue: oldValue, newValue: elementd, timestamp: Date()))
+        }
+
         if elementd.replacingOccurrences(of: " ", with: "").count > 0{
             if let i = locationIndex(for: IPd) {
 

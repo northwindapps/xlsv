@@ -9,6 +9,7 @@
 import UIKit
 import CoreXLSX
 import Foundation
+import ZIPFoundation
 
 
 class ExcelHelper{
@@ -192,6 +193,8 @@ class ExcelHelper{
            appd.formatCodes.removeAll()
            appd.numFmts.removeAll()
            appd.numFmtIds.removeAll()
+           appd.loadedSheetXML = ""
+           appd.editHistory.removeAll()
            
            
            //get all worksheets
@@ -231,8 +234,27 @@ class ExcelHelper{
                sheet1Files = paths.filter { $0.hasSuffix("sheet" + String(reIdx1 ?? 0) + ".xml") }
            }
 
+           // `path` (the func parameter) gets shadowed by the worksheet entry path below --
+           // capture the on-disk xlsx filepath under its own name first, so the raw XML read
+           // further down can still open the same archive.
+           let xlsxFilePath = path
+
            if let path = try sheet1Files.first {
                print("path",path)
+
+               // CoreXLSX's parseWorksheet(at:) below only exposes a decoded Worksheet
+               // struct -- it never keeps the original XML text around. Read the same zip
+               // entry independently via ZIPFoundation (already a transitive dependency of
+               // CoreXLSX, and importable directly) to keep the exact original markup for
+               // sheetN.xml, which a future "write xlsx back out" pass needs as its base
+               // instead of reconstructing every attribute CoreXLSX doesn't round-trip.
+               if let archive = Archive(url: URL(fileURLWithPath: xlsxFilePath), accessMode: .read),
+                  let entry = archive[path] {
+                   var rawXMLData = Data()
+                   _ = try? archive.extract(entry) { rawXMLData += $0 }
+                   appd.loadedSheetXML = String(data: rawXMLData, encoding: .utf8) ?? ""
+               }
+
                //Cleaning instances on table data
                columnName = []
                stringLocation = []

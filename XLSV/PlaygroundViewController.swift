@@ -589,7 +589,16 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 cell.label2?.text = ""
                 cell.label2?.textAlignment = .center
             }
-            
+
+            // Cells with real embedded newlines still need to wrap across those
+            // lines -- but single-line text that's simply too wide for the column
+            // (e.g. "how are you?" in a narrow column) should shrink to fit
+            // instead of wrapping, since wrapping there just grows the row
+            // unpredictably. adjustsFontSizeToFitWidth (set at the top of this
+            // function) only takes effect when numberOfLines == 1.
+            if let text = cell.label2?.text, !text.contains("\n") {
+                cell.label2?.numberOfLines = 1
+            }
 
             #if !targetEnvironment(macCatalyst)
             if selection_bool {

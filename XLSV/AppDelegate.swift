@@ -10,6 +10,17 @@ import UIKit
 //import GoogleMobileAds
 //import GoogleSignIn
 
+// One entry per committed cell edit at runtime -- the eventual goal is to
+// replay/apply these onto loadedSheetXML to write a sheetN.xml back out that
+// keeps every original property CoreXLSX doesn't round-trip (styles, borders,
+// merges, etc.) and only patches in what actually changed.
+struct CellEditRecord {
+    let location: String // "column,row" key, matches ViewController's IPd/location format
+    let oldValue: String
+    let newValue: String
+    let timestamp: Date
+}
+
 @UIApplicationMain
 //https://stackoverflow.com/questions/46648834/ld-entry-point-main-undefined-for-architecture-x86-64-xcode-9
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -52,6 +63,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cellIndex = IndexPath()
     var wsSheetIndex = 1
     var imported_xlsx_file_path=""
+    // Raw XML text of the currently loaded worksheet part (e.g. xl/worksheets/sheet1.xml),
+    // captured as-is at import time in ExcelHelper.readExcel2 -- CoreXLSX only exposes a
+    // decoded Worksheet struct, not the original markup, so this is read independently via
+    // ZIPFoundation. Needed as the source-of-truth base for eventually writing a sheetN.xml
+    // back out that preserves whatever CoreXLSX's model doesn't round-trip.
+    var loadedSheetXML = ""
+    var editHistory = [CellEditRecord]()
     var excelStyleIdx = [Int]()
     var excelStyleLocation = [String]()
     var excelStyleLocationAlphabet = [String]()
