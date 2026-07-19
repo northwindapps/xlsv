@@ -586,11 +586,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     cell.label2?.textAlignment = .left
                 }
 
-                if (isBold || isItalic) && i < 30 {
-                    print("DEBUG-FONT key=\(key) i=\(i) isBold=\(isBold) isItalic=\(isItalic)",
-                          "resultFont=\(cell.label2?.font.fontName ?? "nil")",
-                          "traits=\(cell.label2?.font.fontDescriptor.symbolicTraits.rawValue ?? 0)")
-                }
+                //if (isBold || isItalic) && i < 30 {
+                //    print("DEBUG-FONT key=\(key) i=\(i) isBold=\(isBold) isItalic=\(isItalic)",
+                //          "resultFont=\(cell.label2?.font.fontName ?? "nil")",
+                //          "traits=\(cell.label2?.font.fontDescriptor.symbolicTraits.rawValue ?? 0)")
+                //}
             }else{
                 //empty
                 let fl: CGFloat = CGFloat(("11" as NSString).doubleValue)

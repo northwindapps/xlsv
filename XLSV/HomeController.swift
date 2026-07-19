@@ -51,6 +51,13 @@ class HomeController: UIViewController {
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "An xlsx file viewer"
+        subtitleLabel.font = UIFont.systemFont(ofSize: 15, weight: .regular)
+        subtitleLabel.textColor = .secondaryLabel
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+
         let spreadsheetButton = makeButton(title: "Spreadsheet", subtitle: "Good for making a simple, general sheet")
         spreadsheetButton.addTarget(self, action: #selector(openSpreadsheet), for: .touchUpInside)
 
@@ -81,6 +88,7 @@ class HomeController: UIViewController {
         creditLabel.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(titleLabel)
+        view.addSubview(subtitleLabel)
         view.addSubview(stack)
         view.addSubview(disclaimerLabel)
         view.addSubview(creditLabel)
@@ -89,6 +97,10 @@ class HomeController: UIViewController {
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            subtitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
             stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
