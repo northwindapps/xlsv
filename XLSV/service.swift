@@ -728,7 +728,7 @@ class Service {
         // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
         // -- splice in just that one element. (?!\d) guards against "B1" also matching
         // "B10"/"B11" (the same collision testDeleteStringBulk already guards against).
-        let existingPattern = "<c[^>]*r=\"\(index)\"(?!\\d)[^>]*(?:/>|>.*?</c>)"
+        let existingPattern = "<c[^>]*r=\"\(index)\"(?!\\d)[^/>]*(?:/>|>.*?</c>)"
         if let regex = try? NSRegularExpression(pattern: existingPattern, options: []) {
             let range = NSRange(xmlString.startIndex..., in: xmlString)
             if let match = regex.firstMatch(in: xmlString, range: range),
