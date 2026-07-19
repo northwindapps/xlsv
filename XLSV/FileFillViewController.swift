@@ -15,7 +15,7 @@ import SSZipArchive
 import CoreFoundation
 //import GoogleMobileAds
 
-
+let reuseIdentifierF = "customCellF"
 class FileFillViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
     
 //    @IBOutlet weak var bannerview: GADBannerView!
@@ -509,7 +509,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         //Render
         if collectionView === myCollectionView{
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! CustomCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifierF, for: indexPath) as! CustomCollectionViewCell
             
             
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
@@ -939,7 +939,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
                 } else {
             // sheet cell tab menu
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! FileCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cellTabF", for: indexPath) as! FileCollectionViewCell
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
@@ -3406,9 +3406,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         customview2.localLoad.addTarget(self, action: #selector(FileFillViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.reset.addTarget(self, action: #selector(FileFillViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
+        customview2.reset.isHidden = true
+        //customview2.reset.addTarget(self, action: #selector(FileFillViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.resetStyling.addTarget(self, action: #selector(FileFillViewController.goSettings), for: UIControl.Event.touchUpInside)
+        customview2.resetStyling.isHidden = true
+        //customview2.resetStyling.addTarget(self, action: #selector(FileFillViewController.goSettings), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.addTarget(self, action: #selector(FileFillViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
@@ -3418,10 +3420,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         customview2.backups.addTarget(self, action: #selector(FileFillViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
-        customview2.playgroundMode.addTarget(self, action: #selector(FileFillViewController.moveToPlayground), for: UIControl.Event.touchUpInside)
-        
-        customview2.filefillmode.setTitle("Normal Mode", for: UIControlState())
-        customview2.filefillmode.addTarget(self, action: #selector(FileFillViewController.moveToNormal), for: UIControl.Event.touchUpInside)
+        customview2.filefillmode.setTitle("Home", for: UIControlState())
+        customview2.filefillmode.addTarget(self, action: #selector(FileFillViewController.moveToHome), for: UIControl.Event.touchUpInside)
         
   
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
@@ -3429,66 +3429,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         self.view.addSubview(customview2)
     }
     
-    @objc func moveToNormal(){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        self.customview2.removeFromSuperview()
-        appd.imported_xlsx_file_path = ""
-
-       
-
-            //reset all
-            self.location.removeAll()
-            self.content.removeAll()
-            self.bgcolor.removeAll()
-            self.cursor = String()
-            self.tcolor.removeAll()
-            self.textsize.removeAll()
-            
-            
-            let domain = Bundle.main.bundleIdentifier!
-            UserDefaults.standard.removePersistentDomain(forName: domain)
-            UserDefaults.standard.synchronize()
-            
-            appd.cswLocation.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.customSizedHeight.removeAll()
-            appd.cswLocation_temp.removeAll()
-            appd.cshLocation_temp.removeAll()
-            appd.customSizedWidth_temp.removeAll()
-            appd.customSizedHeight_temp.removeAll()
-            appd.diff_end_index.removeAll()
-            appd.diff_start_index.removeAll()
-            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
-            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
-            appd.sheetNames = [String]()
-            appd.sheetNameIds = [String]()
-            appd.imported_xlsx_file_path = ""
-            appd.imported_xlsx_file_path = ""
-            appd.isAppStarted = false
+    @objc func moveToHome(){
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
         
-            let sheet1Json = ReadWriteJSON()
-            sheet1Json.deleteJsonFile(title: "csv_sheet1")
-            
-            //delete local excel
-            let pathDirectory = self.getRootDocumentsDirectory()
-            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
-            let fileManager = FileManager.default
-            do {
-                if fileManager.fileExists(atPath: filePath.path) {
-                    try fileManager.removeItem(at: filePath)
-                    print("File deleted successfully.")
-                } else {
-                    print("File does not exist.")
-                }
-            } catch {
-                print("An error occurred while deleting the file: \(error.localizedDescription)")
-            }
-            
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )//Landscape
-            targetViewController.modalPresentationStyle = .fullScreen
-            self.present( targetViewController, animated: true, completion: nil)
-   
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
 
     }
     

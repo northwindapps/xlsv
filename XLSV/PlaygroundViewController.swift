@@ -18,7 +18,7 @@ import SwiftUI
 import SceneKit
 
 
-let reuseIdentifier2 = "customCell"
+let reuseIdentifierP = "customCellP"
 var SCREENSIZE_w2 = ScreenSize.SCREEN_WIDTH
 var SCREENSIZE2 = ScreenSize.SCREEN_HEIGHT
 
@@ -532,18 +532,16 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         //Render
         if collectionView === myCollectionView{
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier2, for: indexPath) as! CustomCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifierP, for: indexPath) as! CustomCollectionViewCell
             
             
             cell.label2?.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
             cell.label2?.numberOfLines = 0
-            // Apply to every cell, not just row/column headers -- UILabel only
-            // honors adjustsFontSizeToFitWidth when numberOfLines == 1, so this
-            // is a no-op on multi-line wrapped content cells (numberOfLines stays
-            // 0 above) and only actually shrinks single-line cell content that
-            // would otherwise clip/overflow its column width.
-            cell.label2?.adjustsFontSizeToFitWidth = true
-            cell.label2?.minimumScaleFactor = 0.4
+            // Playground keeps one uniform font size across all cells, so
+            // (unlike ViewController/FileFillViewController) auto-shrinking
+            // is disabled here -- overflowing single-line text truncates
+            // instead of shrinking its font.
+            cell.label2?.adjustsFontSizeToFitWidth = false
             cell.layer.borderWidth = 0.0
             cell.backgroundColor = UIColor.white
             cell.layer.borderColor = UIColor.white.cgColor
@@ -951,7 +949,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
         }else{
             //sheet cell
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! FileCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cellTabP", for: indexPath) as! FileCollectionViewCell
             let title = localFileNames[indexPath.item]
             cell.FileLabel.text = title
             
@@ -3926,7 +3924,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         
         customview2.closebutton.addTarget(self, action: #selector(close), for: UIControl.Event.touchUpInside)
         
-        customview2.quitbutton.addTarget(self, action: #selector(quitPlaygroundAction), for: UIControl.Event.touchUpInside)
+        customview2.quitbutton.addTarget(self, action: #selector(moveToHome), for: UIControl.Event.touchUpInside)
         
         customview2.graphbutton.addTarget(self, action: #selector(graphViewAlert), for: UIControl.Event.touchUpInside)
         
@@ -3952,6 +3950,23 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             
             window.rootViewController = targetViewController
             
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
+
+    }
+    
+    @objc func moveToHome(){
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
+
+        // Playground keeps no dedicated working file of its own (unlike FileFillViewController's
+        // "_ff" copy), so whatever file it had open stays on appd.imported_xlsx_file_path unless
+        // cleared here -- otherwise the next screen opened from Home would inherit it.
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.imported_xlsx_file_path = ""
+
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
             UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 

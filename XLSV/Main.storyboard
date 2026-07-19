@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24765" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="lYo-SA-o9a">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24765" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="4SW-rT-QAD">
     <device id="retina5_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
@@ -223,28 +223,28 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="chd-YV-m5p">
-                                <rect key="frame" x="184.66666666666663" y="121" width="45" height="30"/>
+                                <rect key="frame" x="184.66666666666666" y="121" width="45" height="30"/>
                                 <state key="normal" title="50x30"/>
                                 <connections>
                                     <action selector="exsmallCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="9mG-r7-aRw"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dst-Uf-Yb3">
-                                <rect key="frame" x="184.66666666666663" y="181" width="45" height="30"/>
+                                <rect key="frame" x="184.66666666666666" y="181" width="45" height="30"/>
                                 <state key="normal" title="80x30"/>
                                 <connections>
                                     <action selector="smallCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="biv-dB-9gV"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="A1v-ZI-zqU">
-                                <rect key="frame" x="181.66666666666663" y="241" width="51" height="30"/>
+                                <rect key="frame" x="181.66666666666666" y="241" width="51" height="30"/>
                                 <state key="normal" title="120x30"/>
                                 <connections>
                                     <action selector="middiumCell:" destination="XM5-Uu-5U1" eventType="touchUpInside" id="ieU-c3-2aq"/>
                                 </connections>
                             </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Settings" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uow-lz-iWZ">
-                                <rect key="frame" x="175.66666666666663" y="70" width="63.000000000000028" height="21"/>
+                                <rect key="frame" x="175.66666666666666" y="70" width="63" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
@@ -511,13 +511,13 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Loading..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Ot-mS-JYa">
-                                <rect key="frame" x="169.66666666666663" y="358" width="75.000000000000028" height="20"/>
+                                <rect key="frame" x="169.66666666666666" y="358" width="75" height="20"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="12l-Bi-tLv">
-                                <rect key="frame" x="189.66666666666663" y="663" width="35" height="35"/>
+                                <rect key="frame" x="189.66666666666666" y="663" width="35" height="35"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="KRx-5j-SFf"/>
                                     <constraint firstAttribute="width" constant="35" id="kGP-gJ-p5t"/>
@@ -633,13 +633,13 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Loading..." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cml-Uw-eFu">
-                                <rect key="frame" x="169.66666666666663" y="358" width="75.000000000000028" height="20"/>
+                                <rect key="frame" x="169.66666666666666" y="358" width="75" height="20"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vQj-mD-MrP">
-                                <rect key="frame" x="189.66666666666663" y="663" width="35" height="35"/>
+                                <rect key="frame" x="189.66666666666666" y="663" width="35" height="35"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="Hrl-cv-4XH"/>
                                     <constraint firstAttribute="width" constant="35" id="Jw7-wg-lEA"/>
@@ -693,7 +693,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <collectionViewLayout key="collectionViewLayout" id="7tV-dB-CoP" customClass="CustomCollectionViewLayout" customModule="XLSV" customModuleProvider="target"/>
                                 <cells>
-                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="customCell" id="IVS-yr-Ki0" customClass="CustomCollectionViewCell" customModule="XLSV" customModuleProvider="target">
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="customCellP" id="IVS-yr-Ki0" customClass="CustomCollectionViewCell" customModule="XLSV" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="0.0" width="100" height="30"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
@@ -788,7 +788,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                     <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                 </collectionViewFlowLayout>
                                 <cells>
-                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="cell" id="gxH-1d-nog" customClass="FileCollectionViewCell" customModule="XLSV" customModuleProvider="target">
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="cellTabP" id="gxH-1d-nog" customClass="FileCollectionViewCell" customModule="XLSV" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="0.0" width="100" height="35"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO">
@@ -877,6 +877,24 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
             </objects>
             <point key="canvasLocation" x="-1429" y="-6546"/>
         </scene>
+        <!--Home Controller-->
+        <scene sceneID="Aei-aj-GWs">
+            <objects>
+                <viewController storyboardIdentifier="Home" id="4SW-rT-QAD" customClass="HomeController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="aKh-fs-Qdc"/>
+                        <viewControllerLayoutGuide type="bottom" id="ULW-Zw-dZH"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="sku-BZ-QvA">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="9iU-sB-T8W" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-3795" y="-8390"/>
+        </scene>
         <!--File Fill View Controller-->
         <scene sceneID="l73-sl-8ef">
             <objects>
@@ -894,7 +912,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <collectionViewLayout key="collectionViewLayout" id="NYz-nX-ieo" customClass="CustomCollectionViewLayout" customModule="XLSV" customModuleProvider="target"/>
                                 <cells>
-                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="customCell" id="NDN-D3-a1n" customClass="CustomCollectionViewCell" customModule="XLSV" customModuleProvider="target">
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="customCellF" id="NDN-D3-a1n" customClass="CustomCollectionViewCell" customModule="XLSV" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="0.0" width="100" height="30"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
@@ -989,7 +1007,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                                     <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                 </collectionViewFlowLayout>
                                 <cells>
-                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="cell" id="NkW-v3-iJW" customClass="FileCollectionViewCell" customModule="XLSV" customModuleProvider="target">
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="cellTabF" id="NkW-v3-iJW" customClass="FileCollectionViewCell" customModule="XLSV" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="0.0" width="100" height="35"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO">

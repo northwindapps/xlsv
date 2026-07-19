@@ -3502,7 +3502,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localLoad.isHidden = true
         //customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.filefillmode.addTarget(self, action: #selector(ViewController.moveToFilefill), for: UIControl.Event.touchUpInside)
+        customview2.filefillmode.setTitle("Home", for: UIControlState())
+        customview2.filefillmode.addTarget(self, action: #selector(ViewController.moveToHome), for: UIControl.Event.touchUpInside)
         
         
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
@@ -3517,12 +3518,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
-        customview2.playgroundMode.addTarget(self, action: #selector(ViewController.moveToPlayground), for: UIControl.Event.touchUpInside)
-        
-  
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
+      
+            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+            
         self.view.addSubview(customview2)
+    }
+    
+    @objc func moveToHome(){
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
+        
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
+
     }
     
     @objc func moveToFilefill(){
