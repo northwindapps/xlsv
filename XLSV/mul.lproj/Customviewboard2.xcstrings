@@ -63,7 +63,7 @@
     },
     "fvj-7b-951.normalTitle" : {
       "comment" : "Class = \"UIButton\"; normalTitle = \"Resize Cells\"; ObjectID = \"fvj-7b-951\";",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "da" : {
           "stringUnit" : {
@@ -110,13 +110,49 @@
       }
     },
     "J6X-e2-4mD.normalTitle" : {
-      "comment" : "Class = \"UIButton\"; normalTitle = \"Filefill Mode\"; ObjectID = \"J6X-e2-4mD\";",
+      "comment" : "Class = \"UIButton\"; normalTitle = \"Home\"; ObjectID = \"J6X-e2-4mD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjem"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startseite"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Filefill Mode"
+            "value" : "Home"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accueil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホーム"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主页"
           }
         }
       }

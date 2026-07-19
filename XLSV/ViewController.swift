@@ -3459,22 +3459,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 275))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 275))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 275))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 275))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 275))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 275))
             break
             
             
@@ -3482,7 +3482,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 275))
             break
             
         }
@@ -3502,13 +3502,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.localLoad.isHidden = true
         //customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.filefillmode.setTitle("Home", for: UIControlState())
         customview2.filefillmode.addTarget(self, action: #selector(ViewController.moveToHome), for: UIControl.Event.touchUpInside)
         
         
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
-        
-        customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
         
         customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
@@ -3518,9 +3515,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
-      
-            let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-            
         self.view.addSubview(customview2)
     }
     
