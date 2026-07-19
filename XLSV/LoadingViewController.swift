@@ -33,7 +33,6 @@ class LoadingViewController: UIViewController,UITextFieldDelegate {
     
     func showAnimate()
     {
-        
         let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         next.modalPresentationStyle = .fullScreen

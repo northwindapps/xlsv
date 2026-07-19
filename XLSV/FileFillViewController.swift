@@ -3695,6 +3695,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // existing collectionView -- that in-place path doesn't fully take here,
         // so mirror the pattern that's already proven to work.
         let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
+        targetViewController.isFromFF = true
         if isExcel {
             targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
         }
@@ -4091,6 +4092,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         print("go to file view")
         //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+        targetViewController.isFromFF = true
         if isExcel{
             targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
         }
@@ -4099,7 +4101,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
         }
-        
+
     }
     
     
