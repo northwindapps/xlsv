@@ -1607,21 +1607,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     
-    @objc func endterDelete(){
-        
-        if pastemode == false {
-            pastemode = true
-            
-            datainputview.fontbutton.setTitleColor(UIColor.red, for: .normal)
-        }else if pastemode == true {
-            pastemode = false
-            
-            datainputview.fontbutton.setTitleColor(UIColor.white, for: .normal)
-        }
-        
-        
-    }
-    
     @objc func csvexport(result:[String])
     {
         
@@ -1765,29 +1750,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     
-    
-    @objc func localload(_ sender:UIButton)
-    {
-        
-        location.removeAll()
-        content.removeAll()
-        
-        //Font location
-        //        bglocation.removeAll()
-        //        tlocation.removeAll()
-        //        sizelocation.removeAll()
-        
-        
-        tcolor.removeAll()
-        textsize.removeAll()
-        bgcolor.removeAll()
-        
-        
-        self.customview2.removeFromSuperview()
-        
-        performSegue(withIdentifier: "previousData", sender: nil)
-        
-    }
     
     
     @objc func icloudview(_ sender:UIButton){
@@ -2073,149 +2035,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    @objc func resetStyle(_ sender:UIButton){
-        
-        var message = "Current cell styles will be lost. Is that alright?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "現在のセルスタイルは失われます。それは大丈夫ですか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Les styles de cellule actuels seront perdus. C'est bien?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "当前的单元格样式将丢失。这样好吗？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Aktuelle Zellstile gehen verloren. Ist das richtig?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Gli stili di cella correnti andranno persi. Va bene?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Текущие стили ячеек будут потеряны. Все в порядке?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("sv")
-        {
-            message = "Nuvarande cellstilar kommer att gå förlorade. Är det okej?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("da")
-        {
-            message = "Nuværende celleformater vil gå tabt. Er det okay?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("ar")
-        {
-            message = "ستفقد أنماط الخلية الحالية. هل هذا جيد؟"
-            yes = "نعم"
-            no = "لا"
-            
-        }else if locationstr.contains("es")
-        {
-            message = "Se perderán los estilos de celda actuales. ¿Está eso bien?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "Alert", message: message, preferredStyle: .alert)
-        
-        
-        alert.addAction(UIAlertAction(title: yes, style: .default, handler: { action in
-            //reset all
-            
-            self.bgcolor.removeAll()
-            self.cursor = String()
-            self.tcolor.removeAll()
-            self.textsize.removeAll()
-            
-            
-            switch UIDevice.current.userInterfaceIdiom {
-            case .pad:
-                for _ in 0..<self.content.count{
-                    self.textsize.append(String(self.selectingSize))
-                    self.bgcolor.append(self.selectingBgColor)
-                    self.tcolor.append(self.selectingColor)
-                }
-                break
-                
-            default:
-                for _ in 0..<self.content.count{
-                    self.textsize.append(String(self.selectingSize))
-                    self.bgcolor.append(self.selectingBgColor)
-                    self.tcolor.append(self.selectingColor)
-                }
-                break
-            }
-            
-            
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.cswLocation.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            let r2 = UserDefaults.standard
-            r2.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
-            r2.synchronize()
-            
-            let r3 = UserDefaults.standard
-            r3.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
-            r3.synchronize()
-            
-            let r1 = UserDefaults.standard
-            r1.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
-            r1.synchronize()
-            
-            let r4 = UserDefaults.standard
-            r4.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
-            r4.synchronize()
-            
-            //if self.selectedSheet >= 0{
-                self.saveAsLocalJson(filename: "csv_sheet1")
-            //}
-            
-            DispatchQueue.main.async() {
-                appd.collectionViewCellSizeChanged = 1
-                self.myCollectionView.collectionViewLayout.invalidateLayout()
-                self.myCollectionView.reloadData()
-                appd.collectionViewCellSizeChanged = 0
-            }
-
-            self.customview2.removeFromSuperview()
-
-        }))
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
-    }
-    
     
     override func viewDidLoad() {
         hiddenTextField.becomeFirstResponder()
@@ -2405,37 +2224,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     
-    @objc private func localSave(){
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let pathDirectory = getRootDocumentsDirectory()
-        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
-        
-        let overWritingfilePath = appd.imported_xlsx_file_path
-        do {
-            let fileManager = FileManager.default
-            try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: URL(fileURLWithPath:overWritingfilePath))
-            print("File replaced successfully at path: \(overWrittenfilePath.path)")
-            appd.imported_xlsx_file_path = overWrittenfilePath.path
-        } catch {
-            print("Error replacing file: \(error.localizedDescription)")
-        }
-
-    }
-    
     //Filename Change
-    @objc private func handleDoubleTap2(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: FileCollectionView)
-        
-        if let indexPath = FileCollectionView.indexPathForItem(at: location) {
-            print("Double-tapped cell at \(indexPath)")
-            // Perform your double-tap action here
-        }
-        //sheet name mangament
-        excelChangeSheetName()
-        
-        
-    }
-    
     //
     @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: myCollectionView)
@@ -2447,15 +2236,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         selection_bool = true
         myCollectionView.reloadData()
-    }
-    
-    @objc private func handleSingleTap(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: myCollectionView)
-        
-        if let indexPath = myCollectionView.indexPathForItem(at: location) {
-            print("Single-tapped cell at \(indexPath)")
-            // Perform your single-tap action here
-        }
     }
     
     func extractExcelCellReferences(from expression: String) -> [String] {
@@ -3630,10 +3410,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     
-    @objc func movetosearchreplace(_ sender:UIButton){
-        show3()
-    }
-    
     
     //http://code-examples-ja.hateblo.jp/entry/2016/09/21/Swift3
     func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat) -> CGRect {
@@ -3754,120 +3530,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     }
     
-    @objc func saveOniCloudAction(){
-        
-        var message = "Do you save this file on iCloud?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "このファイルをiCloudに保存しますか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Enregistrez-vous ce fichier sur iCloud ?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "您是否将此文件保存在 iCloud 上？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Speichern Sie diese Datei in iCloud?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Salvi questo file su iCloud?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Вы сохраняете этот файл в iCloud?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("da")
-        {
-            message = "Gemmer du denne fil på iCloud?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("es")
-        {
-            message = "¿Guardas este archivo en iCloud?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
-        alert.addTextField()
-        
-        if isExcel{
-            //
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-            
-            alert.textFields?[0].text = (url?.pathExtension == "xlsx") ? url?.lastPathComponent : "can't find an xlsx file"
-            
-            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-                let name = alert.textFields![0].text
-                if name!.count > 0 {
-                    if let url2 = url{
-                        self.uploadFileToICloud(url: url2,filename: name!)
-                    }
-                }
-            })
-            
-            alert.addAction(confirmAction)
-            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-            
-            self.present(alert, animated: true)
-            self.customview2.removeFromSuperview()
-        }
-        
-        if isCSV{
-            //
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-            //csv
-            //save temp content
-            var result = content
-            for idx in 0..<f_calculated.count{
-                if let l_idx = location.index(of: f_location[idx]){
-                    result[l_idx] = f_calculated[idx]
-                }
-            }
-            csvexport(result: result)
-            
-            alert.textFields?[0].text = "tempCSV.csv"
-            
-            let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-                let name = alert.textFields![0].text
-                if name!.count > 0 {
-                    self.uploadFileToICloudCSV(filename: name!)
-                }
-            })
-            
-            alert.addAction(confirmAction)
-            alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-            
-            self.present(alert, animated: true)
-            self.customview2.removeFromSuperview()
-        }
-    }
-    
     //create excel todo
     @objc func createxlsxSheet(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -3972,264 +3634,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         let test = ReadWriteJSON()
         test.deleteJsonFile(title: filename)
-    }
-    
-    @objc func saveJSONAction(_ sender:UIButton){
-        
-        var message = "Do you save this file?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "このファイルを保存しますか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Enregistrez-vous ce fichier?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "您保存此文件吗？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Speichern Sie diese Datei?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Salvi questo file?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Вы сохраняете этот файл?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("sv")
-        {
-            message = "Sparar du den här filen?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("da")
-        {
-            message = "Gemmer du denne fil?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("ar")
-        {
-            message = "هل تحفظ هذا الملف؟"
-            yes = "نعم"
-            no = "لا"
-            
-        }else if locationstr.contains("es")
-        {
-            message = "¿Guarda este archivo?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
-        alert.addTextField()
-        
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            alert.textFields![0].text = localFileName[selectedSheet]
-        }
-        
-        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-            let name = alert.textFields![0].text
-            
-            if name!.count > 0 {
-                self.saveAsLocalJson(filename:name!.replacingOccurrences(of: " ", with: "_"))
-            }
-            
-            let test = ReadWriteJSON()
-            let temp = test.titleJsonFile()
-            
-            self.localFileName = temp.reversed()
-            
-            self.FileCollectionView.reloadData()
-            
-            self.customview2.removeFromSuperview()
-            
-            self.fileTitle.text = name!.replacingOccurrences(of: " ", with: "_")
-            
-        })
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
-    }
-    
-    @objc func deleteJSONAction(_ sender:UIButton){
-        
-        var message = "Do you delete this file?"
-        var yes = "OK"
-        var no = "No"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            message = "このファイルを削除しますか？"
-            yes = "はい"
-            no = "いいえ"
-        }else if locationstr.contains( "fr")
-        {
-            message = "Supprimez-vous ce fichier?"
-            yes = "oui"
-            no = "non"
-        }else if locationstr.contains( "zh"){
-            
-            message = "是否删除此文件？"
-            yes = "是"
-            no = "否"
-        }else if locationstr.contains( "de")
-        {
-            
-            message = "Löschen Sie diese Datei?"
-            yes = "ja"
-            no = "nein"
-        }else if locationstr.contains( "it")
-        {
-            
-            message = "Elimina questo file?"
-            yes = "si"
-            no = "no"
-        }else if locationstr.contains( "ru")
-        {
-            
-            message = "Вы удаляете этот файл?"
-            yes = "да"
-            no = "нет"
-        }else if locationstr.contains("sv")
-        {
-            message = "Tar du bort den här filen?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("da")
-        {
-            message = "Slet du denne fil?"
-            yes = "ja"
-            no = "nej"
-        }else if locationstr.contains("ar")
-        {
-            message = "هل تحذف هذا الملف؟"
-            yes = "نعم"
-            no = "لا"
-            
-        }else if locationstr.contains("es")
-        {
-            message = "¿Eliminas este archivo?"
-            yes = "si"
-            no = "no"
-        }else{
-            
-        }
-        
-        
-        let alert = UIAlertController(title: "FILE NAME", message: message, preferredStyle: .alert)
-        alert.addTextField()
-        
-        
-//        if  selectedSheet >= 0 && localFileName.count > 0 {
-        if selectedSheet >= localFileName.startIndex && selectedSheet < localFileName.endIndex{
-            alert.textFields![0].text = localFileName[selectedSheet]
-        }
-        
-        let confirmAction = UIAlertAction(title: yes, style: .default, handler: { action in
-            let name = alert.textFields![0].text
-            
-            self.deleteLocalJson(filename:name!)
-            
-            let test = ReadWriteJSON()
-            let temp = test.titleJsonFile()
-            
-            self.localFileName = temp.reversed()
-            
-            self.FileCollectionView.reloadData()
-            
-            self.customview2.removeFromSuperview()
-            
-            self.fileTitle.text = ""
-            
-        })
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
-        self.present(alert, animated: true)
-        
-        
-        
-        self.customview2.removeFromSuperview()
-        
-    }
-    
-    @objc func fontediting() {
-        
-        if Fview != nil {
-            Fview.removeFromSuperview()
-        }
-        
-        if customview2 != nil{
-            
-            customview2.removeFromSuperview()
-        }
-        
-        
-        Fview = formatview(frame: CGRect(x:10,y:30, width: 300,height: 150))
-        
-        
-        
-        Fview .layer.borderWidth = 1
-        
-        Fview .layer.cornerRadius = 8;
-        
-        Fview .layer.borderColor = UIColor.black.cgColor
-        
-        Fview .color5.layer.borderWidth = 1
-        
-        Fview .color5.layer.borderColor = UIColor.black.cgColor
-        
-        Fview.formatBackButton.addTarget(self, action: #selector(ViewController.formatbackaction(_:)), for: UIControl.Event.touchUpInside)
-        
-        Fview.color1.addTarget(self, action: #selector(ViewController.c1(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color2.addTarget(self, action: #selector(ViewController.c2(_:)), for: UIControl.Event.touchUpInside)
-        
-        Fview.color5.addTarget(self, action: #selector(ViewController.c5(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color6.addTarget(self, action: #selector(ViewController.c6(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color7.addTarget(self, action: #selector(ViewController.c7(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color8.addTarget(self, action: #selector(ViewController.c8(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color9.addTarget(self, action: #selector(ViewController.c9(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color10.addTarget(self, action: #selector(ViewController.c10(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color11.addTarget(self, action: #selector(ViewController.c11(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color12.addTarget(self, action: #selector(ViewController.c12(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color13.addTarget(self, action: #selector(ViewController.c13(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color14.addTarget(self, action: #selector(ViewController.c14(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color15.addTarget(self, action: #selector(ViewController.c15(_:)), for: UIControl.Event.touchUpInside)
-        Fview.sizeslider.addTarget(self, action: #selector(ViewController.sliderValueChanged(_:)), for: UIControl.Event.valueChanged)
-        
-        self.view.addSubview(Fview)
-        
-        
-        
     }
     
     @objc func sliderValueChanged(_ sender:Any){
@@ -4725,33 +4129,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     
-    @objc func resetAll (){
-        //reset all
-        self.location.removeAll()
-        self.content.removeAll()
-        self.bgcolor.removeAll()
-        self.cursor = String()
-        self.tcolor.removeAll()
-        self.textsize.removeAll()
-        let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.cswLocation.removeAll()
-        appd.cshLocation.removeAll()
-        appd.customSizedWidth.removeAll()
-        appd.customSizedHeight.removeAll()
-        appd.sheetNames = [String]()
-        saveuserD()
-        saveuserF()
-        
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )//Landscape
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present( targetViewController, animated: true, completion: nil)
-        
-    }
-    
     @objc func plusAction(_ sender:UIButton)
     {
         let indexItem = Int(currentindex.item)
@@ -4991,216 +4368,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     //copy
-    @objc func copyText(){
-        
-//        cursor = String(currentindex!.item)+","+String(currentindex!.section)
-//        if location.contains(cursor){
-//            let i = location.index(of: cursor)
-//
-//            datainputview.stringbox.text = datainputview.stringbox.text  + content[i!]
-//
-//            //new functionality
-//            let ary = datainputview.stringbox.text.components(separatedBy: "+")
-//            for i in 0..<COLUMNSIZE {
-//                for j in 0..<ary.count {
-//                    if ary[j].contains(getExcelColumnName(columnNumber:COLUMNSIZE-i)){
-//                        let item = ary[j].replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-//                        let row = numberOnlyString(text: item)
-//
-//                        if row.count > 0{
-//                            let original = getExcelColumnName(columnNumber:COLUMNSIZE-i)
-//                            let change = item.replacingOccurrences(of: original, with: String(COLUMNSIZE-i) + ",")
-//                            changeaffected.append(change)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.collectionViewCellSizeChanged = 0
-        //pasteboard.string = ""
-        
-        
-        
-        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
-        
-        var element :String = datainputview.stringbox.text!
-        datainputview.stringbox.text = ""
-        
-        //add more complicated functionality
-        if autoComplete(src: element).count > 1 {
-            element = autoComplete(src: element)
-        }
-        
-        
-        let IP :String = cursor   //String(currentindex!.item) + String(currentindex!.section)
-        let t_item = IP.components(separatedBy: ",")[0]
-        let t_section = IP.components(separatedBy: ",")[1]
-        
-        let IP_i = Int(t_item)!
-        var IP_s = Int(t_section)!
-        var checkInt = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "")
-        
-        var collocation = -1
-        if element.contains("→"){
-            let checkAlpha = alphabetOnlyString(text: element)
-            if columnNames.index(of: checkAlpha) != nil {
-                collocation = columnNames.index(of: checkAlpha)!
-                checkInt = checkInt.replacingOccurrences(of: checkAlpha, with: String(collocation))
-            }
-        }
-        
-        if element.contains(" ") && down_bool == true || element.contains(" ") && left_bool == true || element.contains(" ") && up_bool == true || element.contains(" ") && right_bool == true{
-            
-            element = element.replacingOccurrences(of: "→", with: "").replacingOccurrences(of: "↓", with: "").replacingOccurrences(of: "↑", with: "").replacingOccurrences(of: "←", with: "")
-            //20200502
-            switch UIDevice.current.userInterfaceIdiom {
-            case .phone:
-                //storeInput(IPd: IP, elementd: element) implement this function in iphone too? i dont know it is a good idea
-                var padAry = element.components(separatedBy: " ")
-                
-                if down_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s+idx)
-                        if IP_s+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                        }
-                    }
-                }
-                else if right_bool{
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i+idx) + "," + String(IP_s)
-                        if IP_i+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                        }
-                    }
-                }
-                
-                break
-                
-            case .pad:
-                
-                var padAry = element.components(separatedBy: " ")
-                
-                if down_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s+idx)
-                        if IP_s+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                        }
-                    }
-                }
-                else if up_bool {
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i) + "," + String(IP_s-idx)
-                        if IP_s-idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            
-                        }
-                    }
-                }
-                else if left_bool{
-                    for idx in 0..<padAry.count{
-                        let IPl = String(IP_i-idx) + "," + String(IP_s)
-                        if IP_i-idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            
-                        }
-                    }
-                }
-                else if right_bool{
-                    var modulo = 0
-                    for idx in 0..<padAry.count{
-                        modulo = idx % 8
-                        if modulo == 0 {
-                            IP_s += 1
-                        }
-                        let IPl = String(IP_i+modulo + 1) + "," + String(IP_s)
-                     
-                        if IP_i+idx <= 0 {
-                            //it's
-                        }else{
-                            var each = padAry[idx]
-                            if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
-                                }
-                            }
-                            storeInput(IPd: IPl, elementd: each)
-                            let alphabet = getExcelColumnName(columnNumber: IP_i+idx)
-                            clipboard = clipboard + alphabet + String(IP_s+idx) + "+"
-                        }
-                    }
-                }
-                
-                break
-                
-            default:
-                storeInput(IPd: IP, elementd: element)
-                break
-            }
-            XLSV.pasteboard.string = clipboard
-        }
-        
-        stringboxText = ""
-        myCollectionView.reloadData()
-        
-    }
-    
     @objc func terminate(){
         if pastemode == false && getRefmode == false {
             datainputview.stringbox.resignFirstResponder()
@@ -7128,27 +6295,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     //TextFormatting currency
-    @objc func currencyFormat(tempStr:String)->String{
-        
-        var fp = ""
-        var tempD = 0.0
-        
-        if let calculated = Double(tempStr){
-            
-            let formatter = NumberFormatter()
-            formatter.locale = Locale.current // Change this to another locale if you want to force a specific locale, otherwise this is redundant as the current locale is the default already
-            formatter.numberStyle = .currency
-            tempD = Double(tempStr)!
-            //tipAmountLabel.text = "Tip Amount: \(formattedTipAmount)"
-            fp = formatter.string(from: tempD as NSNumber)!
-            //removeCrrencySign
-            fp = removeSpecialCharsFromFpString(fp)
-            return fp
-        }
-        //https://stackoverflow.com/questions/41558832/how-to-format-a-double-into-currency-swift-3
-        return tempStr
-    }
-    
     
     //FBAction
     func up2dateAction(){
@@ -7183,23 +6329,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
          
         }
         settingCellSelected = false
-    }
-    
-    @objc func moveUp(){
-        
-        up_bool = !up_bool
-        down_bool = false
-        right_bool = false
-        left_bool = false
-        datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.leftArrow.setImage(UIImage(named: "leftArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        
-        if up_bool{
-            datainputview.upArrow.setImage(UIImage(named: "upArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }else if !up_bool{
-            datainputview.upArrow.setImage(UIImage(named: "upArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }
     }
     
     @objc func moveDown(){
@@ -7276,23 +6405,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
     }
-    @objc func moveLeft(){
-        left_bool = !left_bool
-        down_bool = false
-        right_bool = false
-        up_bool = false
-        datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        datainputview.upArrow.setImage(UIImage(named: "upArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        
-        if left_bool {
-            datainputview.leftArrow.setImage(UIImage(named: "leftArwRed")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }else if !left_bool{
-            datainputview.leftArrow.setImage(UIImage(named: "leftArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }
-        
-    }
-    
     func isExcelSheetData(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
@@ -7934,21 +7046,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
     }
     
-    @objc func sqrtAction(){
-        let check = datainputview.stringbox.text.replacingOccurrences(of: " ", with: "")
-        if check.count == 0  {
-            datainputview.stringbox.text = "=sqrt("
-        }else{
-            datainputview.stringbox.text = datainputview.stringbox.text + "sqrt("
-        }
-    }
-    
-    @objc func complexAction(){
-        
-        datainputview.stringbox.text = "=COMPLEX("
-        
-    }
-    
     @objc func piAction(){
         let check = datainputview.stringbox.text.replacingOccurrences(of: " ", with: "")
         if check.count == 0  {
@@ -7956,36 +7053,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             datainputview.stringbox.text = datainputview.stringbox.text + "pi"
         }
-    }
-    
-    @objc func imsumAction(){
-        
-        datainputview.stringbox.text = "=IMSUM("
-        
-    }
-    
-    @objc func imsubAction(){
-        datainputview.stringbox.text = "=IMSUB("
-    }
-    
-    @objc func improAction(){
-        datainputview.stringbox.text = "=IMPRODUCT("
-    }
-    
-    @objc func imargAction(){
-        datainputview.stringbox.text = "=IMARGUMENT("
-    }
-    
-    @objc func imdivAction(){
-        datainputview.stringbox.text = "=IMDIV("
-    }
-    
-    @objc func imabsAction(){
-        datainputview.stringbox.text = "=IMABS("
-    }
-    
-    @objc func imrectAction(){
-        datainputview.stringbox.text = "=IMRECTANGULAR("
     }
     
     @objc func plusmarkAction(){
