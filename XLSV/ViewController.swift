@@ -194,6 +194,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     //
     var localFileName = [String]()
     var currentFileNameCollectionViewIdx = IndexPath(item: 0, section: 0)
+    // Guards the sheet-tab tap cycle below (currentFileNameCollectionViewIdx ->
+    // loadExcelSheet -> action alert). Without this, tapping another tab before
+    // the alert from a prior tap is dismissed overwrites currentFileNameCollectionViewIdx,
+    // so the alert's Add/Duplicate/Delete/Rename actions -- which all read that shared
+    // property rather than their own tap's index -- end up acting on the wrong sheet.
+    private var sheetTabActionInProgress = false
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -469,6 +475,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     private func invalidateFLocationIndexCache() {
         fLocationIndexCacheCount = -1
+    }
+
+    // location/f_location/excelStyleLocation get fully reassigned (not appended to)
+    // whenever a different sheet's data loads (see isExcelSheetData). The count-based
+    // checks above can't detect that -- a same-size sheet swap leaves the old sheet's
+    // key->index mappings in place -- so any full reassignment must invalidate all three.
+    private func invalidateAllRenderIndexCaches() {
+        locationIndexCacheCount = -1
+        fLocationIndexCacheCount = -1
+        excelStyleLocationIndexCacheCount = -1
     }
 
     private func locationIndex(for key: String) -> Int? {
@@ -1221,6 +1237,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }else{
             //FileNameCollectionview Change Page
             //sheet cell get touched
+            if sheetTabActionInProgress {
+                // A prior tap's load+alert cycle hasn't been resolved yet -- ignore
+                // this tap instead of letting it overwrite currentFileNameCollectionViewIdx
+                // out from under the still-pending alert (see property doc above).
+                return
+            }
+            sheetTabActionInProgress = true
+
             let locationstr = NSLocale.preferredLanguages.first ?? "en"
             var msgChoose = "Choose an action"
             var msgAdd = "Add Sheet"
@@ -1274,22 +1298,28 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             )
 
             alert.addAction(UIAlertAction(title: msgAdd, style: .default) { _ in
+                self.sheetTabActionInProgress = false
                 self.createxlsxSheet()
             })
 
             alert.addAction(UIAlertAction(title: msgDup, style: .default) { _ in
+                self.sheetTabActionInProgress = false
                 self.excelCopySheet()
             })
 
             alert.addAction(UIAlertAction(title: msgDel, style: .destructive) { _ in
+                self.sheetTabActionInProgress = false
                 self.deletexlsxSheet()
             })
 
             alert.addAction(UIAlertAction(title: msgRen, style: .default) { _ in
+                self.sheetTabActionInProgress = false
                 self.excelChangeSheetName()
             })
 
-            alert.addAction(UIAlertAction(title: msgCancel, style: .cancel))
+            alert.addAction(UIAlertAction(title: msgCancel, style: .cancel) { _ in
+                self.sheetTabActionInProgress = false
+            })
             
             
             appd.collectionViewCellSizeChanged = 1
@@ -1324,6 +1354,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         self.present(alert, animated: true)
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
+                        self.sheetTabActionInProgress = false
                     }
                 }
 
@@ -6407,7 +6438,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     func isExcelSheetData(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        
+
+        // location/content/etc. below get fully replaced with a different sheet's
+        // data -- the render-index caches key on these by count, which can't tell
+        // that apart from "unchanged" when the new sheet has the same cell count.
+        invalidateAllRenderIndexCaches()
+
         //localFileNames = ["sheet1"]
         
         //excel senario

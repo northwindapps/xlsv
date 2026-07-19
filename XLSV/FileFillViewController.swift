@@ -447,6 +447,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         fLocationIndexCacheCount = -1
     }
 
+    // location/f_location/excelStyleLocation get fully reassigned (not appended to)
+    // whenever a different sheet's data loads (see isExcelSheetData). The count-based
+    // checks above can't detect that -- a same-size sheet swap leaves the old sheet's
+    // key->index mappings in place -- so any full reassignment must invalidate all three.
+    private func invalidateAllRenderIndexCaches() {
+        locationIndexCacheCount = -1
+        fLocationIndexCacheCount = -1
+        excelStyleLocationIndexCacheCount = -1
+    }
+
     private func locationIndex(for key: String) -> Int? {
         if locationIndexCacheCount != location.count {
             locationIndexCache.removeAll(keepingCapacity: true)
@@ -6384,7 +6394,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     func isExcelSheetData(sheetIdx:Int)->Bool{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        
+
+        // location/content/etc. below get fully replaced with a different sheet's
+        // data -- the render-index caches key on these by count, which can't tell
+        // that apart from "unchanged" when the new sheet has the same cell count.
+        invalidateAllRenderIndexCaches()
+
         //localFileNames = ["sheet1"]
         
         //excel senario
