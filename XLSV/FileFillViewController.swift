@@ -2205,13 +2205,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             takeDailyBackup(msg: "daily_")
             UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.removeXlsxBackup()
+            let rlt = serviceInstance.removeXlsxBackup(forFileFill: true)
             if rlt == false{
                 print("auto backup removal failed")
             }
         }
     }
-    
+
     
     
     //Filename Change

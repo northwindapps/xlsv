@@ -200,3 +200,66 @@ Not yet done / known remaining work:
 - The same ws.cells(atColumns:)-per-column pattern may exist in other,
   less-used import/export paths not covered today -- same fix applies if
   one of those turns out to be slow.
+
+2026-07-19: testUpdateString regex -> SWXMLHash tree lookup (single-cell xlsx write)
+=========================================================================
+
+Problem:
+- testUpdateString (service.swift) -- the function that patches one cell into
+  sheetN.xml's <sheetData> -- located the existing <c>/<row> element via
+  NSRegularExpression, e.g. "<c[^>]*r=\"\(index)\"(?!\\d)[^/>]*(?:/>|>.*?</c>)".
+  The (?!\d) lookahead exists to stop "B1" from also matching "B10"/"B11", but
+  regex-over-raw-XML-text is inherently fragile (self-closing vs open tags,
+  attribute ordering, escaping) and was already implicated in earlier bugs in
+  this codebase (the border-layering bug, the stale-cache rendering bug).
+
+Fix (hybrid, not a full DOM rewrite -- Foundation's XMLDocument/XMLNode aren't
+available on iOS, so a real mutable-tree serializer would be new
+infrastructure, not a swap of what's already in the project):
+- SWXMLHash (already a project dependency) is used ONLY to answer
+  existence/lookup questions via exact attribute equality
+  (element.attribute(by: "r")?.text == exactValue) -- rowExists/cellExists/
+  sheetDataRows helpers. This can't have the "B1" vs "B10" collision at all,
+  since it's exact string equality, not substring matching.
+- The actual text to splice out of the real xmlString is found via
+  originalElementRange(tag:attributeValue:in:) -- a plain literal substring
+  anchor on the quoted attribute (`r="B1"`, closing quote makes it exact, same
+  guarantee as the old regex's lookahead) plus a forward/backward scan for the
+  tag boundaries. Deliberately NOT using SWXMLHash's own .description here --
+  it re-serializes attributes from an unordered Dictionary and always
+  normalizes self-closing tags away, so it isn't guaranteed to reproduce the
+  original bytes; using it as the replace "needle" risked a silent no-op
+  (reconstructed text just not found in the original string, edit silently
+  fails to persist).
+- Confirmed working (user tested output directly).
+Fixed in: service.swift (testUpdateString + new sheetDataRows/rowExists/
+cellExists/originalElementRange helpers just above it).
+
+Important: unlike the render/cache code (locationIndexCache etc., and
+cellForItemAt), which genuinely is duplicated per controller and had to be
+fixed separately in ViewController.swift and FileFillViewController.swift,
+testUpdateString and the other xlsx-XML-editing functions (testUpdateRow,
+testAddRows, testDeleteRows, testAddCols, testDeleteCols, ...) live only once,
+in service.swift's Service class. ViewController.swift, FileFillViewController.swift,
+and PlaygroundViewController.swift all funnel single-cell writes through the
+same testUpdateStringBox -> testUpdateString call chain, so this fix already
+covers all three controllers with no separate work needed. Don't assume a
+service.swift fix needs repeating elsewhere by default -- grep for the
+function name first to check whether it's actually duplicated.
+
+Also fixed same day, worth noting here for context:
+- FileFillViewController's bottom sheet-tab handler had a re-entrancy bug:
+  rapid taps could overwrite currentFileNameCollectionViewIdx before an
+  earlier tap's action alert (Add/Duplicate/Delete/Rename) was dismissed, so
+  acting on that alert could hit the wrong sheet. Fixed with a
+  sheetTabActionInProgress guard in ViewController.swift's didSelectItemAt.
+- locationIndexCache/fLocationIndexCache/excelStyleLocationIndexCache
+  (ViewController.swift + FileFillViewController.swift) only invalidated on
+  array *count* change, but isExcelSheetData fully reassigns those arrays on
+  sheet switch -- if two sheets happen to have the same cell count, cells
+  rendered with the wrong sheet's content/style. Fixed by invalidating all
+  three at the top of isExcelSheetData in both files.
+- FileFillViewController's backups now live in their own
+  Documents/Backups/FileFill directory (ExcelHelper.getBackupDirectory(forFileFill:)),
+  separate from ViewController's Documents/Backups, instead of both sharing
+  one folder distinguished only by a "_ff" filename suffix.

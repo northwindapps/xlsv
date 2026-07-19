@@ -588,16 +588,22 @@ class ExcelHelper{
        return paths[0]
     }
 
-    func getBackupDirectory() -> URL? {
+    // FileFillViewController's backups live in their own "Backups/FileFill"
+    // subdirectory, kept separate from ViewController's "Backups" so the two modes'
+    // backups never mix in either one's list (see getBackupFiles/writeXlsxBackup).
+    func getBackupDirectory(forFileFill: Bool = false) -> URL? {
         let fileManager = FileManager.default
-        
+
         guard let documentPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first else {
             return nil
         }
-        
+
         let documentURL = URL(fileURLWithPath: documentPath)
-        let backupDirectory = documentURL.appendingPathComponent("Backups", isDirectory: true)
-        
+        var backupDirectory = documentURL.appendingPathComponent("Backups", isDirectory: true)
+        if forFileFill {
+            backupDirectory = backupDirectory.appendingPathComponent("FileFill", isDirectory: true)
+        }
+
         if !fileManager.fileExists(atPath: backupDirectory.path) {
             do {
                 try fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true, attributes: nil)
@@ -606,18 +612,16 @@ class ExcelHelper{
                 return nil
             }
         }
-        
+
         return backupDirectory
     }
 
-    // Backups written from FileFillViewController are tagged with a "_ff" suffix
-    // (see Service.writeXlsxBackup's filenameSuffix). formFillOnly picks which side
-    // of that split to return -- false (the default, ViewController's call site)
-    // returns everything else, true (BackupTableViewController.isFileFillMode)
-    // returns only the "_ff" ones. Keeps the two modes' backups from mixing in
-    // either one's list.
+    // formFillOnly picks which directory to list -- false (the default,
+    // ViewController's call site) returns ViewController's "Backups", true
+    // (BackupTableViewController.isFileFillMode) returns FileFillViewController's
+    // own "Backups/FileFill".
     func getBackupFiles(formFillOnly: Bool = false) -> [URL] {
-        guard let backupDirectory = getBackupDirectory() else { return [] }
+        guard let backupDirectory = getBackupDirectory(forFileFill: formFillOnly) else { return [] }
 
         let fileManager = FileManager.default
         do {
@@ -626,11 +630,7 @@ class ExcelHelper{
 
             let excelFiles = fileURLs.filter { $0.pathExtension.lowercased() == "xlsx" }
 
-            let matchingFiles = excelFiles.filter {
-                $0.deletingPathExtension().lastPathComponent.hasSuffix("_ff") == formFillOnly
-            }
-
-            return matchingFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+            return excelFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
         } catch {
             print("failed to retrieve: \(error)")
             return []

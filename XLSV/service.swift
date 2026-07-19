@@ -3592,9 +3592,9 @@ class Service {
             return nil
     }
     
-    func removeXlsxBackup() -> Bool? {
+    func removeXlsxBackup(forFileFill: Bool = false) -> Bool? {
         do {
-            let backupDirURL = ExcelHelper().getBackupDirectory()
+            let backupDirURL = ExcelHelper().getBackupDirectory(forFileFill: forFileFill)
             if (backupDirURL == nil){
                 print("Invalid backupDir, return nil")
                 return nil
@@ -3694,7 +3694,10 @@ class Service {
             var files = try FileManager.default.contentsOfDirectory(at:subdirectoryURL, includingPropertiesForKeys: nil)
             //"importedExcel"
             let fpURL = URL(fileURLWithPath: fp)
-            let backupDirURL = ExcelHelper().getBackupDirectory()
+            // "_ff" is FileFillViewController's own marker (see its writeXlsxBackup call
+            // sites) -- reused here to route its backups into their own directory instead
+            // of introducing a second, parallel flag for the same distinction.
+            let backupDirURL = ExcelHelper().getBackupDirectory(forFileFill: filenameSuffix == "_ff")
             if (backupDirURL == nil){
                 print("Invalid backupDir, return nil")
                 return nil
