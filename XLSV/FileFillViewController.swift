@@ -3438,15 +3438,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     @objc func moveToPlayground(){
-//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-//        //       postAction()
-//        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine2" ) as! PlaygroundViewController
-//        if isExcel{
-//            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
-//        }
-//        targetViewController.modalPresentationStyle = .fullScreen
-//        self.present( targetViewController, animated: true, completion: nil)
-//        
         self.customview2.removeFromSuperview()
         
         let storyboard = UIStoryboard(name: "Main", bundle: nil)

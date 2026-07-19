@@ -210,13 +210,21 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             let fp = selectedFileURL.path
             print("excel file")
             print("yourExcelfile",fp)
-            appd.imported_xlsx_file_path=fp
+            // FileFillViewController reads imported_xlsx_file_path; ViewController reads its
+            // own imported_xlsx_file_path_ss -- keep whichever mode this restore is for on its
+            // own field so a Spreadsheet restore can never leak into FileFillViewController's
+            // field (or vice versa).
+            if isFileFillMode {
+                appd.imported_xlsx_file_path=fp
+            } else {
+                appd.imported_xlsx_file_path_ss=fp
+            }
             appd.excelfilename=excelName
             readExcel(path: fp)
-            
+
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
-            let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+
+            let url = serviceInstance.testSandBox(fp: fp)
             //createxlsxSheet()
             
             replaceLocalFileWithImportedOne()
@@ -271,16 +279,21 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     func replaceLocalFileWithImportedOne() {
         let appd = UIApplication.shared.delegate as! AppDelegate
         let pathDirectory = getRootDocumentsDirectory()
-        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
-        
-        let overWritingfilePath = URL(fileURLWithPath: appd.imported_xlsx_file_path)
-        
+        // Restoring in FF mode must land at FileFillViewController's own dedicated "_ff"
+        // file, never the shared/Spreadsheet initialXLSX.xlsx -- matches iCloudViewController's
+        // replaceLocalFileWithImportedOne.
+        let overWrittenFileName = isFileFillMode ? "initialXLSX_ff.xlsx" : "initialXLSX.xlsx"
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent(overWrittenFileName)
+
+        let sourcePath = isFileFillMode ? appd.imported_xlsx_file_path : appd.imported_xlsx_file_path_ss
+        let overWritingfilePath = URL(fileURLWithPath: sourcePath)
+
         let backupDir = ExcelHelper().getBackupDirectory()
         let isFromBackup = backupDir.map { overWritingfilePath.path.contains($0.path) } ?? false
 
         do {
             let fileManager = FileManager.default
-            
+
             //Want to keep backup files
             if isFromBackup {
                 if fileManager.fileExists(atPath: overWrittenfilePath.path) {
@@ -293,8 +306,12 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 try fileManager.replaceItemAt(overWrittenfilePath, withItemAt: overWritingfilePath)
                 print("Import: Replaced local file and removed temp.")
             }
-            
-            appd.imported_xlsx_file_path = overWrittenfilePath.path
+
+            if isFileFillMode {
+                appd.imported_xlsx_file_path = overWrittenfilePath.path
+            } else {
+                appd.imported_xlsx_file_path_ss = overWrittenfilePath.path
+            }
         } catch {
             print("Error during file replacement: \(error.localizedDescription)")
         }

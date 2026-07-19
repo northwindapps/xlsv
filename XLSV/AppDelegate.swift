@@ -63,6 +63,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cellIndex = IndexPath()
     var wsSheetIndex = 1
     var imported_xlsx_file_path=""
+    // Same handoff mechanism as imported_xlsx_file_path (set by BackupTableViewController,
+    // claimed once by the receiving controller's viewDidLoad), but dedicated to ViewController
+    // restores specifically -- imported_xlsx_file_path is FileFillViewController's own field
+    // (and the generic one PlaygroundViewController reads), so BackupTableViewController needs
+    // a separate field to hand a Spreadsheet restore to ViewController without it colliding
+    // with whatever FileFillViewController last left on the shared field.
+    var imported_xlsx_file_path_ss=""
     // Raw XML text of the currently loaded worksheet part (e.g. xl/worksheets/sheet1.xml),
     // captured as-is at import time in ExcelHelper.readExcel2 -- CoreXLSX only exposes a
     // decoded Worksheet struct, not the original markup, so this is read independently via

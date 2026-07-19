@@ -186,6 +186,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var isExcel = false
     var isCSV = false
     var isMail = false
+
+    // ViewController's own copy of "which file am I editing" -- unlike
+    // appd.imported_xlsx_file_path (shared across every controller: FileFillViewController,
+    // PlaygroundViewController, BackupTableViewController, iCloudViewController), this is
+    // scoped to this instance only. ViewController no longer routes through
+    // iCloudViewController and only takes files via local Backups restore, so viewDidLoad
+    // claims whatever path was handed over on appd.imported_xlsx_file_path (if any) into
+    // this property and clears the shared one immediately, then every read/write below
+    // uses this instead.
+    var local_xlsx_file_path = ""
 //    var sheetIdx = 0
     
     //RangeSelection reset at the start
@@ -1366,22 +1376,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func loadExcelSheet(idx: Int, completion: (() -> Void)? = nil) {
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            if appd.imported_xlsx_file_path == "" {
+            if local_xlsx_file_path == "" {
                 self.isExcel = false
             }
             
-            if appd.imported_xlsx_file_path != "" {
-                print("yourExcelfile",appd.imported_xlsx_file_path)
+            if local_xlsx_file_path != "" {
+                print("yourExcelfile",local_xlsx_file_path)
                 let ehp = ExcelHelper()
                 let __readExcel2Start = CFAbsoluteTimeGetCurrent()
-                ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: idx)
+                ehp.readExcel2(path: local_xlsx_file_path, wsIndex: idx)
                 print(String(format: "PERF loadExcelSheet.readExcel2: %.3fs", CFAbsoluteTimeGetCurrent() - __readExcel2Start))
                 // Do any additional setup after loading the view.
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                //let url = serviceInstance.testSandBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
                 let __testReadXMLStart = CFAbsoluteTimeGetCurrent()
-                let notUsed = serviceInstance.testReadXMLSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+                let notUsed = serviceInstance.testReadXMLSandBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
                 print(String(format: "PERF loadExcelSheet.testReadXMLSandBox: %.3fs", CFAbsoluteTimeGetCurrent() - __testReadXMLStart))
 
                 self.isExcel = true
@@ -2013,8 +2023,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
             appd.sheetNames = [String]()
             appd.sheetNameIds = [String]()
-            appd.imported_xlsx_file_path = ""
-            appd.imported_xlsx_file_path = ""
+            self.local_xlsx_file_path = ""
+            self.local_xlsx_file_path = ""
             appd.isAppStarted = false
         
             let sheet1Json = ReadWriteJSON()
@@ -2074,6 +2084,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
 
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        // Claim whatever file path BackupTableViewController's local restore handed over on
+        // its ViewController-dedicated appd field, then clear it immediately so it can't leak
+        // into whichever controller loads next -- see local_xlsx_file_path above.
+        // imported_xlsx_file_path_ss (not the plain imported_xlsx_file_path) because that
+        // field belongs to FileFillViewController/PlaygroundViewController.
+        local_xlsx_file_path = appd.imported_xlsx_file_path_ss
+        appd.imported_xlsx_file_path_ss = ""
+
         fileTitle.text = ""
         super.viewDidLoad()
 
@@ -2093,24 +2112,33 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // fallback further down knows whether it still needs to load anything.
         var didLoadSheetInViewDidLoad = false
 
-        // A "_ff" suffix means appd.imported_xlsx_file_path is left pointing at a
+        // A "_ff" suffix means local_xlsx_file_path is left pointing at a
         // FileFillViewController backup (see Service.writeXlsxBackup's
         // filenameSuffix) -- e.g. navigating back to ViewController without the
         // path having been reset. ViewController isn't meant to open those, so
         // treat it the same as "no file selected" and fall through to the default
         // file load below instead.
-        if !appd.imported_xlsx_file_path.isEmpty,
-           URL(fileURLWithPath: appd.imported_xlsx_file_path).deletingPathExtension().lastPathComponent.hasSuffix("_ff") {
-            appd.imported_xlsx_file_path = ""
+        if !local_xlsx_file_path.isEmpty,
+           URL(fileURLWithPath: local_xlsx_file_path).deletingPathExtension().lastPathComponent.hasSuffix("_ff") {
+            local_xlsx_file_path = ""
+            // appd.wsSheetIndex is shared too, and FileFillViewController leaves it
+            // pointing at whatever tab it was last on. loadExcelSheet(idx:) below reads
+            // and writes a sheet-data cache keyed only by this numeric index (see
+            // ExcelHelper.readExcel2 / isExcelSheetData) -- if the default file has no
+            // worksheet at that index, readExcel2 silently fails to refresh the cache,
+            // and isExcelSheetData falls back to whatever stale content is still on disk
+            // from FF's last write to that same index, i.e. FF's content. Reset to the
+            // default sheet index so a freshly-loaded file starts from a clean cache key.
+            appd.wsSheetIndex = 1
         }
 
-        if appd.imported_xlsx_file_path == "" && isCSV == false {
+        if local_xlsx_file_path == "" && isCSV == false {
             let pathDirectory = getRootDocumentsDirectory()
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
             isExcel = true
             if fileExists{
-                appd.imported_xlsx_file_path=filePath.path
+                local_xlsx_file_path=filePath.path
                 // iCloudViewController.readExcel is a separate, older duplicate
                 // parse+JSON-save that never learned about styleId -- loadExcelSheet
                 // already does its own fresh ExcelHelper.readExcel2 parse (the one
@@ -2128,12 +2156,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     do {
                         let icc = iCloudViewController()
                         icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath2))
-                        // loadInitialXLSX only copies the bundled file into place and
-                        // sets appd.imported_xlsx_file_path now -- it no longer parses
-                        // it itself, so loadExcelSheet does the (styleId-aware) parse.
+                        // loadInitialXLSX only copies the bundled file into place and sets
+                        // appd.imported_xlsx_file_path (it has no knowledge of ViewController's
+                        // own local_xlsx_file_path) -- pull the result in here, same as the
+                        // claim step at the top of viewDidLoad. It no longer parses the file
+                        // itself, so loadExcelSheet does the (styleId-aware) parse.
+                        local_xlsx_file_path = appd.imported_xlsx_file_path
                         self.loadExcelSheet(idx: appd.wsSheetIndex)
                         didLoadSheetInViewDidLoad = true
-                        //                    appd.imported_xlsx_file_path=filePath.path
+                        //                    local_xlsx_file_path=filePath.path
                         //                    icc.readExcel(path: filePath.path)
                     } catch {
                         print("Error reading file: \(error)")
@@ -2571,7 +2602,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -2673,7 +2704,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -2763,7 +2794,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -2860,7 +2891,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -2957,7 +2988,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             locationInExcel = locationInExcel.filter { $0 != "" }
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -3070,7 +3101,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
 
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel )
+                let rlt = serviceInstance.testRangeOperationsBox(fp: self.local_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel )
                 
                 if rlt == nil{
                     print("Something went wrong")
@@ -3536,10 +3567,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // No copy step -- FileFillViewController manages its own "_ff" working file
         // independently (see its viewDidLoad, which seeds initialXLSX_ff.xlsx from the
         // bundled template when it doesn't exist yet, and moveToNormal() deletes it on
-        // the way out). Just clear the path so FF mode doesn't inherit and live-edit
-        // whatever file ViewController currently has open.
+        // the way out). Clear both the shared handoff field (which FileFillViewController
+        // actually reads) and this instance's own copy, so FF mode never inherits and
+        // live-edits whatever file ViewController currently has open.
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.imported_xlsx_file_path = ""
+        local_xlsx_file_path = ""
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
@@ -3552,9 +3585,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func moveToPlayground(){
-    
+
         self.customview2.removeFromSuperview()
-        
+
+        // Playground has no dedicated working file of its own and reads the shared appd
+        // field directly, so it needs ViewController's current file handed to it explicitly
+        // here -- ViewController no longer keeps that field in sync as a side effect of its
+        // own read/writes (see local_xlsx_file_path above).
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.imported_xlsx_file_path = local_xlsx_file_path
+
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
         
@@ -5042,7 +5082,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
+            let isOK = serviceInstance.testUpdateStringBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
             
             if !(isOK ?? false){
                 return false
@@ -5117,7 +5157,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if element == " "{
                 element = ""
             }
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
+            _ = serviceInstance.testUpdateStringBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
             
         }
     }
@@ -5133,7 +5173,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testRowsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
+            _ = serviceInstance.testRowsDeleteBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1
@@ -5186,7 +5226,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testRowsAddBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
+            _ = serviceInstance.testRowsAddBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, rowRange: rowRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1
@@ -5238,7 +5278,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testColsAddBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
+            _ = serviceInstance.testColsAddBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1
@@ -5290,7 +5330,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             //fp: String = "", cellIdxString:String = "", ovwritten:[String] = [], ovwriting:[String] = []
-            _ = serviceInstance.testColsDeleteBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
+            _ = serviceInstance.testColsDeleteBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, colRange: colRange, locationInExcel: locationInExcel)
             
             //sheet cell get touched
             appd.collectionViewCellSizeChanged = 1
@@ -5341,7 +5381,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             
             
-            let rlt = service.testGetSheetDataBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+            let rlt = service.testGetSheetDataBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
             
             
             if rlt == nil{
@@ -5388,11 +5428,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     name = dateFormatter.string(from: today)
                 }
             
-                _ = serviceInstance.testAddSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,filename: name!,copySheetData: copySheetData)
+                _ = serviceInstance.testAddSheetBox(fp: self.local_xlsx_file_path.isEmpty ? "" : self.local_xlsx_file_path,filename: name!,copySheetData: copySheetData)
                 
                 //Not got a new sheet in appd .. seems working
                 let ic = iCloudViewController()
-                ic.getExcelSheetNamesAndIds(path: appd.imported_xlsx_file_path)
+                ic.getExcelSheetNamesAndIds(path: self.local_xlsx_file_path)
                 
                 let nameId = appd.sheetNames.firstIndex(of: name!)
                 //TODO Fetch New One's sheetIndex from xml
@@ -5506,7 +5546,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 print("before",appd.sheetNameIds)
                 print("before",appd.sheetNames)
-                _ = serviceInstance.testDeleteSheetBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: name!)
+                _ = serviceInstance.testDeleteSheetBox(fp: self.local_xlsx_file_path.isEmpty ? "" : self.local_xlsx_file_path,sheetname: name!)
                 
                 //sheet cell get touched
                 appd.collectionViewCellSizeChanged = 1
@@ -5598,7 +5638,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
                 print("before",appd.sheetNameIds)
                 print("before",appd.sheetNames)
-                _ = serviceInstance.testChangeSheetNameBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,sheetname: oldname,newsheetname: name)
+                _ = serviceInstance.testChangeSheetNameBox(fp: self.local_xlsx_file_path.isEmpty ? "" : self.local_xlsx_file_path,sheetname: oldname,newsheetname: name)
                 
                 //sheet cell get touched
                 appd.collectionViewCellSizeChanged = 1
@@ -6692,7 +6732,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel file creation
-        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+        let url = serviceInstance.writeXlsxEmail(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
         
         //save temp content
         var result = content
@@ -6778,7 +6818,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let appd = UIApplication.shared.delegate as! AppDelegate
             
             let url = serviceInstance.writeXlsxBackup(
-                fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
+                fp: self.local_xlsx_file_path.isEmpty ? "" : self.local_xlsx_file_path,
                 filename: fileName
             )
             
@@ -6814,7 +6854,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
-        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true,msg: msg)
+        let url = serviceInstance.writeXlsxBackup(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path,isAutoSave: true,msg: msg)
         
         
     }

@@ -40,30 +40,26 @@ class CreditController: UIViewController {
     func showAnimate()
     {
       
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if appd.imported_xlsx_file_path == "" {
-            let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
-            next.modalPresentationStyle = .fullScreen
-            self.present(next,animated: true, completion: nil)
-            return
-        }
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        if appd.imported_xlsx_file_path == "" {
+//            let next = storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+//            next.modalPresentationStyle = .fullScreen
+//            self.present(next,animated: true, completion: nil)
+//            return
+//        }
         
-        print("go to file view")
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-        targetViewController.idx = idx
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
         targetViewController.modalPresentationStyle = .fullScreen
-        // Present the target view controller after LoadingFileController's view has appeared
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
-        }
+        self.present( targetViewController, animated: true, completion: nil)
         
     }
     
     @objc func returnTOP() {
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController //Landscape
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
         targetViewController.modalPresentationStyle = .fullScreen
         self.present( targetViewController, animated: true, completion: nil)
     }
+    
 
     /*
     // MARK: - Navigation
