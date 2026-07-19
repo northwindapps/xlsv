@@ -407,15 +407,19 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                             }else{
                                 //
                                 cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: each_width[section], height: each_height[item])
-                                
+
                                 cellAttributes.zIndex = 1
-                                
-                                // Save the attributes.
-                                if(cellAttrsDictionary[cellIndex] == nil){
-                                    cellAttrsDictionary[cellIndex] = cellAttributes
-                                }else{
-                                    //print("attribute exists") //well. what should i do in this case
-                                }
+
+                                // Always overwrite, even if this indexPath already has
+                                // attributes from a previous prepare() pass (e.g. a
+                                // different file, or this same file before a row/col
+                                // shift). If this cell used to be a merge anchor --
+                                // spanning frame, zIndex 2 -- and isn't one anymore, this
+                                // is the only place that resets it back to a normal
+                                // single-cell frame. Skipping the write here left ghost
+                                // merge boxes on screen indefinitely, including across a
+                                // totally unrelated file being loaded afterward.
+                                cellAttrsDictionary[cellIndex] = cellAttributes
                             }
                             
                         }

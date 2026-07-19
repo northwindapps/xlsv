@@ -2237,11 +2237,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         myCollectionView.delegate = self
         orientaion = "P"
         
+       
+        
         // Tracks whether loadExcelSheet() already ran below, so the "checkSheet"
         // fallback further down knows whether it still needs to load anything.
         var didLoadSheetInViewDidLoad = false
 
-        if appd.imported_xlsx_file_path == "" && isCSV == false{
+        // A "_ff" suffix means appd.imported_xlsx_file_path is left pointing at a
+        // FileFillViewController backup (see Service.writeXlsxBackup's
+        // filenameSuffix) -- e.g. navigating back to ViewController without the
+        // path having been reset. ViewController isn't meant to open those, so
+        // treat it the same as "no file selected" and fall through to the default
+        // file load below instead.
+        if !appd.imported_xlsx_file_path.isEmpty,
+           URL(fileURLWithPath: appd.imported_xlsx_file_path).deletingPathExtension().lastPathComponent.hasSuffix("_ff") {
+            appd.imported_xlsx_file_path = ""
+        }
+
+        if appd.imported_xlsx_file_path == "" && isCSV == false {
             let pathDirectory = getRootDocumentsDirectory()
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
@@ -2257,6 +2270,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.loadExcelSheet(idx: appd.wsSheetIndex)
                 didLoadSheetInViewDidLoad = true
             }
+            
             if !fileExists {
                 print("File doesn't exist at path: \(filePath.path)")
                 //loadinitialXLSX so it's reading from actual file
@@ -2277,6 +2291,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }
             }
         }
+        
+        
 
         //checkSheet -- loadExcelSheet() above already runs isExcelSheetData/
         // initSheetData/storeValues/initExcelLocation *and* resolveCellStyles.
@@ -3703,12 +3719,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func moveToFilefill(){
-    
+
         self.customview2.removeFromSuperview()
-        
+
+        // No copy step -- FileFillViewController manages its own "_ff" working file
+        // independently (see its viewDidLoad, which seeds initialXLSX_ff.xlsx from the
+        // bundled template when it doesn't exist yet, and moveToNormal() deletes it on
+        // the way out). Just clear the path so FF mode doesn't inherit and live-edit
+        // whatever file ViewController currently has open.
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.imported_xlsx_file_path = ""
+
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
-        
+
         if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
             window.rootViewController = targetViewController
             UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)

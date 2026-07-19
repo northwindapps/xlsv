@@ -610,17 +610,27 @@ class ExcelHelper{
         return backupDirectory
     }
 
-    func getBackupFiles() -> [URL] {
+    // Backups written from FileFillViewController are tagged with a "_ff" suffix
+    // (see Service.writeXlsxBackup's filenameSuffix). formFillOnly picks which side
+    // of that split to return -- false (the default, ViewController's call site)
+    // returns everything else, true (BackupTableViewController.isFileFillMode)
+    // returns only the "_ff" ones. Keeps the two modes' backups from mixing in
+    // either one's list.
+    func getBackupFiles(formFillOnly: Bool = false) -> [URL] {
         guard let backupDirectory = getBackupDirectory() else { return [] }
-        
+
         let fileManager = FileManager.default
         do {
             let fileURLs = try fileManager.contentsOfDirectory(at: backupDirectory,
                                                             includingPropertiesForKeys: nil)
-            
+
             let excelFiles = fileURLs.filter { $0.pathExtension.lowercased() == "xlsx" }
-            
-            return excelFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+
+            let matchingFiles = excelFiles.filter {
+                $0.deletingPathExtension().lastPathComponent.hasSuffix("_ff") == formFillOnly
+            }
+
+            return matchingFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
         } catch {
             print("failed to retrieve: \(error)")
             return []

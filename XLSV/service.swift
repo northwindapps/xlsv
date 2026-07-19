@@ -3586,7 +3586,7 @@ class Service {
         return false
     }
     
-    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false,msg:String = "",filename:String="") -> URL? {
+    func writeXlsxBackup(fp: String = "", url: URL? = nil,isAutoSave:Bool = false,msg:String = "",filename:String="",filenameSuffix:String="") -> URL? {
         do {
         // Get the sandbox directory for documents
         if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -3681,17 +3681,23 @@ class Service {
             
                
             var nameWithoutExtension = fpURL.deletingPathExtension().lastPathComponent // coook
-            
+
             if isAutoSave == true{
                 nameWithoutExtension = msg + "auto_save"
             }
-            
+
             let fileExtension = fpURL.pathExtension // xlsx
 
-            var newFileName = "\(nameWithoutExtension)_\(timestamp).\(fileExtension)"
-            
+            // filenameSuffix (e.g. "_ff" for FileFillViewController) tags backups by
+            // which mode wrote them, without needing a separate backup directory --
+            // getBackupFiles() filters on this same suffix to keep them out of
+            // ViewController's backup list. Always placed immediately before the
+            // extension (not before the timestamp) so both the auto-save and the
+            // explicit-named-save filenames reliably end with it.
+            var newFileName = "\(nameWithoutExtension)_\(timestamp)\(filenameSuffix).\(fileExtension)"
+
             if filename.replacingOccurrences(of: " ", with: "") != ""{
-                newFileName = "\(filename).\(fileExtension)"
+                newFileName = "\(filename)\(filenameSuffix).\(fileExtension)"
             }
             
             let backupURL = backupDirURL!.appendingPathComponent(newFileName)

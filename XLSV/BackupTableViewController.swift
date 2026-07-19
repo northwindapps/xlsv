@@ -8,6 +8,12 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     
     var backupFiles: [URL] = []
     let cellId = "cell"
+
+    // Set by the presenting controller before this view loads. Determines both
+    // which backups loadData() lists (getBackupFiles(formFillOnly:)) and which
+    // controller restore(selectedFileURL:) navigates back to -- FileFillViewController
+    // for "_ff" backups, ViewController otherwise.
+    var isFileFillMode = false
     
     let tableView = UITableView()
     
@@ -79,7 +85,7 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     }
 
     func loadData() {
-        self.backupFiles = ExcelHelper().getBackupFiles()
+        self.backupFiles = ExcelHelper().getBackupFiles(formFillOnly: isFileFillMode)
         tableView.reloadData()
     }
 
@@ -214,18 +220,28 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             //createxlsxSheet()
             
             replaceLocalFileWithImportedOne()
-            
-            
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-            targetViewController.isExcel = true
-            
+
+            // Restoring a "_ff" backup needs to land back in FileFillViewController,
+            // not the regular ViewController -- otherwise a form-fill-mode save would
+            // open in the full editing view it was deliberately kept out of.
+            let rootViewController: UIViewController
+            if isFileFillMode {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+                targetViewController.isExcel = true
+                rootViewController = targetViewController
+            } else {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+                targetViewController.isExcel = true
+                rootViewController = targetViewController
+            }
+
             if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
                    let window = appDelegate.window {
-                    
+
                     UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                        window.rootViewController = targetViewController
+                        window.rootViewController = rootViewController
                     }, completion: nil)
-                    
+
                     window.makeKeyAndVisible()
                 }
         }

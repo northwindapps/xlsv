@@ -1502,9 +1502,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         datainputview.stringbox.layer.borderWidth = 1
         datainputview.stringbox.layer.borderColor = UIColor.gray.cgColor
         
-        datainputview.okbutton.addTarget(self, action: #selector(ViewController.terminate), for: UIControl.Event.touchUpInside)
+        datainputview.okbutton.addTarget(self, action: #selector(FileFillViewController.terminate), for: UIControl.Event.touchUpInside)
         
-//        datainputview.returnbutton.addTarget(self, action: #selector(ViewController.restore), for: UIControl.Event.touchUpInside)
+//        datainputview.returnbutton.addTarget(self, action: #selector(FileFillViewController.restore), for: UIControl.Event.touchUpInside)
 //
         datainputview.returnbutton.addTarget(self, action: #selector(barcodeAction), for: UIControl.Event.touchUpInside)
 
@@ -1560,13 +1560,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 Hintview.removeFromSuperview()
             }else{
                 Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
-                Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
+                Hintview.hintCloseButton.addTarget(self, action: #selector(FileFillViewController.closeHview), for: UIControl.Event.touchUpInside)
                 
                 self.view.addSubview(Hintview)
             }
         }else{
             Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
-            Hintview.hintCloseButton.addTarget(self, action: #selector(ViewController.closeHview), for: UIControl.Event.touchUpInside)
+            Hintview.hintCloseButton.addTarget(self, action: #selector(FileFillViewController.closeHview), for: UIControl.Event.touchUpInside)
             
             self.view.addSubview(Hintview)
         }
@@ -1868,9 +1868,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 
             }
             
-            //delete local excel
+            //delete local excel -- FF mode's own dedicated copy, never
+            // ViewController's initialXLSX.xlsx (see moveToFilefill()).
             let pathDirectory = self.getRootDocumentsDirectory()
-            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX_ff.xlsx")
             let fileManager = FileManager.default
             do {
                 if fileManager.fileExists(atPath: filePath.path) {
@@ -1882,13 +1883,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             } catch {
                 print("An error occurred while deleting the file: \(error.localizedDescription)")
             }
-            
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "iCloud" )//Landscape
+
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "iCloud" ) as! iCloudViewController//Landscape
+            targetViewController.isFileFillMode = true
             targetViewController.modalPresentationStyle = .fullScreen
             self.present( targetViewController, animated: true, completion: nil)
         }))
         alert.addAction(UIAlertAction(title: no, style: .default, handler: nil))
-        
+
         self.present(alert, animated: true)
         
         
@@ -2003,9 +2005,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             let sheet1Json = ReadWriteJSON()
             sheet1Json.deleteJsonFile(title: "csv_sheet1")
             
-            //delete local excel
+            //delete local excel -- FF mode's own dedicated copy, never
+            // ViewController's initialXLSX.xlsx (see moveToFilefill()).
             let pathDirectory = self.getRootDocumentsDirectory()
-            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX_ff.xlsx")
             let fileManager = FileManager.default
             do {
                 if fileManager.fileExists(atPath: filePath.path) {
@@ -2017,7 +2020,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             } catch {
                 print("An error occurred while deleting the file: \(error.localizedDescription)")
             }
-            
+
             self.customview2.removeFromSuperview()
             
             let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )//Landscape
@@ -2219,7 +2222,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
         if appd.imported_xlsx_file_path == "" && isCSV == false{
             let pathDirectory = getRootDocumentsDirectory()
-            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            // FileFillViewController's default file is kept separate from
+            // ViewController's initialXLSX.xlsx (see moveToFilefill(), which is the
+            // normal entry point and already hands over a dedicated "_ff" copy) --
+            // this branch only matters for the edge case of entering FF mode with no
+            // file already selected.
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX_ff.xlsx")
             let fileExists = FileManager.default.fileExists(atPath: filePath.path)
             isExcel = true
             if fileExists{
@@ -2240,6 +2248,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     do {
                         let icc = iCloudViewController()
                         icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath2))
+                        // loadInitialXLSX unconditionally lands the bundled template at
+                        // the shared initialXLSX.xlsx -- copy it over to this
+                        // controller's own dedicated "_ff" path so FF mode still never
+                        // ends up pointed at ViewController's file.
+                        if !appd.imported_xlsx_file_path.isEmpty {
+                            let sourceURL = URL(fileURLWithPath: appd.imported_xlsx_file_path)
+                            if FileManager.default.fileExists(atPath: filePath.path) {
+                                try? FileManager.default.removeItem(at: filePath)
+                            }
+                            try? FileManager.default.copyItem(at: sourceURL, to: filePath)
+                            appd.imported_xlsx_file_path = filePath.path
+                        }
                         // loadInitialXLSX only copies the bundled file into place and
                         // sets appd.imported_xlsx_file_path now -- it no longer parses
                         // it itself, so loadExcelSheet does the (styleId-aware) parse.
@@ -2368,7 +2388,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     @objc private func localSave(){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         let pathDirectory = getRootDocumentsDirectory()
-        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        // FF mode's own dedicated copy, never ViewController's initialXLSX.xlsx.
+        let overWrittenfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX_ff.xlsx")
         
         let overWritingfilePath = appd.imported_xlsx_file_path
         do {
@@ -3558,22 +3579,22 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 340))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 340))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 340))
             break
             
             
@@ -3581,7 +3602,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 310))
+            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 340))
             break
             
         }
@@ -3596,28 +3617,94 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         customview2.layer.borderColor = UIColor.black.cgColor
         
-        customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
+        customview2.back.addTarget(self, action: #selector(FileFillViewController.back2(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
+        customview2.localLoad.addTarget(self, action: #selector(FileFillViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
+        customview2.reset.addTarget(self, action: #selector(FileFillViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.resetStyling.addTarget(self, action: #selector(ViewController.goSettings), for: UIControl.Event.touchUpInside)
+        customview2.resetStyling.addTarget(self, action: #selector(FileFillViewController.goSettings), for: UIControl.Event.touchUpInside)
         
-        customview2.emailButton.addTarget(self, action: #selector(ViewController.excelEmail), for: UIControl.Event.touchUpInside)
+        customview2.emailButton.addTarget(self, action: #selector(FileFillViewController.excelEmail), for: UIControl.Event.touchUpInside)
         
-        customview2.savefile.addTarget(self, action: #selector(ViewController.filesave), for: UIControl.Event.touchUpInside)
+        customview2.savefile.addTarget(self, action: #selector(FileFillViewController.filesave), for: UIControl.Event.touchUpInside)
         
-        customview2.localSave.addTarget(self, action: #selector(ViewController.loadCreditview), for: UIControl.Event.touchUpInside)
+        customview2.localSave.addTarget(self, action: #selector(FileFillViewController.loadCreditview), for: UIControl.Event.touchUpInside)
         
-        customview2.backups.addTarget(self, action: #selector(ViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
+        customview2.backups.addTarget(self, action: #selector(FileFillViewController.moveToBackupsView), for: UIControl.Event.touchUpInside)
         
-        customview2.playgroundMode.addTarget(self, action: #selector(ViewController.moveToPlayground), for: UIControl.Event.touchUpInside)
+        customview2.playgroundMode.addTarget(self, action: #selector(FileFillViewController.moveToPlayground), for: UIControl.Event.touchUpInside)
+        
+        customview2.filefillmode.setTitle("Normal Mode", for: UIControlState())
+        customview2.filefillmode.addTarget(self, action: #selector(FileFillViewController.moveToNormal), for: UIControl.Event.touchUpInside)
         
   
         let locationstr = (NSLocale.preferredLanguages[0] as String?)!
         
         self.view.addSubview(customview2)
+    }
+    
+    @objc func moveToNormal(){
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        self.customview2.removeFromSuperview()
+        appd.imported_xlsx_file_path = ""
+
+       
+
+            //reset all
+            self.location.removeAll()
+            self.content.removeAll()
+            self.bgcolor.removeAll()
+            self.cursor = String()
+            self.tcolor.removeAll()
+            self.textsize.removeAll()
+            
+            
+            let domain = Bundle.main.bundleIdentifier!
+            UserDefaults.standard.removePersistentDomain(forName: domain)
+            UserDefaults.standard.synchronize()
+            
+            appd.cswLocation.removeAll()
+            appd.cshLocation.removeAll()
+            appd.customSizedWidth.removeAll()
+            appd.customSizedHeight.removeAll()
+            appd.cswLocation_temp.removeAll()
+            appd.cshLocation_temp.removeAll()
+            appd.customSizedWidth_temp.removeAll()
+            appd.customSizedHeight_temp.removeAll()
+            appd.diff_end_index.removeAll()
+            appd.diff_start_index.removeAll()
+            appd.CELL_HEIGHT_EXCEL_GSHEET = -1.0
+            appd.CELL_WIDTH_EXCEL_GSHEET = -1.0
+            appd.sheetNames = [String]()
+            appd.sheetNameIds = [String]()
+            appd.imported_xlsx_file_path = ""
+            appd.imported_xlsx_file_path = ""
+            appd.isAppStarted = false
+        
+            let sheet1Json = ReadWriteJSON()
+            sheet1Json.deleteJsonFile(title: "csv_sheet1")
+            
+            //delete local excel
+            let pathDirectory = self.getRootDocumentsDirectory()
+            let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+            let fileManager = FileManager.default
+            do {
+                if fileManager.fileExists(atPath: filePath.path) {
+                    try fileManager.removeItem(at: filePath)
+                    print("File deleted successfully.")
+                } else {
+                    print("File does not exist.")
+                }
+            } catch {
+                print("An error occurred while deleting the file: \(error.localizedDescription)")
+            }
+            
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )//Landscape
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present( targetViewController, animated: true, completion: nil)
+   
+
     }
     
     @objc func moveToPlayground(){
@@ -3775,6 +3862,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     @objc func moveToBackupsView(){
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Backups" ) as! BackupTableViewController
+        targetViewController.isFileFillMode = true
         targetViewController.modalPresentationStyle = .fullScreen
         present(targetViewController, animated: true, completion: nil)
         if customview2 != nil{
@@ -4096,23 +4184,23 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         Fview .color5.layer.borderColor = UIColor.black.cgColor
         
-        Fview.formatBackButton.addTarget(self, action: #selector(ViewController.formatbackaction(_:)), for: UIControl.Event.touchUpInside)
+        Fview.formatBackButton.addTarget(self, action: #selector(FileFillViewController.formatbackaction(_:)), for: UIControl.Event.touchUpInside)
         
-        Fview.color1.addTarget(self, action: #selector(ViewController.c1(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color2.addTarget(self, action: #selector(ViewController.c2(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color1.addTarget(self, action: #selector(FileFillViewController.c1(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color2.addTarget(self, action: #selector(FileFillViewController.c2(_:)), for: UIControl.Event.touchUpInside)
         
-        Fview.color5.addTarget(self, action: #selector(ViewController.c5(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color6.addTarget(self, action: #selector(ViewController.c6(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color7.addTarget(self, action: #selector(ViewController.c7(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color8.addTarget(self, action: #selector(ViewController.c8(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color9.addTarget(self, action: #selector(ViewController.c9(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color10.addTarget(self, action: #selector(ViewController.c10(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color11.addTarget(self, action: #selector(ViewController.c11(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color12.addTarget(self, action: #selector(ViewController.c12(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color13.addTarget(self, action: #selector(ViewController.c13(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color14.addTarget(self, action: #selector(ViewController.c14(_:)), for: UIControl.Event.touchUpInside)
-        Fview.color15.addTarget(self, action: #selector(ViewController.c15(_:)), for: UIControl.Event.touchUpInside)
-        Fview.sizeslider.addTarget(self, action: #selector(ViewController.sliderValueChanged(_:)), for: UIControl.Event.valueChanged)
+        Fview.color5.addTarget(self, action: #selector(FileFillViewController.c5(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color6.addTarget(self, action: #selector(FileFillViewController.c6(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color7.addTarget(self, action: #selector(FileFillViewController.c7(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color8.addTarget(self, action: #selector(FileFillViewController.c8(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color9.addTarget(self, action: #selector(FileFillViewController.c9(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color10.addTarget(self, action: #selector(FileFillViewController.c10(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color11.addTarget(self, action: #selector(FileFillViewController.c11(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color12.addTarget(self, action: #selector(FileFillViewController.c12(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color13.addTarget(self, action: #selector(FileFillViewController.c13(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color14.addTarget(self, action: #selector(FileFillViewController.c14(_:)), for: UIControl.Event.touchUpInside)
+        Fview.color15.addTarget(self, action: #selector(FileFillViewController.c15(_:)), for: UIControl.Event.touchUpInside)
+        Fview.sizeslider.addTarget(self, action: #selector(FileFillViewController.sliderValueChanged(_:)), for: UIControl.Event.valueChanged)
         
         self.view.addSubview(Fview)
         
@@ -4283,12 +4371,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         numberview.inputfield.delegate = self
         
         //
-        numberview.back.addTarget(self, action: #selector(ViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
+        numberview.back.addTarget(self, action: #selector(FileFillViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
         
-        numberview.plusOne.addTarget(self, action: #selector(ViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
+        numberview.plusOne.addTarget(self, action: #selector(FileFillViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
         
         
-        numberview.minusOne.addTarget(self, action: #selector(ViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
+        numberview.minusOne.addTarget(self, action: #selector(FileFillViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
         
         numberview.width_height_selector.setTitle(width, forSegmentAt: 0)
         numberview.width_height_selector.setTitle(height, forSegmentAt: 1)
@@ -7515,7 +7603,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             let url = serviceInstance.writeXlsxBackup(
                 fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
-                filename: fileName
+                filename: fileName,
+                filenameSuffix: "_ff"
             )
             
             if url == nil {
@@ -7550,7 +7639,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel backups
-        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true,msg: msg)
+        let url = serviceInstance.writeXlsxBackup(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,isAutoSave: true,msg: msg,filenameSuffix: "_ff")
         
         
     }

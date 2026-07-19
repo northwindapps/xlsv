@@ -50,7 +50,14 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     var mergedCellsLocation = [[String:AnyObject]]()
     
     var test = true
-    
+
+    // Set by the presenting controller before this view loads (FileFillViewController
+    // sets this to true in its icloudview(_:)). Determines both which local file the
+    // imported xlsx lands at (replaceLocalFileWithImportedOne) and which controller
+    // documentPicker(_:didPickDocumentAt:) returns to afterward, so an import
+    // triggered from FF mode never ends up overwriting/showing in ViewController.
+    var isFileFillMode = false
+
     @IBOutlet weak var aci: UIActivityIndicatorView!
     //var activityIndicator: UIActivityIndicatorView!
     
@@ -136,150 +143,24 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         //
         if url.absoluteString.hasSuffix(".csv"){
             //temporary susupend feature
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Landscape
-            targetViewController.isExcel = true
-            targetViewController.isCSV = false
+            let targetViewController: UIViewController
+            if isFileFillMode {
+                let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+                ffViewController.isExcel = true
+                ffViewController.isCSV = false
+                targetViewController = ffViewController
+            } else {
+                let vc = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
+                vc.isExcel = true
+                vc.isCSV = false
+                targetViewController = vc
+            }
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
                 //just return and start with an initial xlsx file
                 self.present(targetViewController, animated: true, completion: nil)
             }
             return
-            let fnameArry = url.absoluteString.split(separator: "/")
-            let fnameA = fnameArry.last!.split(separator: ".")
-            excelName = String(fnameA.first!) + "." + String(fnameA.last!)
-            let mydata = try! Data(contentsOf: url)
-            let str = swiftDataToString(someData: mydata)
-            var elementArray = str?.components(separatedBy: "\n")
-                var rowcount:Int = elementArray!.count
-            
-            for i in 0..<rowcount {
-
-                if (elementArray![i].contains("\r")){
-                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\r", with: "")
-                    elementArray![i] = elementArray![i].replacingOccurrences(of: "\n", with: "")
-                }
-            }
-
-            //
-            location.removeAll()
-            contents.removeAll()
-            //
-            appd.sheetNameIds = [String]()
-            appd.sheetNames = [String]()
-            appd.diff_start_index.removeAll()
-            appd.diff_end_index.removeAll()
-            appd.excelStyleIdx.removeAll()
-            appd.excelStyleLocation.removeAll()
-            appd.excelStyleLocationAlphabet.removeAll()
-            appd.cellXfs.removeAll()
-            appd.cellStyleXfs.removeAll()
-            appd.border_lefts.removeAll()
-            appd.border_rights.removeAll()
-            appd.border_bottoms.removeAll()
-            appd.border_tops.removeAll()
-            
-            //Let's start
-            var columncount = 0
-            for r in 0..<rowcount//the number of rows
-            {
-                let wordsArray: [String] = elementArray![r].components(separatedBy: ",")
-                
-                if columncount < wordsArray.count {
-                    columncount = wordsArray.count
-                }
-                
-                if wordsArray.count < columncount{
-                    
-                }
-                else
-                {
-                    for c in 0..<columncount
-                    {
-                        if wordsArray[c] == "" || wordsArray[c] == " "
-                        {
-                            
-                        }
-                        else
-                        {
-                            let targetlocation:String = String(c+1) + "," + String(r+1)//Something is wrong.. String(i+1) + "," + String(j+1)
-                            
-                            location.append(targetlocation)
-                            contents.append(wordsArray[c])
-                        }
-                    }
-                }
-            }
-                
-            if columncount < appd.DEFAULT_COLUMN_NUMBER {
-                columncount = appd.DEFAULT_COLUMN_NUMBER
-            }
-            
-            if rowcount < appd.DEFAULT_ROW_NUMBER {
-                rowcount = appd.DEFAULT_ROW_NUMBER
-            }
-
-            let csvData = UserDefaults.standard
-            csvData.set(location, forKey: "NEWTMLOCATION")
-            csvData.set(contents, forKey: "NEWTMCONTENT")
-            csvData.set(rowcount, forKey: "NEWRsize")
-            csvData.set(columncount, forKey: "NEWCsize")
-            csvData.synchronize()
-
-           let today: Date = Date()
-           let dateFormatter: DateFormatter = DateFormatter()
-           dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
-           let date = dateFormatter.string(from: today)
-           var fontSize = [String]()
-           var fontColor = [String]()
-           var bgColor = [String]()
-           for i in 0..<location.count{
-               fontSize.append(String(10))
-               bgColor.append("white")
-               fontColor.append("black")
-           }
- 
-            let dict : [String:Any] = ["filename": "csv_sheet1",
-                                  "date": date,
-                                  "content": contents,
-                                  "location": location,
-                                  "fontsize": fontSize,
-                                  "fontcolor": fontColor,
-                                  "bgcolor": bgColor,
-                                  "rowsize": rowcount,
-                                  "columnsize": columncount,
-                                  "customcellWidth":[String](),
-                                  "customcellHeight": [String](),
-                                  "ccwLocation": [String](),
-                                  "cchLocation": [String](),
-                                  "formulaResult":[String](),
-                                  "inputOrder":[String]()]
-
-       
-
-            let test = ReadWriteJSON()
-            print("savingImportJSON CSV")
-            test.saveuserAll()
-            test.saveJsonFile(source: dict, title: "csv_sheet1")
-            appd.customSizedHeight.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.cswLocation.removeAll()
-            appd.numberofRow = rowcount+1
-            appd.numberofColumn = columncount+1
-            print("end iCloudController")
-            
-//            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! ViewController//Landscape
-            targetViewController.isExcel = false
-            targetViewController.isCSV = true
-            targetViewController.modalPresentationStyle = .fullScreen
-            DispatchQueue.main.async {
-                self.present(targetViewController, animated: true, completion: nil)
-            }
-            
-            
-            return
-            
         }
         
         if url.absoluteString.hasSuffix(".xlsx"){
@@ -341,26 +222,48 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             
             
             replaceLocalFileWithImportedOne()
-        
+
             print("end iCloudController")
-        
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Nomore Filefill
-            targetViewController.isExcel = isExcel
+
+            // Return to whichever controller triggered this import -- FileFillViewController
+            // set isFileFillMode before presenting; otherwise this came from ViewController's
+            // own "Local Load" and must land back there, not in FF mode.
+            let rootViewController: UIViewController
+            if isFileFillMode {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+                targetViewController.isExcel = isExcel
+                rootViewController = targetViewController
+            } else {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
+                targetViewController.isExcel = isExcel
+                rootViewController = targetViewController
+            }
             if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
                let window = appDelegate.window {
-                
+
                 UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                    window.rootViewController = targetViewController
+                    window.rootViewController = rootViewController
                 }, completion: nil)
-                
+
                 window.makeKeyAndVisible()
             }
             return
         }
                 
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Landscape
-        targetViewController.isExcel = true
-        targetViewController.isCSV = false
+        // Unsupported file type -- no import happened, just return to whichever
+        // controller triggered the picker.
+        let targetViewController: UIViewController
+        if isFileFillMode {
+            let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+            ffViewController.isExcel = true
+            ffViewController.isCSV = false
+            targetViewController = ffViewController
+        } else {
+            let vc = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
+            vc.isExcel = true
+            vc.isCSV = false
+            targetViewController = vc
+        }
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
@@ -370,7 +273,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     func replaceLocalFileWithImportedOne() {
         let appd = UIApplication.shared.delegate as! AppDelegate
         let pathDirectory = getRootDocumentsDirectory()
-        let destinationfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
+        // FF-mode imports land at their own dedicated file, never ViewController's
+        // initialXLSX.xlsx -- see isFileFillMode above.
+        let destinationFileName = isFileFillMode ? "initialXLSX_ff.xlsx" : "initialXLSX.xlsx"
+        let destinationfilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent(destinationFileName)
         
         let currentfilePath = URL(fileURLWithPath: appd.imported_xlsx_file_path)
         
