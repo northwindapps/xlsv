@@ -15,6 +15,7 @@
 		2B6704142F9100B500CBBBB3 /* PlaygroundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */; };
 		2B67BE012FA970BA0016DF24 /* initialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B67BE002FA970BA0016DF24 /* initialXLSX.xlsx */; };
 		2B9503382FA5857D00D681BF /* BarcodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9503372FA5855A00D681BF /* BarcodeViewController.swift */; };
+		2BB3DD16300C8E2700040AA8 /* FileFillViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
@@ -99,6 +100,7 @@
 		2B67BE002FA970BA0016DF24 /* initialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXLSX.xlsx; sourceTree = "<group>"; };
 		2B864A5E2BF8953C00F7726C /* initialXlsxSheet1.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = initialXlsxSheet1.xlsx; sourceTree = "<group>"; };
 		2B9503372FA5855A00D681BF /* BarcodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeViewController.swift; sourceTree = "<group>"; };
+		2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileFillViewController.swift; sourceTree = "<group>"; };
 		2BB809742F72DF74009666B6 /* BackupTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTableViewController.swift; sourceTree = "<group>"; };
 		2BBF55252F8B991E008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard2.xib; sourceTree = "<group>"; };
 		2BBF55282F8B991E008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Customviewboard2.xcstrings; sourceTree = "<group>"; };
@@ -348,6 +350,7 @@
 				8DF796AD1E4E799500BE7D38 /* NilController.swift */,
 				6AC8322B24663D3E006FA917 /* JSONModel.swift */,
 				6AB0A81A245B320B007703C0 /* ViewController.swift */,
+				2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */,
 				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
 				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
 				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
@@ -627,6 +630,7 @@
 				6A1F5E1C2542D734002796C0 /* core.swift in Sources */,
 				6A1F5E112542D728002796C0 /* workbook.swift in Sources */,
 				8DB176C91E1492AA009DCD75 /* AppDelegate.swift in Sources */,
+				2BB3DD16300C8E2700040AA8 /* FileFillViewController.swift in Sources */,
 				3CD1E3B62142985F0023BC43 /* SettingsViewController.swift in Sources */,
 				6AC832292465CBC2006FA917 /* FileCollectionViewCell.swift in Sources */,
 				6AB0A815245B14F3007703C0 /* StyleReadFile.swift in Sources */,

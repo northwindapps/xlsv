@@ -136,7 +136,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         //
         if url.absoluteString.hasSuffix(".csv"){
             //temporary susupend feature
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Landscape
             targetViewController.isExcel = true
             targetViewController.isCSV = false
             targetViewController.modalPresentationStyle = .fullScreen
@@ -269,7 +269,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             appd.numberofColumn = columncount+1
             print("end iCloudController")
             
-//            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+//            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! ViewController//Landscape
             targetViewController.isExcel = false
             targetViewController.isCSV = true
             targetViewController.modalPresentationStyle = .fullScreen
@@ -344,7 +344,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
             print("end iCloudController")
         
-            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+            let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Nomore Filefill
             targetViewController.isExcel = isExcel
             if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
                let window = appDelegate.window {
@@ -358,7 +358,7 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             return
         }
                 
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
+        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController//Landscape
         targetViewController.isExcel = true
         targetViewController.isCSV = false
         targetViewController.modalPresentationStyle = .fullScreen

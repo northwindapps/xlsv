@@ -15,32 +15,8 @@ import SSZipArchive
 import CoreFoundation
 //import GoogleMobileAds
 
-let reuseIdentifier = "customCell"
-var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
-var SCREENSIZE = ScreenSize.SCREEN_HEIGHT
 
-var fontcolorClass = colorclass()
-
-var pasteboard = UIPasteboard.general
-
-extension UIColor {
-    // Parses "#RRGGBB" strings, used for cell colors imported from an xlsx file's
-    // actual font/fill color (as opposed to the app's fixed named color palette).
-    convenience init?(hexString: String) {
-        var hex = hexString
-        if hex.hasPrefix("#") {
-            hex.removeFirst()
-        }
-        guard hex.count == 6, let value = UInt32(hex, radix: 16) else { return nil }
-
-        let r = CGFloat((value & 0xFF0000) >> 16) / 255
-        let g = CGFloat((value & 0x00FF00) >> 8) / 255
-        let b = CGFloat(value & 0x0000FF) / 255
-        self.init(red: r, green: g, blue: b, alpha: 1)
-    }
-}
-
-class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
+class FileFillViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
     
 //    @IBOutlet weak var bannerview: GADBannerView!
     @IBOutlet weak var menuButton: UIButton!
@@ -293,7 +269,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if name.hasPrefix("#"), let color = UIColor(hexString: name) {
             return color
         }
-        return ViewController.namedCellColors[name] ?? defaultColor
+        return FileFillViewController.namedCellColors[name] ?? defaultColor
     }
 
     // Maps an xlsx <left/right/top/bottom style="..."> name to a screen border
@@ -338,7 +314,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func cellFont(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
         let base = bold ? UIFont.boldSystemFont(ofSize: size) : UIFont.systemFont(ofSize: size)
         guard italic else { return base }
-        let slantedDescriptor = base.fontDescriptor.withMatrix(ViewController.syntheticItalicMatrix)
+        let slantedDescriptor = base.fontDescriptor.withMatrix(FileFillViewController.syntheticItalicMatrix)
         return UIFont(descriptor: slantedDescriptor, size: size)
     }
 
@@ -2634,68 +2610,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     func panGestureShow2() {
-        //TODO Bug fix
-        if rsview != nil{
-            
+        // FileFillViewController is form-filling mode: row/col insert-delete and
+        // multi-cell copy/paste aren't supported here, so unlike ViewController's
+        // panGestureShow2(), this never creates or shows RangeSelectionOpsView --
+        // just clear any leftover selection state instead.
+        if rsview != nil {
             rsview.removeFromSuperview()
         }
-        
-        switch tag_int {
-        case 0:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
-            break
-        case 1:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
-            break
-        case 2:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
-            break
-        case 3:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:10, width: 220,height: 180))
-            break
-        case 4:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:200, width: 220,height: 180))
-            break
-        case 5:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:190, width: 220,height: 180))
-            break
-            
-            
-            
-            
-            
-        default:
-            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
-            break
-            
-        }
-        
-        
-        
-        
-        rsview.layer.borderWidth = 1
-        
-        rsview.layer.cornerRadius = 8;
-        
-        
-        rsview.layer.borderColor = UIColor.black.cgColor
-        
-        rsview.deletevalues.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
-                
-        rsview.deleterow.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
-        
-        rsview.insertrow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
-        
-        rsview.insertcol.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
-        
-        rsview.deletecol.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
-        
-        rsview.copyandpaste.addTarget(self, action: #selector(copyPasteSelectedCellContent), for: UIControl.Event.touchUpInside)
-
-        rsview.return.addTarget(self, action: #selector(ViewController.backRS(_:)), for: UIControl.Event.touchUpInside)
-        
-        
-        self.view.addSubview(rsview)
+        tempRangeSelected = []
     }
     
     @objc func rowInsertOperation() {
@@ -3636,22 +3558,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         switch tag_int {
         case 0:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 1:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 2:
-            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:50, width: 285,height: 310))
             break
         case 3:
-            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:10, width: 285,height: 310))
             break
         case 4:
-            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:200, width: 285,height: 310))
             break
         case 5:
-            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:190, width: 285,height: 310))
             break
             
             
@@ -3659,7 +3581,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
         default:
-            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 340))
+            customview2 = Customview2(frame: CGRect(x:5,y:150, width: 285,height: 310))
             break
             
         }
@@ -3675,12 +3597,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         customview2.layer.borderColor = UIColor.black.cgColor
         
         customview2.back.addTarget(self, action: #selector(ViewController.back2(_:)), for: UIControl.Event.touchUpInside)
-
-        customview2.localLoad.isHidden = true
-        //customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
-        customview2.filefillmode.addTarget(self, action: #selector(ViewController.moveToFilefill), for: UIControl.Event.touchUpInside)
-        
+        customview2.localLoad.addTarget(self, action: #selector(ViewController.icloudview(_:)), for: UIControl.Event.touchUpInside)
         
         customview2.reset.addTarget(self, action: #selector(ViewController.resetSheet(_:)), for: UIControl.Event.touchUpInside)
         
@@ -3702,22 +3620,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.view.addSubview(customview2)
     }
     
-    @objc func moveToFilefill(){
-    
-        self.customview2.removeFromSuperview()
-        
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
-        
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            window.rootViewController = targetViewController
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-        }
-
-    }
-    
     @objc func moveToPlayground(){
-    
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        //       postAction()
+//        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine2" ) as! PlaygroundViewController
+//        if isExcel{
+//            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+//        }
+//        targetViewController.modalPresentationStyle = .fullScreen
+//        self.present( targetViewController, animated: true, completion: nil)
+//        
         self.customview2.removeFromSuperview()
         
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
@@ -8056,170 +7968,4 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return str.rangeOfCharacter(from: decimalDigits.inverted) == nil
     }
 
-}
-
-extension FileManager {
-    
-    open func secureCopyItem(at srcURL: URL, to dstURL: URL) -> Bool {
-        do {
-            if FileManager.default.fileExists(atPath: dstURL.path) {
-                try FileManager.default.removeItem(at: dstURL)
-            }
-            try FileManager.default.copyItem(at: srcURL, to: dstURL)
-        } catch (let error) {
-            print("Cannot copy item at \(srcURL) to \(dstURL): \(error)")
-            return false
-        }
-        return true
-    }
-    
-}
-
-extension UIApplication {
-    
-    func getKeyWindow() -> UIWindow? {
-        if #available(iOS 13, *) {
-            return windows.first { $0.isKeyWindow }
-        } else {
-            return keyWindow
-        }
-    }
-    
-    func makeSnapshot() -> UIImage? { return getKeyWindow()?.layer.makeSnapshot() }
-}
-
-
-extension CALayer {
-    func makeSnapshot() -> UIImage? {
-        let scale = UIScreen.main.scale
-        UIGraphicsBeginImageContextWithOptions(frame.size, false, scale)
-        defer { UIGraphicsEndImageContext() }
-        guard let context = UIGraphicsGetCurrentContext() else { return nil }
-        render(in: context)
-        let screenshot = UIGraphicsGetImageFromCurrentImageContext()
-        return screenshot
-    }
-}
-
-extension UIView {
-    func makeSnapshot() -> UIImage? {
-        if #available(iOS 10.0, *) {
-            let renderer = UIGraphicsImageRenderer(size: frame.size)
-            return renderer.image { _ in drawHierarchy(in: bounds, afterScreenUpdates: true) }
-        } else {
-            return layer.makeSnapshot()
-        }
-    }
-}
-
-extension UIImage {
-    convenience init?(snapshotOf view: UIView) {
-        guard let image = view.makeSnapshot(), let cgImage = image.cgImage else { return nil }
-        self.init(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
-    }
-}
-
-extension UICollectionView {
-    
-    func scrollToNextItem() {
-        let scrollOffset = CGFloat(floor(self.contentOffset.x + self.bounds.size.width))
-        self.scrollToFrame(scrollOffset: scrollOffset)
-    }
-    
-    func scrollToPreviousItem() {
-        let scrollOffset = CGFloat(floor(self.contentOffset.x - self.bounds.size.width))
-        self.scrollToFrame(scrollOffset: scrollOffset)
-    }
-    
-    func scrollToFrame(scrollOffset : CGFloat) {
-        guard scrollOffset <= self.contentSize.width - self.bounds.size.width else { return }
-        guard scrollOffset >= 0 else { return }
-        self.setContentOffset(CGPoint(x: scrollOffset, y: self.contentOffset.y), animated: true)
-    }
-    
-}
-
-
-
-
-@IBDesignable class UIMarginLabel: UILabel {
-
-    @IBInspectable var topInset:       CGFloat = 0
-    @IBInspectable var rightInset:     CGFloat = 0
-    @IBInspectable var bottomInset:    CGFloat = 0
-    @IBInspectable var leftInset:      CGFloat = 0
-
-    // UILabel has no vertical-alignment API of its own -- its default drawText(in:)
-    // already centers text within whatever rect it's given, which is why .center
-    // below is a no-op. .top/.bottom work by shrinking the rect passed to super down
-    // to the text's own natural height and pinning it to that edge, since a rect
-    // exactly as tall as the text leaves super nothing to center within.
-    enum VerticalAlignment {
-        case top, center, bottom
-    }
-    var verticalAlignment: VerticalAlignment = .bottom
-
-    override func drawText(in rect: CGRect) {
-        let insets: UIEdgeInsets = UIEdgeInsets(top: self.topInset, left: self.leftInset, bottom: self.bottomInset, right: self.rightInset)
-        self.setNeedsLayout()
-        let insetRect = UIEdgeInsetsInsetRect(rect, insets)
-
-        switch verticalAlignment {
-        case .center:
-            return super.drawText(in: insetRect)
-        case .top, .bottom:
-            let naturalHeight = self.sizeThatFits(CGSize(width: insetRect.width, height: .greatestFiniteMagnitude)).height
-            let textHeight = min(naturalHeight, insetRect.height)
-            var alignedRect = insetRect
-            alignedRect.size.height = textHeight
-            if verticalAlignment == .bottom {
-                alignedRect.origin.y = insetRect.maxY - textHeight
-            }
-            return super.drawText(in: alignedRect)
-        }
-    }
-}
-extension Collection {
-    func distance(to index: Index) -> Int { distance(from: startIndex, to: index) }
-}
-extension UIView {
-    func setBorder(width: CGFloat, color: UIColor, sides: UIRectEdge) {
-        layer.borderWidth = width
-        layer.borderColor = color.cgColor
-        
-        // Clear existing borders
-        layer.maskedCorners = []
-        
-        // Apply borders to specified sides
-        if sides.contains(.top) {
-            layer.maskedCorners.insert(.layerMinXMinYCorner)
-            layer.maskedCorners.insert(.layerMaxXMinYCorner)
-        }
-        if sides.contains(.bottom) {
-            layer.maskedCorners.insert(.layerMinXMaxYCorner)
-            layer.maskedCorners.insert(.layerMaxXMaxYCorner)
-        }
-        if sides.contains(.left) {
-            layer.maskedCorners.insert(.layerMinXMinYCorner)
-            layer.maskedCorners.insert(.layerMinXMaxYCorner)
-        }
-        if sides.contains(.right) {
-            layer.maskedCorners.insert(.layerMaxXMinYCorner)
-            layer.maskedCorners.insert(.layerMaxXMaxYCorner)
-        }
-    }
-}
-struct ExcelCell {
-    let excelRef: String // "A1", "B10" など
-    let content: String
-    
-    // ソート用の行番号を取得
-    var rowNumber: Int {
-        return Int(excelRef.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) ?? 0
-    }
-    
-    // ソート用の列名を取得
-    var columnName: String {
-        return excelRef.components(separatedBy: CharacterSet.decimalDigits).joined()
-    }
 }

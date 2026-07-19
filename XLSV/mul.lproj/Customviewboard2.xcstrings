@@ -109,6 +109,18 @@
         }
       }
     },
+    "J6X-e2-4mD.normalTitle" : {
+      "comment" : "Class = \"UIButton\"; normalTitle = \"Filefill Mode\"; ObjectID = \"J6X-e2-4mD\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Filefill Mode"
+          }
+        }
+      }
+    },
     "lCK-kP-XA0.normalTitle" : {
       "comment" : "Class = \"UIButton\"; normalTitle = \"Help\"; ObjectID = \"lCK-kP-XA0\";",
       "extractionState" : "extracted_with_value",

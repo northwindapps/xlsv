@@ -29,6 +29,9 @@ class Customview2: UIView {
 
     @IBOutlet weak var v135Data: UIButton!
     
+    @IBOutlet weak var filefillmode: UIButton!
+    
+    
     @IBOutlet weak var savefile: UIButton!
     @IBOutlet weak var backups: UIButton!
     @IBOutlet weak var deleteSheet: UIButton!
