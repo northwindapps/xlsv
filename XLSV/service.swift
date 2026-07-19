@@ -704,6 +704,55 @@ class Service {
         }
     }
 
+    // Read-only SWXMLHash lookups for testUpdateString below -- these only ever answer
+    // "does this row/cell already exist", never build replacement text. XMLElement's own
+    // .description re-serializes attributes from an unordered Dictionary and always
+    // normalizes self-closing tags away (see SWXMLHash's XMLElement.swift), so it isn't
+    // guaranteed to reproduce the original bytes an exact-match splice into xmlString needs
+    // -- that's what originalElementRange below is for.
+    private func sheetDataRows(in xmlString: String) -> [XMLIndexer] {
+        let xml = XMLHash.parse(xmlString)
+        return xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children ?? []
+    }
+
+    private func rowExists(_ rowNumber: String, in rows: [XMLIndexer]) -> Bool {
+        rows.contains { $0.element?.attribute(by: "r")?.text == rowNumber }
+    }
+
+    private func cellExists(_ ref: String, inRow rowNumber: String, rows: [XMLIndexer]) -> Bool {
+        rows.first(where: { $0.element?.attribute(by: "r")?.text == rowNumber })?
+            .children.contains { $0.element?.attribute(by: "r")?.text == ref } ?? false
+    }
+
+    // Carves the exact original text of a <tag ... r="attributeValue" ...> element
+    // (self-closing or with a separate close tag) out of xmlString. Anchored on the
+    // *quoted* attribute value ("r=\"B1\"") instead of a regex -- the closing quote makes
+    // the match exact, so "B1" can never accidentally match inside "B10"/"B11" the way a
+    // bare substring search would, without needing a regex lookahead to guard it. The
+    // forward/backward scans below assume the well-formed, non-nested OOXML sheetData
+    // shape this app writes (a <row> only ever contains <c> children, a <c> never
+    // contains another <c> or <row>), which is what makes a plain scan for the first
+    // ">"/matching close tag exact without a general-purpose XML parser.
+    private func originalElementRange(tag: String, attributeValue: String, in xmlString: String) -> Range<String.Index>? {
+        guard let quoteRange = xmlString.range(of: "r=\"\(attributeValue)\"") else { return nil }
+        guard let tagOpenRange = xmlString.range(of: "<\(tag) ", options: .backwards, range: xmlString.startIndex..<quoteRange.upperBound) else {
+            return nil
+        }
+        guard let firstCloseAngle = xmlString.range(of: ">", range: quoteRange.upperBound..<xmlString.endIndex) else {
+            return nil
+        }
+
+        if xmlString[xmlString.index(before: firstCloseAngle.lowerBound)] == "/" {
+            // Self-closing: <tag .../>
+            return tagOpenRange.lowerBound..<firstCloseAngle.upperBound
+        }
+
+        guard let closeTagRange = xmlString.range(of: "</\(tag)>", range: firstCloseAngle.upperBound..<xmlString.endIndex) else {
+            return nil
+        }
+        return tagOpenRange.lowerBound..<closeTagRange.upperBound
+    }
+
     // Patches a single cell into sheetN.xml's <sheetData>, leaving every other byte
     // (row ht=/spans=/customFormat=/thickBot=, sibling cells' s= style, shared-formula
     // compression, style-only placeholder cells) untouched -- as opposed to
@@ -725,66 +774,25 @@ class Service {
 
         let newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
 
+        let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        let rows = sheetDataRows(in: xmlString)
+
         // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
-        // -- splice in just that one element. (?!\d) guards against "B1" also matching
-        // "B10"/"B11" (the same collision testDeleteStringBulk already guards against).
-        let existingPattern = "<c[^>]*r=\"\(index)\"(?!\\d)[^/>]*(?:/>|>.*?</c>)"
-        if let regex = try? NSRegularExpression(pattern: existingPattern, options: []) {
-            let range = NSRange(xmlString.startIndex..., in: xmlString)
-            if let match = regex.firstMatch(in: xmlString, range: range),
-               let matchRange = Range(match.range, in: xmlString) {
-                let matchingSubstring = String(xmlString[matchRange])
-                if matchingSubstring.components(separatedBy: "r=").count == 2 {
-                    xmlString = xmlString.replacingOccurrences(of: matchingSubstring, with: newElement)
-                    let validator = XMLValidator()
-                    if validator.validateXML(xmlString: xmlString) {
-                        return xmlString
-                    } else {
-                        return backUpXmlString
-                    }
-                }
-            }
+        // -- splice in just that one element.
+        if cellExists(index, inRow: rowNumber, rows: rows),
+           let cellRange = originalElementRange(tag: "c", attributeValue: index, in: xmlString) {
+            xmlString.replaceSubrange(cellRange, with: newElement)
+            let validator = XMLValidator()
+            return validator.validateXML(xmlString: xmlString) ? xmlString : backUpXmlString
         }
 
         // Case 2/3: the cell doesn't exist yet -- find its row, then either insert the
         // cell in sorted column order within that row, or create the row itself (in
         // sorted row order) if the row is entirely new.
-        let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        guard let regexRow = try? NSRegularExpression(pattern: "<row r=\"\(rowNumber)\"(?!\\d)[^>]*>(.*?)</row>|<row r=\"\(rowNumber)\"(?!\\d)[^>]*/>", options: []) else {
-            return backUpXmlString
-        }
-        let rowRange = NSRange(xmlString.startIndex..., in: xmlString)
-        let targetRowTag = regexRow.firstMatch(in: xmlString, range: rowRange)
-            .flatMap { Range($0.range, in: xmlString) }
-            .map { String(xmlString[$0]) } ?? ""
-
-        if targetRowTag.isEmpty {
-            // Row doesn't exist at all -- insert a brand-new <row> right after the
-            // <sheetData> open tag, then re-sort all rows by their r= attribute via
-            // XMLHash so it lands in numeric row order.
-            var replaced = xmlString
-            if replaced.contains("<sheetData/>") {
-                replaced = replaced.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
-            }
-            replaced = replaced.replacingOccurrences(of: "<sheetData>", with: "<sheetData><row r=\"\(rowNumber)\">\(newElement)</row>")
-
-            guard let sheetDataSubstring = extractSheetDataSubstring(from: replaced) else { return backUpXmlString }
-            let xml = XMLHash.parse(replaced)
-            guard let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children else {
-                return backUpXmlString
-            }
-            let sortedRows = rows.sorted { r1, r2 -> Bool in
-                guard let t1 = r1.element?.attribute(by: "r")?.text, let n1 = Int(t1),
-                      let t2 = r2.element?.attribute(by: "r")?.text, let n2 = Int(t2) else { return false }
-                return n1 < n2
-            }
-            let rebuiltSheetData = "<sheetData>" + sortedRows.map { $0.description }.joined() + "</sheetData>"
-            let final = replaced.replacingOccurrences(of: sheetDataSubstring, with: rebuiltSheetData)
-            let validator = XMLValidator()
-            return validator.validateXML(xmlString: final) ? final : backUpXmlString
-        } else {
+        if rowExists(rowNumber, in: rows), let rowRange = originalElementRange(tag: "row", attributeValue: rowNumber, in: xmlString) {
             // Row exists but this cell doesn't -- append it, then re-sort just this
             // row's cells by column so the insertion lands in the right place.
+            let targetRowTag = String(xmlString[rowRange])
             var rowPart = targetRowTag
             if rowPart.hasSuffix("/>") {
                 rowPart = String(rowPart.dropLast(2)) + ">"
@@ -800,8 +808,8 @@ class Service {
 
             var rebuiltRowPart = ""
             let xml = XMLHash.parse(candidate)
-            if let rows = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
-                for row in rows {
+            if let rows2 = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
+                for row in rows2 {
                     guard row.element?.attribute(by: "r")?.text == rowNumber else { continue }
                     let sortedCells = row.children.sorted { c1, c2 -> Bool in
                         guard let n1 = c1.element?.attribute(by: "r")?.text, let i1 = extractIndices(from: n1),
@@ -819,6 +827,30 @@ class Service {
             let validator = XMLValidator()
             return validator.validateXML(xmlString: final) ? final : backUpXmlString
         }
+
+        // Row doesn't exist at all -- insert a brand-new <row> right after the
+        // <sheetData> open tag, then re-sort all rows by their r= attribute via
+        // XMLHash so it lands in numeric row order.
+        var replaced = xmlString
+        if replaced.contains("<sheetData/>") {
+            replaced = replaced.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
+        }
+        replaced = replaced.replacingOccurrences(of: "<sheetData>", with: "<sheetData><row r=\"\(rowNumber)\">\(newElement)</row>")
+
+        guard let sheetDataSubstring = extractSheetDataSubstring(from: replaced) else { return backUpXmlString }
+        let xml = XMLHash.parse(replaced)
+        guard let rows3 = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children else {
+            return backUpXmlString
+        }
+        let sortedRows = rows3.sorted { r1, r2 -> Bool in
+            guard let t1 = r1.element?.attribute(by: "r")?.text, let n1 = Int(t1),
+                  let t2 = r2.element?.attribute(by: "r")?.text, let n2 = Int(t2) else { return false }
+            return n1 < n2
+        }
+        let rebuiltSheetData = "<sheetData>" + sortedRows.map { $0.description }.joined() + "</sheetData>"
+        let final = replaced.replacingOccurrences(of: sheetDataSubstring, with: rebuiltSheetData)
+        let validator = XMLValidator()
+        return validator.validateXML(xmlString: final) ? final : backUpXmlString
     }
     
     //making row
