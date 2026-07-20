@@ -126,7 +126,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     var down_bool = false
     var right_bool = false
     var left_bool = false
-    
+
+    // Post-edit refresh strategy for a single-cell commit. true: patch the
+    // JSON sidecar cache from the in-memory state storeInput()/excelEntry()
+    // already set, skipping the xlsx unzip/reparse in loadExcelSheet ->
+    // readExcel2 (see patchJsonCacheAndRefresh). false: fall back to the
+    // original full loadExcelSheet() reload. Kept as a switch rather than
+    // replacing loadExcelSheet's call sites outright so the known-correct
+    // path stays reachable; can be exposed in a settings view later.
+    var useFastCellEditReload = true
+
     var selection_bool = false
 
     @IBOutlet weak var label: UILabel!
@@ -1082,9 +1091,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
    
         DispatchQueue.main.async {
             let appd = UIApplication.shared.delegate as! AppDelegate
-           
-            self.loadExcelSheet(idx: appd.wsSheetIndex) {
-                
+
+            self.applyCellEditAndRefresh(idx: appd.wsSheetIndex) {
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
                         self.myCollectionView.collectionViewLayout.invalidateLayout()
@@ -1094,7 +1103,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
         }
     }
-    
+
     //Hiding Keyboard
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         if(text == "\n") {
@@ -1122,14 +1131,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             DispatchQueue.main.async {
                 let appd = UIApplication.shared.delegate as! AppDelegate
-               
-                self.loadExcelSheet(idx: appd.wsSheetIndex) {
-                    
+
+                self.applyCellEditAndRefresh(idx: appd.wsSheetIndex) {
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
                             self.myCollectionView.collectionViewLayout.invalidateLayout()
                             self.myCollectionView.reloadData()
-                            
+
                             self.myCollectionView.selectItem(at: self.currentindex,
                                                              animated: true,
                                                              scrollPosition: [.centeredVertically, .centeredHorizontally])
@@ -1381,12 +1390,77 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             calculatormode_update_main()
             print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
             completion?()
-            
+
         }catch {
             print(error)
         }
     }
-    
+
+    // Single entry point for the post-cell-edit refresh. Both call sites
+    // used to call loadExcelSheet() directly; this just routes to the fast
+    // path or the original path based on useFastCellEditReload, so flipping
+    // the flag is the only thing needed to compare/revert.
+    func applyCellEditAndRefresh(idx: Int, completion: (() -> Void)? = nil) {
+        if useFastCellEditReload {
+            patchJsonCacheAndRefresh(idx: idx, completion: completion)
+        } else {
+            loadExcelSheet(idx: idx, completion: completion)
+        }
+    }
+
+    // Fast path for a single-cell edit commit. storeInput() already applied
+    // the edit to content/location (and excelEntry() already persisted it
+    // into the xlsx file itself, which stays the durable source of truth),
+    // so there's no need to unzip and re-parse the whole xlsx again just to
+    // reconstruct state that's already sitting correctly in memory --
+    // that's what loadExcelSheet's readExcel2 + testReadXMLSandBox +
+    // isExcelSheetData round trip does, and it's the "too slow" path flagged
+    // in ExcelHelper.readExcel2's saveJsonFile comment.
+    //
+    // This only re-serializes the JSON sidecar cache (the "middleman json")
+    // from the current in-memory arrays -- so a future full load, e.g. after
+    // relaunch or switching sheets and back, still sees the edit -- and
+    // reruns the remaining steps loadExcelSheet does after isExcelSheetData,
+    // all of which are already in-memory-only (style resolution reads
+    // appd.xfFontIds/xfFillIds/etc., populated once when the file was first
+    // opened and unaffected by a plain value edit; formula recalc reads
+    // content/location directly).
+    func patchJsonCacheAndRefresh(idx: Int, completion: (() -> Void)? = nil) {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        if isExcel {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+
+            let dict: [String: Any] = [
+                "filename": "sheet" + String(idx) + ".xml",
+                "date": dateFormatter.string(from: Date()),
+                "content": content,
+                "location": location,
+                "fontsize": textsize,
+                "fontcolor": tcolor,
+                "bgcolor": bgcolor,
+                "styleId": cellStyleId,
+                "rowsize": ROWSIZE,
+                "columnsize": COLUMNSIZE,
+                "customcellWidth": appd.customSizedWidth,
+                "customcellHeight": appd.customSizedHeight,
+                "ccwLocation": appd.cswLocation,
+                "cchLocation": appd.cshLocation,
+                "formulaResult": [String](),
+                "inputOrder": [String]()
+            ]
+            ReadWriteJSON().saveJsonFile(source: dict, title: "sheet" + String(idx) + ".xml")
+        }
+
+        initSheetData()
+        fontcolorClass.storeValues(rl: location, rc: content, rsize: ROWSIZE, csize: COLUMNSIZE)
+        initExcelLocation()
+        resolveCellStyles()
+        calculatormode_update_main()
+        completion?()
+    }
+
 //    xlsx numFmtId
 //    numFmtId    Format Code    Description
 //    0    General    General format
