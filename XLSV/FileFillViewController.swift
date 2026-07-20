@@ -627,8 +627,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 cell.addGestureRecognizer(panGesture)
             }
             #else
-            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-            cell.addGestureRecognizer(panGesture)
+             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+             cell.addGestureRecognizer(panGesture)
             #endif
      
                 
@@ -2183,9 +2183,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         
         #if !targetEnvironment(macCatalyst)
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-        doubleTapGesture.numberOfTapsRequired = 2
-        myCollectionView.addGestureRecognizer(doubleTapGesture)
+//        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+//        doubleTapGesture.numberOfTapsRequired = 2
+//        myCollectionView.addGestureRecognizer(doubleTapGesture)
         #endif
 
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
