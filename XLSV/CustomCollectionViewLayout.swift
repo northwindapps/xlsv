@@ -365,71 +365,73 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                             
                             cellAttrsDictionary[cellIndex] = cellAttributes
                         }else{
-                            //merged cells
-                            var EACH_HEIGHT = 0.0
-                            var EACH_WIDTH = 0.0
-                            if let id = mergedStartIndex[getExcelColumnName(columnNumber: section) + String(item)] {
-
-                                let end_column_aphabet_int = alphabetOnlyString(text: appd.diff_end_index[id])
-                                let end_row_int = Int(numberOnlyString(text: appd.diff_end_index[id]))
-                                let end_column_int = getExcelColumnNumber(columnName: end_column_aphabet_int)
- 
-                                if(section > end_column_int || item > end_row_int!){
-                                    print("out of index")
-                                    cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: each_width[section], height: each_height[item])
-                                    
-                                    cellAttributes.zIndex = 1
-                                    cellAttrsDictionary[cellIndex] = cellAttributes
-                                    
-                                }else{
-                                    
-                                    // Calculate the sum of each_width from section to col_end
-                                    let sumWidth = (section...end_column_int).reduce(0) { result, i in
-                                        return result + each_width[i]
-                                    }
-                                    
-                                    // Calculate the sum of each_height from item to row_end
-                                    let sumHeight = (item...end_row_int!).reduce(0) { result, j in
-                                        return result + each_height[j]
-                                    }
-                                    
-                                    EACH_WIDTH += sumWidth
-                                    EACH_HEIGHT += sumHeight
-                                    
-                                    cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: EACH_WIDTH, height: EACH_HEIGHT)
-                                    
-                                    //lay it at top of ordinary cells
-                                    cellAttributes.zIndex = 2
-                                    
-                                    cellAttrsDictionary[cellIndex] = cellAttributes
-                                }
-                                
-                            }else{
-                                //
-                                cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: each_width[section], height: each_height[item])
-
-                                cellAttributes.zIndex = 1
-
-                                // Always overwrite, even if this indexPath already has
-                                // attributes from a previous prepare() pass (e.g. a
-                                // different file, or this same file before a row/col
-                                // shift). If this cell used to be a merge anchor --
-                                // spanning frame, zIndex 2 -- and isn't one anymore, this
-                                // is the only place that resets it back to a normal
-                                // single-cell frame. Skipping the write here left ghost
-                                // merge boxes on screen indefinitely, including across a
-                                // totally unrelated file being loaded afterward.
-                                cellAttrsDictionary[cellIndex] = cellAttributes
-                            }
-                            
+                            // Ordinary cell. Merge anchors (a handful, see `merged`)
+                            // are patched in below after this loop -- probing every
+                            // one of the r*c cells here for a merge match required
+                            // building a column-letter string (getExcelColumnName)
+                            // and a dictionary lookup per cell just to serve at most
+                            // a few dozen real merges. Always overwrite, even if this
+                            // indexPath already has attributes from a previous
+                            // prepare() pass (e.g. a different file, or this same
+                            // file before a row/col shift): if this cell used to be a
+                            // merge anchor -- spanning frame, zIndex 2 -- and isn't
+                            // one anymore, this is what resets it back to a normal
+                            // single-cell frame. Skipping the write here left ghost
+                            // merge boxes on screen indefinitely, including across a
+                            // totally unrelated file being loaded afterward.
+                            cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: each_width[section], height: each_height[item])
+                            cellAttributes.zIndex = 1
+                            cellAttrsDictionary[cellIndex] = cellAttributes
                         }
                     }
                 }
             }
         }
-             
-        
-        
+
+        // Patch in merge-anchor cells over the ordinary frames the main loop
+        // just wrote. mergedStartIndex has one entry per actual merge
+        // (appd.diff_start_index.count, typically tiny) regardless of grid
+        // size, so this pass is cheap even when the loop above isn't.
+        for (start, id) in mergedStartIndex {
+            let section = getExcelColumnNumber(columnName: alphabetOnlyString(text: start))
+            guard let item = Int(numberOnlyString(text: start)) else { continue }
+            // Header row/column cells were already laid out above and must
+            // not be overwritten here, matching the original per-cell check
+            // order where item == 0 / section == 0 took priority over merges.
+            guard section > 0 && section < c, item > 0 && item < r else { continue }
+
+            let cellIndex = IndexPath(item: section, section: item)
+            let cellAttributes = UICollectionViewLayoutAttributes(forCellWith: cellIndex)
+
+            let end_column_aphabet_int = alphabetOnlyString(text: appd.diff_end_index[id])
+            let end_row_int = Int(numberOnlyString(text: appd.diff_end_index[id]))
+            let end_column_int = getExcelColumnNumber(columnName: end_column_aphabet_int)
+
+            if section > end_column_int || item > end_row_int! {
+                print("out of index")
+                cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: each_width[section], height: each_height[item])
+                cellAttributes.zIndex = 1
+                cellAttrsDictionary[cellIndex] = cellAttributes
+            } else {
+                // Calculate the sum of each_width from section to col_end
+                let sumWidth = (section...end_column_int).reduce(0) { result, i in
+                    return result + each_width[i]
+                }
+
+                // Calculate the sum of each_height from item to row_end
+                let sumHeight = (item...end_row_int!).reduce(0) { result, j in
+                    return result + each_height[j]
+                }
+
+                cellAttributes.frame = CGRect(x: xPOS[section], y: yPOS[item], width: sumWidth, height: sumHeight)
+
+                //lay it at top of ordinary cells
+                cellAttributes.zIndex = 2
+
+                cellAttrsDictionary[cellIndex] = cellAttributes
+            }
+        }
+
         // Update content size.
         self.contentSize = CGSize(width: xPos, height: yPos)
    

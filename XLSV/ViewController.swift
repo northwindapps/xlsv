@@ -150,8 +150,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var down_bool = false
     var right_bool = false
     var left_bool = false
-    
-    var selection_bool = false
 
     @IBOutlet weak var label: UILabel!
     
@@ -562,7 +560,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             cell.label2?.adjustsFontSizeToFitWidth = true
             cell.label2?.minimumScaleFactor = 0.4
 
+            #if targetEnvironment(macCatalyst)
             removePanGestureRecognizerFromCell(cell)
+            #endif
 
             let key = String(indexPath.item)+","+String(indexPath.section)
 
@@ -660,13 +660,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 cell.label2?.verticalAlignment = .bottom
             }
 
-            #if !targetEnvironment(macCatalyst)
-            if selection_bool {
-                //number or fx only
-                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-                cell.addGestureRecognizer(panGesture)
-            }
-            #else
+            #if targetEnvironment(macCatalyst)
             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
             cell.addGestureRecognizer(panGesture)
             #endif
@@ -1754,21 +1748,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     @objc func back2(_ sender:UIButton)
     {
-        selection_bool = false
         myCollectionView.reloadData()
         self.customview2.removeFromSuperview()
     }
-    
+
     @objc func backRS(_ sender:UIButton)
     {
-        selection_bool = false
         myCollectionView.reloadData()
         self.rsview.removeFromSuperview()
     }
-    
+
     @objc func backRS2()
     {
-        selection_bool = false
         myCollectionView.reloadData()
         if self.rsview != nil{
             self.rsview.removeFromSuperview()
@@ -2255,9 +2246,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         
         #if !targetEnvironment(macCatalyst)
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-        doubleTapGesture.numberOfTapsRequired = 2
-        myCollectionView.addGestureRecognizer(doubleTapGesture)
+        // Scrolling needs two fingers; a single finger drags out a cell
+        // range instead. Splitting by touch count means selection is
+        // always available with no separate "selection mode" to enter --
+        // replaces the old double-tap-to-toggle-selection_bool flow.
+        myCollectionView.panGestureRecognizer.minimumNumberOfTouches = 2
+        let cellSelectionPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        cellSelectionPanGesture.maximumNumberOfTouches = 1
+        myCollectionView.addGestureRecognizer(cellSelectionPanGesture)
         #endif
 
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
@@ -2286,20 +2282,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     
     
-    //Filename Change
-    //
-    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: myCollectionView)
-        
-        if let indexPath = myCollectionView.indexPathForItem(at: location) {
-            print("Double-tapped cell at \(indexPath)")
-            // Perform your double-tap action here
-        }
-        
-        selection_bool = true
-        myCollectionView.reloadData()
-    }
-    
     func extractExcelCellReferences(from expression: String) -> [String] {
         // Define a regular expression for Excel cell references
         let regexPattern = "[A-Za-z]+\\d+"
@@ -2320,32 +2302,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        guard let cell = gesture.view as? CustomCollectionViewCell,
-                //touched cell index not selected index
-                let indexPath = myCollectionView.indexPath(for: cell)
-        else { return }
-        let startRow = indexPath.section
-        let startCol = indexPath.item
+        // Gesture is attached to myCollectionView itself (see viewDidLoad),
+        // gated to a single touch via maximumNumberOfTouches, so the touched
+        // cell has to be resolved from the gesture's location rather than
+        // gesture.view -- that was only valid back when this recognizer was
+        // added per-cell.
         let idxInLocation = location.firstIndex(of: cursor) ?? -1
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
-        
+
         switch gesture.state {
         case .began:
             print("start")
+            let locationCG = gesture.location(in: myCollectionView)
+            guard let indexPath = myCollectionView.indexPathForItem(at: locationCG),
+                  let cell = myCollectionView.cellForItem(at: indexPath) as? CustomCollectionViewCell
+            else { return }
             tempRangeSelected = []
             tempRangeSelected.append(indexPath)
             // Change background color to indicate dragging started
             cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
-            let locationCG = gesture.location(in: myCollectionView)
-            if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-                if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                    //cell2.label2.layer.borderWidth = 1.0
-                    cell2.label2.backgroundColor = UIColor.systemBlue
-                    if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
-                        tempRangeSelected.append(newIndexPath)
-                    }
-                }
-            }
             break
             
         case .changed:
@@ -2437,7 +2412,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                     self.panGestureShow2()
                                 })
                                 alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
-                                    self.selection_bool = false
                                     self.myCollectionView.reloadData()
                                 })
                                 self.present(alert, animated: true)
@@ -2455,7 +2429,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                     }
                                 })
                                 alert.addAction(UIAlertAction(title: "Cancel", style: .cancel){ _ in
-                                    self.selection_bool = false
                                     self.myCollectionView.reloadData()
                                 })
                                 alert.addAction(UIAlertAction(title: msgMore, style: .default){ _ in
