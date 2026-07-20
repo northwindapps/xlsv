@@ -3836,18 +3836,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         appd.collectionViewCellSizeChanged = 1
 
-        // Matches SettingsViewController.showAnimate() / backactionnum(): global
-        // cell-size changes in this app go through a full LoadingFileController
-        // re-present, not an in-place invalidateLayout()+reloadData() on the
-        // existing collectionView -- that in-place path doesn't fully take here,
-        // so mirror the pattern that's already proven to work.
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
-        if isExcel {
-            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
-        }
-        targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
+            self.loadExcelSheet(idx: appd.wsSheetIndex){
+                // Assuming `collectionView` is your UICollectionView instance
+                if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                    customLayout.resetCellAttrsDictionaryItemZindex()
+                    customLayout.prepare()
+                    customLayout.invalidateLayout() // Call the method on the instance
+                    self.myCollectionView.reloadData()
+                } else {
+                    print("CustomCollectionViewLayout is not set as the current layout")
+                }
+            }
+            
         }
     }
 
