@@ -1,0 +1,57 @@
+2026-07-20: Cell attribute preservation gap on string/value edits (service.swift)
+=========================================================================
+
+Context:
+- Every single-cell edit (ViewController/FileFillViewController/PlaygroundViewController
+  all funnel through testUpdateStringBox -> testUpdateString -> buildCellElement in
+  service.swift) rebuilds the target <c> element from scratch rather than patching the
+  original tag's attributes in place.
+
+What IS preserved:
+- Style index (s=). testUpdateString looks up the cell's original style index from the
+  parallel appd.excelStyleLocationAlphabet / appd.excelStyleIdx arrays (populated at
+  import time by ExcelHelper.readExcel2) and re-applies it via buildCellElement's
+  styleAttr. This is a lookup-and-reapply, not a byte-preserving patch, but the net
+  effect is correct: the cell keeps its formatting (font/fill/border/numFmtId, all of
+  which live in styles.xml's <cellXfs>/<xf>, referenced indirectly through s=).
+
+What is NOT preserved (buildCellElement, service.swift ~686-705):
+1. t= (cell type) only has branches for:
+     - shared string (t="s")
+     - formula's cached string result (t="str")
+     - plain number / formula (no t=, default "n")
+   There is no branch for:
+     - t="b"   (boolean cells, e.g. TRUE/FALSE)
+     - t="e"   (error cells, e.g. #DIV/0!, #N/A)
+     - t="inlineStr" (inline string stored directly on the cell, no shared-strings entry)
+     - t="d"   (ISO-8601 date type, used by some newer/other xlsx writers instead of a
+       numFmt'd serial number)
+   Editing a cell that was previously one of these types silently rewrites it as a plain
+   shared string -- the original semantic type is lost, not just formatting.
+
+2. cm= / vm= (cell metadata index / value metadata index) are dropped entirely. These
+   back Excel 365 Rich Data Types (linked stock/geography data) and Dynamic Array spill
+   ranges -- both genuinely common in "modern" xlsx. Editing such a cell silently
+   downgrades it to a plain value; the linked-data "chip" / spill relationship is gone
+   on next open in real Excel.
+
+Why this hasn't been fixed yet:
+- Per note.text's 2026-07-19 entry, testUpdateString already moved from pure regex to a
+  hybrid SWXMLHash-lookup + literal-substring-splice approach specifically to avoid
+  fragile raw-text matching. Attribute-level preservation (keeping cm=/vm=/t= from the
+  original tag while only swapping <v>/<f> content) is a reasonable next increment on
+  top of that same splice mechanism, but wasn't in scope for that pass.
+- Per project_form_filling_mode_pivot (this release is scoped to simple general sheets /
+  form-filling), boolean/error/inline-string/rich-data-type cells are a low-probability
+  edge case for the app's actual target use case, so this was assessed as acceptable for
+  now rather than blocking.
+
+If this needs fixing later:
+- The fix point is buildCellElement (service.swift ~686) and its caller testUpdateString
+  (~761): before rebuilding the <c> element, read the ORIGINAL <c> tag's t=/cm=/vm=
+  attributes (originalElementRange already carves out the exact original tag text) and
+  carry forward any not being intentionally changed by this edit, instead of only
+  carrying forward styleIdx.
+- Test with a real Excel-365-generated xlsx containing a linked data type (Data Types >
+  Stocks) or a dynamic array formula, plus a sheet with boolean/error cells, to confirm
+  the gap is closed.
