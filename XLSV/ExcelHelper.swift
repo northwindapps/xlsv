@@ -176,6 +176,10 @@ class ExcelHelper{
        //TODO NOT WORKING SHOULD I REPLACE WHOLE JSON FILES?
        do {
            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+           // Sub-stage timers to isolate where PERF loadExcelSheet.readExcel2's total
+           // comes from -- CoreXLSX's XMLCoder-based decode vs. the Swift-side loops
+           // below, which prior fixes already bounded to O(actual cell count).
+           let __t0 = CFAbsoluteTimeGetCurrent()
            let file = XLSXFile(filepath: path)
            appd.sheetNameIds = [String]()
            appd.sheetNames = [String]()
@@ -219,6 +223,7 @@ class ExcelHelper{
                appd.sheetNames = tempSheets.map { $0.name }
                appd.sheetNameIds = tempSheets.map { $0.idString }
            }
+           print(String(format: "PERF readExcel2.fileInit+workbooks: %.3fs", CFAbsoluteTimeGetCurrent() - __t0))
 
            
           
@@ -248,11 +253,11 @@ class ExcelHelper{
                // CoreXLSX, and importable directly) to keep the exact original markup for
                // sheetN.xml, which a future "write xlsx back out" pass needs as its base
                // instead of reconstructing every attribute CoreXLSX doesn't round-trip.
+               var rawSheetXMLData = Data()
                if let archive = Archive(url: URL(fileURLWithPath: xlsxFilePath), accessMode: .read),
                   let entry = archive[path] {
-                   var rawXMLData = Data()
-                   _ = try? archive.extract(entry) { rawXMLData += $0 }
-                   appd.loadedSheetXML = String(data: rawXMLData, encoding: .utf8) ?? ""
+                   _ = try? archive.extract(entry) { rawSheetXMLData += $0 }
+                   appd.loadedSheetXML = String(data: rawSheetXMLData, encoding: .utf8) ?? ""
                }
 
                //Cleaning instances on table data
@@ -267,9 +272,29 @@ class ExcelHelper{
                // called 3 separate times below for the same path. For a large sheet, decoding
                // that XML three times instead of once was a big chunk of the remaining import
                // cost. Parse it once and reuse the result.
-               let ws = try file!.parseWorksheet(at: path)
+               let __tParseStart = CFAbsoluteTimeGetCurrent()
+               let fastWs = FastWorksheetParser().parse(data: rawSheetXMLData)
+               let ws: FastWorksheet
+               if let fastWs = fastWs {
+                   ws = fastWs
+               } else {
+                   // Fall back to CoreXLSX's own decoder if the SAX parse failed for
+                   // any reason (unexpected markup, empty raw read, etc.) so a fast-path
+                   // bug never breaks a load that used to work.
+                   let coreWs = try file!.parseWorksheet(at: path)
+                   ws = FastWorksheet(
+                       cells: (coreWs.data?.rows.flatMap { $0.cells } ?? []).map {
+                           FastCell(reference: $0.reference, type: $0.type?.rawValue, styleIndex: $0.styleIndex, value: $0.value, formulaValue: $0.formula?.value)
+                       },
+                       rowCount: coreWs.data?.rows.count ?? 0,
+                       mergeCells: coreWs.mergeCells.map { FastMergeCells(items: $0.items.map { FastMergeCell(reference: $0.reference) }) },
+                       formatProperties: coreWs.formatProperties.map { FastFormatProperties(defaultRowHeight: $0.defaultRowHeight) }
+                   )
+               }
+               print(String(format: "PERF readExcel2.parseWorksheet: %.3fs (fast=%@)", CFAbsoluteTimeGetCurrent() - __tParseStart, fastWs != nil ? "true" : "false"))
 
-               let container = ws.data?.rows.flatMap { $0.cells } ?? []
+               let container = ws.cells
+               print("PERF readExcel2.containerCount", container.count, "rows", ws.rowCount)
                columnName = uniquing(src:container.map { $0.reference.column.value })//AA AS AW E
 
                // Cells bucketed by column, built once from the already-flattened `container`.
@@ -310,10 +335,13 @@ class ExcelHelper{
                    }
                }
 
+               let __tSharedStringsStart = CFAbsoluteTimeGetCurrent()
                let sharedStrings = try file!.parseSharedStrings()
+               print(String(format: "PERF readExcel2.parseSharedStrings: %.3fs count=%d", CFAbsoluteTimeGetCurrent() - __tSharedStringsStart, sharedStrings?.items.count ?? -1))
                appd.CELL_HEIGHT_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
                appd.CELL_WIDTH_EXCEL_GSHEET = Double(ws.formatProperties?.defaultRowHeight ?? "-1")!
 
+               let __tStringsLoopStart = CFAbsoluteTimeGetCurrent()
                //Getting strings
                for i in 0..<columnName.count {
                    //you need to update sharedstring count and use count or it throws out of index error
@@ -322,7 +350,7 @@ class ExcelHelper{
                        let columnCells = cellsByColumn[k] ?? []
                        let columnCStrings = columnCells
                        // in format internals "s" stands for "shared"
-                           .filter { $0.type?.rawValue ?? nil == "s" }
+                           .filter { $0.type == "s" }
                            .filter { $0.value != nil }
                        
                        // Rich Text
@@ -383,18 +411,20 @@ class ExcelHelper{
                    }
                }
            
+               print(String(format: "PERF readExcel2.gettingStringsLoop: %.3fs", CFAbsoluteTimeGetCurrent() - __tStringsLoopStart))
+               let __tValuesLoopStart = CFAbsoluteTimeGetCurrent()
                //Getting values
                //if let formula = cell.formula?.value { returnString = formula } }
                for i in 0..<columnName.count {
                    let k = String(columnName[i])
                    if k.count != 0 {
                        let columnCStrings = (cellsByColumn[k] ?? [])
-                           .filter { $0.type?.rawValue ?? nil != "s"  }
-                           .filter { $0.value != nil || $0.formula != nil }
-                       
+                           .filter { $0.type != "s"  }
+                           .filter { $0.value != nil || $0.formulaValue != nil }
+
                        var formulaCheck = [String]()
                        for i in 0..<columnCStrings.count {
-                           let formulaContent = columnCStrings[i].formula?.value
+                           let formulaContent = columnCStrings[i].formulaValue
                            let valueContentTemp = columnCStrings[i].value
                            
                            if formulaContent == nil {
@@ -418,6 +448,8 @@ class ExcelHelper{
                    }
                }
 
+               print(String(format: "PERF readExcel2.gettingValuesLoop: %.3fs", CFAbsoluteTimeGetCurrent() - __tValuesLoopStart))
+               let __tMergedAnchorStart = CFAbsoluteTimeGetCurrent()
                // Anchor cells of merged ranges are often empty (no value) -- Excel still
                // writes them into <sheetData> with just an "s" (style) attribute so the
                // merged block's fill/border render correctly. valueLocation/stringLocation
@@ -438,9 +470,11 @@ class ExcelHelper{
                }
 
 
+               print(String(format: "PERF readExcel2.mergedAnchorLoop: %.3fs", CFAbsoluteTimeGetCurrent() - __tMergedAnchorStart))
+               let __tFinalLoopsStart = CFAbsoluteTimeGetCurrent()
                //heavy
                //print("content",valueContent+stringContent)
-               
+
                var finalL_value = [String]()
                var finalL_string = [String]()
                // Needed for LocationData (3,2) (3,4) (1,3)
@@ -543,9 +577,12 @@ class ExcelHelper{
                
                
                
+               print(String(format: "PERF readExcel2.finalLoopsAndDictBuild: %.3fs", CFAbsoluteTimeGetCurrent() - __tFinalLoopsStart))
+               let __tSaveJsonStart = CFAbsoluteTimeGetCurrent()
                let test = ReadWriteJSON()
                print("savingImportJSON")
                test.saveJsonFile(source: dict, title: "sheet" + String(wsIndex) + ".xml")
+               print(String(format: "PERF readExcel2.saveJsonFile: %.3fs", CFAbsoluteTimeGetCurrent() - __tSaveJsonStart))
                //this library is too slow, abound it in the next version
                
                
@@ -1059,6 +1096,167 @@ class ExcelHelper{
         return false
     }
 
+}
+
+// MARK: - Fast worksheet parsing (bypasses CoreXLSX's XMLCoder decode)
+//
+// CoreXLSX's `parseWorksheet(at:)` decodes the whole sheetN.xml through XMLCoder, a
+// Codable-based DOM decoder that boxes every element into a node tree before Codable
+// ever sees it. That's a high constant-factor cost per XML element, independent of
+// how many of those elements the app actually needs. Excel routinely writes
+// style-only, empty <c> elements across a sheet's whole formatted range -- a 173KB
+// real-world file measured 72,930 <c> elements for only 449 cells with actual
+// content/style worth resolving (see DEBUG-RESOLVE cells=449 vs.
+// PERF readExcel2.containerCount), and parseWorksheet(at:) took 6.039s of a 6.458s
+// total readExcel2 call decoding that.
+//
+// FastWorksheetParser below is a SAX-based replacement (Foundation's event-driven
+// XMLParser) that extracts only the row/cell attributes and text nodes readExcel2
+// actually uses, without building a DOM. It mirrors just enough of CoreXLSX's
+// Cell/Worksheet/MergeCells shape (reusing CoreXLSX's own CellReference/
+// ColumnReference directly -- their initializers are public) that readExcel2 needed
+// only trivial changes to switch over, with a fallback to CoreXLSX's own decoder if
+// the fast parse fails for any reason.
+
+struct FastCell {
+    let reference: CellReference
+    // Raw "t" attribute -- "s" (shared string), "str", "b", "n", "d", "e",
+    // "inlineStr", or nil for a plain number. CoreXLSX's CellType enum isn't reused
+    // here since readExcel2 only ever compares this against the literal "s".
+    let type: String?
+    let styleIndex: Int?
+    var value: String?
+    var formulaValue: String?
+}
+
+struct FastMergeCell {
+    let reference: String // e.g. "A1:F1", matches CoreXLSX.MergeCell.reference
+}
+
+struct FastMergeCells {
+    let items: [FastMergeCell]
+}
+
+struct FastFormatProperties {
+    let defaultRowHeight: String?
+}
+
+struct FastWorksheet {
+    let cells: [FastCell]
+    let rowCount: Int
+    let mergeCells: FastMergeCells?
+    let formatProperties: FastFormatProperties?
+}
+
+final class FastWorksheetParser: NSObject, XMLParserDelegate {
+    private var cells: [FastCell] = []
+    private var rowCount = 0
+    private var mergeCellRefs: [String] = []
+    private var defaultRowHeight: String?
+
+    private var inSheetData = false
+    private var currentCell: FastCell?
+    private var currentElement = ""
+    private var textBuffer = ""
+
+    // Returns nil (rather than throwing) on any parse failure so callers can fall
+    // back to CoreXLSX's own decoder instead of failing the whole sheet load.
+    func parse(data: Data) -> FastWorksheet? {
+        guard !data.isEmpty else { return nil }
+        let parser = XMLParser(data: data)
+        parser.shouldProcessNamespaces = false
+        parser.delegate = self
+        guard parser.parse() else { return nil }
+
+        // A well-formed XML doc with rows but zero cells almost certainly means the
+        // producer used element names/namespacing this parser doesn't recognize
+        // (e.g. prefixed tags) rather than a genuinely cell-less sheet -- don't trust
+        // a silently-empty result, let the caller fall back to CoreXLSX's decoder.
+        if rowCount > 0 && cells.isEmpty {
+            return nil
+        }
+
+        return FastWorksheet(
+            cells: cells,
+            rowCount: rowCount,
+            mergeCells: mergeCellRefs.isEmpty
+                ? nil
+                : FastMergeCells(items: mergeCellRefs.map { FastMergeCell(reference: $0) }),
+            formatProperties: FastFormatProperties(defaultRowHeight: defaultRowHeight)
+        )
+    }
+
+    // Mirrors CellReference's own Decodable init (column letters + row number split
+    // at the last letter), just without going through a Decoder.
+    private func parseCellReference(_ ref: String) -> CellReference? {
+        guard let lastLetterIndex = ref.lastIndex(where: { $0.isLetter }) else { return nil }
+        let separatorIndex = ref.index(after: lastLetterIndex)
+        guard let column = ColumnReference(ref[..<separatorIndex]) else { return nil }
+        guard let row = UInt(ref[separatorIndex...]) else { return nil }
+        return CellReference(column, row)
+    }
+
+    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String] = [:]) {
+        currentElement = elementName
+        switch elementName {
+        case "sheetData":
+            inSheetData = true
+        case "row":
+            if inSheetData { rowCount += 1 }
+        case "c":
+            guard inSheetData, let refString = attributeDict["r"], let ref = parseCellReference(refString) else {
+                currentCell = nil
+                return
+            }
+            let styleIndex = attributeDict["s"].flatMap { Int($0) }
+            currentCell = FastCell(reference: ref, type: attributeDict["t"], styleIndex: styleIndex, value: nil, formulaValue: nil)
+        case "v", "f":
+            textBuffer = ""
+        case "mergeCell":
+            if let ref = attributeDict["ref"] {
+                mergeCellRefs.append(ref)
+            }
+        case "sheetFormatPr":
+            defaultRowHeight = attributeDict["defaultRowHeight"]
+        default:
+            break
+        }
+    }
+
+    func parser(_ parser: XMLParser, foundCharacters string: String) {
+        guard currentElement == "v" || currentElement == "f" else { return }
+        textBuffer += string
+    }
+
+    // XMLParser routes <![CDATA[...]]> content here instead of foundCharacters --
+    // some non-Excel producers wrap <v>/<f> text in CDATA (e.g. formula text with
+    // "<" or "&"), so without this a CDATA-wrapped value would silently parse as
+    // empty instead of erroring.
+    func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
+        guard currentElement == "v" || currentElement == "f" else { return }
+        textBuffer += String(data: CDATABlock, encoding: .utf8) ?? ""
+    }
+
+    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        switch elementName {
+        case "v":
+            currentCell?.value = textBuffer
+        case "f":
+            // Self-closing shared-formula follow-on cells (<f t="shared" si="3"/>)
+            // have no text -- keep formulaValue nil so callers fall back to the
+            // cell's computed <v> value, matching CoreXLSX's prior behavior.
+            currentCell?.formulaValue = textBuffer.isEmpty ? nil : textBuffer
+        case "c":
+            if let cell = currentCell {
+                cells.append(cell)
+            }
+            currentCell = nil
+        case "sheetData":
+            inSheetData = false
+        default:
+            break
+        }
+    }
 }
 
 

@@ -699,14 +699,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //BG
             if let i = locationIndex(for: key) {
 
-                if bgcolor[i].count > 0 {
-                    cell.label2?.backgroundColor = namedCellColor(bgcolor[i], default: UIColor.white)
-                }
+                // Reused cells keep whatever backgroundColor/textColor a previous
+                // index path last set (UICollectionViewCell pooling) -- cells with
+                // no explicit xlsx fill/font color must still be reset to the plain
+                // defaults here, not just left alone, or fast scrolling flickers
+                // between stale colors from a handful of recycled cell instances.
+                cell.label2?.backgroundColor = bgcolor[i].count > 0
+                    ? namedCellColor(bgcolor[i], default: UIColor.white)
+                    : UIColor.white
+                cell.label2?.textColor = tcolor[i].count > 0
+                    ? namedCellColor(tcolor[i], default: UIColor.black)
+                    : UIColor.black
 
-                if tcolor[i].count > 0{
-                    cell.label2?.textColor = namedCellColor(tcolor[i], default: UIColor.black)
-                }
-                
             }else{
                 cell.label2?.backgroundColor = UIColor.white
                 cell.label2?.textColor = UIColor.black
@@ -3645,10 +3649,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func moveToHome(){
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
-        
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            window.rootViewController = targetViewController
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+
+        // This screen was reached via HomeController.present(...), a real modal
+        // presentation -- presenter and presented view controller hold each other
+        // strongly. Swapping window.rootViewController directly (without dismissing
+        // first) only drops the window's reference; the old HomeController and this
+        // VC keep each other alive forever, leaking both plus everything retained
+        // (e.g. CustomCollectionViewLayout's full cellAttrsDictionary). dismiss()
+        // first to break that pair; it's a harmless no-op if this VC wasn't actually
+        // presented (e.g. reached via another moveToX root swap instead).
+        self.dismiss(animated: false) {
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = targetViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
 
     }
@@ -3670,9 +3684,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
 
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            window.rootViewController = targetViewController
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        // See moveToHome() above for why dismiss() has to run before the root swap.
+        self.dismiss(animated: false) {
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = targetViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
 
     }
@@ -3690,10 +3707,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
-        
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            window.rootViewController = targetViewController
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+
+        // See moveToHome() above for why dismiss() has to run before the root swap.
+        self.dismiss(animated: false) {
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = targetViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
 
     }

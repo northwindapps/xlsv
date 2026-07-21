@@ -205,6 +205,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Override point for customization after application launch.
         self.window = UIWindow(frame: UIScreen.main.bounds)
+        // An unset UIWindow background defaults to black, which flashes through any
+        // transient gap in the view hierarchy during layout/rotation. The app's own
+        // colors (spreadsheet grid, cells) are all hardcoded light and not Dark-Mode
+        // aware, so pin both the window background and interface style to light to
+        // remove the black side of the white/black flicker rather than just papering
+        // over one trigger of it.
+        self.window?.backgroundColor = .white
+        self.window?.overrideUserInterfaceStyle = .light
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         
         if(DeviceType.IS_IPHONE_4_OR_LESS == true)
