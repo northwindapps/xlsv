@@ -2337,8 +2337,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             textField.text = "sin(x) * cos(y)"
         }
 
-        let showAction = UIAlertAction(title: display, style: .default) { _ in
-            if let expression = alert.textFields?.first?.text {
+        // [weak self, weak alert] -- capturing `alert` itself (to read its own text
+        // field) inside a closure that `alert` also owns (via addAction) is a
+        // self-contained retain cycle: alert -> showAction -> this closure -> alert.
+        // That cycle needs no external reference to persist, so it never breaks on
+        // its own even after the alert is dismissed -- and since this closure also
+        // captures self, self stays trapped in it forever too. Since graphViewAlert()
+        // runs on every viewDidAppear, this alone was enough to leak the whole
+        // PlaygroundViewController on every single open, independent of the
+        // navigation-level fixes elsewhere.
+        let showAction = UIAlertAction(title: display, style: .default) { [weak self, weak alert] _ in
+            guard let self = self else { return }
+            if let expression = alert?.textFields?.first?.text {
                 if expression.contains("x") && expression.contains("y"){
                     print("User entered: \(expression)")
                     self.setupGraphView(expression: expression)
@@ -2348,8 +2358,8 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                             message: invalidMessage,
                             preferredStyle: .alert
                         )
-                        errorAlert.addAction(UIAlertAction(title: ok, style: .default) { _ in
-                            self.graphViewAlert()
+                        errorAlert.addAction(UIAlertAction(title: ok, style: .default) { [weak self] _ in
+                            self?.graphViewAlert()
                         })
                         self.present(errorAlert, animated: true)
                 }
@@ -2554,7 +2564,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
         @objc func closeGraph() {
             guard let hc = hostingController else { return }
-            
+
             UIView.animate(withDuration: 0.3, animations: {
                 hc.view.alpha = 0
             }) { _ in
@@ -2564,7 +2574,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 self.hostingController = nil
             }
         }
-    
+
+        // Same teardown as closeGraph(), minus the fade -- for call sites that are
+        // about to leave this screen entirely rather than just closing the graph
+        // overlay, where waiting on an animation's completion isn't necessary.
+        func tearDownHostingControllerIfPresent() {
+            guard let hc = hostingController else { return }
+            hc.willMove(toParent: nil)
+            hc.view.removeFromSuperview()
+            hc.removeFromParentViewController()
+            self.hostingController = nil
+        }
+
 
     
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
@@ -3943,6 +3964,16 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     @objc func quitPlaygroundAction(){
 //        let storyboard = UIStoryboard(name: "Main", bundle: nil)
 
+        // The 3D graph feature (setupGraphView) embeds a UIHostingController whose
+        // SwiftUI rootView holds a closure capturing self strongly -- self retains it
+        // via `children`/hostingController, and the closure retains self back. Only
+        // closeGraph() (the graph's own "x" button) broke that cycle; exiting
+        // Playground directly while the graph was still open left it fully intact,
+        // keeping this whole view controller alive forever regardless of any
+        // navigation-level fix. Tear it down here too, non-animated since the screen
+        // is going away anyway.
+        tearDownHostingControllerIfPresent()
+
         let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
 
         // This screen was reached via HomeController.present(...), a real modal
@@ -3951,21 +3982,30 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         // first) only drops the window's reference; the old HomeController and this
         // VC keep each other alive forever, leaking both plus everything retained
         // (e.g. CustomCollectionViewLayout's full cellAttrsDictionary). dismiss()
-        // first to break that pair; it's a harmless no-op if this VC wasn't actually
-        // presented (e.g. reached via another moveToX root swap instead).
-        self.dismiss(animated: false) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+        // as fire-and-forget cleanup to break that pair -- deliberately NOT nesting
+        // the root swap inside its completion, since when this VC was instead
+        // reached via another moveToX root swap (no presentation involved, e.g. from
+        // ViewController/FileFillViewController's own moveToPlayground()) there is
+        // nothing to dismiss and the completion handler firing in that case isn't
+        // something to depend on; the swap below always runs regardless. (An earlier
+        // version of this fix nested the swap inside the completion, which left this
+        // exact "Exit Playground" button non-functional whenever Playground was
+        // reached via a root swap instead of a presentation.)
+        self.dismiss(animated: false, completion: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
 
-                window.rootViewController = targetViewController
+            window.rootViewController = targetViewController
 
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 
     }
-    
+
     @objc func moveToHome(){
+        // See quitPlaygroundAction() above for why this has to run before leaving.
+        tearDownHostingControllerIfPresent()
+
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
 
@@ -3975,12 +4015,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.imported_xlsx_file_path = ""
 
-        // See quitPlaygroundAction() above for why dismiss() has to run before the root swap.
-        self.dismiss(animated: false) {
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = targetViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
+        // See quitPlaygroundAction() above for why dismiss() runs as fire-and-forget
+        // cleanup rather than gating the root swap on its completion firing.
+        self.dismiss(animated: false, completion: nil)
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 
     }
@@ -7760,14 +7800,22 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         }
         
         // Save action
-        let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
-            let fileName = alert.textFields?.first?.text ?? ""
-            
+        // [weak self, weak alert] -- capturing `alert` itself (to read its own text
+        // field) inside a closure that `alert` also owns (via addAction) is a
+        // self-contained retain cycle: alert -> saveAction -> this closure -> alert.
+        // That cycle needs no external reference to persist, so it never breaks on
+        // its own even after the alert is dismissed -- and since this closure also
+        // captures self, self stays trapped in it forever too. Same fix already
+        // applied correctly in excelEmail() above; mirroring it here.
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self, weak alert] _ in
+            guard let self = self else { return }
+            let fileName = alert?.textFields?.first?.text ?? ""
+
             if fileName.isEmpty {
                 self.showResultAlert(title: "Invalid Name", message: "Please enter a file name.")
                 return
             }
-            
+
             let serviceInstance = Service(
                 imp_sheetNumber: 0,
                 imp_stringContents: [String](),
@@ -7776,14 +7824,14 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 imp_fileName: "",
                 imp_formula: [String]()
             )
-            
+
             let appd = UIApplication.shared.delegate as! AppDelegate
-            
+
             let url = serviceInstance.writeXlsxBackup(
                 fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
                 filename: fileName
             )
-            
+
             if url == nil {
                 self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
             } else {

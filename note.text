@@ -263,3 +263,198 @@ Also fixed same day, worth noting here for context:
   Documents/Backups/FileFill directory (ExcelHelper.getBackupDirectory(forFileFill:)),
   separate from ViewController's Documents/Backups, instead of both sharing
   one folder distinguished only by a "_ff" filename suffix.
+
+2026-07-20: CustomCollectionViewLayout.prepare() merge-scan perf
+=========================================================================
+
+Problem:
+- prepare()'s full-rebuild path checked *every* interior grid cell against
+  the merged-cell map: build a column-letter string via
+  getExcelColumnName(columnNumber:) + row, then dictionary-lookup it in
+  mergedStartIndex -- an O(gridCells) per-cell probe (dominated by string
+  building) even though real merges are rare (41 in the reported case vs.
+  202,202 total grid cells).
+
+Fix:
+- Flipped the order: the main per-cell loop now writes the ordinary
+  (non-merged) frame unconditionally for every interior cell, and a
+  separate pass *after* the loop iterates only mergedStartIndex (sized to
+  actual merge count) to patch in the spanning frame + zIndex=2 for merge
+  anchors, overwriting the same IndexPath key the ordinary pass already
+  wrote.
+- Result: 1.936s -> 0.480s for gridCells=202202, merged=41.
+Fixed in: CustomCollectionViewLayout.swift.
+
+Note: if a similar per-cell-probe-for-a-rare-match pattern turns up
+elsewhere (grep for getExcelColumnName(columnNumber: inside a hot per-cell
+loop), the same "default first, patch the few exceptions after"
+restructuring applies.
+
+2026-07-21: readExcel2 import hang was CoreXLSX's XMLCoder decode, not app code
+=========================================================================
+
+Problem:
+- FileFillController's initial load of a 173KB real-world .xlsx hung for
+  ~6.5s (PERF loadExcelSheet.readExcel2: 6.494s), even though the earlier
+  2026-07-18 fixes had already bounded readExcel2's own Swift-side loops to
+  the actual populated-cell count.
+
+Root cause (found by adding sub-stage PERF timers around every stage of
+readExcel2 -- file init, parseWorksheet(at:), parseSharedStrings, the
+strings/values loops, merged-anchor backfill, final location-index loops,
+saveJsonFile):
+- PERF readExcel2.parseWorksheet: 6.039s of the 6.458s total (94%).
+  container.count (all <c> elements in the sheet) was 72,930 across 935
+  <row> elements, while only 449 cells actually held content/style worth
+  resolving (DEBUG-RESOLVE cells=449) -- Excel had written style-only,
+  empty <c> elements across the whole formatted range of the sheet, not
+  just the populated cells.
+- CoreXLSX's parseWorksheet(at:) decodes the whole worksheet XML through
+  XMLCoder, a Codable-based DOM decoder that boxes every element into a
+  node tree before Codable ever sees it -- high constant-factor cost per
+  XML element, independent of how many of those elements are meaningful to
+  the app. 73k elements is squarely in XMLCoder's known multi-second
+  range. NOT a per-cell Swift loop problem -- those were already correctly
+  bounded to the ~449 real cells.
+
+Fix:
+- Added FastCell/FastMergeCell/FastMergeCells/FastFormatProperties/
+  FastWorksheet (lightweight mirrors of CoreXLSX's shapes, reusing
+  CoreXLSX's own CellReference/ColumnReference directly since those have
+  public initializers) plus FastWorksheetParser, a SAX-based parser
+  (Foundation's XMLParser) that pulls only <row>, <c r s t>, <v>, <f>,
+  <mergeCell ref>, and <sheetFormatPr defaultRowHeight> -- no DOM tree
+  built. Appended to the end of ExcelHelper.swift (not a new file) to
+  avoid touching project.pbxproj, which had unrelated uncommitted changes
+  at the time.
+- readExcel2 now parses the raw XML already extracted via ZIPFoundation
+  for the "write back" path (appd.loadedSheetXML) with FastWorksheetParser
+  first, falling back to the original file!.parseWorksheet(at:) call only
+  if the fast parse returns nil (defensive -- e.g. unrecognized markup).
+- Hardening added after an initial correctness review: (1) XMLParser
+  routes CDATA content through a separate foundCDATA callback, not
+  foundCharacters -- added that so CDATA-wrapped <v>/<f> text isn't
+  silently parsed as empty; (2) if rowCount > 0 but zero cells were found,
+  treat the parse as failed (return nil) rather than trusting a
+  suspiciously-empty result, so unrecognized producers fall back to
+  CoreXLSX instead of silently losing data.
+Result: PERF readExcel2.parseWorksheet: 0.931s (fast=true); total
+readExcel2 6.458s -> 1.340s (4.8x). containerCount/DEBUG-RESOLVE counts and
+the full "location" array came out byte-for-byte identical to the pre-fix
+run, confirming the fast parser finds the same cells/style indices/merge
+locations as CoreXLSX did.
+Fixed in: ExcelHelper.swift.
+
+Known limitation carried over unchanged (not a regression): inline strings
+(t="inlineStr" with <is><t>) aren't handled by readExcel2 in either the
+old or new path -- pre-existing gap.
+
+2026-07-22: White/black scroll flicker + two independent memory leaks
+=========================================================================
+
+1) Cell reuse: stale backgroundColor/textColor flicker while scrolling
+------------------------------------------------------------------------
+Problem:
+- collectionView(_:cellForItemAt:)'s "BG" section only *set*
+  cell.label2.backgroundColor/textColor when the resolved xlsx style had a
+  non-empty bgcolor[i]/tcolor[i] -- no else branch reset plain cells (the
+  common case) back to white/black. UICollectionViewCell instances are
+  pooled and reused during scroll; a cell landing on a location with no
+  explicit fill kept whatever color the *previous* cell that recycled the
+  same instance had painted. With only ~30-60 live cell instances cycling
+  fast during a scroll, this read as flicker between stale colors, not the
+  current cell's actual color.
+Fix:
+- Changed to always assign backgroundColor/textColor (ternary: resolved
+  color if bgcolor[i]/tcolor[i] non-empty, else plain white/black),
+  instead of only assigning in the non-empty case.
+Fixed in: ViewController.swift, FileFillViewController.swift.
+
+(Also fixed, defensive/probably-unrelated to the reported flicker but
+found investigating the same code path: AppDelegate's UIWindow was never
+given an explicit backgroundColor -- defaults to black, which can flash
+through view-hierarchy gaps during layout/rotation. Set to .white and
+pinned overrideUserInterfaceStyle = .light there too, since none of this
+app's colors are Dark-Mode aware.)
+
+2) Leak: closing a spreadsheet screen never released it
+------------------------------------------------------------------------
+Problem:
+- User opened/closed 3 spreadsheet files in a row; memory climbed from
+  ~5MB to 830.5MB and never came back down. HomeController.swift presents
+  each spreadsheet screen via real modal presentation
+  (self.present(target, animated: true)), but closing it --
+  ViewController.moveToHome()/moveToFilefill()/moveToPlayground(),
+  FileFillViewController's equivalents, PlaygroundViewController's
+  quitPlaygroundAction()/moveToHome() -- never called dismiss(). They just
+  did `window.rootViewController = targetViewController` directly.
+  UIKit's presenter<->presented relationship is a genuine two-way strong
+  reference; swapping window.rootViewController only drops the *window's*
+  reference to the old root, so the old HomeController and the old
+  spreadsheet VC kept each other alive forever every time -- along with
+  everything each retained, notably CustomCollectionViewLayout's
+  cellAttrsDictionary (sized to the full default 202x1001=202,202-cell
+  grid regardless of actual sheet size).
+Fix:
+- Call self.dismiss(animated: false, completion: nil) as fire-and-forget
+  cleanup, then perform the window.rootViewController swap unconditionally
+  right afterward -- NOT nested inside dismiss's completion closure.
+  (First attempt nested the swap inside the completion, on the assumption
+  that dismiss() on a VC with nothing presented is a harmless no-op whose
+  completion still fires -- this broke the "Exit Playground" button
+  whenever Playground was reached via a root-swap rather than a real
+  presentation, since in that case there's nothing to dismiss and the
+  completion firing isn't something to depend on. Corrected same session
+  by decoupling: dismiss() runs as pure cleanup, the swap always happens
+  regardless of whether/when its completion fires.)
+- Added temporary deinit logging (print) to HomeController/
+  ViewController/FileFillViewController to directly confirm dealloc timing
+  instead of guessing from static code -- confirmed HomeController deinits
+  correctly every cycle after the fix.
+Fixed in: ViewController.swift (3 call sites), FileFillViewController.swift
+(2 call sites), PlaygroundViewController.swift (2 call sites) -- 7 total.
+
+3) Leak: UIAlertAction capturing its own UIAlertController
+------------------------------------------------------------------------
+Problem:
+- Even after fix #2, PlaygroundViewController still never deallocated
+  (confirmed via deinit logging never firing for it, then pinned down
+  exactly via Xcode's Memory Graph Debugger). graphViewAlert() -- called
+  unconditionally from viewDidAppear, i.e. on *every* open of the screen,
+  not just when the 3D-graph feature is used -- built:
+    let alert = UIAlertController(...)
+    let showAction = UIAlertAction(...) { _ in
+        if let expression = alert.textFields?.first?.text { ... self.setupGraphView(...) ... }
+    }
+    alert.addAction(showAction)
+  `alert` owns `showAction` (via addAction), and showAction's handler
+  closure captures `alert` right back to read its own text field -- a
+  self-contained retain cycle (alert -> showAction -> closure -> alert)
+  that needs no external reference to persist and never breaks on its own,
+  even after the alert is dismissed on screen. Since the same closure also
+  captured self (to call self.setupGraphView), PlaygroundViewController
+  was pulled into that permanent cycle too, fully independent of fix #2.
+- The same pattern (capturing the enclosing UIAlertController local
+  variable inside one of its own actions, usually to read
+  .textFields?.first?.text) was already present-but-already-fixed in
+  PlaygroundViewController.excelEmail() using [weak self, weak alert] --
+  just not applied consistently. Grepping `\.textFields?\.first` across
+  the app found the same unfixed pattern duplicated in
+  PlaygroundViewController.filesave(), ViewController.filesave(), and
+  FileFillViewController.filesave() (all copy-pasted "save backup" flows).
+Fix:
+- [weak self, weak alert] + guard/optional-chaining on all four, matching
+  the pattern already correct in excelEmail().
+Fixed in: PlaygroundViewController.swift (graphViewAlert + filesave),
+ViewController.swift (filesave), FileFillViewController.swift (filesave).
+
+Debugging note for next time: Xcode's Memory Graph Debugger (Debug
+Navigator -> Memory -> the memory-graph icon in the debug bar, or Debug
+menu -> "View Memory Graph") was what actually found leak #3 -- expand
+XLSV.debug.dylib in the left object browser to see live instance counts
+per app-defined class, click the leaked class to see its retain graph, and
+click any node showing "[capture]" to see what's referencing it (the
+inspector's "N objects referencing X" panel shows the exact owning
+property/ivar, e.g. "_handler" on a UIAlertAction). Much faster than
+guessing from static code reading once deinit logging confirms an object
+never deallocates.

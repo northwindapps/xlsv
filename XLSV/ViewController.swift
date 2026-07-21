@@ -41,7 +41,15 @@ extension UIColor {
 }
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate, BannerViewDelegate{
-    
+
+    // Temporary instrumentation for the window.rootViewController-swap leak
+    // investigation (see [[project_rootviewcontroller_swap_leak]] memory note) --
+    // confirms whether dismiss()-before-swap actually lets this instance deallocate.
+    // Safe to remove once the fix is confirmed on-device.
+    deinit {
+        print("DEINIT ViewController \(ObjectIdentifier(self))")
+    }
+
     @IBOutlet weak var bannerview: BannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
@@ -3656,17 +3664,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // first) only drops the window's reference; the old HomeController and this
         // VC keep each other alive forever, leaking both plus everything retained
         // (e.g. CustomCollectionViewLayout's full cellAttrsDictionary). dismiss()
-        // first to break that pair; it's a harmless no-op if this VC wasn't actually
-        // presented (e.g. reached via another moveToX root swap instead).
-        self.dismiss(animated: false) {
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = targetViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
+        // as fire-and-forget cleanup to break that pair -- deliberately NOT nesting
+        // the root swap inside its completion, since when this VC was instead
+        // reached via another moveToX root swap (no presentation involved) there is
+        // nothing to dismiss and the completion handler firing in that case isn't
+        // something to depend on; the swap below always runs regardless.
+        self.dismiss(animated: false, completion: nil)
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 
     }
-    
+
     @objc func moveToFilefill(){
 
         self.customview2.removeFromSuperview()
@@ -3684,16 +3694,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
 
-        // See moveToHome() above for why dismiss() has to run before the root swap.
-        self.dismiss(animated: false) {
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = targetViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
+        // See moveToHome() above for why dismiss() runs as fire-and-forget cleanup
+        // rather than gating the root swap on its completion firing.
+        self.dismiss(animated: false, completion: nil)
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 
     }
-    
+
     @objc func moveToPlayground(){
 
         self.customview2.removeFromSuperview()
@@ -3708,12 +3718,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
 
-        // See moveToHome() above for why dismiss() has to run before the root swap.
-        self.dismiss(animated: false) {
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = targetViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
+        // See moveToHome() above for why dismiss() runs as fire-and-forget cleanup
+        // rather than gating the root swap on its completion firing.
+        self.dismiss(animated: false, completion: nil)
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+            window.rootViewController = targetViewController
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
 
     }
@@ -6921,14 +6931,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         // Save action
-        let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
-            let fileName = alert.textFields?.first?.text ?? ""
-            
+        // [weak self, weak alert] -- capturing `alert` itself (to read its own text
+        // field) inside a closure that `alert` also owns (via addAction) is a
+        // self-contained retain cycle: alert -> saveAction -> this closure -> alert.
+        // That cycle needs no external reference to persist, so it never breaks on
+        // its own even after the alert is dismissed -- and since this closure also
+        // captures self, self stays trapped in it forever too.
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self, weak alert] _ in
+            guard let self = self else { return }
+            let fileName = alert?.textFields?.first?.text ?? ""
+
             if fileName.isEmpty {
                 self.showResultAlert(title: "Invalid Name", message: "Please enter a file name.")
                 return
             }
-            
+
             let serviceInstance = Service(
                 imp_sheetNumber: 0,
                 imp_stringContents: [String](),
@@ -6937,14 +6954,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 imp_fileName: "",
                 imp_formula: [String]()
             )
-            
+
             let appd = UIApplication.shared.delegate as! AppDelegate
-            
+
             let url = serviceInstance.writeXlsxBackup(
                 fp: self.local_xlsx_file_path.isEmpty ? "" : self.local_xlsx_file_path,
                 filename: fileName
             )
-            
+
             if url == nil {
                 self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
             } else {

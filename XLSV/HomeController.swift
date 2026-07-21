@@ -10,6 +10,14 @@ import UIKit
 
 class HomeController: UIViewController {
 
+    // Temporary instrumentation for the window.rootViewController-swap leak
+    // investigation (see [[project_rootviewcontroller_swap_leak]] memory note) --
+    // confirms whether dismiss()-before-swap actually lets this instance deallocate.
+    // Safe to remove once the fix is confirmed on-device.
+    deinit {
+        print("DEINIT HomeController \(ObjectIdentifier(self))")
+    }
+
     private func makeButton(title: String, subtitle: String) -> UIButton {
         let button = UIButton(type: .system)
 
