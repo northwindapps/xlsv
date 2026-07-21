@@ -13,7 +13,7 @@ import CoreData
 import Zip
 import SSZipArchive
 import CoreFoundation
-//import GoogleMobileAds
+import GoogleMobileAds
 
 let reuseIdentifier = "customCell"
 var SCREENSIZE_w = ScreenSize.SCREEN_WIDTH
@@ -40,9 +40,9 @@ extension UIColor {
     }
 }
 
-class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate{
+class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UITextFieldDelegate,UITextViewDelegate,MFMailComposeViewControllerDelegate,UICollectionViewDelegateFlowLayout,UIDocumentPickerDelegate,UIGestureRecognizerDelegate, BannerViewDelegate{
     
-//    @IBOutlet weak var bannerview: GADBannerView!
+    @IBOutlet weak var bannerview: BannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
     
@@ -1353,13 +1353,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
             print("go to file view")
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
-            self.currentFileNameCollectionViewIdx = indexPath
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
-            print(self.currentFileNameCollectionViewIdx.item)
 
             DispatchQueue.main.async {
                 self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item])! ){
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
+                        // Flip the tab highlight only once the sheet has actually
+                        // finished loading -- setting this before the async load
+                        // above left the tab bar pointing at the new sheet while the
+                        // grid still showed the old one whenever the app got
+                        // backgrounded mid-load (nothing re-syncs the two later).
+                        self.currentFileNameCollectionViewIdx = indexPath
+                        // A plain tab tap used to leave appd.wsSheetIndex untouched --
+                        // every other sheet-changing action (rename/delete/add/data
+                        // input from another controller) does set it, so it went stale
+                        // relative to currentFileNameCollectionViewIdx after a tap.
+                        // appDidBecomeActive() below trusts wsSheetIndex as the source
+                        // of truth on resume, so a stale value there was forcing the
+                        // tab bar back to whatever sheet was last touched by one of
+                        // those other actions instead of the one just tapped.
+                        appd.wsSheetIndex = sheetIdx!
+                        self.FileCollectionView.reloadData()
                         customLayout.resetCellAttrsDictionaryItemZindex()
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
@@ -1377,6 +1391,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     func loadExcelSheet(idx: Int, completion: (() -> Void)? = nil) {
+        // Persisted here (rather than only on background/terminate) so an eviction
+        // kill at any point still has the last successfully-requested sheet on
+        // disk -- appd.wsSheetIndex itself is in-memory only and resets to 1 on a
+        // fresh process, which is what caused the tab bar to snap back to sheet 1
+        // after iOS silently killed a backgrounded instance of this app.
+        UserDefaults.standard.set(idx, forKey: "lastWsSheetIndex_vc")
         do {
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             if local_xlsx_file_path == "" {
@@ -2158,6 +2178,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         local_xlsx_file_path = appd.imported_xlsx_file_path_ss
         appd.imported_xlsx_file_path_ss = ""
 
+        // Restore the sheet tab this controller was last showing -- appd.wsSheetIndex
+        // is in-memory only, so on a fresh process (including an eviction-triggered
+        // relaunch that looks to the user like a normal background resume) it would
+        // otherwise sit at its default of 1 regardless of what was actually open.
+        if let savedSheetIndex = UserDefaults.standard.object(forKey: "lastWsSheetIndex_vc") as? Int {
+            appd.wsSheetIndex = savedSheetIndex
+        }
+
         fileTitle.text = ""
         super.viewDidLoad()
 
@@ -2257,16 +2285,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // changes, the cell-size slider, etc.) was resetting back to sheet 1
             // instead of staying on whatever sheet was actually open.
             self.loadExcelSheet(idx: appd.wsSheetIndex)
+        }
 
-            // currentFileNameCollectionViewIdx (drives which FileCollectionView
-            // tab gets the selection highlight) defaults to item 0 for a fresh
-            // ViewController instance -- without this, the tab bar highlighted
-            // the first sheet even though loadExcelSheet above just correctly
-            // loaded the real (previously selected) sheet's content.
-            if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)) {
-                self.currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
-                self.FileCollectionView.reloadData()
-            }
+        // currentFileNameCollectionViewIdx (drives which FileCollectionView tab
+        // gets the selection highlight) defaults to item 0 for a fresh
+        // ViewController instance -- without this, the tab bar highlighted the
+        // first sheet even though loadExcelSheet (whichever branch above ran it)
+        // just correctly loaded the real (previously selected) sheet's content.
+        // This has to run regardless of which branch loaded the sheet -- it used
+        // to be nested inside the block above and only ran on the fallback path,
+        // so the default-file cold-launch branch further up left the tab bar on
+        // item 0 even when the restored wsSheetIndex pointed at a different tab.
+        if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)) {
+            self.currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
+            self.FileCollectionView.reloadData()
         }
 
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
@@ -2283,13 +2315,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             name: NSNotification.Name.UIKeyboardWillHide,
             object: nil
         )
-        
-       
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-//        bannerview.rootViewController = self
-//        bannerview.load(GADRequest())
+
+        // appd.wsSheetIndex is shared with FileFillViewController, and neither
+        // controller re-syncs currentFileNameCollectionViewIdx against it when
+        // the app comes back from the background (this VC stays alive the whole
+        // time, so viewWillAppear/viewDidLoad never re-run) -- without this, a
+        // sheet switch that changed wsSheetIndex while this VC wasn't the one
+        // driving it left the tab bar highlighting a sheet other than the one
+        // actually on screen after resume.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: NSNotification.Name.UIApplicationDidBecomeActive,
+            object: nil
+        )
+
+
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+        bannerview.rootViewController = self
+        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -6449,11 +6495,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if pastemode == false && getRefmode == false{
                 terminate()
             }
-         
+
         }
         settingCellSelected = false
     }
-    
+
+    @objc func appDidBecomeActive() {
+        let appd = UIApplication.shared.delegate as! AppDelegate
+        if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)),
+           matchIndex != currentFileNameCollectionViewIdx.item {
+            currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
+            FileCollectionView.reloadData()
+        }
+    }
+
     @objc func moveDown(){
         down_bool = !down_bool
         up_bool = false

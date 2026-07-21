@@ -465,6 +465,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                     <navigationItem key="navigationItem" id="q2Y-DL-6B5"/>
                     <connections>
                         <outlet property="FileCollectionView" destination="tiV-cz-if5" id="iwe-e3-0gg"/>
+                        <outlet property="bannerview" destination="G1f-VI-PIW" id="778-ww-KVM"/>
                         <outlet property="cellSizeSlicer" destination="nSJ-6G-hzX" id="dF0-l0-PNg"/>
                         <outlet property="fileTitle" destination="1gf-SZ-xET" id="lyS-9a-Iq8"/>
                         <outlet property="hiddenTextField" destination="pFc-Pl-Cdc" id="Uqm-81-KoN"/>
@@ -1073,6 +1074,7 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
                     <navigationItem key="navigationItem" id="xHU-Ut-lKM"/>
                     <connections>
                         <outlet property="FileCollectionView" destination="Xwy-HS-Pqy" id="WXH-yS-w5B"/>
+                        <outlet property="bannerview" destination="L2t-kn-Opy" id="aCE-W4-dlX"/>
                         <outlet property="cellSizeSlicer" destination="vb8-cU-Tfn" id="lQv-8c-DKm"/>
                         <outlet property="fileTitle" destination="AyG-nB-SIe" id="cJn-3F-R4h"/>
                         <outlet property="hiddenTextField" destination="zeL-Ys-W8s" id="0iu-eT-yVZ"/>

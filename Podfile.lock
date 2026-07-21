@@ -2,6 +2,9 @@ PODS:
   - CoreXLSX (0.14.1):
     - XMLCoder (~> 0.11.1)
     - ZIPFoundation (~> 0.9.11)
+  - Google-Mobile-Ads-SDK (13.6.0):
+    - GoogleUserMessagingPlatform (>= 1.1)
+  - GoogleUserMessagingPlatform (3.1.0)
   - SSZipArchive (2.4.3)
   - SwiftyXMLParser (5.6.0)
   - SWXMLHash (7.0.2)
@@ -11,6 +14,7 @@ PODS:
 
 DEPENDENCIES:
   - CoreXLSX (~> 0.14.1)
+  - Google-Mobile-Ads-SDK
   - SSZipArchive
   - SwiftyXMLParser
   - SWXMLHash
@@ -19,6 +23,8 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - CoreXLSX
+    - Google-Mobile-Ads-SDK
+    - GoogleUserMessagingPlatform
     - SSZipArchive
     - SwiftyXMLParser
     - SWXMLHash
@@ -28,6 +34,8 @@ SPEC REPOS:
 
 SPEC CHECKSUMS:
   CoreXLSX: f9a7a70b509150ceb675b05877b7ac041a587030
+  Google-Mobile-Ads-SDK: 6e501ace4af8d63e967bd45497c8b2b05821163d
+  GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
   SwiftyXMLParser: 9b98995235961881322015ebe38d1f3d7c953bd7
   SWXMLHash: dd733a457e9c4fe93b1538654057aefae4acb382
@@ -35,6 +43,6 @@ SPEC CHECKSUMS:
   Zip: b3fef584b147b6e582b2256a9815c897d60ddc67
   ZIPFoundation: fa9ae5af13b7cf168245f24d1c672a4fb972e37f
 
-PODFILE CHECKSUM: 8d5e8667af90254fe4fcf66333bc056d9447cb40
+PODFILE CHECKSUM: b8319f848adf8d7f4fec8ad4a476e89d8d889af1
 
 COCOAPODS: 1.16.2
