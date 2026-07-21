@@ -3945,12 +3945,22 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
 
         let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "LoadingFileController") as! LoadingFileController
 
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
-            
-            window.rootViewController = targetViewController
-            
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        // This screen was reached via HomeController.present(...), a real modal
+        // presentation -- presenter and presented view controller hold each other
+        // strongly. Swapping window.rootViewController directly (without dismissing
+        // first) only drops the window's reference; the old HomeController and this
+        // VC keep each other alive forever, leaking both plus everything retained
+        // (e.g. CustomCollectionViewLayout's full cellAttrsDictionary). dismiss()
+        // first to break that pair; it's a harmless no-op if this VC wasn't actually
+        // presented (e.g. reached via another moveToX root swap instead).
+        self.dismiss(animated: false) {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+
+                window.rootViewController = targetViewController
+
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
 
     }
@@ -3965,9 +3975,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.imported_xlsx_file_path = ""
 
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            window.rootViewController = targetViewController
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        // See quitPlaygroundAction() above for why dismiss() has to run before the root swap.
+        self.dismiss(animated: false) {
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = targetViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
 
     }
