@@ -249,7 +249,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         
         
-        var initialViewController = storyboard.instantiateViewController(withIdentifier: "Home")
+        let initialViewController = storyboard.instantiateViewController(withIdentifier: "Home")
         
         
         

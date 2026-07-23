@@ -62,3 +62,46 @@ Lesson: when a new implementation supersedes an old one touching the same
 state, remove the old path in the same change. Don't call a visual bug
 fixed just because it looks better -- confirm there's exactly one writer
 left.
+
+
+SpeechInputHelper.swift build errors - Swift 4.0 language mode, not a typo
+============================================================================
+
+Symptom: `try audioSession.setCategory(.record, mode: .measurement, options:
+.duckOthers)` failed with "Type 'String' has no member 'record'" (and
+'measurement'), and `setActive(true, options: .notifyOthersOnDeactivation)`
+failed with "'setActive(_:options:)' has been renamed to
+'setActive(_:with:)'".
+
+Root cause
+----------
+XLSV.xcodeproj has SWIFT_VERSION = 4.0 in all 6 build configs. Apple's
+AVFAudio overlay gates the modern AVAudioSession API surface to Swift >=4.2:
+
+    @available(swift, introduced: 4.2, renamed: "setActive(_:with:)")
+    open func setActive(_ active: Bool, options: AVAudioSessionSetActiveOptions = []) throws
+
+Under Swift 4.2+ mode, AVAudioSessionCategory/Mode import as NS_STRING_ENUM
+struct wrappers (AVAudioSession.Category.record, etc.) and setActive takes
+`options:`. Under this project's Swift 4.0 mode, neither exists -- category/
+mode are still the plain old global String constants
+(AVAudioSessionCategoryRecord, AVAudioSessionModeMeasurement), and setActive
+only has the `with:` label.
+
+Fix: use the Swift-4.0-compatible spellings --
+    try audioSession.setCategory(AVAudioSessionCategoryRecord, mode: AVAudioSessionModeMeasurement, options: .duckOthers)
+    try audioSession.setActive(true, with: .notifyOthersOnDeactivation)
+
+Why it was missed at first
+---------------------------
+Verified the fix with `xcrun swiftc -typecheck` against the real iOS SDK
+headers on this machine, but without pinning `-swift-version 4` it silently
+used the toolchain's newer default mode, which has the `.record`/`options:`
+surface and reported clean -- a false pass. Only reproduced the actual
+project error after explicitly passing `-swift-version 4` to match the
+project's SWIFT_VERSION build setting.
+
+Lesson: when validating a fix against SDK headers/typecheck outside of an
+actual Xcode build, match every relevant build setting (language version
+first) -- not just the SDK/target platform -- or a "clean" check can be
+compiling against a different API surface than the real build uses.

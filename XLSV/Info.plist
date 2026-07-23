@@ -52,6 +52,10 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Barcode Scan</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Used to record your voice for speech-to-text cell input</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Used to convert your speech into cell input</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
 		<key>iCloud.com.yumiya.xlsv2</key>

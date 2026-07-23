@@ -176,6 +176,33 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var customview2 :Customview2!
     var Fview :formatview!
     var datainputview :Datainputview!
+    let speechInputHelper = SpeechInputHelper()
+    // Every cell committed via voice since the mic was last tapped (or
+    // since the last "改行"/linebreak) -- speechLineBreakCommandRange uses
+    // this to find the leftmost column filled so far, so it can return
+    // there one row down, the same way Excel's Tab-then-Enter does.
+    var speechRowFillHistory: [(indexPath: IndexPath, value: String)] = []
+    // Live speech transcript, kept separate from datainputview.stringbox.text
+    // on purpose -- evaluateStringboxVoiceCommands() reads this, never the
+    // visible textbox, so manual typing (which only ever touches stringbox)
+    // can't be misread as a voice command. stringbox is still mirrored to
+    // this value for live-dictation visual feedback, just not read back for
+    // command detection.
+    var speechLiveTranscript: String = ""
+    // Everything already finalized with a pause-triggered ":" -- the
+    // recognizer's own transcript resets to blank each time
+    // appendColonAfterSpeechPause() calls startNewSegment(), so
+    // speechLiveTranscript is always this prefix plus whatever the
+    // recognizer has produced since, never the raw callback text alone.
+    var speechCommittedPrefix: String = ""
+    // Pending "append ':' after a pause" callback -- re-armed on every
+    // speech update with no command in it, cancelled by a command firing
+    // or by stopping the mic. See scheduleSpeechColonAppend().
+    var speechColonPauseWorkItem: DispatchWorkItem?
+    // How long a pause in speech has to be before it's marked with a ":".
+    // Plain var (not a static let) since this is meant to become a
+    // user-configurable setting later -- for now it just defaults to 1.5s.
+    var speechPauseColonDelay: TimeInterval = 1.5
     var Hintview:Hint!
     
     //forexport
@@ -1588,17 +1615,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // It's an iPhone
                 if Double(SCREENSIZE) != nil && Double(KEYBOARDLOCATION) != nil &&  SCREENSIZE > 0 &&  KEYBOARDLOCATION > 0 && Int(SCREENSIZE - KEYBOARDLOCATION - 60.0) > 0 {
                     // The result is an integer and greater than 0
-                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE - KEYBOARDLOCATION - 60.0), width: 320,height: 60))
-                    
+                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE - KEYBOARDLOCATION - 60.0), width: 360,height: 60))
+
                 } else {
-                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 320,height: 60))
+                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 360,height: 60))
                 }
 
-                
-                
+
+
                 datainputview.downArrow.addTarget(self, action: #selector(imoveDown), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(imoveRight), for: UIControl.Event.touchUpInside)
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
                 
                 break
             case .pad:
@@ -1634,6 +1662,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.colonButton.addTarget(self, action: #selector(colonAction), for: UIControl.Event.touchUpInside)
                 
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
                 
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
                 datainputview.addGestureRecognizer(panGesture)
@@ -1645,12 +1674,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // Uh, oh! What could it be?
                 if Double(SCREENSIZE) != nil && Double(KEYBOARDLOCATION) != nil &&  SCREENSIZE > 0 &&  KEYBOARDLOCATION > 0 && Int(SCREENSIZE - KEYBOARDLOCATION - 60.0) > 0 {
                     // The result is an integer and greater than 0
-                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE - KEYBOARDLOCATION - 60.0), width: 320,height: 60))
-                    
+                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE - KEYBOARDLOCATION - 60.0), width: 360,height: 60))
+
                 } else {
-                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 320,height: 60))
+                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 360,height: 60))
                 }
-                
+
                 break
             default:
                 break
@@ -5207,7 +5236,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 calculated = f_calculated[f_idx!]
             }
             let isOK = serviceInstance.testUpdateStringBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
-            
+            print("excelEntry: testUpdateStringBox(\(cellId)) returned \(String(describing: isOK))")
+
             if !(isOK ?? false){
                 return false
             }
@@ -7340,7 +7370,321 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.present(targetViewController, animated: true, completion: nil)
 
     }
-    
+
+    @objc func speechAction(){
+        speechInputHelper.toggle(onResult: { [weak self] text in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                // Backing store for command-detection, kept separate from
+                // datainputview.stringbox (see speechLiveTranscript's own
+                // comment) -- stringbox is still mirrored right after so the
+                // user keeps seeing live dictation, but nothing reads
+                // commands from it anymore.
+                //
+                // text is the recognizer's own raw transcript for whatever
+                // it's heard since the last startNewSegment() -- it has no
+                // idea we appended a ":" on a pause (appendColonAfterSpeechPause
+                // resets the segment for exactly this reason), so the full
+                // live value is always speechCommittedPrefix + text, never
+                // text alone.
+                self.speechLiveTranscript = self.speechCommittedPrefix + text
+                self.datainputview?.stringbox.text = self.speechLiveTranscript
+                self.evaluateStringboxVoiceCommands()
+            }
+        }, onStateChange: { [weak self] isRecording in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.datainputview?.speechButton.tintColor = isRecording ? .systemRed : nil
+                if isRecording {
+                    self.speechRowFillHistory.removeAll()
+                    self.speechLiveTranscript = ""
+                    self.speechCommittedPrefix = ""
+                } else {
+                    self.speechColonPauseWorkItem?.cancel()
+                    self.speechColonPauseWorkItem = nil
+                }
+            }
+        })
+    }
+
+    // Runs the voice-command checks against the live speech transcript --
+    // deliberately its own String, not datainputview.stringbox.text.
+    // Previously this read stringbox directly and was also wired to
+    // textViewDidChange so typed "next"/"改行"/etc. worked too, but that
+    // meant ordinary typed text merely *containing* one of those trigger
+    // substrings partway through (a sentence with "next" in it, a literal
+    // value like "A28") would intercept the keystroke -- clearing the box,
+    // committing partial content, or jumping to a different cell mid-type.
+    // Keeping speech's transcript in its own store means typing and voice
+    // commands can never step on each other again, structurally, not just
+    // by convention.
+    //
+    // All checks run against one concatenated, space-stripped copy of that
+    // text rather than the raw formattedString: en-US recognition puts
+    // spaces between words ("100 next 200") but ja-JP recognition generally
+    // doesn't space out separate words the same way ("100次200" as one
+    // run), and \b-word-boundary matching for "next"/"delete" would itself
+    // fail once spaces are gone (a digit run right against a letter run has
+    // no boundary between them), so both problems are solved together by
+    // stripping spaces once and matching plain substrings throughout.
+    private func evaluateStringboxVoiceCommands(){
+        guard let datainputview = datainputview else { return }
+        let history = speechConcatenatedHistory(speechLiveTranscript)
+
+        let deleteRange = speechDeleteCommandRange(in: history)
+        let nextRange = speechNextCommandRange(in: history)
+        let lineBreakRange = speechLineBreakCommandRange(in: history)
+
+        // Whichever trigger word was actually said/typed first wins, if
+        // more than one shows up in the same (revised) transcript.
+        let winnerBound = [deleteRange?.lowerBound, nextRange?.lowerBound, lineBreakRange?.lowerBound]
+            .compactMap { $0 }
+            .min()
+
+        guard let winnerBound = winnerBound else {
+            // No command matched -- leave the box content as-is, it's just
+            // ordinary in-progress input, but arm the pause-triggered colon
+            // append for whenever speech goes quiet.
+            scheduleSpeechColonAppend()
+            return
+        }
+
+        // A command matched -- cancel any pending colon append, it's moot
+        // now that the segment is ending, and drop any colon prefix so it
+        // doesn't leak into the next segment.
+        speechColonPauseWorkItem?.cancel()
+        speechColonPauseWorkItem = nil
+        speechCommittedPrefix = ""
+
+        if deleteRange?.lowerBound == winnerBound {
+            speechLiveTranscript = ""
+            datainputview.stringbox.text = ""
+            speechInputHelper.startNewSegment()
+            return
+        }
+
+        if let n = nextRange, n.lowerBound == winnerBound {
+            let committed = speechFinalizeCommittedValue(String(history[history.startIndex..<n.lowerBound]))
+            commitSpeechSegment(committed, advance: true)
+            speechLiveTranscript = ""
+            datainputview.stringbox.text = ""
+            speechInputHelper.startNewSegment()
+            return
+        }
+
+        if let lb = lineBreakRange, lb.lowerBound == winnerBound {
+            let committed = speechFinalizeCommittedValue(String(history[history.startIndex..<lb.lowerBound]))
+            if committed.isEmpty {
+                // Nothing was dictated before "改行" this segment -- don't
+                // commit at all. commitSpeechSegment("", ...) would still
+                // call virtual_input, which turns "" into a single space and
+                // writes it via excelEntry, silently blanking whatever's
+                // already in the current cell. Just move to the row start.
+                //
+                // moveToRowFillStartOnNextRow() runs synchronously and
+                // already sets stringbox.text to the target cell's real
+                // content via its own navigateToSpeechIndexPath ->
+                // didSelectItemAt call -- don't stomp that with a blind
+                // clear afterward (that was the actual bug: it ran every
+                // single time, unconditionally overwriting whatever
+                // didSelectItemAt had just correctly loaded).
+                moveToRowFillStartOnNextRow()
+            } else {
+                // Chained through the commit's own completion rather than
+                // called right after it -- commitSpeechSegment's refresh
+                // ends in its own delayed reselect of self.currentindex, so
+                // calling moveToRowFillStartOnNextRow() synchronously right
+                // after it was racing that delayed reselect, which could
+                // still land afterward and overwrite the row-start
+                // navigation back to wherever the plain column advance left
+                // off. Same reasoning as above: no blind clear after this,
+                // moveToRowFillStartOnNextRow's own navigation sets the
+                // right content once it actually runs.
+                commitSpeechSegment(committed, advance: true) { [weak self] in
+                    self?.moveToRowFillStartOnNextRow()
+                }
+            }
+            speechLiveTranscript = ""
+            speechInputHelper.startNewSegment()
+            return
+        }
+    }
+
+    // Removed: this used to also run evaluateStringboxVoiceCommands() on
+    // every keystroke so typed "next"/"改行"/etc. would trigger the same
+    // behavior speech dictation gets. That broke ordinary typing -- any
+    // manually-typed text that merely *contained* one of those trigger
+    // substrings partway through (e.g. typing a sentence with "next" in
+    // it, or a literal value like "A28") would immediately intercept the
+    // keystroke: clear the box, commit partial content, or jump to a
+    // different cell. Voice commands are speech-only again; typing is
+    // back to being handled solely by textView(_:shouldChangeTextIn:)'s
+    // Enter-key handling above.
+
+    private func speechConcatenatedHistory(_ text: String) -> String {
+        (text.applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? text)
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "\u{3000}", with: "")
+    }
+
+    // Fires speechPauseColonDelay seconds after the *last* speech update
+    // with no command in it -- every new update cancels and reschedules
+    // this, so it only actually runs once things have gone quiet.
+    private func scheduleSpeechColonAppend(){
+        speechColonPauseWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.appendColonAfterSpeechPause()
+        }
+        speechColonPauseWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + speechPauseColonDelay, execute: workItem)
+    }
+
+    // Marks the pause with ":" so voice dictation can build up
+    // virtual_input's existing ":"-separated bulk-fill syntax (e.g. "100"
+    // <pause> "200" <pause> "300" -> "100:200:300") without having to say
+    // "colon" out loud. The trailing "→" that actually activates
+    // virtual_input's fill parsing gets appended once, at commit time, by
+    // speechFinalizeCommittedValue -- not here on every pause, which would
+    // produce "100:→200:→300" instead of the clean "100:200:300→".
+    // Skips appending if the transcript already ends with one, so
+    // back-to-back pauses with nothing new said don't pile up colons.
+    //
+    // Restarts the recognition segment here (unlike the delete/next/改行
+    // commands, which end the whole segment) -- the recognizer's own
+    // transcript otherwise keeps growing from before the pause, so without
+    // resetting it, the next onResult would duplicate everything already
+    // folded into the colon-terminated prefix.
+    private func appendColonAfterSpeechPause(){
+        guard !speechLiveTranscript.isEmpty, !speechLiveTranscript.hasSuffix(":") else { return }
+        speechCommittedPrefix = speechLiveTranscript + ":"
+        speechLiveTranscript = speechCommittedPrefix
+        datainputview?.stringbox.text = speechLiveTranscript
+        speechInputHelper.startNewSegment()
+    }
+
+    // Appends the "→" that activates virtual_input's ":"-separated
+    // bulk-fill parsing, but only once and only when there's actually a
+    // ":" in the committed value -- a plain single-value commit (no pause
+    // in the middle) should stay a plain literal string, not gain a
+    // trailing arrow it doesn't need.
+    private func speechFinalizeCommittedValue(_ value: String) -> String {
+        value.contains(":") ? value + "→" : value
+    }
+
+    // Plain substring search, not \b-bounded -- history has no spaces left
+    // by the time this runs, so a word-boundary regex would never match a
+    // trigger word sitting directly against a digit run (e.g. "100next200").
+    private func speechNextCommandRange(in history: String) -> Range<String.Index>? {
+        if let r = history.range(of: "はい") {
+            return r
+        }
+        return history.range(of: "next", options: .caseInsensitive)
+    }
+
+    private func speechDeleteCommandRange(in history: String) -> Range<String.Index>? {
+        if let r = history.range(of: "消去") {
+            return r
+        }
+        return history.range(of: "delete", options: .caseInsensitive)
+    }
+
+    private func speechLineBreakCommandRange(in history: String) -> Range<String.Index>? {
+        if let r = history.range(of: "次") {
+            return r
+        }
+        return history.range(of: "linebreak", options: .caseInsensitive)
+    }
+
+    // Mirrors what a real tap on the cell does -- selectItem only updates
+    // the visual highlight, the delegate call is what actually moves
+    // currentindex/cursor and refreshes datainputview.stringbox.
+    private func navigateToSpeechIndexPath(_ indexPath: IndexPath){
+        myCollectionView.selectItem(at: indexPath,
+                                     animated: true,
+                                     scrollPosition: [.centeredVertically, .centeredHorizontally])
+        collectionView(myCollectionView, didSelectItemAt: indexPath)
+    }
+
+    // "改行"/"linebreak" -- return to the leftmost column filled so far
+    // this row (speechRowFillHistory, recorded by commitSpeechSegment
+    // below) and move one row down, then start a fresh history for that
+    // new row. Mirrors Excel's
+    // Tab-across-then-Enter behavior: Enter returns to where the row
+    // started, one row down, not wherever Tab last left off.
+    private func moveToRowFillStartOnNextRow(){
+        defer { speechRowFillHistory.removeAll() }
+
+        // Falls back to the current cell's own column/row when nothing's
+        // been filled via "next" yet this session, so "改行" said on its
+        // own still does something sensible: just move down one row at the
+        // current column, instead of being a no-op.
+        let firstRow = speechRowFillHistory.first?.indexPath.section ?? currentindex?.section
+        let targetColumn = speechRowFillHistory.map({ $0.indexPath.item }).min() ?? currentindex?.item
+
+        guard let firstRow = firstRow, let targetColumn = targetColumn else { return }
+
+        let targetRow = firstRow + 1
+        guard targetColumn >= 1, targetColumn <= COLUMNSIZE, targetRow >= 1, targetRow <= ROWSIZE else {
+            print("speech linebreak: target (\(targetColumn),\(targetRow)) out of bounds -- COLUMNSIZE=\(COLUMNSIZE) ROWSIZE=\(ROWSIZE)")
+            datainputview?.stringbox.text = ""
+            return
+        }
+
+        print("speech linebreak: moving to column \(targetColumn) row \(targetRow)")
+        navigateToSpeechIndexPath(IndexPath(item: targetColumn, section: targetRow))
+        // navigateToSpeechIndexPath -> didSelectItemAt already set
+        // stringbox.text to this cell's real content -- nothing more to do.
+    }
+
+    // Mirrors what textView(_:shouldChangeTextIn:)'s Enter-key handling does
+    // after input(), but via virtual_input(source:cellId:) since we're
+    // committing a value that never went through datainputview.stringbox's
+    // own editing flow -- using input() here would read+clear stringbox.text
+    // out from under the live dictation still writing into it.
+    //
+    // advance controls whether the cursor moves right afterward -- false
+    // for the "no"/"ノー" cancel-the-advance case, true for the pause-based
+    // auto-advance and for "改行" (which then overrides the destination via
+    // moveToRowFillStartOnNextRow anyway, but still wants right_bool's
+    // normal bookkeeping along the way).
+    private func commitSpeechSegment(_ value: String, advance: Bool, completion: (() -> Void)? = nil){
+        guard currentindex != nil else {
+            completion?()
+            return
+        }
+
+        let committedIndexPath = currentindex!
+        let cellId = getIndexlabel()
+        print("speech commit: writing \"\(value)\" to \(cellId) -- isExcel=\(isExcel) local_xlsx_file_path.isEmpty=\(local_xlsx_file_path.isEmpty)")
+        let previousRightBool = right_bool
+        right_bool = advance
+        virtual_input(source: value, cellId: cellId)
+        right_bool = previousRightBool
+
+        speechRowFillHistory.append((indexPath: committedIndexPath, value: value))
+
+        saveuserF()
+        saveuserD()
+        if !isExcel{
+            saveAsLocalJson(filename: "csv_sheet1")
+        }
+
+        let appd = UIApplication.shared.delegate as! AppDelegate
+        applyCellEditAndRefresh(idx: appd.wsSheetIndex) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
+                    self.myCollectionView.collectionViewLayout.invalidateLayout()
+                    self.myCollectionView.reloadData()
+                    self.myCollectionView.selectItem(at: self.currentindex,
+                                                     animated: true,
+                                                     scrollPosition: [.centeredVertically, .centeredHorizontally])
+                    self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
+                }
+                completion?()
+            }
+        }
+    }
+
     @objc func barcodeAction(){
         #if !targetEnvironment(macCatalyst)
             let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "BarcodeView")

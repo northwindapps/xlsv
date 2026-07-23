@@ -78,6 +78,7 @@ class Datainputview: UIView {
     @IBOutlet weak var commaButton: UIButton!
     @IBOutlet weak var colonButton: UIButton!
     
+    @IBOutlet weak var speechButton: UIButton!
     
     
     //new buttons

@@ -404,6 +404,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     var customview2 :Customview3!
     var Fview :formatview!
     var datainputview :Datainputview!
+    let speechInputHelper = SpeechInputHelper()
     var Hintview:Hint!
     
     //forexport
@@ -1328,17 +1329,18 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 // It's an iPhone
                 if Double(SCREENSIZE2) != nil && Double(KEYBOARDLOCATION) != nil &&  SCREENSIZE2 > 0 &&  KEYBOARDLOCATION > 0 && Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0) > 0 {
                     // The result is an integer and greater than 0
-                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0), width: 320,height: 60))
-                    
+                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0), width: 360,height: 60))
+
                 } else {
-                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 320,height: 60))
+                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 360,height: 60))
                 }
 
-                
-                
+
+
                 datainputview.downArrow.addTarget(self, action: #selector(imoveDown), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(imoveRight), for: UIControl.Event.touchUpInside)
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
                 
                 break
             case .pad:
@@ -1373,6 +1375,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 
             
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
                 
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
                 datainputview.addGestureRecognizer(panGesture)
@@ -1383,12 +1386,12 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
                 // Uh, oh! What could it be?
                 if Double(SCREENSIZE2) != nil && Double(KEYBOARDLOCATION) != nil &&  SCREENSIZE2 > 0 &&  KEYBOARDLOCATION > 0 && Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0) > 0 {
                     // The result is an integer and greater than 0
-                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0), width: 320,height: 60))
-                    
+                    datainputview = Datainputview(frame: CGRect(x:0,y:Int(SCREENSIZE2 - KEYBOARDLOCATION - 60.0), width: 360,height: 60))
+
                 } else {
-                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 320,height: 60))
+                    datainputview = Datainputview(frame: CGRect(x:0,y:200, width: 360,height: 60))
                 }
-                
+
                 break
             default:
                 break
@@ -8256,7 +8259,15 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         self.present(targetViewController, animated: true, completion: nil)
 
     }
-    
+
+    @objc func speechAction(){
+        speechInputHelper.toggle(onResult: { [weak self] text in
+            self?.datainputview?.stringbox.text = text
+        }, onStateChange: { [weak self] isRecording in
+            self?.datainputview?.speechButton.tintColor = isRecording ? .systemRed : nil
+        })
+    }
+
     func isNumeric(_ str: String) -> Bool {
         // Check if the string is empty
         guard !str.isEmpty else {

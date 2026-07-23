@@ -21,6 +21,7 @@
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
+		7F7BE06BF6EABB72BF5C6090 /* SpeechInputHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */; };
 		2BEE077F2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */; };
 		3C22A76B21D9DCD8001ADDD9 /* iCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */; };
 		3C22A79421DCD860001ADDD9 /* Input4Pad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22A79621DCD860001ADDD9 /* Input4Pad.xib */; };
@@ -109,6 +110,7 @@
 		2BBF55292F8B9C18008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/RangeSelectionOpsView.xib; sourceTree = "<group>"; };
 		2BBF552C2F8B9C19008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/RangeSelectionOpsView.xcstrings; sourceTree = "<group>"; };
 		2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewController.swift; sourceTree = "<group>"; };
+		08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInputHelper.swift; sourceTree = "<group>"; };
 		2BE0EB922F9850F9001FBD72 /* XLSV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = XLSV.entitlements; sourceTree = "<group>"; };
 		2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundViewController_ajustingAxiesScales.swift; sourceTree = "<group>"; };
 		3C22A75F21D79003001ADDD9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Datainput.strings; sourceTree = "<group>"; };
@@ -364,6 +366,7 @@
 				3C6F503820E3D151001EC20D /* TableViewCell.swift */,
 				8DB176C21E1492AA009DCD75 /* CreditViewController.swift */,
 				2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */,
+				08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */,
 				2B9503372FA5855A00D681BF /* BarcodeViewController.swift */,
 				3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */,
 				6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */,
@@ -638,6 +641,7 @@
 				6A1F5E0F2542D728002796C0 /* calcChain.swift in Sources */,
 				6A1F5E182542D734002796C0 /* rels.swift in Sources */,
 				2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */,
+				7F7BE06BF6EABB72BF5C6090 /* SpeechInputHelper.swift in Sources */,
 				6A1F5E1A2542D734002796C0 /* styles.swift in Sources */,
 				6A1F5E0E2542D728002796C0 /* adapter.swift in Sources */,
 				6AB0A802245AE82C007703C0 /* Customview3.swift in Sources */,
@@ -969,7 +973,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.4.2;
+				CURRENT_PROJECT_VERSION = 3.4.3;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -990,7 +994,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.4.2;
+				MARKETING_VERSION = 3.4.3;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1025,7 +1029,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.4.2;
+				CURRENT_PROJECT_VERSION = 3.4.3;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1042,7 +1046,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.4.2;
+				MARKETING_VERSION = 3.4.3;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
