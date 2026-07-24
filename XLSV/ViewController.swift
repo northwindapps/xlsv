@@ -7435,6 +7435,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if speechInputHelper.isRecording {
             speechInputHelper.stop()
         }
+
+        // Cleared here rather than left for the next openSpeechView() to
+        // reset -- onStateChange(true) does reset speechLiveTranscript/
+        // speechCommittedPrefix/speechRowFillHistory when recording starts
+        // again, but that's lazy: until then this state just sits stale,
+        // and speechview.transcriptionField specifically was never touched
+        // by that reset at all, so reopening would briefly show whatever
+        // was left on screen from before back was tapped.
+        speechColonPauseWorkItem?.cancel()
+        speechColonPauseWorkItem = nil
+        speechLiveTranscript = ""
+        speechCommittedPrefix = ""
+        speechRowFillHistory.removeAll()
+        speechview?.transcriptionField.text = ""
+
         speechview?.isHidden = true
         datainputview?.isHidden = false
         datainputview?.stringbox.becomeFirstResponder()

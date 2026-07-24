@@ -1553,7 +1553,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 datainputview.downArrow.addTarget(self, action: #selector(imoveDown), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(imoveRight), for: UIControl.Event.touchUpInside)
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
-                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
+                // Disabled here (not wired to speechAction) -- this
+                // controller's speech feature never got the round of fixes
+                // ViewController's did (threading race, decoupling from
+                // datainputview, the speechView panel, etc.), so it's turned
+                // off rather than left reachable in a known-buggier state.
+                datainputview.speechButton.isEnabled = false
                 
                 break
             case .pad:
@@ -1589,7 +1594,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 datainputview.colonButton.addTarget(self, action: #selector(colonAction), for: UIControl.Event.touchUpInside)
                 
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
-                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
+                // Disabled here (not wired to speechAction) -- this
+                // controller's speech feature never got the round of fixes
+                // ViewController's did (threading race, decoupling from
+                // datainputview, the speechView panel, etc.), so it's turned
+                // off rather than left reachable in a known-buggier state.
+                datainputview.speechButton.isEnabled = false
                 
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
                 datainputview.addGestureRecognizer(panGesture)
@@ -5979,11 +5989,20 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
             //42
             if !item.hasPrefix("=") {
-                literalContent.append(item)
+                // Trimmed once here so every downstream use of literalContent
+                // (including the formula-substitution loop further down)
+                // sees the same value -- a stray leading/trailing whitespace
+                // character makes Double(item) return nil, which silently
+                // skips substituting this cell into any formula that
+                // references it, leaving that formula's result stuck at
+                // "error" even though the value looks perfectly numeric when
+                // displayed. See the matching fix in ViewController.swift.
+                let trimmedItem = item.trimmingCharacters(in: .whitespacesAndNewlines)
+                literalContent.append(trimmedItem)
                 literalLocation.append(location[index])
                 literalLocationInExcel.append(locationInExcel[index])
-                if Double(item) != nil{
-                    literalResult.append(item)
+                if Double(trimmedItem) != nil{
+                    literalResult.append(trimmedItem)
                 }else{
                     literalResult.append("")
                 }
