@@ -38,9 +38,12 @@ final class SpeechInputHelper: NSObject {
 
     private func requestAuthorizationAndStart() {
         SFSpeechRecognizer.requestAuthorization { [weak self] authStatus in
+            print("speech: requestAuthorization ->", authStatus.rawValue)
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                print("speech: requestRecordPermission -> granted=\(granted)")
                 DispatchQueue.main.async {
                     guard authStatus == .authorized, granted else {
+                        print("speech: not starting -- authStatus=\(authStatus.rawValue) granted=\(granted)")
                         self?.onStateChange?(false)
                         return
                     }
@@ -50,14 +53,37 @@ final class SpeechInputHelper: NSObject {
         }
     }
 
+    // Locale.current ("en_JP" on the test device) really was usable --
+    // confirmed directly: isAvailable reported true and the audio engine
+    // started fine on it. supportedLocales() only means "the framework
+    // theoretically supports this somewhere," not "this exact locale's
+    // model is installed/ready on this device" -- confirmed the hard way
+    // too, en-ZA/en-CA/en-GB from that set all came back isAvailable=false
+    // here. So: try Locale.current for real first, and only fall back
+    // (matching by language, then plain SFSpeechRecognizer()) if that
+    // specific recognizer instance reports itself unavailable.
+    private func preferredSpeechRecognizer() -> SFSpeechRecognizer? {
+        if let candidate = SFSpeechRecognizer(locale: Locale.current), candidate.isAvailable {
+            return candidate
+        }
+        let supported = SFSpeechRecognizer.supportedLocales()
+        if let languageMatch = supported.first(where: { $0.languageCode == Locale.current.languageCode }),
+           let candidate = SFSpeechRecognizer(locale: languageMatch), candidate.isAvailable {
+            return candidate
+        }
+        return SFSpeechRecognizer()
+    }
+
     private func start() {
         recognitionTask?.cancel()
         recognitionTask = nil
 
-        let recognizer = SFSpeechRecognizer(locale: Locale.current) ?? SFSpeechRecognizer()
+        let recognizer = preferredSpeechRecognizer()
         speechRecognizer = recognizer
+        print("speech: Locale.current=\(Locale.current.identifier) recognizer.locale=\(recognizer?.locale.identifier ?? "nil") isAvailable=\(recognizer?.isAvailable ?? false) supportsOnDevice=\(recognizer?.supportsOnDeviceRecognition ?? false)")
 
         guard let recognizer = recognizer, recognizer.isAvailable else {
+            print("speech: not starting -- recognizer unavailable")
             onStateChange?(false)
             return
         }
@@ -67,16 +93,25 @@ final class SpeechInputHelper: NSObject {
             try audioSession.setCategory(AVAudioSessionCategoryRecord, mode: AVAudioSessionModeMeasurement, options: .duckOthers)
             try audioSession.setActive(true, with: .notifyOthersOnDeactivation)
         } catch {
+            print("speech: not starting -- audio session error:", error)
             onStateChange?(false)
             return
         }
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
+        // Tried forcing requiresOnDeviceRecognition = false here as a test
+        // (ruling out an unstable on-device model as the cause) -- same
+        // hang/death happened identically either way, so it's not that.
+        // Left as framework default (on-device preferred when available)
+        // since forcing server-based also risks failing outright on a
+        // device with no network connectivity.
         recognitionRequest = request
+        print("speech: requiresOnDeviceRecognition=\(request.requiresOnDeviceRecognition)")
 
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        print("speech: recordingFormat=\(recordingFormat)")
         inputNode.removeTap(onBus: 0)
         // Reads recognitionRequest at append time (not a captured local) so
         // startNewSegment() can redirect audio to a new request without
@@ -89,12 +124,14 @@ final class SpeechInputHelper: NSObject {
         do {
             try audioEngine.start()
         } catch {
+            print("speech: not starting -- audioEngine.start() error:", error)
             inputNode.removeTap(onBus: 0)
             onStateChange?(false)
             return
         }
 
         isRecording = true
+        print("speech: started, isRunning=\(audioEngine.isRunning)")
         onStateChange?(true)
 
         beginRecognitionTask(with: request, recognizer: recognizer)
@@ -129,10 +166,17 @@ final class SpeechInputHelper: NSObject {
             // thread race that can let a stale/cancelled task's callback
             // see an out-of-date generation and slip past the guard below.
             DispatchQueue.main.async {
-                guard let self = self, self.generation == myGeneration else { return }
+                guard let self = self, self.generation == myGeneration else {
+                    print("speech: dropped stale callback (generation mismatch)")
+                    return
+                }
 
                 if let result = result {
+                    print("speech: result -> \"\(result.bestTranscription.formattedString)\" isFinal=\(result.isFinal)")
                     self.onResult?(result.bestTranscription.formattedString)
+                }
+                if let error = error {
+                    print("speech: recognitionTask error:", error)
                 }
 
                 if error != nil || (result?.isFinal ?? false) {

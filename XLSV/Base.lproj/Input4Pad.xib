@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="24765" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24743"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -33,6 +34,7 @@
                 <outlet property="returnbutton" destination="AlB-65-1Zv" id="B1Z-6b-ANW"/>
                 <outlet property="rightArrow" destination="H7m-Eh-gMf" id="KJI-Vn-7JM"/>
                 <outlet property="sinButton" destination="Jof-t7-ExX" id="H2U-0c-PhA"/>
+                <outlet property="speechButton" destination="6ZF-ZJ-HcX" id="tHz-Ct-E7v"/>
                 <outlet property="stringbox" destination="QBU-lZ-TMd" id="HMO-mX-4I7"/>
                 <outlet property="tanButton" destination="rH5-br-Nmo" id="tqx-vL-0Qk"/>
             </connections>
@@ -252,6 +254,12 @@
                         <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </state>
                 </button>
+                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6ZF-ZJ-HcX">
+                    <rect key="frame" x="345" y="37" width="51" height="35"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal" title="Button"/>
+                    <buttonConfiguration key="configuration" style="plain" image="mic" catalog="system"/>
+                </button>
             </subviews>
             <viewLayoutGuide key="safeArea" id="GMW-MP-UXT"/>
             <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -263,12 +271,13 @@
         <image name="barcode.viewfinder" catalog="system" width="128" height="115"/>
         <image name="downArwWhite" width="136" height="136"/>
         <image name="handWriting" width="258" height="137"/>
+        <image name="mic" catalog="system" width="110" height="128"/>
         <image name="rightArwWhite" width="136" height="136"/>
         <systemColor name="scrollViewTexturedBackgroundColor">
             <color red="0.43529411764705883" green="0.44313725490196076" blue="0.47450980392156861" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemRedColor">
-            <color red="1" green="0.23137254901960785" blue="0.18823529411764706" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.2196078431372549" blue="0.23529411764705882" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

@@ -7429,6 +7429,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                                     width: 210, height: 145))
             speechview.back.addTarget(self, action: #selector(closeSpeechView), for: UIControl.Event.touchUpInside)
             speechview.speechButton.addTarget(self, action: #selector(speechViewMicAction), for: UIControl.Event.touchUpInside)
+            speechview.transcriptionField.placeholder = speechPlaceholderHintText()
             self.view.addSubview(speechview)
         } else {
             // datainputview can get recreated at a different position (e.g.
@@ -7705,6 +7706,25 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     private func speechFinalizeCommittedValue(_ value: String) -> String {
         guard value.contains(":") else { return value }
         return value + (speechFillsDown ? "↓" : "→")
+    }
+
+    // Shown in transcriptionField while empty -- a quick reminder of the
+    // command words in whatever language the recognizer is actually running
+    // in, since the words themselves aren't otherwise discoverable from the
+    // UI. Uses each language's first/simplest synonym from
+    // speechLineBreakCommandRange/speechDeleteCommandRange above, not a
+    // literal translation -- those functions are what actually decides what
+    // counts as a command. "yes"/next-column-shift is left out here since
+    // it's the least-used of the three and the hint is already dense.
+    private func speechPlaceholderHintText() -> String {
+        switch Locale.current.languageCode {
+        case "ja": return "「次」= 改行　「消去」= 削除"
+        case "fr": return "\"suivant\" = retour à la ligne, \"supprimer\" = supprimer"
+        case "de": return "\"weiter\" = neue Zeile, \"löschen\" = löschen"
+        case "da": return "\"næste\" = ny linje, \"slet\" = slet"
+        case "zh": return "「下一个」= 换行，「删除」= 删除"
+        default:   return "\"ok\" = new line, \"delete\" = delete"
+        }
     }
 
     // Plain substring search, not \b-bounded -- history has no spaces left
