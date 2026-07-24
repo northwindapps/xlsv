@@ -142,7 +142,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     var boolean :Bool! //coulmnsize_check
     
-    var numberview = numberkey()
+    //var numberview = numberkey()
     
     var calcmemory = "0"
     
@@ -176,6 +176,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var customview2 :Customview2!
     var Fview :formatview!
     var datainputview :Datainputview!
+    // Dedicated panel for voice dictation -- created once on first use,
+    // then just shown/hidden together with datainputview afterward (see
+    // openSpeechView/closeSpeechView) rather than recreated each time.
+    var speechview: speechView!
+    // Single source of truth for "are we in speech mode right now" -- set
+    // true only in openSpeechView(), false only in closeSpeechView(). Voice
+    // commands (next/改行/delete) re-assert datainputview/speechview
+    // visibility against this flag after every commit (see
+    // enforceSpeechViewVisibilityIfActive()) specifically so speech mode
+    // stays up until the user taps back, even if some other refresh path
+    // (e.g. didSelectItemAt, run as part of every commit's collection view
+    // reload) touches datainputview's visibility along the way.
+    var isSpeechInputModeActive: Bool = false
     let speechInputHelper = SpeechInputHelper()
     // Every cell committed via voice since the mic was last tapped (or
     // since the last "改行"/linebreak) -- speechLineBreakCommandRange uses
@@ -1626,7 +1639,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.downArrow.addTarget(self, action: #selector(imoveDown), for: UIControl.Event.touchUpInside)
                 datainputview.rightArrow.addTarget(self, action: #selector(imoveRight), for: UIControl.Event.touchUpInside)
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
-                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(openSpeechView), for: UIControl.Event.touchUpInside)
                 
                 break
             case .pad:
@@ -1662,7 +1675,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 datainputview.colonButton.addTarget(self, action: #selector(colonAction), for: UIControl.Event.touchUpInside)
                 
                 datainputview.handWritingInputButton.addTarget(self, action: #selector(hwAction), for: UIControl.Event.touchUpInside)
-                datainputview.speechButton.addTarget(self, action: #selector(speechAction), for: UIControl.Event.touchUpInside)
+                datainputview.speechButton.addTarget(self, action: #selector(openSpeechView), for: UIControl.Event.touchUpInside)
                 
                 let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
                 datainputview.addGestureRecognizer(panGesture)
@@ -2562,7 +2575,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                 )
                                 
                                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                                    self.takeDailyBackup(msg: "before_seqDate_")
+                                    // takeDailyBackup(msg: "before_seqDate_") halted -- writeXlsxBackup
+                                    // does a synchronous full unzip/copy of the xlsx on the main
+                                    // thread, and with backups accumulating in Documents/Backups
+                                    // over time this was stalling the UI right as the fill ran.
                                     if isSingleCol{
                                         self.fillDateInSelectedCellContent(direction: 0)
                                     }else{
@@ -2582,7 +2598,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                                             preferredStyle: .alert)
                                 
                                 alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                                    self.takeDailyBackup(msg: "before_seqFunc_")
+                                    // takeDailyBackup(msg: "before_seqFunc_") halted -- see the
+                                    // matching note in the date-fill branch above.
                                     if isSingleCol{
                                         self.fillFunctionInSelectedCellContent(direction: 0)
                                     }else{
@@ -3978,68 +3995,68 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         saveAsLocalJson(filename: "csv_sheet1")
     }
 
-    func numberviewopen() {
-
-        if numberview != nil {
-            numberview.removeFromSuperview()
-        }
-        
-        
-        //if UIDevice.current.orientation.isLandscape{
-        var width = "width"
-        var height = "height"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            width = "横幅"
-            height = "縦幅"
-        }else if locationstr.contains( "fr")
-        {
-            width = "largeur"
-            height = "la taille"
-        }else if locationstr.contains( "zh"){
-            width = "宽度"
-            height = "高度"
-        }else if locationstr.contains( "de")
-        {
-            width = "Breite"
-            height = "Höhe"
-        }else if locationstr.contains( "it")
-        {
-            
-            width = "altezza"
-            height = "larghezza"
-        }else if locationstr.contains( "ru")
-        {
-            width = "ширина"
-            height = "высота"
-        }
-        
-        numberview = numberkey(frame: CGRect(x:40,y:100, width: 210,height: 145))
-        
-        numberview.layer.borderWidth = 1
-        
-        numberview.layer.cornerRadius = 8;
-        
-        numberview.layer.borderColor = UIColor.black.cgColor
-        
-        numberview.inputfield.delegate = self
-        
-        //
-        numberview.back.addTarget(self, action: #selector(ViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
-        
-        numberview.plusOne.addTarget(self, action: #selector(ViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
-        
-        
-        numberview.minusOne.addTarget(self, action: #selector(ViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
-        
-        numberview.width_height_selector.setTitle(width, forSegmentAt: 0)
-        numberview.width_height_selector.setTitle(height, forSegmentAt: 1)
-        
-        
-        self.view.addSubview(numberview)
-    }
+//    func numberviewopen() {
+//
+//        if numberview != nil {
+//            numberview.removeFromSuperview()
+//        }
+//        
+//        
+//        //if UIDevice.current.orientation.isLandscape{
+//        var width = "width"
+//        var height = "height"
+//        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+//        
+//        if locationstr.contains( "ja")
+//        {
+//            width = "横幅"
+//            height = "縦幅"
+//        }else if locationstr.contains( "fr")
+//        {
+//            width = "largeur"
+//            height = "la taille"
+//        }else if locationstr.contains( "zh"){
+//            width = "宽度"
+//            height = "高度"
+//        }else if locationstr.contains( "de")
+//        {
+//            width = "Breite"
+//            height = "Höhe"
+//        }else if locationstr.contains( "it")
+//        {
+//            
+//            width = "altezza"
+//            height = "larghezza"
+//        }else if locationstr.contains( "ru")
+//        {
+//            width = "ширина"
+//            height = "высота"
+//        }
+//        
+//        numberview = numberkey(frame: CGRect(x:40,y:100, width: 210,height: 145))
+//        
+//        numberview.layer.borderWidth = 1
+//        
+//        numberview.layer.cornerRadius = 8;
+//        
+//        numberview.layer.borderColor = UIColor.black.cgColor
+//        
+//        numberview.inputfield.delegate = self
+//        
+//        //
+//        numberview.back.addTarget(self, action: #selector(ViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        numberview.plusOne.addTarget(self, action: #selector(ViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        
+//        numberview.minusOne.addTarget(self, action: #selector(ViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        numberview.width_height_selector.setTitle(width, forSegmentAt: 0)
+//        numberview.width_height_selector.setTitle(height, forSegmentAt: 1)
+//        
+//        
+//        self.view.addSubview(numberview)
+//    }
     
     
     
@@ -4287,75 +4304,75 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     
     //**********************BUTTONS*************************************************//
     
-    @objc func backactionnum(_ sender:UIButton)
-    {
-        let indexItem = Int(currentindex.item)
-        let indexSection = Int(currentindex.section)
-        let temp_value = numberview.inputfield.text!
-        let value = temp_value.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.collectionViewCellSizeChanged = 1
-        
-        if Double(value) != nil{
-            
-            
-            if numberview.width_height_selector.selectedSegmentIndex == 0{
-                
-                if Double(value)! < 20.0{
-                    
-                }else{
-                    if appd.cswLocation_temp.contains(indexItem){
-                        let idx = appd.cswLocation_temp.firstIndex(of: indexItem)
-                        appd.customSizedWidth_temp[idx!] = Double(value)!
-                    }
-                    appd.customSizedWidth_temp.append(Double(value)!)
-                    appd.cswLocation_temp.append(indexItem)
-                    
-                }
-                
-            }else if numberview.width_height_selector.selectedSegmentIndex == 1{
-                
-                
-                if Double(value)! < 20.0{
-                    
-                }else {
-                    if appd.cshLocation_temp.contains(indexSection){
-                        let idx = appd.cshLocation_temp.firstIndex(of: indexSection)
-                        appd.customSizedHeight_temp[idx!] = Double(value)!
-                    }
-                    appd.customSizedHeight_temp.append(Double(value)!)
-                    appd.cshLocation_temp.append(indexSection)
-                                    
-                    
-                }
-                
-                
-                
-                
-            }
-            
-        }
-        
-        
-        
-        numberview.removeFromSuperview()
-        
-        
-        print("go to file view")
-        //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-        if isExcel{
-            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
-        }
-        targetViewController.modalPresentationStyle = .fullScreen
-        // Present the target view controller after LoadingFileController's view has appeared
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
-        }
-        
-    }
-    
-    
+//    @objc func backactionnum(_ sender:UIButton)
+//    {
+//        let indexItem = Int(currentindex.item)
+//        let indexSection = Int(currentindex.section)
+//        let temp_value = numberview.inputfield.text!
+//        let value = temp_value.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        appd.collectionViewCellSizeChanged = 1
+//        
+//        if Double(value) != nil{
+//            
+//            
+//            if numberview.width_height_selector.selectedSegmentIndex == 0{
+//                
+//                if Double(value)! < 20.0{
+//                    
+//                }else{
+//                    if appd.cswLocation_temp.contains(indexItem){
+//                        let idx = appd.cswLocation_temp.firstIndex(of: indexItem)
+//                        appd.customSizedWidth_temp[idx!] = Double(value)!
+//                    }
+//                    appd.customSizedWidth_temp.append(Double(value)!)
+//                    appd.cswLocation_temp.append(indexItem)
+//                    
+//                }
+//                
+//            }else if numberview.width_height_selector.selectedSegmentIndex == 1{
+//                
+//                
+//                if Double(value)! < 20.0{
+//                    
+//                }else {
+//                    if appd.cshLocation_temp.contains(indexSection){
+//                        let idx = appd.cshLocation_temp.firstIndex(of: indexSection)
+//                        appd.customSizedHeight_temp[idx!] = Double(value)!
+//                    }
+//                    appd.customSizedHeight_temp.append(Double(value)!)
+//                    appd.cshLocation_temp.append(indexSection)
+//                                    
+//                    
+//                }
+//                
+//                
+//                
+//                
+//            }
+//            
+//        }
+//        
+//        
+//        
+//        numberview.removeFromSuperview()
+//        
+//        
+//        print("go to file view")
+//        //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
+//        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+//        if isExcel{
+//            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+//        }
+//        targetViewController.modalPresentationStyle = .fullScreen
+//        // Present the target view controller after LoadingFileController's view has appeared
+//        DispatchQueue.main.async {
+//            self.present(targetViewController, animated: true, completion: nil)
+//        }
+//        
+//    }
+//    
+//    
     
     @objc func plusAction(_ sender:UIButton)
     {
@@ -6131,11 +6148,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
             //42
             if !item.hasPrefix("=") {
-                literalContent.append(item)
+                // Trimmed once here so every downstream use of literalContent
+                // (including the formula-substitution loop further down)
+                // sees the same value -- a stray leading/trailing whitespace
+                // character (any Unicode whitespace, not just a plain space)
+                // makes Double(item) return nil, which silently skips
+                // substituting this cell into any formula that references
+                // it, leaving that formula's result stuck at "error" even
+                // though the value looks perfectly numeric when displayed.
+                let trimmedItem = item.trimmingCharacters(in: .whitespacesAndNewlines)
+                literalContent.append(trimmedItem)
                 literalLocation.append(location[index])
                 literalLocationInExcel.append(locationInExcel[index])
-                if Double(item) != nil{
-                    literalResult.append(item)
+                if Double(trimmedItem) != nil{
+                    literalResult.append(trimmedItem)
                 }else{
                     literalResult.append("")
                 }
@@ -7371,15 +7397,78 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     }
 
-    @objc func speechAction(){
+    // Shows the dedicated speechView panel in place of datainputview and
+    // immediately starts dictation -- matches the old single-tap-to-start
+    // behavior datainputview's own mic button used to have directly, just
+    // handed off to the new panel's own mic button as the stop control.
+    @objc func openSpeechView(){
+        guard let datainputview = datainputview else { return }
+        datainputview.stringbox.resignFirstResponder()
+
+        if speechview == nil {
+            speechview = speechView(frame: CGRect(x: datainputview.frame.origin.x,
+                                                    y: datainputview.frame.origin.y,
+                                                    width: 210, height: 145))
+            speechview.back.addTarget(self, action: #selector(closeSpeechView), for: UIControl.Event.touchUpInside)
+            speechview.speechButton.addTarget(self, action: #selector(speechViewMicAction), for: UIControl.Event.touchUpInside)
+            self.view.addSubview(speechview)
+        } else {
+            // datainputview can get recreated at a different position (e.g.
+            // keyboard/orientation changes) between opens -- keep speechview
+            // aligned with wherever it currently is.
+            speechview.frame.origin = datainputview.frame.origin
+        }
+
+        isSpeechInputModeActive = true
+        datainputview.isHidden = true
+        speechview.isHidden = false
+        speechViewMicAction()
+    }
+
+    // Stops dictation (if still running -- addresses the mic otherwise
+    // staying hot with no visible UI after the panel closes) and hands
+    // control back to datainputview. The only place isSpeechInputModeActive
+    // goes false -- voice commands must never close speech mode themselves,
+    // only this button does.
+    @objc func closeSpeechView(){
+        isSpeechInputModeActive = false
+        if speechInputHelper.isRecording {
+            speechInputHelper.stop()
+        }
+        speechview?.isHidden = true
+        datainputview?.isHidden = false
+        datainputview?.stringbox.becomeFirstResponder()
+    }
+
+    // Re-asserts speech-mode visibility (and keyboard state) after anything
+    // that might have touched datainputview/speechview along the way --
+    // commit's collection view reload runs didSelectItemAt, which sets
+    // datainputview state and can leave/put datainputview.stringbox back as
+    // first responder, popping the keyboard up and visually bumping
+    // speechview. Explicitly resigning both text inputs here forces the
+    // keyboard back down every time. Called after every voice-command
+    // commit so speech mode only ever ends via closeSpeechView's explicit
+    // back-button tap.
+    private func enforceSpeechViewVisibilityIfActive(){
+        guard isSpeechInputModeActive else { return }
+        datainputview?.stringbox.resignFirstResponder()
+        speechview?.transcriptionField.resignFirstResponder()
+        datainputview?.isHidden = true
+        speechview?.isHidden = false
+    }
+
+    // speechView's own mic button -- same toggle speechAction used to be,
+    // just mirroring into speechview.transcriptionField instead of
+    // datainputview.stringbox now that dictation has its own dedicated view.
+    @objc func speechViewMicAction(){
         speechInputHelper.toggle(onResult: { [weak self] text in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 // Backing store for command-detection, kept separate from
-                // datainputview.stringbox (see speechLiveTranscript's own
-                // comment) -- stringbox is still mirrored right after so the
-                // user keeps seeing live dictation, but nothing reads
-                // commands from it anymore.
+                // speechview.transcriptionField (see speechLiveTranscript's
+                // own comment) -- transcriptionField is still mirrored right
+                // after so the user keeps seeing live dictation, but nothing
+                // reads commands from it anymore.
                 //
                 // text is the recognizer's own raw transcript for whatever
                 // it's heard since the last startNewSegment() -- it has no
@@ -7388,13 +7477,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // live value is always speechCommittedPrefix + text, never
                 // text alone.
                 self.speechLiveTranscript = self.speechCommittedPrefix + text
-                self.datainputview?.stringbox.text = self.speechLiveTranscript
+                self.speechview?.transcriptionField.text = self.speechLiveTranscript
                 self.evaluateStringboxVoiceCommands()
             }
         }, onStateChange: { [weak self] isRecording in
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                self.datainputview?.speechButton.tintColor = isRecording ? .systemRed : nil
+                self.speechview?.speechButton.tintColor = isRecording ? .systemRed : nil
                 if isRecording {
                     self.speechRowFillHistory.removeAll()
                     self.speechLiveTranscript = ""
@@ -7428,7 +7517,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // no boundary between them), so both problems are solved together by
     // stripping spaces once and matching plain substrings throughout.
     private func evaluateStringboxVoiceCommands(){
-        guard let datainputview = datainputview else { return }
+        guard speechview != nil else { return }
         let history = speechConcatenatedHistory(speechLiveTranscript)
 
         let deleteRange = speechDeleteCommandRange(in: history)
@@ -7458,7 +7547,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         if deleteRange?.lowerBound == winnerBound {
             speechLiveTranscript = ""
-            datainputview.stringbox.text = ""
+            speechview?.transcriptionField.text = ""
             speechInputHelper.startNewSegment()
             return
         }
@@ -7467,7 +7556,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let committed = speechFinalizeCommittedValue(String(history[history.startIndex..<n.lowerBound]))
             commitSpeechSegment(committed, advance: true)
             speechLiveTranscript = ""
-            datainputview.stringbox.text = ""
+            speechview?.transcriptionField.text = ""
             speechInputHelper.startNewSegment()
             return
         }
@@ -7521,10 +7610,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // back to being handled solely by textView(_:shouldChangeTextIn:)'s
     // Enter-key handling above.
 
+    // Strips every Unicode whitespace variant, not just plain " " and the
+    // ideographic space -- a stray character the recognizer inserts that
+    // isn't one of those two (e.g. a no-break space) would otherwise sail
+    // through into a committed cell value looking numeric but failing
+    // Double(_:), which silently breaks any formula referencing that cell
+    // (see calculatormode_update_main's literalContent trimming).
     private func speechConcatenatedHistory(_ text: String) -> String {
-        (text.applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? text)
-            .replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: "\u{3000}", with: "")
+        let normalized = text.applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? text
+        return normalized.components(separatedBy: .whitespacesAndNewlines).joined()
     }
 
     // Fires speechPauseColonDelay seconds after the *last* speech update
@@ -7558,17 +7652,26 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         guard !speechLiveTranscript.isEmpty, !speechLiveTranscript.hasSuffix(":") else { return }
         speechCommittedPrefix = speechLiveTranscript + ":"
         speechLiveTranscript = speechCommittedPrefix
-        datainputview?.stringbox.text = speechLiveTranscript
+        speechview?.transcriptionField.text = speechLiveTranscript
         speechInputHelper.startNewSegment()
     }
 
-    // Appends the "→" that activates virtual_input's ":"-separated
+    // speechView.inputSelector's "→"/"↓" segments (index 0/1) -- picks
+    // which direction voice-driven fills advance in, read fresh at each
+    // commit rather than cached, since the user can flip the segmented
+    // control mid-dictation.
+    private var speechFillsDown: Bool {
+        speechview?.inputSelector.selectedSegmentIndex == 1
+    }
+
+    // Appends the "→"/"↓" that activates virtual_input's ":"-separated
     // bulk-fill parsing, but only once and only when there's actually a
     // ":" in the committed value -- a plain single-value commit (no pause
     // in the middle) should stay a plain literal string, not gain a
     // trailing arrow it doesn't need.
     private func speechFinalizeCommittedValue(_ value: String) -> String {
-        value.contains(":") ? value + "→" : value
+        guard value.contains(":") else { return value }
+        return value + (speechFillsDown ? "↓" : "→")
     }
 
     // Plain substring search, not \b-bounded -- history has no spaces left
@@ -7603,6 +7706,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                      animated: true,
                                      scrollPosition: [.centeredVertically, .centeredHorizontally])
         collectionView(myCollectionView, didSelectItemAt: indexPath)
+        enforceSpeechViewVisibilityIfActive()
     }
 
     // "改行"/"linebreak" -- return to the leftmost column filled so far
@@ -7621,12 +7725,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let firstRow = speechRowFillHistory.first?.indexPath.section ?? currentindex?.section
         let targetColumn = speechRowFillHistory.map({ $0.indexPath.item }).min() ?? currentindex?.item
 
-        guard let firstRow = firstRow, let targetColumn = targetColumn else { return }
+        guard let firstRow = firstRow, let targetColumn = targetColumn else {
+            enforceSpeechViewVisibilityIfActive()
+            return
+        }
 
         let targetRow = firstRow + 1
         guard targetColumn >= 1, targetColumn <= COLUMNSIZE, targetRow >= 1, targetRow <= ROWSIZE else {
             print("speech linebreak: target (\(targetColumn),\(targetRow)) out of bounds -- COLUMNSIZE=\(COLUMNSIZE) ROWSIZE=\(ROWSIZE)")
-            datainputview?.stringbox.text = ""
+            speechview?.transcriptionField.text = ""
+            enforceSpeechViewVisibilityIfActive()
             return
         }
 
@@ -7642,11 +7750,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // own editing flow -- using input() here would read+clear stringbox.text
     // out from under the live dictation still writing into it.
     //
-    // advance controls whether the cursor moves right afterward -- false
-    // for the "no"/"ノー" cancel-the-advance case, true for the pause-based
-    // auto-advance and for "改行" (which then overrides the destination via
-    // moveToRowFillStartOnNextRow anyway, but still wants right_bool's
-    // normal bookkeeping along the way).
+    // advance controls whether the cursor moves afterward at all -- true
+    // for "next"/"改行" (the latter then overrides the destination via
+    // moveToRowFillStartOnNextRow anyway, but still wants right_bool/
+    // down_bool's normal bookkeeping along the way). Which direction it
+    // moves in when advancing follows speechFillsDown (speechView's →/↓
+    // selector), read fresh here rather than cached.
     private func commitSpeechSegment(_ value: String, advance: Bool, completion: (() -> Void)? = nil){
         guard currentindex != nil else {
             completion?()
@@ -7657,9 +7766,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let cellId = getIndexlabel()
         print("speech commit: writing \"\(value)\" to \(cellId) -- isExcel=\(isExcel) local_xlsx_file_path.isEmpty=\(local_xlsx_file_path.isEmpty)")
         let previousRightBool = right_bool
-        right_bool = advance
+        let previousDownBool = down_bool
+        let fillsDown = speechFillsDown
+        right_bool = advance && !fillsDown
+        down_bool = advance && fillsDown
         virtual_input(source: value, cellId: cellId)
         right_bool = previousRightBool
+        down_bool = previousDownBool
 
         speechRowFillHistory.append((indexPath: committedIndexPath, value: value))
 
@@ -7680,6 +7793,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                                                      scrollPosition: [.centeredVertically, .centeredHorizontally])
                     self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
                 }
+                self.enforceSpeechViewVisibilityIfActive()
                 completion?()
             }
         }

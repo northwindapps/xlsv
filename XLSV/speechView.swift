@@ -8,14 +8,14 @@
 
 import UIKit
 
-class numberkey: UIView {
-
-    @IBOutlet weak var width_height_selector: UISegmentedControl!
+class speechView: UIView {
     @IBOutlet weak var back: UIButton!
-
-    @IBOutlet weak var inputfield: UITextField!
-    @IBOutlet weak var minusOne: UIButton!
-    @IBOutlet weak var plusOne: UIButton!
+  
+    @IBOutlet weak var speechButton: UIButton!
+    
+    
+    @IBOutlet weak var inputSelector: UISegmentedControl!
+    @IBOutlet weak var transcriptionField: UITextField!
     
     /*
     // Only override draw() if you perform custom drawing.
@@ -52,7 +52,7 @@ class numberkey: UIView {
     func loadviewfromNib() ->UIView
     {
         let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "numberkeyView",bundle: bundle)
+        let nib = UINib(nibName: "speechView",bundle: bundle)
         let view = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
         
         return view

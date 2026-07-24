@@ -118,7 +118,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     var boolean :Bool! //coulmnsize_check
     
-    var numberview = numberkey()
+    //var numberview = numberkey()
     
     var calcmemory = "0"
     
@@ -3826,70 +3826,70 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         saveAsLocalJson(filename: "csv_sheet1")
     }
 
-    func numberviewopen() {
-
-        if numberview != nil {
-            numberview.removeFromSuperview()
-        }
-        
-        
-        //if UIDevice.current.orientation.isLandscape{
-        var width = "width"
-        var height = "height"
-        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-        
-        if locationstr.contains( "ja")
-        {
-            width = "横幅"
-            height = "縦幅"
-        }else if locationstr.contains( "fr")
-        {
-            width = "largeur"
-            height = "la taille"
-        }else if locationstr.contains( "zh"){
-            width = "宽度"
-            height = "高度"
-        }else if locationstr.contains( "de")
-        {
-            width = "Breite"
-            height = "Höhe"
-        }else if locationstr.contains( "it")
-        {
-            
-            width = "altezza"
-            height = "larghezza"
-        }else if locationstr.contains( "ru")
-        {
-            width = "ширина"
-            height = "высота"
-        }
-        
-        numberview = numberkey(frame: CGRect(x:40,y:100, width: 210,height: 145))
-        
-        numberview.layer.borderWidth = 1
-        
-        numberview.layer.cornerRadius = 8;
-        
-        numberview.layer.borderColor = UIColor.black.cgColor
-        
-        numberview.inputfield.delegate = self
-        
-        //
-        numberview.back.addTarget(self, action: #selector(FileFillViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
-        
-        numberview.plusOne.addTarget(self, action: #selector(FileFillViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
-        
-        
-        numberview.minusOne.addTarget(self, action: #selector(FileFillViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
-        
-        numberview.width_height_selector.setTitle(width, forSegmentAt: 0)
-        numberview.width_height_selector.setTitle(height, forSegmentAt: 1)
-        
-        
-        self.view.addSubview(numberview)
-    }
-    
-    
+//    func numberviewopen() {
+//
+//        if numberview != nil {
+//            numberview.removeFromSuperview()
+//        }
+//        
+//        
+//        //if UIDevice.current.orientation.isLandscape{
+//        var width = "width"
+//        var height = "height"
+//        let locationstr = (NSLocale.preferredLanguages[0] as String?)!
+//        
+//        if locationstr.contains( "ja")
+//        {
+//            width = "横幅"
+//            height = "縦幅"
+//        }else if locationstr.contains( "fr")
+//        {
+//            width = "largeur"
+//            height = "la taille"
+//        }else if locationstr.contains( "zh"){
+//            width = "宽度"
+//            height = "高度"
+//        }else if locationstr.contains( "de")
+//        {
+//            width = "Breite"
+//            height = "Höhe"
+//        }else if locationstr.contains( "it")
+//        {
+//            
+//            width = "altezza"
+//            height = "larghezza"
+//        }else if locationstr.contains( "ru")
+//        {
+//            width = "ширина"
+//            height = "высота"
+//        }
+//        
+//        numberview = numberkey(frame: CGRect(x:40,y:100, width: 210,height: 145))
+//        
+//        numberview.layer.borderWidth = 1
+//        
+//        numberview.layer.cornerRadius = 8;
+//        
+//        numberview.layer.borderColor = UIColor.black.cgColor
+//        
+//        numberview.inputfield.delegate = self
+//        
+//        //
+//        numberview.back.addTarget(self, action: #selector(FileFillViewController.backactionnum(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        numberview.plusOne.addTarget(self, action: #selector(FileFillViewController.plusAction(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        
+//        numberview.minusOne.addTarget(self, action: #selector(FileFillViewController.minusAction(_:)), for: UIControl.Event.touchUpInside)
+//        
+//        numberview.width_height_selector.setTitle(width, forSegmentAt: 0)
+//        numberview.width_height_selector.setTitle(height, forSegmentAt: 1)
+//        
+//        
+//        self.view.addSubview(numberview)
+//    }
+//    
+//    
     
     
     //*********************//
@@ -4135,75 +4135,75 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     //**********************BUTTONS*************************************************//
     
-    @objc func backactionnum(_ sender:UIButton)
-    {
-        let indexItem = Int(currentindex.item)
-        let indexSection = Int(currentindex.section)
-        let temp_value = numberview.inputfield.text!
-        let value = temp_value.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.collectionViewCellSizeChanged = 1
-        
-        if Double(value) != nil{
-            
-            
-            if numberview.width_height_selector.selectedSegmentIndex == 0{
-                
-                if Double(value)! < 20.0{
-                    
-                }else{
-                    if appd.cswLocation_temp.contains(indexItem){
-                        let idx = appd.cswLocation_temp.firstIndex(of: indexItem)
-                        appd.customSizedWidth_temp[idx!] = Double(value)!
-                    }
-                    appd.customSizedWidth_temp.append(Double(value)!)
-                    appd.cswLocation_temp.append(indexItem)
-                    
-                }
-                
-            }else if numberview.width_height_selector.selectedSegmentIndex == 1{
-                
-                
-                if Double(value)! < 20.0{
-                    
-                }else {
-                    if appd.cshLocation_temp.contains(indexSection){
-                        let idx = appd.cshLocation_temp.firstIndex(of: indexSection)
-                        appd.customSizedHeight_temp[idx!] = Double(value)!
-                    }
-                    appd.customSizedHeight_temp.append(Double(value)!)
-                    appd.cshLocation_temp.append(indexSection)
-                                    
-                    
-                }
-                
-                
-                
-                
-            }
-            
-        }
-        
-        
-        
-        numberview.removeFromSuperview()
-        
-        
-        print("go to file view")
-        //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
-        targetViewController.isFromFF = true
-        if isExcel{
-            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
-        }
-        targetViewController.modalPresentationStyle = .fullScreen
-        // Present the target view controller after LoadingFileController's view has appeared
-        DispatchQueue.main.async {
-            self.present(targetViewController, animated: true, completion: nil)
-        }
-
-    }
-    
+//    @objc func backactionnum(_ sender:UIButton)
+//    {
+//        let indexItem = Int(currentindex.item)
+//        let indexSection = Int(currentindex.section)
+//        let temp_value = numberview.inputfield.text!
+//        let value = temp_value.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+//        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+//        appd.collectionViewCellSizeChanged = 1
+//        
+//        if Double(value) != nil{
+//            
+//            
+//            if numberview.width_height_selector.selectedSegmentIndex == 0{
+//                
+//                if Double(value)! < 20.0{
+//                    
+//                }else{
+//                    if appd.cswLocation_temp.contains(indexItem){
+//                        let idx = appd.cswLocation_temp.firstIndex(of: indexItem)
+//                        appd.customSizedWidth_temp[idx!] = Double(value)!
+//                    }
+//                    appd.customSizedWidth_temp.append(Double(value)!)
+//                    appd.cswLocation_temp.append(indexItem)
+//                    
+//                }
+//                
+//            }else if numberview.width_height_selector.selectedSegmentIndex == 1{
+//                
+//                
+//                if Double(value)! < 20.0{
+//                    
+//                }else {
+//                    if appd.cshLocation_temp.contains(indexSection){
+//                        let idx = appd.cshLocation_temp.firstIndex(of: indexSection)
+//                        appd.customSizedHeight_temp[idx!] = Double(value)!
+//                    }
+//                    appd.customSizedHeight_temp.append(Double(value)!)
+//                    appd.cshLocation_temp.append(indexSection)
+//                                    
+//                    
+//                }
+//                
+//                
+//                
+//                
+//            }
+//            
+//        }
+//        
+//        
+//        
+//        numberview.removeFromSuperview()
+//        
+//        
+//        print("go to file view")
+//        //print("selectedSheet",Int(appd.sheetNameIds[selectedSheet]))
+//        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingFileController" ) as! LoadingFileController //Landscape
+//        targetViewController.isFromFF = true
+//        if isExcel{
+//            targetViewController.idx = Int(appd.sheetNameIds[selectedSheet])
+//        }
+//        targetViewController.modalPresentationStyle = .fullScreen
+//        // Present the target view controller after LoadingFileController's view has appeared
+//        DispatchQueue.main.async {
+//            self.present(targetViewController, animated: true, completion: nil)
+//        }
+//
+//    }
+//    
     
     
     @objc func plusAction(_ sender:UIButton)
