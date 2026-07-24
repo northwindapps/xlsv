@@ -214,8 +214,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var speechColonPauseWorkItem: DispatchWorkItem?
     // How long a pause in speech has to be before it's marked with a ":".
     // Plain var (not a static let) since this is meant to become a
-    // user-configurable setting later -- for now it just defaults to 1.5s.
-    var speechPauseColonDelay: TimeInterval = 1.5
+    // user-configurable setting later -- for now it just defaults to 1.2s.
+    var speechPauseColonDelay: TimeInterval = 1.2
     var Hintview:Hint!
     
     //forexport
@@ -2500,12 +2500,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         case .changed:
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
+                // Tracked unconditionally -- indexPathForItem(at:) is pure
+                // geometry and doesn't require the cell to actually be
+                // rendered, but cellForItem(at:) does, returning nil for
+                // any index path not currently on screen (e.g. the drag
+                // outran the collection view instantiating cells for it).
+                // Gating tempRangeSelected on that too meant a cell that
+                // didn't happen to be visible at that instant silently
+                // never made it into the selection -- no blue highlight
+                // *and* missing from the eventual fill, with no error.
+                if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
+                    tempRangeSelected.append(newIndexPath)
+                }
                 if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                    //cell2.label2.layer.borderWidth = 1.0
                     cell2.label2.backgroundColor = UIColor.systemBlue
-                    if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
-                        tempRangeSelected.append(newIndexPath)
-                    }
                 }
             }
             break
@@ -2513,7 +2521,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         case .ended, .cancelled:
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-                tempRangeSelected.append(newIndexPath)
+                // Same duplicate guard as .changed above -- without it, the
+                // final touch position (already appended by the last
+                // .changed event, since the finger hasn't moved between
+                // that and lifting) gets appended a second time, e.g.
+                // [...,[33,1],[33,1]] confirmed in an actual test log. That
+                // duplicate is exactly what fillDateInSelectedCellContent/
+                // fillFunctionInSelectedCellContent's "skip the last sorted
+                // item" logic was fragilely compensating for -- fixed at
+                // the source here instead, see the matching removal there.
+                if tempRangeSelected.firstIndex(of: newIndexPath) == nil {
+                    tempRangeSelected.append(newIndexPath)
+                }
             }
             print("selected(row,col)",tempRangeSelected)
             // Restore the original background color
@@ -3324,11 +3343,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var excelIndice = [String]()
         var generatedDates = [String]()
 
+        // No longer skipping the last item here -- that was compensating
+        // for handlePanGesture's .ended case duplicating the final cell,
+        // which is now fixed at the source (see its duplicate guard). With
+        // that fixed, sortedSelection has no phantom extra entry and every
+        // real cell in the drag, including the last one, should get filled.
         for (i, each) in sortedSelection.enumerated() {
-            if i == sortedSelection.count - 1 {
-                print("This is the last item")
-                continue
-            }
             let column = each.item
             let row = each.section
             let posKey = "\(column),\(row)"
@@ -3397,11 +3417,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         var excelIndice = [String]()
         var generatedFormulas = [String]()
 
-        for (i, each) in sortedSelection.enumerated() {
-            if i == sortedSelection.count - 1 {
-                print("This is the last item")
-                continue
-            }
+        // No longer skipping the last item here -- see the matching note
+        // in fillDateInSelectedCellContent above.
+        for each in sortedSelection {
             let posKey = "\(each.item),\(each.section)"
             
             let colOffset = each.item - firstIndexPath.item
@@ -7692,25 +7710,52 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // Plain substring search, not \b-bounded -- history has no spaces left
     // by the time this runs, so a word-boundary regex would never match a
     // trigger word sitting directly against a digit run (e.g. "100next200").
+    // Earliest-matching word wins, same as the cross-command priority in
+    // evaluateStringboxVoiceCommands -- lets any configured synonym in any
+    // supported language trigger the command, since SFSpeechRecognizer only
+    // ever recognizes in one locale at a time (Locale.current) so there's
+    // no real risk of a word from an unused language accidentally matching.
+    private func speechFirstMatch(_ words: [String], in history: String) -> Range<String.Index>? {
+        words.compactMap { history.range(of: $0, options: .caseInsensitive) }
+            .min { $0.lowerBound < $1.lowerBound }
+    }
+
+    // "next" -- commit + advance one column. Affirmative-style words
+    // ("yes"/はい), not literal "next" -- that word is reserved for the
+    // linebreak command below, matching the ja pattern already set.
     private func speechNextCommandRange(in history: String) -> Range<String.Index>? {
-        if let r = history.range(of: "はい") {
-            return r
-        }
-        return history.range(of: "next", options: .caseInsensitive)
+        speechFirstMatch([
+            "yes", "yep",     // en
+            "はい",                  // ja
+            "oui", "d'accord",      // fr
+            "ja",                   // de
+            "ja",                   // da
+            "是", "好"                // zh
+        ], in: history)
     }
 
     private func speechDeleteCommandRange(in history: String) -> Range<String.Index>? {
-        if let r = history.range(of: "消去") {
-            return r
-        }
-        return history.range(of: "delete", options: .caseInsensitive)
+        speechFirstMatch([
+            "delete",  // en
+            "消去",     // ja
+            "supprimer", // fr
+            "löschen", // de
+            "slet",    // da
+            "删除"      // zh
+        ], in: history)
     }
 
+    // "改行"/linebreak -- row-shift command. Continuation-style words
+    // ("next"/次), not affirmative ones -- see speechNextCommandRange.
     private func speechLineBreakCommandRange(in history: String) -> Range<String.Index>? {
-        if let r = history.range(of: "次") {
-            return r
-        }
-        return history.range(of: "linebreak", options: .caseInsensitive)
+        speechFirstMatch([
+            "linebreak", "next", "ok", // en
+            "次",                   // ja
+            "suivant",             // fr
+            "weiter",              // de
+            "næste",               // da
+            "下一个"                 // zh
+        ], in: history)
     }
 
     // Mirrors what a real tap on the cell does -- selectItem only updates
