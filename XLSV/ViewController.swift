@@ -7426,10 +7426,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if speechview == nil {
             speechview = speechView(frame: CGRect(x: datainputview.frame.origin.x,
                                                     y: datainputview.frame.origin.y,
-                                                    width: 210, height: 145))
+                                                    width: 210, height: 230))
             speechview.back.addTarget(self, action: #selector(closeSpeechView), for: UIControl.Event.touchUpInside)
             speechview.speechButton.addTarget(self, action: #selector(speechViewMicAction), for: UIControl.Event.touchUpInside)
-            speechview.transcriptionField.placeholder = speechPlaceholderHintText()
+            speechview.transcriptionView.text = speechPlaceholderHintText()
             self.view.addSubview(speechview)
         } else {
             // datainputview can get recreated at a different position (e.g.
@@ -7459,7 +7459,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // reset -- onStateChange(true) does reset speechLiveTranscript/
         // speechCommittedPrefix/speechRowFillHistory when recording starts
         // again, but that's lazy: until then this state just sits stale,
-        // and speechview.transcriptionField specifically was never touched
+        // and speechview.transcriptionView specifically was never touched
         // by that reset at all, so reopening would briefly show whatever
         // was left on screen from before back was tapped.
         speechColonPauseWorkItem?.cancel()
@@ -7467,7 +7467,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         speechLiveTranscript = ""
         speechCommittedPrefix = ""
         speechRowFillHistory.removeAll()
-        speechview?.transcriptionField.text = ""
+        speechview?.transcriptionView.text = ""
 
         speechview?.isHidden = true
         datainputview?.isHidden = false
@@ -7486,21 +7486,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     private func enforceSpeechViewVisibilityIfActive(){
         guard isSpeechInputModeActive else { return }
         datainputview?.stringbox.resignFirstResponder()
-        speechview?.transcriptionField.resignFirstResponder()
+        speechview?.transcriptionView.resignFirstResponder()
         datainputview?.isHidden = true
         speechview?.isHidden = false
     }
 
     // speechView's own mic button -- same toggle speechAction used to be,
-    // just mirroring into speechview.transcriptionField instead of
+    // just mirroring into speechview.transcriptionView instead of
     // datainputview.stringbox now that dictation has its own dedicated view.
     @objc func speechViewMicAction(){
         speechInputHelper.toggle(onResult: { [weak self] text in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 // Backing store for command-detection, kept separate from
-                // speechview.transcriptionField (see speechLiveTranscript's
-                // own comment) -- transcriptionField is still mirrored right
+                // speechview.transcriptionView (see speechLiveTranscript's
+                // own comment) -- transcriptionView is still mirrored right
                 // after so the user keeps seeing live dictation, but nothing
                 // reads commands from it anymore.
                 //
@@ -7511,7 +7511,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // live value is always speechCommittedPrefix + text, never
                 // text alone.
                 self.speechLiveTranscript = self.speechCommittedPrefix + text
-                self.speechview?.transcriptionField.text = self.speechLiveTranscript
+                self.speechview?.transcriptionView.text = self.speechLiveTranscript
                 self.evaluateStringboxVoiceCommands()
             }
         }, onStateChange: { [weak self] isRecording in
@@ -7581,7 +7581,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         if deleteRange?.lowerBound == winnerBound {
             speechLiveTranscript = ""
-            speechview?.transcriptionField.text = ""
+            speechview?.transcriptionView.text = ""
             speechInputHelper.startNewSegment()
             return
         }
@@ -7590,7 +7590,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             let committed = speechFinalizeCommittedValue(String(history[history.startIndex..<n.lowerBound]))
             commitSpeechSegment(committed, advance: true)
             speechLiveTranscript = ""
-            speechview?.transcriptionField.text = ""
+            speechview?.transcriptionView.text = ""
             speechInputHelper.startNewSegment()
             return
         }
@@ -7686,7 +7686,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         guard !speechLiveTranscript.isEmpty, !speechLiveTranscript.hasSuffix(":") else { return }
         speechCommittedPrefix = speechLiveTranscript + ":"
         speechLiveTranscript = speechCommittedPrefix
-        speechview?.transcriptionField.text = speechLiveTranscript
+        speechview?.transcriptionView.text = speechLiveTranscript
         speechInputHelper.startNewSegment()
     }
 
@@ -7708,7 +7708,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return value + (speechFillsDown ? "↓" : "→")
     }
 
-    // Shown in transcriptionField while empty -- a quick reminder of the
+    // Shown in transcriptionView while empty -- a quick reminder of the
     // command words in whatever language the recognizer is actually running
     // in, since the words themselves aren't otherwise discoverable from the
     // UI. Uses each language's first/simplest synonym from
@@ -7722,6 +7722,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         case "fr": return "\"suivant\" = retour à la ligne, \"supprimer\" = supprimer"
         case "de": return "\"weiter\" = neue Zeile, \"löschen\" = löschen"
         case "da": return "\"næste\" = ny linje, \"slet\" = slet"
+        case "es": return "\"siguiente\" = nueva línea, \"borrar\" = borrar"
         case "zh": return "「下一个」= 换行，「删除」= 删除"
         default:   return "\"ok\" = new line, \"delete\" = delete"
         }
@@ -7750,6 +7751,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "oui", "d'accord",      // fr
             "ja",                   // de
             "ja",                   // da
+            "sí", "vale",           // es
             "是", "好"                // zh
         ], in: history)
     }
@@ -7761,6 +7763,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "supprimer", // fr
             "löschen", // de
             "slet",    // da
+            "borrar",  // es
             "删除"      // zh
         ], in: history)
     }
@@ -7774,6 +7777,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "suivant",             // fr
             "weiter",              // de
             "næste",               // da
+            "siguiente",           // es
             "下一个"                 // zh
         ], in: history)
     }
@@ -7813,7 +7817,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let targetRow = firstRow + 1
         guard targetColumn >= 1, targetColumn <= COLUMNSIZE, targetRow >= 1, targetRow <= ROWSIZE else {
             print("speech linebreak: target (\(targetColumn),\(targetRow)) out of bounds -- COLUMNSIZE=\(COLUMNSIZE) ROWSIZE=\(ROWSIZE)")
-            speechview?.transcriptionField.text = ""
+            speechview?.transcriptionView.text = ""
             enforceSpeechViewVisibilityIfActive()
             return
         }

@@ -14,8 +14,8 @@ class speechView: UIView {
     @IBOutlet weak var speechButton: UIButton!
     
     
+    @IBOutlet weak var transcriptionView: UITextView!
     @IBOutlet weak var inputSelector: UISegmentedControl!
-    @IBOutlet weak var transcriptionField: UITextField!
     
     /*
     // Only override draw() if you perform custom drawing.
