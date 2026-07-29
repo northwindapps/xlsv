@@ -159,6 +159,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var right_bool = false
     var left_bool = false
 
+    // Double-tap arms a single cell-range drag selection; the drag gesture
+    // itself is only attached to myCollectionView while this is true, so an
+    // ordinary single-finger scroll never competes with it the rest of the
+    // time. Set back to false as soon as that one drag ends (see
+    // handlePanGesture's .ended/.cancelled case) -- selecting another range
+    // needs another double-tap.
+    var isCellSelectionModeActive = false
+    var cellSelectionPanGesture: UIPanGestureRecognizer!
+
     // Post-edit refresh strategy for a single-cell commit. true: patch the
     // JSON sidecar cache from the in-memory state storeInput()/excelEntry()
     // already set, skipping the xlsx unzip/reparse in loadExcelSheet ->
@@ -2420,14 +2429,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         
         #if !targetEnvironment(macCatalyst)
-        // Scrolling needs two fingers; a single finger drags out a cell
-        // range instead. Splitting by touch count means selection is
-        // always available with no separate "selection mode" to enter --
-        // replaces the old double-tap-to-toggle-selection_bool flow.
-        myCollectionView.panGestureRecognizer.minimumNumberOfTouches = 2
-        let cellSelectionPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-        cellSelectionPanGesture.maximumNumberOfTouches = 1
-        myCollectionView.addGestureRecognizer(cellSelectionPanGesture)
+        // Scrolling is a plain single-finger drag at all times. Cell-range
+        // selection is double-tap-to-arm instead of touch-count-gated --
+        // the drag gesture only gets attached to myCollectionView once
+        // armed (see handleDoubleTapToArmCellSelection), so it never
+        // competes with ordinary scrolling.
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTapToArmCellSelection(_:)))
+        doubleTapGesture.numberOfTapsRequired = 2
+        myCollectionView.addGestureRecognizer(doubleTapGesture)
+        cellSelectionPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         #endif
 
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
@@ -2475,12 +2485,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
+    // Double-tap arms exactly one upcoming drag as a cell-range selection.
+    // Attaching cellSelectionPanGesture here (rather than leaving it on
+    // myCollectionView permanently) is what keeps ordinary single-finger
+    // scrolling free the rest of the time.
+    @objc func handleDoubleTapToArmCellSelection(_ gesture: UITapGestureRecognizer) {
+        guard !isCellSelectionModeActive else { return }
+        isCellSelectionModeActive = true
+        myCollectionView.addGestureRecognizer(cellSelectionPanGesture)
+    }
+
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        // Gesture is attached to myCollectionView itself (see viewDidLoad),
-        // gated to a single touch via maximumNumberOfTouches, so the touched
-        // cell has to be resolved from the gesture's location rather than
-        // gesture.view -- that was only valid back when this recognizer was
-        // added per-cell.
+        // Only attached to myCollectionView (see handleDoubleTapToArmCellSelection)
+        // while a selection is armed, so the touched cell has to be resolved
+        // from the gesture's location rather than gesture.view -- that was
+        // only valid back when this recognizer was added per-cell.
         let idxInLocation = location.firstIndex(of: cursor) ?? -1
         let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
 
@@ -2519,6 +2538,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             break
             
         case .ended, .cancelled:
+            // Disarm immediately -- this drag is over, and another range
+            // selection needs a fresh double-tap. Done up front so it still
+            // happens no matter which branch below runs afterward.
+            isCellSelectionModeActive = false
+            myCollectionView.removeGestureRecognizer(cellSelectionPanGesture)
+
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
                 // Same duplicate guard as .changed above -- without it, the
