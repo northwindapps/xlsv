@@ -7748,6 +7748,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         case "de": return "\"weiter\" = neue Zeile, \"löschen\" = löschen"
         case "da": return "\"næste\" = ny linje, \"slet\" = slet"
         case "es": return "\"siguiente\" = nueva línea, \"borrar\" = borrar"
+        case "ru": return "\"далее\" = новая строка, \"удалить\" = удалить"
+        case "tr": return "\"sonraki\" = yeni satır, \"sil\" = sil"
+        case "pt": return "\"seguinte\" = nova linha, \"apagar\" = apagar"
+        case "ko": return "\"다음\" = 줄 바꿈, \"삭제\" = 삭제"
+        case "it": return "\"avanti\" = nuova riga, \"cancella\" = cancella"
+        case "el": return "\"επόμενο\" = νέα γραμμή, \"διαγραφή\" = διαγραφή"
+        case "sv": return "\"nästa\" = ny rad, \"radera\" = radera"
+        case "nl": return "\"volgende\" = nieuwe regel, \"verwijderen\" = verwijderen"
+        case "fi": return "\"seuraava\" = uusi rivi, \"poista\" = poista"
+        case "pl": return "\"dalej\" = nowa linia, \"usuń\" = usuń"
+        case "lv": return "\"tālāk\" = jauna rinda, \"dzēst\" = dzēst"
+        case "uk": return "\"далі\" = новий рядок, \"видалити\" = видалити"
+        case "cs": return "\"další\" = nový řádek, \"smazat\" = smazat"
         case "zh": return "「下一个」= 换行，「删除」= 删除"
         default:   return "\"ok\" = new line, \"delete\" = delete"
         }
@@ -7777,6 +7790,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "ja",                   // de
             "ja",                   // da
             "sí", "vale",           // es
+            "да",                   // ru
+            "evet",                 // tr
+            "sim",                  // pt
+            "네", "예",               // ko
+            "sì",                   // it
+            "ναι",                  // el
+            "ja",                   // sv
+            "ja",                   // nl
+            "kyllä",                // fi
+            "tak",                  // pl
+            "jā",                   // lv
+            "так",                  // uk
+            "ano",                  // cs
             "是", "好"                // zh
         ], in: history)
     }
@@ -7789,6 +7815,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "löschen", // de
             "slet",    // da
             "borrar",  // es
+            "удалить", // ru
+            "sil",     // tr
+            "apagar",  // pt
+            "삭제",     // ko
+            "cancella", // it
+            "διαγραφή", // el
+            "radera",  // sv
+            "verwijderen", // nl
+            "poista",  // fi
+            "usuń",    // pl
+            "dzēst",   // lv
+            "видалити", // uk
+            "smazat",  // cs
             "删除"      // zh
         ], in: history)
     }
@@ -7803,6 +7842,19 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             "weiter",              // de
             "næste",               // da
             "siguiente",           // es
+            "далее",               // ru
+            "sonraki",             // tr
+            "seguinte",            // pt
+            "다음",                  // ko
+            "avanti",              // it
+            "επόμενο",             // el
+            "nästa",               // sv
+            "volgende",            // nl
+            "seuraava",            // fi
+            "dalej",               // pl
+            "tālāk",               // lv
+            "далі",                // uk
+            "další",               // cs
             "下一个"                 // zh
         ], in: history)
     }
