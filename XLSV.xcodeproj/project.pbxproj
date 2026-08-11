@@ -67,6 +67,7 @@
 		6AD456162AF4F8B20049198C /* CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD456152AF4F8B20049198C /* CalculationService.swift */; };
 		6AD9361223E59D2E00479881 /* mergedCellStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9361123E59D2E00479881 /* mergedCellStyle.swift */; };
 		7F7BE06BF6EABB72BF5C6090 /* SpeechInputHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */; };
+		8971BBF5FAA40EF90F14ED03 /* CellStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C076B50B1FF440F7B42B318 /* CellStore.swift */; };
 		8D3014511F0A74720026E961 /* Datainputview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3014501F0A74720026E961 /* Datainputview.swift */; };
 		8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8D3863D61F0C4C3C00F2220D /* Datainput.xib */; };
 		8D6A11361E4D6A3D00019BEA /* formatview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D6A11351E4D6A3D00019BEA /* formatview.swift */; };
@@ -94,6 +95,7 @@
 /* Begin PBXFileReference section */
 		08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInputHelper.swift; sourceTree = "<group>"; };
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
+		1C076B50B1FF440F7B42B318 /* CellStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CellStore.swift; sourceTree = "<group>"; };
 		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		2B26DDA22F9E3E4700109430 /* 1sheetinitialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = 1sheetinitialXLSX.xlsx; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -386,6 +388,7 @@
 				2B404E3B3013908300208952 /* speechView.xib */,
 				FB5D95391ABE5E6B00E7C8CD /* Supporting Files */,
 				6A6E851E245DA132008AFA03 /* Launch Screen.storyboard */,
+				1C076B50B1FF440F7B42B318 /* CellStore.swift */,
 			);
 			path = XLSV;
 			sourceTree = "<group>";
@@ -665,6 +668,7 @@
 				6A9743C12BB428F3005D341C /* ExcelHelper.swift in Sources */,
 				3C6F503920E3D151001EC20D /* TableViewCell.swift in Sources */,
 				8DB176CE1E1492AA009DCD75 /* CustomCollectionViewLayout.swift in Sources */,
+				8971BBF5FAA40EF90F14ED03 /* CellStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

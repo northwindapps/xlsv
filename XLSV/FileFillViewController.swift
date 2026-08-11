@@ -329,7 +329,25 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // the actual glyphs, so it slants Latin and CJK text alike.
     private static let syntheticItalicMatrix = CGAffineTransform(a: 1, b: 0, c: CGFloat(tan(14.0 * Double.pi / 180)), d: 1, tx: 0, ty: 0)
 
+    // UIFont.systemFont/boldSystemFont already ride UIKit's own font cache, but the
+    // italic path below builds a custom font descriptor with a matrix transform and
+    // constructs a UIFont from it directly -- that bypasses UIKit's cache entirely and
+    // is a genuinely expensive CoreText operation, confirmed (via Instruments) to be a
+    // meaningful chunk of cellForItemAt's cost when scrolling a large sheet, since every
+    // formula cell is always italicized and cellForItemAt re-requests the same handful
+    // of (size, bold, italic) combinations for every cell that scrolls into view.
+    private static var fontCache: [FontCacheKey: UIFont] = [:]
+    private struct FontCacheKey: Hashable { let size: CGFloat; let bold: Bool; let italic: Bool }
+
     func cellFont(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
+        let key = FontCacheKey(size: size, bold: bold, italic: italic)
+        if let cached = FileFillViewController.fontCache[key] { return cached }
+        let font = FileFillViewController.makeCellFont(size: size, bold: bold, italic: italic)
+        FileFillViewController.fontCache[key] = font
+        return font
+    }
+
+    private static func makeCellFont(size: CGFloat, bold: Bool, italic: Bool) -> UIFont {
         let base = bold ? UIFont.boldSystemFont(ofSize: size) : UIFont.systemFont(ofSize: size)
         guard italic else { return base }
         let slantedDescriptor = base.fontDescriptor.withMatrix(FileFillViewController.syntheticItalicMatrix)

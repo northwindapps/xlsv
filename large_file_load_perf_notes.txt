@@ -1,0 +1,180 @@
+Large-file (100k+ row) load performance -- what was fixed, what's still a risk
+================================================================================
+
+Context: a synthetic 100,000-row x 15-col load-test file (~1.5M cells) never
+finished loading in Form Fill mode. Root cause was three separate, unrelated
+bugs stacked on top of each other, not one single hang. All three are fixed.
+Scroll performance after load is a separate, distinct problem (see bottom).
+
+
+Bug 1 -- dead duplicate parse in the document-picker import path
+------------------------------------------------------------------
+iCloudViewController.swift's documentPicker(_:didPickDocumentAt:) and
+loadInitialXLSX(url:) both called readExcel(path:) (this file's own local
+function, not ExcelHelper's readExcel2) immediately after importing a file.
+
+That call's entire output was discarded: the freshly-presented
+FileFillViewController/ViewController instance is a brand-new object whose
+own loadExcelSheet immediately redoes the full parse via readExcel2 from
+scratch, overwriting every appd field readExcel(path:) had just set.
+readExcel(path:) also calls CoreXLSX's parseWorksheet(at:) directly -- the
+slow full-XMLCoder-decode path -- so for a 100k-row file this wasted,
+discarded parse alone took minutes and made the whole import look hung
+before readExcel2 (the fast path) was ever reached.
+
+Fix: removed both calls. (iCloudViewController.swift)
+
+
+Bug 2 -- zip entry lookup silently failing for this file's zip layout
+------------------------------------------------------------------
+ExcelHelper.readExcel2 independently re-reads the raw sheet XML via
+ZIPFoundation (Archive[path]) to keep exact original markup, then hands that
+raw Data to FastWorksheetParser (a SAX parser, fast) before ever touching
+CoreXLSX's decoder.
+
+archive[path] does an exact string match. Zip entries are conventionally
+stored without a leading "/", but CoreXLSX's parseWorksheetPaths() returns
+paths verbatim from the workbook relationships -- and this file's producer
+(openpyxl, used to generate the synthetic load-test file) emits those with a
+leading "/". The mismatch made archive[path] return nil silently: no error,
+just an empty Data(), which then failed FastWorksheetParser's
+`guard !data.isEmpty` and fell through to the slow CoreXLSX
+parseWorksheet(at:) fallback -- the exact same slow path Bug 1 already
+described, just reached a different way.
+
+Fix: strip a leading "/" from the path before the archive[path] lookup.
+(ExcelHelper.swift, readExcel2)
+
+Real-world xlsx files from Excel/Numbers/Google Sheets are not known to emit
+this leading slash -- this was specific to openpyxl's write-only mode. Worth
+re-confirming on an actual large file from one of those apps, not just the
+synthetic one, if this ever regresses.
+
+
+Bug 3 -- CRC32 checksum computed unnecessarily, unoptimized
+------------------------------------------------------------------
+The same archive.extract(entry) call computed a full CRC32 checksum over the
+entire decompressed sheet XML by default (skipCRC32 defaults to false) even
+though the returned checksum was never used. That's pure-Swift work, and
+Pods build at -Onone in Debug configuration (standard CocoaPods behavior --
+pods inherit the app's Debug optimization level), so this was meaningfully
+slow on-device for a large decompressed payload.
+
+Fix: pass skipCRC32: true. Also added reserveCapacity(entry.uncompressedSize)
+to avoid Data's incremental-growth reallocation churn, guarded to skip if the
+reported size looks implausible (>500MB) since uncompressedSize is read from
+the zip central directory and a misread value there would otherwise make
+reserveCapacity itself request a garbage-huge allocation.
+
+(A separate attempt to fix this by forcing all Pods to build at -O even in
+Debug, via a Podfile post_install hook, was tried and reverted -- it works,
+but regenerating Pods.xcodeproj this way surfaced an unrelated pre-existing
+CoreXLSX/ZIPFoundation deployment-target mismatch that broke the build
+entirely on a clean checkout. Not worth the churn for this one call site;
+skipCRC32 alone was sufficient.)
+
+
+Diagnostic infrastructure added along the way
+------------------------------------------------------------------
+- perfLog(_:) (ExcelHelper.swift, top level) wraps print+fflush(stdout).
+  Plain print() goes through buffered stdio -- under the exact memory/CPU
+  pressure a slow large-file parse causes, buffered output can lag far behind
+  or get lost before a hang/crash, which cost real time this session (console
+  logs looked truncated when the code had actually run past that point).
+  Anything diagnosing a hang/crash should use this, not print().
+- PERF readExcel2.entrySize / .zipExtract / .loadedSheetXMLStringConvert /
+  .enteringSlowFallback / .slowFallbackParseWorksheetDone
+- PERF FastWorksheetParser.start / .parseFailed (with parserError, line, col)
+  / .emptyCellsGuard / .progress (every 250k cells)
+These are cheap and were left in place rather than stripped out.
+
+
+Confirmed result
+------------------------------------------------------------------
+100k rows / 1.5M cells now parses in ~4.2s (FastWorksheetParser, steady
+~250k cells/0.7s), plus ~1.2s for the remaining pipeline stages (~5.5s
+total), down from never completing.
+
+
+================================================================================
+Scroll performance after load (separate problem, partially addressed)
+================================================================================
+
+Found via Instruments Time Profiler on the loaded 100k-row file:
+
+1. CustomCollectionViewLayout's "sticky header" repositioning, run on every
+   single scroll tick inside prepare()'s fast path, was looping over ALL r
+   row headers (up to 100,000+) to reposition x-offset, instead of just the
+   ~20-30 actually visible. Same issue in layoutAttributesForElements(in:),
+   which force-included every header cell regardless of visibility.
+   FIXED: both now use the same binary-search visible-range technique
+   (overlappingIndices/partitionPoint) already built for interior cells,
+   gated behind the existing lazyInteriorCells flag so small-file behavior
+   is untouched. (CustomCollectionViewLayout.swift)
+
+2. FileFillViewController.cellFont(size:bold:italic:) built a brand-new
+   UIFont on every call. The italic path (custom font descriptor + matrix
+   transform) bypasses UIKit's own font cache and is genuinely expensive
+   CoreText work -- and every formula cell is always italicized. FIXED: added
+   a simple (size,bold,italic) -> UIFont cache. (FileFillViewController.swift)
+
+3. NOT YET FIXED -- the bigger remaining cost: profiling showed
+   FileFillViewController.collectionView(_:cellForItemAt:) at ~29% of total
+   scroll-time CPU, with only ~15ms of that being its own code -- the rest
+   fans out across many small separate property-getter calls (cellUnderline,
+   cellHorizontalAlign, cellBorderLeftStyle/Color, cellBorderBottomColor,
+   cellItalic, textsize, content, AppDelegate.excelStyleLocation/excelStyleIdx,
+   etc: a dozen+ separate parallel-array lookups per cell instead of one).
+
+   This is the exact same pattern already fixed in ViewController.swift
+   earlier in the CellStore migration (see /Users/yano/.claude/plans/
+   wise-prancing-firefly.md) -- cellForItemAt there now does one
+   cellStore[row, col] lookup instead of a dozen parallel-array reads.
+   FileFillViewController.swift has its own separate, still-unmigrated copy
+   of the old pattern; porting the same CellStore migration to it is the
+   proven, well-understood next step for scroll performance, deliberately
+   deferred (not started) as of this writing since it's a substantial,
+   sizeable change on its own.
+
+4. Roughly 20% of scroll-time CPU is generic UIKit collection-view
+   dequeue/reuse-pool machinery (not our code, not easily influenced) and
+   another ~5-8% is real CALayer/QuartzCore commit/rendering cost.
+
+
+================================================================================
+CoreXLSX -- what's fixed vs. what's still a latent risk
+================================================================================
+
+CoreXLSX uses XMLCoder to fully decode XML into typed Swift object graphs,
+which is inherently slow for large documents -- confirmed this session,
+not a config/tuning issue.
+
+Fixed: sheet data (sheetN.xml) no longer goes through CoreXLSX's decoder at
+all in the normal case -- FastWorksheetParser (SAX-based, via Foundation's
+XMLParser) handles it, with CoreXLSX's parseWorksheet(at:) only as a
+fallback if the fast parser fails.
+
+Still on CoreXLSX's slow path, untouched:
+- parseWorkbooks() / worksheet paths -- small XML (sheet names/ids only),
+  stays fast regardless of overall file size. Low risk.
+- parseSharedStrings() -- decodes sharedStrings.xml via CoreXLSX. The
+  load-test file has almost no shared strings (mostly numeric data), so this
+  hasn't been exercised as a bottleneck. A real file with lots of *text*
+  content (as opposed to numbers) could hit the same class of problem here
+  that sheet data had, just in a different XML file.
+- Style/format table parsing (service.swift, testExtractStyle) -- decodes
+  styles.xml via CoreXLSX. A file with many *distinct* cell styles (heavy
+  formatting variety) could similarly bottleneck here.
+
+Deliberately not fixed preemptively: neither of the above has actually been
+observed as a real bottleneck yet, and doing so now would be speculative
+optimization for a file shape not yet in evidence. If a real-world file ever
+loads slowly *despite* having relatively few rows, that's the signal it's one
+of these two -- and the fix is the same proven pattern already used for sheet
+data (write a small SAX parser, bypass CoreXLSX's decode for that one file).
+
+Separately, unrelated to CoreXLSX: loadExcelSheet still runs synchronously on
+the main thread end to end (Part 3 of wise-prancing-firefly.md, not started).
+Moving it to a background queue wouldn't reduce total parse time, but would
+stop the UI from freezing solid during that time, which is a large part of
+how "slow" a load actually feels even at the same wall-clock cost.

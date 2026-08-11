@@ -213,7 +213,14 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             print("yourExcelfile",fp)
             appd.imported_xlsx_file_path=fp
             appd.excelfilename = excelName
-            readExcel(path: fp)
+            // readExcel(path:) used to run here too, but nothing reads its output: the
+            // freshly-presented FileFillViewController/ViewController below is a brand-new
+            // instance whose own loadExcelSheet immediately redoes the full parse via
+            // ExcelHelper.readExcel2, resetting and repopulating the same appd fields from
+            // scratch. readExcel(path:) also calls CoreXLSX's parseWorksheet(at:) directly --
+            // confirmed via debugger to be exactly where a large file (100k+ rows) gets stuck
+            // for minutes with memory climbing, since it fully decodes the sheet into typed
+            // objects before being thrown away.
             isExcel = true
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -371,7 +378,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
                 print("copied yourExcelfile",fp)
             }
             appd.imported_xlsx_file_path=fp
-            readExcel(path: fp)
+            // readExcel(path:) removed here for the same reason as documentPicker(_:didPickDocumentAt:)
+            // above -- its output is discarded once the freshly-presented VC's own loadExcelSheet
+            // (readExcel2) redoes the full parse, and its direct CoreXLSX parseWorksheet(at:) call
+            // is confirmed (via debugger) to be where large-file loads get stuck for minutes.
             isExcel = true
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())

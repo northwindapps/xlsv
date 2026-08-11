@@ -11,6 +11,15 @@ import CoreXLSX
 import Foundation
 import ZIPFoundation
 
+// print() goes through stdio's buffered stdout -- under the memory/CPU pressure a slow
+// large-file parse causes, buffered output can lag far behind or get lost entirely before
+// a hang/crash, making console logs during exactly the failures we need to diagnose
+// unreliable. Force an immediate flush after every diagnostic line so what's printed is
+// what actually ran, not a stale buffer snapshot.
+func perfLog(_ message: String) {
+    print(message)
+    fflush(stdout)
+}
 
 class ExcelHelper{
     
@@ -245,7 +254,7 @@ class ExcelHelper{
            let xlsxFilePath = path
 
            if let path = try sheet1Files.first {
-               print("path",path)
+               perfLog("path \(path)")
 
                // CoreXLSX's parseWorksheet(at:) below only exposes a decoded Worksheet
                // struct -- it never keeps the original XML text around. Read the same zip
@@ -253,11 +262,35 @@ class ExcelHelper{
                // CoreXLSX, and importable directly) to keep the exact original markup for
                // sheetN.xml, which a future "write xlsx back out" pass needs as its base
                // instead of reconstructing every attribute CoreXLSX doesn't round-trip.
+               let __tExtractStart = CFAbsoluteTimeGetCurrent()
                var rawSheetXMLData = Data()
+               // Zip archive entries are conventionally stored without a leading "/", but
+               // CoreXLSX's parseWorksheetPaths() returns paths verbatim from the workbook
+               // relationships -- some producers (confirmed: openpyxl) emit those with a
+               // leading "/". archive[path] does an exact-string match, so an un-normalized
+               // leading slash makes the lookup silently fail (nil), leaving rawSheetXMLData
+               // empty and skipping straight past FastWorksheetParser into the slow CoreXLSX
+               // fallback with no error -- exactly what was happening here.
+               let archivePath = path.hasPrefix("/") ? String(path.dropFirst()) : path
                if let archive = Archive(url: URL(fileURLWithPath: xlsxFilePath), accessMode: .read),
-                  let entry = archive[path] {
-                   _ = try? archive.extract(entry) { rawSheetXMLData += $0 }
+                  let entry = archive[archivePath] {
+                   // uncompressedSize comes from the zip central directory -- print it before
+                   // trusting it for reserveCapacity, since a misread size (e.g. from a
+                   // streaming/data-descriptor-written zip) reserving a garbage-huge amount
+                   // would itself look exactly like a hang with memory climbing forever.
+                   perfLog("PERF readExcel2.entrySize uncompressedSize=\(entry.uncompressedSize) compressedSize=\(entry.compressedSize)")
+                   if entry.uncompressedSize < 500_000_000 {
+                       rawSheetXMLData.reserveCapacity(Int(entry.uncompressedSize))
+                   }
+                   // skipCRC32: true -- the returned checksum is never used. Computing it in
+                   // pure Swift over the full decompressed sheet XML is where a large file
+                   // (100k+ rows) was confirmed (via debugger) to sit indefinitely: this print
+                   // never fired for loadtest_large.xlsx even after minutes.
+                   _ = try? archive.extract(entry, skipCRC32: true) { rawSheetXMLData += $0 }
+                   perfLog(String(format: "PERF readExcel2.zipExtract: %.3fs bytes=%d", CFAbsoluteTimeGetCurrent() - __tExtractStart, rawSheetXMLData.count))
+                   let __tStringConvertStart = CFAbsoluteTimeGetCurrent()
                    appd.loadedSheetXML = String(data: rawSheetXMLData, encoding: .utf8) ?? ""
+                   perfLog(String(format: "PERF readExcel2.loadedSheetXMLStringConvert: %.3fs", CFAbsoluteTimeGetCurrent() - __tStringConvertStart))
                }
 
                //Cleaning instances on table data
@@ -281,7 +314,9 @@ class ExcelHelper{
                    // Fall back to CoreXLSX's own decoder if the SAX parse failed for
                    // any reason (unexpected markup, empty raw read, etc.) so a fast-path
                    // bug never breaks a load that used to work.
+                   perfLog("PERF readExcel2.enteringSlowFallback bytes=\(rawSheetXMLData.count)")
                    let coreWs = try file!.parseWorksheet(at: path)
+                   perfLog("PERF readExcel2.slowFallbackParseWorksheetDone")
                    ws = FastWorksheet(
                        cells: (coreWs.data?.rows.flatMap { $0.cells } ?? []).map {
                            FastCell(reference: $0.reference, type: $0.type?.rawValue, styleIndex: $0.styleIndex, value: $0.value, formulaValue: $0.formula?.value)
@@ -291,7 +326,7 @@ class ExcelHelper{
                        formatProperties: coreWs.formatProperties.map { FastFormatProperties(defaultRowHeight: $0.defaultRowHeight) }
                    )
                }
-               print(String(format: "PERF readExcel2.parseWorksheet: %.3fs (fast=%@)", CFAbsoluteTimeGetCurrent() - __tParseStart, fastWs != nil ? "true" : "false"))
+               perfLog(String(format: "PERF readExcel2.parseWorksheet: %.3fs (fast=%@)", CFAbsoluteTimeGetCurrent() - __tParseStart, fastWs != nil ? "true" : "false"))
 
                let container = ws.cells
                print("PERF readExcel2.containerCount", container.count, "rows", ws.rowCount)
@@ -1159,20 +1194,34 @@ final class FastWorksheetParser: NSObject, XMLParserDelegate {
     private var currentElement = ""
     private var textBuffer = ""
 
+    // Liveness signal for large sheets -- didEndElement's "c" case prints a
+    // progress line every progressInterval cells so a slow-but-progressing
+    // parse is visibly distinguishable from a genuinely stuck one in the
+    // console, which the elapsed-time-only PERF prints around this call
+    // can't show on their own (they only print once, when/if parse() returns).
+    private var parseStartTime: CFAbsoluteTime = 0
+    private let progressInterval = 250_000
+
     // Returns nil (rather than throwing) on any parse failure so callers can fall
     // back to CoreXLSX's own decoder instead of failing the whole sheet load.
     func parse(data: Data) -> FastWorksheet? {
         guard !data.isEmpty else { return nil }
+        perfLog("PERF FastWorksheetParser.start bytes=\(data.count)")
+        parseStartTime = CFAbsoluteTimeGetCurrent()
         let parser = XMLParser(data: data)
         parser.shouldProcessNamespaces = false
         parser.delegate = self
-        guard parser.parse() else { return nil }
+        guard parser.parse() else {
+            perfLog("PERF FastWorksheetParser.parseFailed: \(parser.parserError?.localizedDescription ?? "unknown") line=\(parser.lineNumber) col=\(parser.columnNumber) cellsSoFar=\(cells.count) rowCount=\(rowCount)")
+            return nil
+        }
 
         // A well-formed XML doc with rows but zero cells almost certainly means the
         // producer used element names/namespacing this parser doesn't recognize
         // (e.g. prefixed tags) rather than a genuinely cell-less sheet -- don't trust
         // a silently-empty result, let the caller fall back to CoreXLSX's decoder.
         if rowCount > 0 && cells.isEmpty {
+            perfLog("PERF FastWorksheetParser.emptyCellsGuard: rowCount=\(rowCount) cells=0")
             return nil
         }
 
@@ -1249,6 +1298,9 @@ final class FastWorksheetParser: NSObject, XMLParserDelegate {
         case "c":
             if let cell = currentCell {
                 cells.append(cell)
+                if cells.count % progressInterval == 0 {
+                    perfLog(String(format: "PERF FastWorksheetParser.progress: cells=%d elapsed=%.3fs", cells.count, CFAbsoluteTimeGetCurrent() - parseStartTime))
+                }
             }
             currentCell = nil
         case "sheetData":

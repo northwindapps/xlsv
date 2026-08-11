@@ -23,6 +23,23 @@ var fontcolorClass = colorclass()
 
 var pasteboard = UIPasteboard.general
 
+// This app's own resident memory footprint in MB, via the standard
+// mach_task_basic_info query -- used by the PERF prints throughout
+// loadExcelSheet/patchJsonCacheAndRefresh to see WHERE memory is actually
+// climbing during a large-file load, instead of only seeing the final total
+// from Xcode's memory gauge after the fact.
+func currentMemoryFootprintMB() -> Double {
+    var info = mach_task_basic_info()
+    var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+    let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+        $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+            task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+        }
+    }
+    guard kerr == KERN_SUCCESS else { return -1 }
+    return Double(info.resident_size) / 1024.0 / 1024.0
+}
+
 extension UIColor {
     // Parses "#RRGGBB" strings, used for cell colors imported from an xlsx file's
     // actual font/fill color (as opposed to the app's fixed named color palette).
@@ -108,6 +125,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var cellHorizontalAlign = [String]()
     var cellVerticalAlign = [String]()
     var cellWrapText = [String]()
+
+    // Consolidated per-cell read cache, rebuilt from the arrays above (still
+    // the source of truth for writes) at every resolveCellStyles() call site --
+    // see rebuildCellStore(). cellForItemAt reads this instead of the parallel
+    // arrays directly; see /Users/yano/.claude/plans/wise-prancing-firefly.md.
+    var cellStore = CellStore(rows: 0, columns: 0)
 
 
     var columninNumber = [String]()
@@ -531,6 +554,35 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         print("DEBUG-RESOLVE cells=\(cellStyleId.count) inBoundsStyleIndex=\(debugInBoundsHits) withNonDefaultColor=\(debugNonDefaultColor) withBorder=\(debugWithBorder) withAlign=\(debugWithAlign) withBold=\(debugWithBold) withItalic=\(debugWithItalic)")
     }
 
+    // Rebuilds cellStore from location/content/cellStyleId/textsize/tcolor/bgcolor
+    // (still the source of truth for writes -- this is a derived read cache, not a
+    // replacement yet) plus f_location/f_calculated for formula display. Call after
+    // resolveCellStyles() AND calculatormode_update_main() (the latter is what
+    // (re)populates f_location/f_calculated) -- both loadExcelSheet and
+    // patchJsonCacheAndRefresh already run both in that order, so this slots in
+    // right after each.
+    func rebuildCellStore() {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let store = CellStore(
+            rows: ROWSIZE, columns: COLUMNSIZE,
+            location: location, content: content, styleId: cellStyleId,
+            fontSize: textsize, fontColor: tcolor, bgColor: bgcolor
+        )
+        store.resolveStyles(appd: appd)
+
+        for (idx, loc) in f_location.enumerated() {
+            let parts = loc.split(separator: ",")
+            guard parts.count == 2, let col = Int(parts[0]), let row = Int(parts[1]),
+                  store.contains(row: row, col: col) else { continue }
+            var record = store[row, col]
+            record.formula = record.content
+            record.calculatedValue = idx < f_calculated.count ? f_calculated[idx] : "error"
+            store[row, col] = record
+        }
+
+        cellStore = store
+    }
+
     // location/f_location/excelStyleLocation are scanned per-cell during rendering (up to
     // hundreds of visible cells per reload). Linear .contains/.index(of:) scans over these
     // arrays made rendering O(visibleCells * n). These caches make repeat lookups O(1);
@@ -631,20 +683,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             #endif
 
             let key = String(indexPath.item)+","+String(indexPath.section)
+            let cellRow = indexPath.section
+            let cellCol = indexPath.item
+            let record = cellStore[cellRow, cellCol]
+            let hasRecord = cellStore.contains(row: cellRow, col: cellCol) && record.hasEntry
 
             //content
-            if let i = locationIndex(for: key) {
+            if hasRecord {
 
-                let notFunc = content[i]
-                let isBold = i < cellBold.count && cellBold[i] == "1"
-                let isItalic = i < cellItalic.count && cellItalic[i] == "1"
-                if let idx = fLocationIndex(for: key) {
-                    if f_calculated.count-1 < idx{
-                        cell.label2?.text = "error"
-                    }else{
-                        cell.label2?.text = f_calculated[idx]
-                    }
-                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
+                let notFunc = record.content
+                let isBold = record.bold
+                let isItalic = record.italic
+                if record.formula != nil {
+                    cell.label2?.text = record.calculatedValue ?? "error"
+                    let fl: CGFloat = CGFloat((record.fontSize as NSString).doubleValue)
                     // Formula cells are always italicized regardless of xlsx style,
                     // to visually flag them as computed -- xlsx bold still applies.
                     cell.label2?.font = cellFont(size: fl, bold: isBold, italic: true)
@@ -652,12 +704,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
                 }else if Double(notFunc) != nil {
                     cell.label2?.text = notFunc
-                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
+                    let fl: CGFloat = CGFloat((record.fontSize as NSString).doubleValue)
                     cell.label2?.font = cellFont(size: fl, bold: isBold, italic: isItalic)
                     cell.label2?.textAlignment = .right
                 }else{
                     cell.label2?.text = notFunc
-                    let fl: CGFloat = CGFloat((textsize[i] as NSString).doubleValue)
+                    let fl: CGFloat = CGFloat((record.fontSize as NSString).doubleValue)
                     cell.label2?.font = cellFont(size: fl, bold: isBold, italic: isItalic)
                     cell.label2?.textAlignment = .left
                 }
@@ -690,31 +742,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // default (numbers right, text left) when the xlsx explicitly sets a
             // horizontal alignment other than "general" -- matching how Excel itself
             // treats "General" as "use the type-based default", not an explicit value.
-            if let i = locationIndex(for: key) {
-                if i < cellHorizontalAlign.count {
-                    switch cellHorizontalAlign[i] {
-                    case "left", "fill":
-                        cell.label2?.textAlignment = .left
-                    case "center", "centerContinuous", "distributed":
-                        cell.label2?.textAlignment = .center
-                    case "right":
-                        cell.label2?.textAlignment = .right
-                    case "justify":
-                        cell.label2?.textAlignment = .justified
-                    default:
-                        break // "general" or unset -- keep the type-based default above
-                    }
+            if hasRecord {
+                switch record.horizontalAlign {
+                case "left", "fill":
+                    cell.label2?.textAlignment = .left
+                case "center", "centerContinuous", "distributed":
+                    cell.label2?.textAlignment = .center
+                case "right":
+                    cell.label2?.textAlignment = .right
+                case "justify":
+                    cell.label2?.textAlignment = .justified
+                default:
+                    break // "general" or unset -- keep the type-based default above
                 }
 
-                if i < cellVerticalAlign.count {
-                    switch cellVerticalAlign[i] {
-                    case "top":
-                        cell.label2?.verticalAlignment = .top
-                    case "center", "distributed":
-                        cell.label2?.verticalAlignment = .center
-                    default:
-                        cell.label2?.verticalAlignment = .bottom // xlsx's own default
-                    }
+                switch record.verticalAlign {
+                case "top":
+                    cell.label2?.verticalAlignment = .top
+                case "center", "distributed":
+                    cell.label2?.verticalAlignment = .center
+                default:
+                    cell.label2?.verticalAlignment = .bottom // xlsx's own default
                 }
 
                 // Always wrap (numberOfLines/lineBreakMode set at the top of this
@@ -754,18 +802,18 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
 
             //BG
-            if let i = locationIndex(for: key) {
+            if hasRecord {
 
                 // Reused cells keep whatever backgroundColor/textColor a previous
                 // index path last set (UICollectionViewCell pooling) -- cells with
                 // no explicit xlsx fill/font color must still be reset to the plain
                 // defaults here, not just left alone, or fast scrolling flickers
                 // between stale colors from a handful of recycled cell instances.
-                cell.label2?.backgroundColor = bgcolor[i].count > 0
-                    ? namedCellColor(bgcolor[i], default: UIColor.white)
+                cell.label2?.backgroundColor = !record.bgColor.isEmpty
+                    ? namedCellColor(record.bgColor, default: UIColor.white)
                     : UIColor.white
-                cell.label2?.textColor = tcolor[i].count > 0
-                    ? namedCellColor(tcolor[i], default: UIColor.black)
+                cell.label2?.textColor = !record.fontColor.isEmpty
+                    ? namedCellColor(record.fontColor, default: UIColor.black)
                     : UIColor.black
 
             }else{
@@ -824,9 +872,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             // resets its attributed storage whenever .text is set (already done above
             // for every cell), so a reused cell won't carry over a previous cell's
             // underline/strike.
-            if let i = locationIndex(for: key),
-               i < cellUnderline.count, i < cellStrike.count,
-               (cellUnderline[i] == "1" || cellStrike[i] == "1"),
+            if hasRecord,
+               (record.underline || record.strike),
                let text = cell.label2?.text, let font = cell.label2?.font,
                let color = cell.label2?.textColor {
                 var attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
@@ -834,34 +881,34 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // a literal instead of referencing the enum case by name because this
                 // project's toolchain is flagging that name as needing a rename in both
                 // directions depending on the day; the raw Int is unambiguous either way.
-                if cellUnderline[i] == "1" { attrs[.underlineStyle] = 1 }
-                if cellStrike[i] == "1" { attrs[.strikethroughStyle] = 1 }
+                if record.underline { attrs[.underlineStyle] = 1 }
+                if record.strike { attrs[.strikethroughStyle] = 1 }
                 cell.label2?.attributedText = NSAttributedString(string: text, attributes: attrs)
             }
 
 //            //xlsx per-side borders, resolved onto cellBorder*Style/Color by
 //            // resolveCellStyles(). Must reset every side on every cell (dequeued
 //            // cells keep whatever a previous index path last set).
-            if let i = locationIndex(for: key) {
-                func edgeSpec(style: [String], color: [String]) -> (width: CGFloat, color: UIColor)? {
-                    guard i < style.count, !style[i].isEmpty else { return nil }
-                    let width = borderWidth(forStyle: style[i])
+            if hasRecord {
+                func edgeSpec(_ edge: BorderEdge?) -> (width: CGFloat, color: UIColor)? {
+                    guard let edge = edge, !edge.style.isEmpty else { return nil }
+                    let width = borderWidth(forStyle: edge.style)
                     guard width > 0 else { return nil }
                     // xlsx's own default for a border with no explicit color is
                     // <color auto="1"/> ("automatic"), which Excel itself renders as
                     // black -- but a flat black line reads as heavier/harsher than
                     // this app wants on a phone/tablet screen, so unspecified-color
                     // borders render as a soft gray instead of true black.
-                    let edgeColor = (i < color.count && !color[i].isEmpty)
-                        ? namedCellColor(color[i], default: UIColor(white: 0.55, alpha: 1.0))
+                    let edgeColor = !edge.color.isEmpty
+                        ? namedCellColor(edge.color, default: UIColor(white: 0.55, alpha: 1.0))
                         : UIColor(white: 0.55, alpha: 1.0)
                     return (width, edgeColor)
                 }
                 cell.setEdgeBorders(
-                    left: edgeSpec(style: cellBorderLeftStyle, color: cellBorderLeftColor),
-                    right: edgeSpec(style: cellBorderRightStyle, color: cellBorderRightColor),
-                    top: edgeSpec(style: cellBorderTopStyle, color: cellBorderTopColor),
-                    bottom: edgeSpec(style: cellBorderBottomStyle, color: cellBorderBottomColor)
+                    left: edgeSpec(record.borderLeft),
+                    right: edgeSpec(record.borderRight),
+                    top: edgeSpec(record.borderTop),
+                    bottom: edgeSpec(record.borderBottom)
                 )
             } else {
                 cell.setEdgeBorders(left: nil, right: nil, top: nil, bottom: nil)
@@ -871,16 +918,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //http://qiita.com/satomyumi/items/b0d071cc906574086ac4
             
             //print("width size",cell.frame.width)
+            // numId/idx resolution used to go through the legacy
+            // appd.excelStyleLocation/excelStyleIdx path (populated live by
+            // ExcelHelper.readExcel2 on cold load only, so it went stale after
+            // a fast single-cell-edit reload) -- now sourced from cellStore's
+            // numFmtId (resolved consistently with every other style field via
+            // cellStyleId, see CellStore.resolveStyles), which stays correct
+            // after both loadExcelSheet and patchJsonCacheAndRefresh.
             let predifinedIds = [31]
-            let ipstr = String(indexPath.section) + "," + String(indexPath.row)
-            let styleId = excelStyleLocationIndex(appd.excelStyleLocation, key: ipstr)
-            if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1) && appd.cellXfs.count != 0 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0 && appd.excelStyleIdx.count != 0){
-                var c = 0
-                if appd.cellXfs.count <= appd.excelStyleIdx[styleId!] || appd.numFmtIds.count <= appd.excelStyleIdx[styleId!] {
-                    return cell
-                }
-                let borderId = appd.cellXfs[appd.excelStyleIdx[styleId!]]
-                let numId = appd.numFmtIds[appd.excelStyleIdx[styleId!]]
+            let numId = record.numFmtId
+            if (numId != -1 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0){
                 var idx = appd.numFmts.firstIndex(of: String(numId))
                 if idx == nil{
                     idx = appd.numFmtIds.firstIndex(of: numId)
@@ -1036,7 +1083,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // the real accent borders -- blending into the "gold/brown"
                 // border color that was chased earlier in this file. Removed;
                 // border rendering is now solely setEdgeBorders' responsibility.
-                _ = borderId
             }
             
             return cell
@@ -1143,9 +1189,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 }else{
                     var each = padAry[idx]
                     if each == "-"{
-                        if location.contains(IPl){
-                            let i = location.index(of: IPl)
-                            each = content[i!]
+                        let existing = cellStore[IP_s, IP_i+idx]
+                        if existing.hasEntry {
+                            each = existing.content
                         }
                     }
                     storeInput(IPd: IPl, elementd: each)
@@ -1464,19 +1510,21 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 self.isExcel = false
             }
             
+            print(String(format: "PERF loadExcelSheet.start: mem=%.1fMB", currentMemoryFootprintMB()))
+
             if local_xlsx_file_path != "" {
                 print("yourExcelfile",local_xlsx_file_path)
                 let ehp = ExcelHelper()
                 let __readExcel2Start = CFAbsoluteTimeGetCurrent()
                 ehp.readExcel2(path: local_xlsx_file_path, wsIndex: idx)
-                print(String(format: "PERF loadExcelSheet.readExcel2: %.3fs", CFAbsoluteTimeGetCurrent() - __readExcel2Start))
+                print(String(format: "PERF loadExcelSheet.readExcel2: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __readExcel2Start, currentMemoryFootprintMB()))
                 // Do any additional setup after loading the view.
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 //let url = serviceInstance.testSandBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
                 let __testReadXMLStart = CFAbsoluteTimeGetCurrent()
                 let notUsed = serviceInstance.testReadXMLSandBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
-                print(String(format: "PERF loadExcelSheet.testReadXMLSandBox: %.3fs", CFAbsoluteTimeGetCurrent() - __testReadXMLStart))
+                print(String(format: "PERF loadExcelSheet.testReadXMLSandBox: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __testReadXMLStart, currentMemoryFootprintMB()))
 
                 self.isExcel = true
             }
@@ -1484,27 +1532,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //checkSheet
             let __isExcelSheetDataStart = CFAbsoluteTimeGetCurrent()
             isExcelSheetData(sheetIdx: idx)
-            print(String(format: "PERF loadExcelSheet.isExcelSheetData: %.3fs", CFAbsoluteTimeGetCurrent() - __isExcelSheetDataStart))
+            print(String(format: "PERF loadExcelSheet.isExcelSheetData: %.3fs mem=%.1fMB cells=%d", CFAbsoluteTimeGetCurrent() - __isExcelSheetDataStart, currentMemoryFootprintMB(), location.count))
 
             let __initSheetDataStart = CFAbsoluteTimeGetCurrent()
             initSheetData()
-            print(String(format: "PERF loadExcelSheet.initSheetData: %.3fs", CFAbsoluteTimeGetCurrent() - __initSheetDataStart))
+            print(String(format: "PERF loadExcelSheet.initSheetData: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __initSheetDataStart, currentMemoryFootprintMB()))
 
             let __storeValuesStart = CFAbsoluteTimeGetCurrent()
             fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-            print(String(format: "PERF loadExcelSheet.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
+            print(String(format: "PERF loadExcelSheet.storeValues: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __storeValuesStart, currentMemoryFootprintMB()))
 
             let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
             initExcelLocation()
-            print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+            print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart, currentMemoryFootprintMB()))
 
             let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
             resolveCellStyles()
-            print(String(format: "PERF loadExcelSheet.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
+            print(String(format: "PERF loadExcelSheet.resolveCellStyles: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart, currentMemoryFootprintMB()))
 
 
             localFileNames = appd.sheetNames //sheet1,sheet2
+            let __reloadDataStart = CFAbsoluteTimeGetCurrent()
             FileCollectionView.reloadData()
+            print(String(format: "PERF loadExcelSheet.reloadData: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __reloadDataStart, currentMemoryFootprintMB()))
 
 
 
@@ -1518,7 +1568,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             //Finally calculate
             let __calcMainStart = CFAbsoluteTimeGetCurrent()
             calculatormode_update_main()
-            print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
+            print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __calcMainStart, currentMemoryFootprintMB()))
+
+            let __rebuildCellStoreStart = CFAbsoluteTimeGetCurrent()
+            rebuildCellStore()
+            print(String(format: "PERF loadExcelSheet.rebuildCellStore: %.3fs mem=%.1fMB", CFAbsoluteTimeGetCurrent() - __rebuildCellStoreStart, currentMemoryFootprintMB()))
+
             completion?()
 
         }catch {
@@ -1588,6 +1643,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         initExcelLocation()
         resolveCellStyles()
         calculatormode_update_main()
+        rebuildCellStore()
         completion?()
     }
 
@@ -3422,6 +3478,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
 
         calculatormode_update_main()
+        // cellForItemAt renders from cellStore, not content/location directly --
+        // without rebuilding it here, reloadData() below re-renders every cell
+        // from a cellStore that still reflects the pre-fill state, so the drag
+        // silently appears to do nothing even though content/location (written
+        // above via virtual_input -> storeInput) already have the new values.
+        rebuildCellStore()
         myCollectionView.reloadData()
         backRS2()
     }
@@ -3488,6 +3550,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         if !isExcel { saveAsLocalJson(filename: "csv_sheet1") }
         calculatormode_update_main()
+        // See matching comment in fillDateInSelectedCellContent -- cellForItemAt
+        // reads cellStore, so it must be rebuilt before reloadData() or the
+        // fill silently doesn't appear on screen.
+        rebuildCellStore()
         myCollectionView.reloadData()
         backRS2()
     }
@@ -4845,9 +4911,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s+idx, IP_i]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -4890,9 +4956,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s, IP_i+idx]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -4904,8 +4970,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     datainputview.rightArrow.setImage(UIImage(named: "rightArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
                 }
                 break
-                
-                
+
+
             case .pad:
                 let padAry = element.components(separatedBy: ":")
                 
@@ -4917,9 +4983,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s+idx, IP_i]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -4930,9 +4996,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                     datainputview.downArrow.setImage(UIImage(named: "downArwWhite")?.withRenderingMode(.alwaysOriginal), for: .normal)
                 }
-                
-                
-                
+
+
+
                 if right_bool{
                     for idx in 0..<padAry.count{
                         let IPl = String(IP_i+idx) + "," + String(IP_s)
@@ -4941,9 +5007,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s, IP_i+idx]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -5083,9 +5149,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s+idx, IP_i]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -5095,7 +5161,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                 }
-                
+
                 if right_bool{
                     for idx in 0..<padAry.count{
                         let IPl = String(IP_i+idx) + "," + String(IP_s)
@@ -5104,9 +5170,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s, IP_i+idx]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -5117,8 +5183,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     }
                 }
                 break
-                
-                
+
+
             case .pad:
                 let padAry = element.components(separatedBy: ":")
                 
@@ -5130,9 +5196,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s+idx, IP_i]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -5142,9 +5208,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                 }
-                
-                
-                
+
+
+
                 if right_bool{
                     for idx in 0..<padAry.count{
                         let IPl = String(IP_i+idx) + "," + String(IP_s)
@@ -5153,9 +5219,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }else{
                             var each = padAry[idx]
                             if each == "-"{
-                                if location.contains(IPl){
-                                    let i = location.index(of: IPl)
-                                    each = content[i!]
+                                let existing = cellStore[IP_s, IP_i+idx]
+                                if existing.hasEntry {
+                                    each = existing.content
                                 }
                             }
                             storeInput(IPd: IPl, elementd: each)
@@ -5165,7 +5231,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                         }
                     }
                 }
-                
+
                 break
                 
             default:
@@ -5920,7 +5986,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }else{
                 content.append(elementd)
                 location.append(IPd)
-                
+                // cellStyleId must stay in lockstep with content/location -- a
+                // new cell that skips this leaves cellStyleId.count one short,
+                // which makes resolveCellStyles() bail (silently) for EVERY
+                // cell, not just this one (see the guard at the top of
+                // resolveCellStyles()). A brand-new cell typed by the user
+                // (as opposed to one loaded from the original xlsx) has no
+                // explicit style, matching cellStyleId's own "" convention.
+                cellStyleId.append("")
+
                 switch UIDevice.current.userInterfaceIdiom {
                 case .pad:
                     //updated
@@ -5928,7 +6002,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     bgcolor.append(selectingBgColor)
                     tcolor.append(selectingColor)
                     break
-                    
+
                 default:
                     //updated
                     textsize.append(String(selectingSize))
@@ -5936,7 +6010,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     tcolor.append(selectingColor)
                     break
                 }
-                
+
             }
         }else{
             if let i = locationIndex(for: IPd) {
@@ -5945,6 +6019,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 textsize.remove(at: i)
                 bgcolor.remove(at: i)
                 tcolor.remove(at: i)
+                if i < cellStyleId.count {
+                    cellStyleId.remove(at: i)
+                }
             }
         }
 
