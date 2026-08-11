@@ -18,6 +18,40 @@ class HomeController: UIViewController {
         print("DEINIT HomeController \(ObjectIdentifier(self))")
     }
 
+    // Tapping a mode button below synchronously runs that mode's viewDidLoad
+    // (loadExcelSheet included) as part of instantiateViewController/present --
+    // there's no background threading for this yet, so on a large file that's a
+    // multi-second freeze with zero feedback today. This overlay just gives the
+    // user something to look at during that freeze; it doesn't make the load
+    // itself any faster.
+    private let loadingOverlay: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+
+    private let loadingSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.hidesWhenStopped = true
+        return spinner
+    }()
+
+    private func showLoading() {
+        view.bringSubview(toFront: loadingOverlay)
+        loadingOverlay.isHidden = false
+        loadingSpinner.startAnimating()
+        view.isUserInteractionEnabled = false
+    }
+
+    private func hideLoading() {
+        loadingSpinner.stopAnimating()
+        loadingOverlay.isHidden = true
+        view.isUserInteractionEnabled = true
+    }
+
     private func makeButton(title: String, subtitle: String) -> UIButton {
         let button = UIButton(type: .system)
 
@@ -101,6 +135,9 @@ class HomeController: UIViewController {
         view.addSubview(disclaimerLabel)
         view.addSubview(creditLabel)
 
+        view.addSubview(loadingOverlay)
+        loadingOverlay.addSubview(loadingSpinner)
+
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
@@ -121,24 +158,51 @@ class HomeController: UIViewController {
             disclaimerLabel.bottomAnchor.constraint(equalTo: creditLabel.topAnchor, constant: -8),
             disclaimerLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
             disclaimerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
+
+            loadingOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            loadingSpinner.centerXAnchor.constraint(equalTo: loadingOverlay.centerXAnchor),
+            loadingSpinner.centerYAnchor.constraint(equalTo: loadingOverlay.centerYAnchor),
         ])
     }
 
     @objc private func openSpreadsheet() {
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present(targetViewController, animated: true, completion: nil)
+        showLoading()
+        // The spinner has to actually get a runloop turn to paint before the
+        // synchronous instantiateViewController/present below blocks the main
+        // thread -- without this hop, startAnimating() and the freeze would be
+        // scheduled in the same runloop pass and nothing would ever be drawn.
+        DispatchQueue.main.async {
+            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present(targetViewController, animated: true) {
+                self.hideLoading()
+            }
+        }
     }
 
     @objc private func openFormFill() {
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present(targetViewController, animated: true, completion: nil)
+        showLoading()
+        DispatchQueue.main.async {
+            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present(targetViewController, animated: true) {
+                self.hideLoading()
+            }
+        }
     }
 
     @objc private func openPlayground() {
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
-        targetViewController.modalPresentationStyle = .fullScreen
-        self.present(targetViewController, animated: true, completion: nil)
+        showLoading()
+        DispatchQueue.main.async {
+            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present(targetViewController, animated: true) {
+                self.hideLoading()
+            }
+        }
     }
 }
