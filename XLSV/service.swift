@@ -677,6 +677,18 @@ class Service {
     }
 
     
+    // Escapes the XML predefined entities for use inside text content (<v>...</v>,
+    // <t>...</t>, <f>...</f>). User-entered cell text/formulas can contain "&", "<", ">"
+    // (e.g. "Tom & Jerry", "=IF(A1<5,...)") which are illegal unescaped in XML text nodes --
+    // every call site below that splices raw user/formula text into text content must
+    // route through this first. "&" is replaced first so it doesn't double-escape the
+    // entities just introduced by the "<"/">" replacements.
+    private func xmlEscapeText(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+    }
+
     // Builds the <c r="..."> fragment for one cell, given its raw content and (if any)
     // preserved style index. All insertion/replacement paths in testUpdateString below
     // funnel through this so the formula/numeric/shared-string branching lives in one
@@ -688,11 +700,11 @@ class Service {
         let trimmed = content.replacingOccurrences(of: " ", with: "")
 
         if trimmed.hasPrefix("=") {
-            let formula = String(trimmed.dropFirst())
+            let formula = xmlEscapeText(String(trimmed.dropFirst()))
             if let fIdx = calculatedLocation.firstIndex(of: ref), fIdx < calculated.count {
                 let cachedValue = calculated[fIdx]
                 let typeAttr = Double(cachedValue) == nil ? " t=\"str\"" : ""
-                return "<c r=\"\(ref)\"\(styleAttr)\(typeAttr)><f>\(formula)</f><v>\(cachedValue)</v></c>"
+                return "<c r=\"\(ref)\"\(styleAttr)\(typeAttr)><f>\(formula)</f><v>\(xmlEscapeText(cachedValue))</v></c>"
             }
             return "<c r=\"\(ref)\"\(styleAttr)><f>\(formula)</f></c>"
         } else if Double(trimmed) != nil {
@@ -700,7 +712,7 @@ class Service {
         } else if let ssIdx = sharedStringIndex {
             return "<c r=\"\(ref)\"\(styleAttr) t=\"s\"><v>\(ssIdx)</v></c>"
         } else {
-            return "<c r=\"\(ref)\"\(styleAttr) t=\"s\"><v>\(content)</v></c>"
+            return "<c r=\"\(ref)\"\(styleAttr) t=\"s\"><v>\(xmlEscapeText(content))</v></c>"
         }
     }
 
@@ -1442,19 +1454,31 @@ class Service {
         }
 
         print("String not exists. Inserting: \(word)")
-        
+        let escapedWord = xmlEscapeText(word)
+
+        var updatedXmlString: String
         if let range = xmlString.range(of: "</sst>") {
-            let newSIElement = "<si><t>\(word)</t></si>"
+            let newSIElement = "<si><t>\(escapedWord)</t></si>"
             xmlString.replaceSubrange(range, with: "\(newSIElement)</sst>")
-            return (SSlist.count, xmlString)
+            updatedXmlString = xmlString
         } else if let range = xmlString.range(of: "/>", options: .backwards) {
-            let newSIElement = "><si><t>\(word)</t></si></sst>"
+            let newSIElement = "><si><t>\(escapedWord)</t></si></sst>"
             xmlString.replaceSubrange(range, with: newSIElement)
-            return (SSlist.count, xmlString)
+            updatedXmlString = xmlString
         } else {
             print("Failed to find any sst tag end.")
             return (nil, nil)
         }
+
+        // Guard against corrupting sharedStrings.xml on disk -- unlike sheetN.xml writes,
+        // testUpdateStringBox writes this string straight to disk with no validation of
+        // its own, so a malformed splice here (e.g. an escaping edge case) must be caught
+        // before it ever reaches the file.
+        guard XMLValidator().validateXML(xmlString: updatedXmlString) else {
+            print("Failed: sharedStrings splice produced invalid XML, discarding.")
+            return (nil, nil)
+        }
+        return (SSlist.count, updatedXmlString)
     }
 
     
