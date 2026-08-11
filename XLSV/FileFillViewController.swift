@@ -6054,6 +6054,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             //Non Excel Function Expressions
             if !filteredContent[i].hasPrefix("=SUM(") && !filteredContent[i].hasPrefix("=AVERAGE(") && !filteredContent[i].hasPrefix("=MIN(") && !filteredContent[i].hasPrefix("=MAX("){
                 for (location, content) in sortedCombined {
+                    // Cheap substring pre-check before building/running the regex --
+                    // if `location` doesn't appear anywhere in the formula text at
+                    // all, "\blocation\b" can't match either, so this only skips
+                    // guaranteed no-ops. Without this guard, every formula cell
+                    // constructs and runs a full NSRegularExpression against every
+                    // literal cell in the sheet (O(formulas * literals) -- 16M+
+                    // regex ops on a formula-heavy sheet), which grows memory
+                    // unboundedly and can crash on a large sheet.
+                    guard filteredContent[i].contains(location) else { continue }
                     let pattern = "\\b\(location)\\b"
                     //replace only perfect match C11 not C1
                     filteredContent[i] = filteredContent[i].replacingOccurrences(
@@ -6064,17 +6073,24 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 }
             }
         }
-        
+
         let cs = CalculationService()
-        
-        
+
+
         // Build dependency graph: which formulas does each formula depend on?
+        // Index lookup instead of filteredLocationInExcel.firstIndex(of:) -- that
+        // was an O(n) linear scan per cell-ref, making this whole loop O(formulas
+        // * refs * n).
+        var locationIndexMap: [String: Int] = [:]
+        for (idx, loc) in filteredLocationInExcel.enumerated() {
+            locationIndexMap[loc] = idx
+        }
         var dependencies: [Int: Set<Int>] = [:]
         for i in 0..<filteredContent.count {
             dependencies[i] = Set()
             let cellRefs = extractCellIndices(from: filteredContent[i].replacingOccurrences(of: "=", with: ""))
             for ref in cellRefs {
-                if let refIdx = filteredLocationInExcel.firstIndex(of: ref) {
+                if let refIdx = locationIndexMap[ref] {
                     dependencies[i]?.insert(refIdx)
                 }
             }
@@ -6109,16 +6125,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 filteredResult[i] = "error"
                 
                 var currentFormula = filteredContent[i].replacingOccurrences(of: "=", with: "")
-                
+
+                // Same guard as the substitution loop above: applyValue() builds
+                // and runs a full NSRegularExpression per call, so calling it
+                // unconditionally for every literal/calculated cell against every
+                // formula cell is the same O(n*m) regex-per-pair cost -- skip refs
+                // that can't possibly match.
                 for j in 0..<literalLocationInExcel.count {
                     let val = literalContent[j]
-                    if Double(val) != nil {
+                    if Double(val) != nil, currentFormula.contains(literalLocationInExcel[j]) {
                         currentFormula = applyValue(formula: currentFormula, ref: literalLocationInExcel[j], value: val)
                     }
                 }
-                
+
                 for j in 0..<filteredResult.count {
-                    if calculated.contains(j), let val = Double(filteredResult[j]) {
+                    if calculated.contains(j), currentFormula.contains(filteredLocationInExcel[j]), let val = Double(filteredResult[j]) {
                         currentFormula = applyValue(formula: currentFormula, ref: filteredLocationInExcel[j], value: String(val))
                     }
                 }

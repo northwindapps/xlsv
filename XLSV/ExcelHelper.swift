@@ -860,7 +860,6 @@ class ExcelHelper{
         }
         
         if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
-            print("invalid inputs")
             return "error"
         }
         
@@ -923,7 +922,6 @@ class ExcelHelper{
         }
         
         if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
-            print("invalid inputs")
             return "error"
         }
         
@@ -987,7 +985,6 @@ class ExcelHelper{
         }
         
         if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
-            print("invalid inputs")
             return "error"
         }
         
@@ -1047,7 +1044,6 @@ class ExcelHelper{
         }
         
         if isRangeSyntaxError(cell: cursor, startCell: startCell, endCell: endCell) {
-            print("invalid inputs")
             return "error"
         }
         
@@ -1117,8 +1113,6 @@ class ExcelHelper{
         let endColumnInt = ExcelHelper().columnToInt(ExcelHelper().alphabetOnlyString(text: endCell)) ?? 0
         let endRowInt = Int(ExcelHelper().numberOnlyString(text: endCell)) ?? 0
 
-        print(startColumnInt,startRowInt)
-        print(endColumnInt,endRowInt)
         // Check if the cell is within the range
         if (startColumnInt > endColumnInt || startRowInt > endRowInt){
             return true
