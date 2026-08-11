@@ -178,3 +178,103 @@ the main thread end to end (Part 3 of wise-prancing-firefly.md, not started).
 Moving it to a background queue wouldn't reduce total parse time, but would
 stop the UI from freezing solid during that time, which is a large part of
 how "slow" a load actually feels even at the same wall-clock cost.
+
+
+================================================================================
+Could FastWorksheetParser go faster still? (discussion, no action taken)
+================================================================================
+
+Question raised: since FastWorksheetParser (SAX via Foundation's XMLParser)
+still took 21s for a 1.5M-cell / 63MB sheet, is a hand-rolled byte/UTF-8
+scanner -- skipping general XML parsing rules entirely, tailored to the
+narrow shape of <c r="A1" s="5"><v>123</v></c> -- the next lever?
+
+Conclusion: not recommended. Notes from that discussion:
+
+1. XMLParser is not "slow interpreted code" to begin with. It's a thin
+   Objective-C/Swift wrapper around libxml2, a mature, highly-optimized C
+   library (not C++) that Apple ships as part of the OS. The core XML
+   tokenizing is already about as fast as a hand-rolled scanner would be.
+
+2. The real cost in FastWorksheetParser is more likely the bridging overhead
+   at the libxml2 -> Swift boundary: every SAX callback (once per element,
+   attribute, and character-data run -- multiple times per cell, across 1.5M
+   cells) allocates a Swift String and pays ARC retain/release traffic. A
+   byte scanner's actual win, if pursued, would come from avoiding String
+   materialization on the hot path (raw UTF-8 byte comparison via
+   UnsafeBufferPointer, only building a String for the handful of fields
+   actually kept) -- not from "bypassing a slow parser." That's a narrower,
+   less obviously-justified target than it first sounds, and hasn't been
+   confirmed as the dominant cost in the 21s (could just as easily be
+   FastCell array growth or parseCellReference's string slicing).
+
+3. A hand-rolled scanner would have to reimplement, correctly, several things
+   a real XML parser gives for free: entity escaping (&amp; &lt; &gt; &quot;
+   &apos; and numeric refs), attribute-order independence (XML doesn't
+   guarantee order; different producers -- Excel, Numbers, Google Sheets,
+   openpyxl -- may order them differently), self-closing vs. explicit-close
+   tags, and gracefully ignoring unexpected elements/namespaces. Getting any
+   of these wrong doesn't crash -- it silently produces a wrong cell value or
+   misaligned row/column, which is a worse failure mode than being slow,
+   especially given how much of this session was spent chasing exactly that
+   class of silent-corruption bug elsewhere (storeInput/cellStyleId desync,
+   the CellStore.resolveStyles exclusivity-violation crash).
+
+4. How other ecosystems solve this -- none hand-roll a byte scanner either:
+   - Python/openpyxl: read_only mode uses xml.etree.ElementTree.iterparse()
+     (or lxml's iterparse), an incremental pull-parser -- same category of
+     solution as XMLParser (real parser, driven incrementally instead of
+     building a full DOM). Rows are exposed as a generator; elements are
+     .clear()'d as consumed to keep memory flat.
+   - Node/exceljs: streaming reader (ExcelJS.stream.xlsx.WorkbookReader) is
+     built on the `sax` npm package -- again a real, spec-compliant SAX
+     parser. SheetJS's free `xlsx` package is more DOM-like and is known to
+     struggle on very large files -- the same position CoreXLSX was in
+     before FastWorksheetParser.
+   - The genuinely faster tier (python-calamine, Rust's quick-xml/calamine,
+     used via FFI/WASM bindings) gets there by being a real, compiled,
+     zero-copy parser in a systems language -- not by relaxing parsing
+     correctness. When these ecosystems want faster-than-SAX, they drop to a
+     different language's real parser via bindings, not a narrower parser in
+     the same language. That option doesn't cheaply transfer here -- no
+     established Rust-xlsx-parser-with-Swift-bindings exists, and standing up
+     cross-language FFI + build toolchain integration for one file-load path
+     is a much bigger investment than anything else in this file.
+
+5. Why does real Excel feel instant, then? Not because it skips XML parsing
+   (.xlsx is a zip of XML; there's no way around reading that). Structural
+   advantages that don't transfer cheaply to this app:
+   - A purpose-built, hand-tuned native C++ parser with decades of
+     Microsoft's engineering/QA investment behind it -- the kind of budget
+     that can absorb the fragility cost point 3 describes.
+   - Full native memory control, no ARC/GC-equivalent overhead -- avoids
+     exactly the per-callback allocation cost described in point 2.
+   - Multi-threaded parsing across CPU cores. This app's loadExcelSheet is
+     still fully synchronous on the main thread (see the paragraph above this
+     section, and Part 3 of wise-prancing-firefly.md) -- arguably the single
+     biggest, most legitimate lever still available, and notably it requires
+     no change to the parser at all.
+   - Lazy/virtualized loading -- prioritizing the visible viewport and
+     loading/parsing the rest in the background, rather than fully
+     materializing every cell before rendering anything (which is what this
+     app currently does).
+
+6. Also considered and ruled out: adopting .NET (ClosedXML/EPPlus/
+   DocumentFormat.OpenXml) for the parsing layer. Its streaming reader
+   (OpenXmlReader) is architecturally the same SAX-style category as
+   XMLParser/iterparse/sax -- a managed, GC'd, JIT-or-AOT-compiled runtime
+   with no inherent speed advantage over Swift for this workload. Using it
+   from this app would mean either a full MAUI rewrite or bundling a second
+   AOT-compiled managed runtime (.NET-for-iOS/Mono; iOS forbids JIT) into a
+   native Swift/UIKit app just to parse files -- a far bigger and riskier
+   move than anything else in this document, for a problem that (per the bug
+   list above) has consistently turned out to be architecture/algorithm bugs,
+   not "the language is too slow." iOS's memory-pressure/jetsam behavior,
+   which caused the real crashes chased this session, also applies identically
+   regardless of runtime language.
+
+Net takeaway: the proportionate next steps remain what's already documented
+above -- move loadExcelSheet off the main thread (Part 3), and only apply the
+SAX-bypass pattern to sharedStrings.xml/styles.xml if a real file actually
+demonstrates it's a bottleneck. A hand-rolled scanner or a runtime/framework
+change are both higher-risk, lower-certainty moves than either of those.
