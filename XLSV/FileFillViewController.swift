@@ -32,6 +32,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     @IBOutlet weak var FileCollectionView: UICollectionView!
     @IBOutlet weak var cellSizeSlicer: UISlider!
+
+    // saveAsLocalJson's actual disk write (JSONSerialization + file write) used to
+    // run synchronously on the main thread on every single cell-edit commit --
+    // for CSV mode specifically, this fires on every keystroke-commit (see
+    // saveAsLocalJson's call sites), and for a 100k-row file that's a multi-MB
+    // JSON rebuild+write blocking the UI thread on every edit. Serial (not
+    // concurrent) so saves from rapid consecutive edits still land in the order
+    // they were issued -- a concurrent queue could let an older edit's save finish
+    // after a newer one and silently clobber it back to stale content.
+    private let localJsonSaveQueue = DispatchQueue(label: "com.xlsv.filefill.localJsonSave")
+
     var KEYBOARDLOCATION:CGFloat = 0.0
     @objc var List: Array<AnyObject> = []
     
@@ -1516,12 +1527,26 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             ReadWriteJSON().saveJsonFile(source: dict, title: "sheet" + String(idx) + ".xml")
         }
 
+        let __initSheetDataStart = CFAbsoluteTimeGetCurrent()
         initSheetData()
+        perfLog(String(format: "PERF patchJsonCacheAndRefresh.initSheetData: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __initSheetDataStart, content.count))
+
+        let __storeValuesStart = CFAbsoluteTimeGetCurrent()
         fontcolorClass.storeValues(rl: location, rc: content, rsize: ROWSIZE, csize: COLUMNSIZE)
+        perfLog(String(format: "PERF patchJsonCacheAndRefresh.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
+
+        let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
         initExcelLocation()
+        perfLog(String(format: "PERF patchJsonCacheAndRefresh.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+
         if !isCSV {
+            let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
             resolveCellStyles()
+            perfLog(String(format: "PERF patchJsonCacheAndRefresh.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
+
+            let __calcMainStart = CFAbsoluteTimeGetCurrent()
             calculatormode_update_main()
+            perfLog(String(format: "PERF patchJsonCacheAndRefresh.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
         }
         completion?()
     }
@@ -3726,6 +3751,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         let date = dateFormatter.string(from: today)
         
         
+        // Values captured into the dict here (Swift arrays are copy-on-write) --
+        // safe to hand off to a background queue even if content/location mutate
+        // again on the main thread before the write below actually runs.
         let dict : [String:Any] = ["filename": filename,
                                    "date": date,
                                    "content": content,
@@ -3741,10 +3769,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                                    "cchLocation": appDelegate.cshLocation,
                                    "formulaResult":f_calculated,
                                    "inputOrder":input_order]
-        
-        
-        let test = ReadWriteJSON()
-        test.saveJsonFile(source: dict, title: filename)
+
+        localJsonSaveQueue.async {
+            ReadWriteJSON().saveJsonFile(source: dict, title: filename)
+        }
         
         
         
@@ -5787,23 +5815,23 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     func saveuserD() {
-        
-        let location1 = UserDefaults.standard
-        location1.set(location, forKey: "NEWTMLOCATION")
-        location1.synchronize()
-        
-        let content1 = UserDefaults.standard
-        content1.set(content, forKey: "NEWTMCONTENT")
-        content1.synchronize()
-        
+        // location/content used to be dumped here in full (NEWTMLOCATION/
+        // NEWTMCONTENT) on every single cell-edit commit, each followed by an
+        // explicit synchronize() -- UserDefaults.set() already persists on its
+        // own, synchronize() just forces a redundant synchronous full-plist
+        // flush, and for a large sheet (100k+ cells) that's a severe freeze on
+        // every return-key press. Nothing in the three active view controllers
+        // ever reads those two keys back (only orphaned legacy screens do:
+        // CalcViewController, SearchController, SharedReadFile, StyleReadFile,
+        // inDevViewController -- none reachable from the current app flow), so
+        // this was pure cost for no benefit. NEWCsize/NEWRsize are still read
+        // back elsewhere (initString/initSheetData/isExcelSheetData's CSV
+        // branch), so those stay -- just without synchronize().
         let appheight = UserDefaults.standard
         appheight.set(COLUMNSIZE, forKey: "NEWCsize")
-        appheight.synchronize()
-        
+
         let appheight2 = UserDefaults.standard
         appheight2.set(ROWSIZE, forKey: "NEWRsize")
-        appheight2.synchronize()
-        
     }
     
     func alphabetOnlyString(text: String) -> String {
@@ -5811,26 +5839,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return text.filter {okayChars.contains($0) }
     }
     
+    // Used to dump bgcolor/tcolor/textsize (full sheet, every cell) into
+    // UserDefaults on every cell-edit commit, each followed by an explicit
+    // synchronize() -- same cost/dead-weight class as saveuserD's removed
+    // writes above. Kept as a no-op rather than deleting the call sites, since
+    // this is called from several places.
     func saveuserF(){
-        
-        
-        
-        let content2 = UserDefaults.standard
-        content2.set(bgcolor, forKey: "NEWTMBGCOLOR")
-        content2.synchronize()
-        
-        
-        
-        let content3 = UserDefaults.standard
-        content3.set(tcolor, forKey: "NEWTMTCOLOR")
-        content3.synchronize()
-        
-        let content4 = UserDefaults.standard
-        content4.set(textsize, forKey: "NEWTMSIZE")
-        content4.synchronize()
-        
-        
-        
     }
     
     
