@@ -142,22 +142,54 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         //
         if url.absoluteString.hasSuffix(".csv"){
-            //temporary susupend feature
+            // Parse the picked file's actual text into content/location (no
+            // styling -- plain values only) and save it as the "csv_sheet1" JSON
+            // sidecar, the same one isExcelSheetData()'s isExcel==false branch
+            // already reads from for the blank-sheet case. loadExcelSheet skips
+            // the xlsx-parsing block entirely when appd.imported_xlsx_file_path
+            // is empty and routes straight into that existing branch, so this
+            // needs no changes to loadExcelSheet itself -- just a real file
+            // behind the sidecar it already knows how to read.
+            let (csvContent, csvLocation, csvFontSize, csvFontColor, csvBgColor, csvRowSize, csvColumnSize) = parseCSVFile(at: url)
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+            let dict: [String: Any] = [
+                "filename": "csv_sheet1",
+                "date": dateFormatter.string(from: Date()),
+                "content": csvContent,
+                "location": csvLocation,
+                "fontsize": csvFontSize,
+                "fontcolor": csvFontColor,
+                "bgcolor": csvBgColor,
+                "rowsize": csvRowSize,
+                "columnsize": csvColumnSize,
+                "customcellWidth": [Double](),
+                "customcellHeight": [Double](),
+                "ccwLocation": [Int](),
+                "cchLocation": [Int](),
+                "formulaResult": [String](),
+                "inputOrder": [String]()
+            ]
+            ReadWriteJSON().saveJsonFile(source: dict, title: "csv_sheet1")
+
+            let appd2 : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd2.imported_xlsx_file_path = ""
+
             let targetViewController: UIViewController
             if isFileFillMode {
                 let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
-                ffViewController.isExcel = true
-                ffViewController.isCSV = false
+                ffViewController.isExcel = false
+                ffViewController.isCSV = true
                 targetViewController = ffViewController
             } else {
                 let vc = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
-                vc.isExcel = true
-                vc.isCSV = false
+                vc.isExcel = false
+                vc.isCSV = true
                 targetViewController = vc
             }
             targetViewController.modalPresentationStyle = .fullScreen
             DispatchQueue.main.async {
-                //just return and start with an initial xlsx file
                 self.present(targetViewController, animated: true, completion: nil)
             }
             return
@@ -276,7 +308,95 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             self.present(targetViewController, animated: true, completion: nil)
         }
     }
-    
+
+    // Reads and parses a picked .csv file into this app's plain content/location
+    // shape -- "col,row" per non-empty cell. 1-indexed, NOT 0-indexed: index 0 in
+    // both axes is reserved for the header row/column throughout this app (see
+    // readExcel2's columnsInAlphabet, where index 0 is explicitly left "" / empty
+    // and real xlsx columns start at 1) -- a 0-indexed first row/column landed
+    // real CSV data directly on top of the header cells instead of past them.
+    // "No styling" means every cell gets the same plain default
+    // (DEFAULT_FONTSIZE/black/white, matching readExcel2's own default for
+    // unstyled xlsx cells) -- fontsize/fontcolor/bgcolor still have to be sized to
+    // match content, or filterEmptyContent() (called from initSheetData(), before
+    // its own length-mismatch fixup runs) indexes into an empty array and crashes.
+    private func parseCSVFile(at url: URL) -> (content: [String], location: [String], fontSize: [String], fontColor: [String], bgColor: [String], rowSize: Int, columnSize: Int) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            return ([], [], [], [], [], appd.DEFAULT_ROW_NUMBER, appd.DEFAULT_COLUMN_NUMBER)
+        }
+
+        let rows = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .components(separatedBy: "\n")
+
+        var content = [String]()
+        var location = [String]()
+        var maxCol = 0
+        let defaultFontSize = ExcelHelper().DEFAULT_FONTSIZE
+
+        for (rowIndex, row) in rows.enumerated() {
+            if row.isEmpty { continue } // trailing blank line from a final newline
+            let fields = parseCSVRow(row)
+            for (colIndex, field) in fields.enumerated() {
+                if field.isEmpty { continue }
+                content.append(field)
+                location.append("\(colIndex + 1),\(rowIndex + 1)")
+                maxCol = max(maxCol, colIndex + 1)
+            }
+        }
+
+        let fontSize = [String](repeating: defaultFontSize, count: content.count)
+        let fontColor = [String](repeating: "black", count: content.count)
+        let bgColor = [String](repeating: "white", count: content.count)
+
+        // Floor to the same defaults xlsx import uses, with a little headroom
+        // above the actual content extent (matching GetRowSize's own +10 pad).
+        let rowSize = max(appd.DEFAULT_ROW_NUMBER, rows.count + 10)
+        let columnSize = max(appd.DEFAULT_COLUMN_NUMBER, maxCol + 1)
+
+        return (content, location, fontSize, fontColor, bgColor, rowSize, columnSize)
+    }
+
+    // Minimal RFC4180-ish field splitter: handles quoted fields containing commas
+    // and escaped quotes ("" inside a quoted field), which a plain
+    // components(separatedBy: ",") split on the whole row would break on.
+    private func parseCSVRow(_ row: String) -> [String] {
+        var fields = [String]()
+        var current = ""
+        var insideQuotes = false
+        let chars = Array(row)
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if insideQuotes {
+                if c == "\"" {
+                    if i + 1 < chars.count, chars[i + 1] == "\"" {
+                        current.append("\"")
+                        i += 1
+                    } else {
+                        insideQuotes = false
+                    }
+                } else {
+                    current.append(c)
+                }
+            } else {
+                if c == "\"" {
+                    insideQuotes = true
+                } else if c == "," {
+                    fields.append(current)
+                    current = ""
+                } else {
+                    current.append(c)
+                }
+            }
+            i += 1
+        }
+        fields.append(current)
+        return fields
+    }
+
     func replaceLocalFileWithImportedOne() {
         let appd = UIApplication.shared.delegate as! AppDelegate
         let pathDirectory = getRootDocumentsDirectory()

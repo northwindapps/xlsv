@@ -1421,14 +1421,19 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             initExcelLocation()
             print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
 
+            // CSV cells have no cellStyleId (no styles.xml to resolve against) --
+            // resolveCellStyles() already no-ops via its own cellStyleId.count ==
+            // location.count guard, but skip it outright for clarity/cost.
             let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
-            resolveCellStyles()
+            if !isCSV {
+                resolveCellStyles()
+            }
             print(String(format: "PERF loadExcelSheet.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
 
 
             localFileNames = appd.sheetNames //sheet1,sheet2
             FileCollectionView.reloadData()
-
+            FileCollectionView.isHidden = isCSV
 
 
 
@@ -1438,9 +1443,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 columnNames.append(letters)
             }
 
-            //Finally calculate
+            //Finally calculate -- CSV data has no formulas (=SUM(...) etc.), so
+            // there's nothing for the formula-dependency-graph pass to find; skip
+            // it rather than pay its cost scanning plain literal content for
+            // formula prefixes that will never be there.
             let __calcMainStart = CFAbsoluteTimeGetCurrent()
-            calculatormode_update_main()
+            if !isCSV {
+                calculatormode_update_main()
+            }
             print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
             completion?()
 
@@ -1509,8 +1519,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         initSheetData()
         fontcolorClass.storeValues(rl: location, rc: content, rsize: ROWSIZE, csize: COLUMNSIZE)
         initExcelLocation()
-        resolveCellStyles()
-        calculatormode_update_main()
+        if !isCSV {
+            resolveCellStyles()
+            calculatormode_update_main()
+        }
         completion?()
     }
 
@@ -2327,18 +2339,20 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         localFileNames = appd.sheetNames //sheet1,sheet2
         FileCollectionView.reloadData()
+        // A CSV file has no concept of multiple sheets (isExcelSheetData's
+        // isExcel==false branch always reads the single "csv_sheet1" sidecar) --
+        // the tab bar showing "sheet1" for it is misleading, so hide it entirely.
+        FileCollectionView.isHidden = isCSV
+
+
+
         
         
-        
-        
-        
-        for idx in 0..<COLUMNSIZE {
-            let letters = getExcelColumnName(columnNumber: idx)
-            columnNames.append(letters)
-        }
-        
-        //Finally calculate
-        calculatormode_update_main()
+        // columnNames and the formula recalc below are already done inside
+        // loadExcelSheet() (called unconditionally, exactly once, earlier in this
+        // same viewDidLoad) -- redoing them here just duplicated columnNames'
+        // entries and reran the full formula recalc pass a second time on
+        // unchanged data.
 
         DispatchQueue.main.async() {
             appd.collectionViewCellSizeChanged = 1
