@@ -142,59 +142,49 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         //
         if url.absoluteString.hasSuffix(".csv"){
-            // Parse the picked file's actual text into content/location (no
-            // styling -- plain values only) and save it as the "csv_sheet1" JSON
-            // sidecar, the same one isExcelSheetData()'s isExcel==false branch
-            // already reads from for the blank-sheet case. loadExcelSheet skips
-            // the xlsx-parsing block entirely when appd.imported_xlsx_file_path
-            // is empty and routes straight into that existing branch, so this
-            // needs no changes to loadExcelSheet itself -- just a real file
-            // behind the sidecar it already knows how to read.
-            let (csvContent, csvLocation, csvFontSize, csvFontColor, csvBgColor, csvRowSize, csvColumnSize) = ExcelHelper().parseCSVFile(at: url)
+            // Parsing (text -> content/location) and the JSON-sidecar write both
+            // used to run synchronously on the main thread here -- confirmed via
+            // instrumentation to block for several seconds at 1.4M cells (the
+            // save alone: ~4.5s). Both move to a background queue; the target
+            // view controller is only instantiated/presented once the sidecar
+            // file actually exists on disk, since its viewDidLoad reads
+            // "csv_sheet1" back almost immediately (loadExcelSheet's isExcel==""
+            // branch) -- presenting before the write lands would race it.
+            DispatchQueue.global(qos: .userInitiated).async {
+                let __parseStart = CFAbsoluteTimeGetCurrent()
+                let (csvContent, csvLocation, csvFontSize, csvFontColor, csvBgColor, csvRowSize, csvColumnSize) = ExcelHelper().parseCSVFile(at: url)
+                perfLog(String(format: "PERF csvImport.parseCSVFile: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __parseStart, csvContent.count))
 
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
-            let dict: [String: Any] = [
-                "filename": "csv_sheet1",
-                "date": dateFormatter.string(from: Date()),
-                "content": csvContent,
-                "location": csvLocation,
-                "fontsize": csvFontSize,
-                "fontcolor": csvFontColor,
-                "bgcolor": csvBgColor,
-                "rowsize": csvRowSize,
-                "columnsize": csvColumnSize,
-                "customcellWidth": [Double](),
-                "customcellHeight": [Double](),
-                "ccwLocation": [Int](),
-                "cchLocation": [Int](),
-                "formulaResult": [String](),
-                "inputOrder": [String]()
-            ]
-            ReadWriteJSON().saveJsonFile(source: dict, title: "csv_sheet1")
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+                let dict: [String: Any] = [
+                    "filename": "csv_sheet1",
+                    "date": dateFormatter.string(from: Date()),
+                    "content": csvContent,
+                    "location": csvLocation,
+                    "fontsize": csvFontSize,
+                    "fontcolor": csvFontColor,
+                    "bgcolor": csvBgColor,
+                    "rowsize": csvRowSize,
+                    "columnsize": csvColumnSize,
+                    "customcellWidth": [Double](),
+                    "customcellHeight": [Double](),
+                    "ccwLocation": [Int](),
+                    "cchLocation": [Int](),
+                    "formulaResult": [String](),
+                    "inputOrder": [String]()
+                ]
+                let __saveStart = CFAbsoluteTimeGetCurrent()
+                ReadWriteJSON().saveJsonFile(source: dict, title: "csv_sheet1")
+                perfLog(String(format: "PERF csvImport.saveJsonFile: %.3fs", CFAbsoluteTimeGetCurrent() - __saveStart))
 
-            let appd2 : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd2.imported_xlsx_file_path = ""
-
-            let targetViewController: UIViewController
-            if isFileFillMode {
-                let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
-                ffViewController.isExcel = false
-                ffViewController.isCSV = true
-                targetViewController = ffViewController
-            } else {
-                let vc = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
-                vc.isExcel = false
-                vc.isCSV = true
-                targetViewController = vc
-            }
-            targetViewController.modalPresentationStyle = .fullScreen
-            DispatchQueue.main.async {
-                self.present(targetViewController, animated: true, completion: nil)
+                DispatchQueue.main.async {
+                    self.presentCSVTarget()
+                }
             }
             return
         }
-        
+
         if url.absoluteString.hasSuffix(".xlsx"){
                 
             //excel process
@@ -307,6 +297,30 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
         }
+    }
+
+    // Instantiates and presents the CSV-mode target view controller -- split out
+    // so documentPicker(_:didPickDocumentAt:)'s CSV branch can call this only
+    // after the background parse+save actually finishes (see there for why that
+    // ordering matters).
+    func presentCSVTarget() {
+        let appd2 : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd2.imported_xlsx_file_path = ""
+
+        let targetViewController: UIViewController
+        if isFileFillMode {
+            let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+            ffViewController.isExcel = false
+            ffViewController.isCSV = true
+            targetViewController = ffViewController
+        } else {
+            let vc = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
+            vc.isExcel = false
+            vc.isCSV = true
+            targetViewController = vc
+        }
+        targetViewController.modalPresentationStyle = .fullScreen
+        self.present(targetViewController, animated: true, completion: nil)
     }
 
     func replaceLocalFileWithImportedOne() {

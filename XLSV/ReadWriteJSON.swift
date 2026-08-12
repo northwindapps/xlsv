@@ -32,6 +32,7 @@ class ReadWriteJSON {
     
     //https://stackoverflow.com/questions/28768015/how-to-save-an-array-as-a-json-file-in-swift
     func saveJsonFile(source:Dictionary<String, Any>, title :String){
+        let __saveJsonFileStart = CFAbsoluteTimeGetCurrent()
         let pathDirectory = getDocumentsDirectory()
         
         //checking /sub root folder existance
@@ -54,36 +55,41 @@ class ReadWriteJSON {
         
         //let jsonString = NSString(data: jsonData, encoding: String.Encoding.utf8.rawValue)
         
+        let __overwriteCheckStart = CFAbsoluteTimeGetCurrent()
         do {
                 //let fileURLs = try FileManager.default.contentsOfDirectory(at: pathDirectory, includingPropertiesForKeys: nil)
                 if FileManager.default.fileExists(atPath: filePath.path){
                     let attr = try FileManager.default.attributesOfItem(atPath: filePath.path)
                     datedata = attr[FileAttributeKey.modificationDate] as! Date //modificationDate
-                    
+
                     deleteJsonFile(title: title)
                     print("json overwritten ")
                 }
-            
+
         } catch {
             print("Failed to write JSON data: \(error.localizedDescription)")
         }
-        
+        perfLog(String(format: "PERF saveJsonFile.overwriteCheck: %.3fs", CFAbsoluteTimeGetCurrent() - __overwriteCheckStart))
+
+        let __serializeWriteStart = CFAbsoluteTimeGetCurrent()
         do{
              try! JSONSerialization.data(withJSONObject: source).write(to: filePath)
             print("savedJson",filePath)
-         
+
         }
-        
+        perfLog(String(format: "PERF saveJsonFile.serializeAndWrite: %.3fs", CFAbsoluteTimeGetCurrent() - __serializeWriteStart))
+
+        let __setAttributesStart = CFAbsoluteTimeGetCurrent()
         do {
             //https://stackoverflow.com/questions/33846694/setting-file-attributes-in-swift
             //https://stackoverflow.com/questions/13497500/retrieve-file-creation-or-modification-date/13516795
-            
+
             let attributes = [
                 FileAttributeKey.modificationDate : datedata
             ]
             try FileManager.default.setAttributes(attributes, ofItemAtPath: filePath.path)
 //            print("setdate",datedata)
-            
+
             //
             let attr = try FileManager.default.attributesOfItem(atPath: filePath.path)
             let check = attr[FileAttributeKey.creationDate] as! Date //modificationDate
@@ -91,6 +97,8 @@ class ReadWriteJSON {
         } catch {
             print(error)
         }
+        perfLog(String(format: "PERF saveJsonFile.setAttributes: %.3fs", CFAbsoluteTimeGetCurrent() - __setAttributesStart))
+        perfLog(String(format: "PERF saveJsonFile.total: %.3fs title=%@", CFAbsoluteTimeGetCurrent() - __saveJsonFileStart, title))
     }
     
     // https://stackoverflow.com/questions/28768015/how-to-save-an-array-as-a-json-file-in-swift

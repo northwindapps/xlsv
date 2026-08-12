@@ -220,24 +220,33 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             //#warning Incomplete method implementation -- Return the number of sections
             var rowsize = appd.DEFAULT_ROW_NUMBER//100
-            
+
             if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
                 let v = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
                 if v > rowsize{
                     rowsize = v
                 }
             }
-            
-            
+
+            // NEWRsize in UserDefaults is stale/global, not this file's real
+            // size (see isExcelSheetData's csvBranch comment) -- appd.numberofRow
+            // may already hold the correct, larger value for the currently
+            // loaded file, and this function must not stomp it back down to the
+            // 1001 default just because myCollectionView (the header strip)
+            // happened to reload.
+            if appd.numberofRow > rowsize {
+                rowsize = appd.numberofRow
+            }
+
             if rowsize < 1{
                 rowsize = 1
             }
-            
-            
-            
+
+
+
             ROWSIZE = rowsize
-            
-            
+
+
             appd.numberofRow = rowsize
             return rowsize
             
@@ -260,16 +269,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     columnsize = v
                 }
             }
-            
-            
+
+            // See matching comment on numberOfSections's rowsize -- don't stomp
+            // a correct, larger appd.numberofColumn back down to the default.
+            if appd.numberofColumn > columnsize {
+                columnsize = appd.numberofColumn
+            }
+
             if columnsize < 1{
                 columnsize = 1
             }
-            
+
             COLUMNSIZE = columnsize// + 1
-            
+
             appd.numberofColumn = columnsize
-            
+
             return columnsize
             
         }else{
@@ -1051,9 +1065,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         //let pasteboard = UIPasteboard.general
         //pasteboard.string = ""
-        
-        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
+
+        // fontcolorClass.storeValues() aliases appd.RC/RL to this same
+        // content/location buffer as part of a 9-deep undo ring buffer
+        // (colorclass.outValues(), consumed only by restore() -- which has no
+        // call site anywhere in the app, not in code, not in any storyboard, so
+        // this whole mechanism is dead). Swift arrays are copy-on-write, so
+        // that alias is cheap by itself, but it means the very next mutation of
+        // content/location (storeInput, moments later) is no longer touching a
+        // uniquely-referenced buffer, forcing a silent full-array deep copy --
+        // a real, severe cost at 1.4M cells. Skipped for CSV; xlsx mode's
+        // behavior is unchanged.
+        if !isCSV {
+            fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        }
+
         var element: String = sourceText
 
         if element.hasPrefix("=") {
@@ -1425,12 +1451,22 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             print(String(format: "PERF loadExcelSheet.initSheetData: %.3fs", CFAbsoluteTimeGetCurrent() - __initSheetDataStart))
 
             let __storeValuesStart = CFAbsoluteTimeGetCurrent()
-            fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+            // See the matching comment on datainputFromOtherComtroller's call --
+            // dead undo mechanism, skipped for CSV to avoid the COW-copy trap.
+            if !isCSV {
+                fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+            }
             print(String(format: "PERF loadExcelSheet.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
 
-            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
-            initExcelLocation()
-            print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+            // Same reasoning as patchJsonCacheAndRefresh's guard: locationInExcel
+            // is only consumed by formula processing and xlsx-XML-writing, both
+            // no-ops for CSV -- confirmed via instrumentation to cost ~4.8s at
+            // 1.4M cells on the initial CSV load.
+            if !isCSV {
+                let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
+                initExcelLocation()
+                print(String(format: "PERF loadExcelSheet.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+            }
 
             // CSV cells have no cellStyleId (no styles.xml to resolve against) --
             // resolveCellStyles() already no-ops via its own cellStyleId.count ==
@@ -1532,12 +1568,22 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         perfLog(String(format: "PERF patchJsonCacheAndRefresh.initSheetData: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __initSheetDataStart, content.count))
 
         let __storeValuesStart = CFAbsoluteTimeGetCurrent()
-        fontcolorClass.storeValues(rl: location, rc: content, rsize: ROWSIZE, csize: COLUMNSIZE)
+        // See the matching comment on datainputFromOtherComtroller's call --
+        // dead undo mechanism, skipped for CSV to avoid the COW-copy trap.
+        if !isCSV {
+            fontcolorClass.storeValues(rl: location, rc: content, rsize: ROWSIZE, csize: COLUMNSIZE)
+        }
         perfLog(String(format: "PERF patchJsonCacheAndRefresh.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
 
-        let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
-        initExcelLocation()
-        perfLog(String(format: "PERF patchJsonCacheAndRefresh.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+        // locationInExcel is only consumed by formula processing (skipped below
+        // for CSV) and xlsx-XML-writing functions (no-op for CSV, no
+        // imported_xlsx_file_path) -- rebuilding it for every cell on every edit
+        // is pure waste for CSV mode.
+        if !isCSV {
+            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
+            initExcelLocation()
+            perfLog(String(format: "PERF patchJsonCacheAndRefresh.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+        }
 
         if !isCSV {
             let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
@@ -3304,7 +3350,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             saveAsLocalJson(filename: "csv_sheet1")
         }
 
-        calculatormode_update_main()
+        if !isCSV {
+            calculatormode_update_main()
+        }
         myCollectionView.reloadData()
         backRS2()
     }
@@ -3372,7 +3420,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
 
         if !isExcel { saveAsLocalJson(filename: "csv_sheet1") }
-        calculatormode_update_main()
+        if !isCSV {
+            calculatormode_update_main()
+        }
         myCollectionView.reloadData()
         backRS2()
     }
@@ -3741,8 +3791,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
     }
     @objc func saveAsLocalJson(filename:String) {
-        filterEmptyContent()
-        
+        // See the matching comment in initSheetData() -- content/location are
+        // already guaranteed clean for CSV mode by construction, so this full
+        // re-scan is redundant there. Confirmed via instrumentation: this and
+        // initSheetData's copy were each independently costing ~3.5s at 1.4M
+        // cells, back to back, on every single edit.
+        let __saveJsonFilterStart = CFAbsoluteTimeGetCurrent()
+        if !isCSV {
+            filterEmptyContent()
+        }
+        perfLog(String(format: "PERF saveAsLocalJson.filterEmptyContent: %.3fs isCSV=%@ filename=%@ content=%d", CFAbsoluteTimeGetCurrent() - __saveJsonFilterStart, isCSV ? "true" : "false", filename, content.count))
+
         let appDelegate:AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
         let today: Date = Date()
@@ -4645,9 +4704,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         //let pasteboard = UIPasteboard.general
         //pasteboard.string = ""
-        
-        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
+
+        // See the matching comment on datainputFromOtherComtroller's call --
+        // dead undo mechanism, skipped for CSV to avoid the COW-copy trap.
+        if !isCSV {
+            fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        }
+
         var element: String = datainputview.stringbox.text!
 
         if element.hasPrefix("=") {
@@ -4851,9 +4914,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         f_calculated.removeAll()
         f_location_alphabet.removeAll()
         f_location.removeAll()
-        calculatormode_update_main()
+        // The comment below says "always excel, no such thing as csv case" --
+        // that assumption doesn't hold; this path is reachable from CSV mode
+        // too (confirmed via a real crash: calculatormode_update_main indexes
+        // locationInExcel[index], which CSV mode never keeps in sync since
+        // initExcelLocation is skipped there).
+        if !isCSV {
+            calculatormode_update_main()
+        }
 
-        
         //always excel, no such thing as csv case
         if element == ""{
             //TODO want to modify xml
@@ -4885,9 +4954,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
 //        let pasteboard = UIPasteboard.general
 //        pasteboard.string = ""
-        
-        fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        
+
+        // See the matching comment on datainputFromOtherComtroller's call --
+        // dead undo mechanism, skipped for CSV to avoid the COW-copy trap.
+        if !isCSV {
+            fontcolorClass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
+        }
+
         var element = source
         if element.hasPrefix("=") {
             let targets = ["sum", "average", "min", "max"]
@@ -5059,9 +5132,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         f_calculated.removeAll()
         f_location_alphabet.removeAll()
         f_location.removeAll()
-        calculatormode_update_main()
+        // The comment below says "always excel, no such thing as csv case" --
+        // that assumption doesn't hold; this path is reachable from CSV mode
+        // too (confirmed via a real crash: calculatormode_update_main indexes
+        // locationInExcel[index], which CSV mode never keeps in sync since
+        // initExcelLocation is skipped there).
+        if !isCSV {
+            calculatormode_update_main()
+        }
 
-        
         //always excel, no such thing as csv case
         if element == ""{
             //TODO want to modify xml
@@ -5763,6 +5842,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     func storeInput(IPd:String, elementd:String)
     {
+        let __storeInputStart = CFAbsoluteTimeGetCurrent()
         // storeInput is the single chokepoint every cell content commit passes
         // through (typing + Enter, paste, formula results, clear), so this is
         // where runtime edit history gets recorded rather than at each caller.
@@ -5775,8 +5855,19 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         if elementd.replacingOccurrences(of: " ", with: "").count > 0{
             if let i = locationIndex(for: IPd) {
 
+                // colorclass.storeValues() (called separately, just before
+                // storeInput, from input()/patchJsonCacheAndRefresh) aliases
+                // appd.RC/appd.RL to this same content/location buffer as part of
+                // a 9-deep undo ring buffer. Swift arrays are copy-on-write, so
+                // that alias is cheap by itself -- but it means the very next
+                // mutation of content/location (here) is no longer touching a
+                // uniquely-referenced buffer, forcing Swift to silently deep-copy
+                // the entire array before applying this one-cell edit. Timing
+                // isolates exactly that.
+                let __mutateStart = CFAbsoluteTimeGetCurrent()
                 content[i] = elementd
                 location[i] = IPd
+                perfLog(String(format: "PERF storeInput.mutateExisting: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __mutateStart, content.count))
 
 
             }else{
@@ -5811,7 +5902,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
 
         //updating locationInExcel
-        initExcelLocation()
+        // Unconditional call here, separate from the ones already guarded in
+        // loadExcelSheet/patchJsonCacheAndRefresh -- same reasoning applies
+        // (locationInExcel unused by CSV mode's formula-free, xlsx-XML-free
+        // path), and this one runs on literally every single edit regardless of
+        // which caller reached storeInput.
+        if !isCSV {
+            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
+            initExcelLocation()
+            perfLog(String(format: "PERF storeInput.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
+        }
+        perfLog(String(format: "PERF storeInput.total: %.3fs", CFAbsoluteTimeGetCurrent() - __storeInputStart))
     }
     
     func saveuserD() {
@@ -6601,7 +6702,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 content = sheet1Json.content
                 location = sheet1Json.location
                 textsize = sheet1Json.fontsize
-                print("textsize",textsize)
                 bgcolor = sheet1Json.bgcolor
                 tcolor = sheet1Json.fontcolor
                 cellStyleId = sheet1Json.styleId
@@ -6645,6 +6745,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 tcolor = sheet1Json.fontcolor
                 COLUMNSIZE = sheet1Json.columnsize
                 ROWSIZE = sheet1Json.rowsize
+                // CustomCollectionViewLayout.prepare() derives its render grid's
+                // row/column count from appd.numberofRow/numberofColumn (and
+                // NEWRsize/NEWCsize in UserDefaults) as a floor over its own
+                // 1001/201 defaults -- every xlsx import path sets these two
+                // appd properties at load time, but nothing in the CSV path did,
+                // so a CSV's real (large) ROWSIZE/COLUMNSIZE never reached the
+                // layout and every CSV silently rendered capped at the default
+                // 1001-row grid regardless of the file's actual size.
+                appd.numberofRow = ROWSIZE
+                appd.numberofColumn = COLUMNSIZE
+                perfLog("PERF isExcelSheetData.csvBranch ROWSIZE=\(ROWSIZE) COLUMNSIZE=\(COLUMNSIZE) content=\(content.count) location=\(location.count)")
                 appd.customSizedWidth = sheet1Json.customcellWidth
                 appd.customSizedHeight = sheet1Json.customcellHeight
                 appd.cswLocation = sheet1Json.ccwLocation
@@ -6659,11 +6770,30 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
-        content = excel_fomula_transformation(src:content)
-        
+        // CSV mode never runs the formula engine (calculatormode_update_main is
+        // already skipped for isCSV), so rewriting Excel function syntax here is
+        // pure wasted work scanning every cell for CSV specifically.
+        let __formulaTransformStart = CFAbsoluteTimeGetCurrent()
+        if !isCSV {
+            content = excel_fomula_transformation(src:content)
+        }
+        perfLog(String(format: "PERF initSheetData.formulaTransform: %.3fs isCSV=%@", CFAbsoluteTimeGetCurrent() - __formulaTransformStart, isCSV ? "true" : "false"))
+
         //Taking out Empty Cells
-        filterEmptyContent()
-        
+        // storeInput() already removes a cell from content/location directly the
+        // moment it's cleared to empty, and parseCSVFile never adds an empty
+        // entry in the first place (skips blank fields when parsing) -- so for
+        // CSV mode, content/location are already guaranteed clean by
+        // construction, and this full O(n) re-scan finds nothing to remove.
+        // Confirmed via instrumentation: ~3.5s at 1.4M cells, running redundantly
+        // on every single edit. xlsx mode doesn't have that guarantee (content
+        // can come from a raw JSON/xlsx read), so it still filters normally.
+        let __filterEmptyStart = CFAbsoluteTimeGetCurrent()
+        if !isCSV {
+            filterEmptyContent()
+        }
+        perfLog(String(format: "PERF initSheetData.filterEmptyContent: %.3fs isCSV=%@ content=%d", CFAbsoluteTimeGetCurrent() - __filterEmptyStart, isCSV ? "true" : "false", content.count))
+
         //SOME THING WENT WRONG RESET PROCESS STARTS
         if location.count != content.count {
             let domain = Bundle.main.bundleIdentifier!
@@ -6724,22 +6854,43 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             appd.cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
         }
         
-        if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
-            COLUMNSIZE = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
+        // NEWCsize/NEWRsize hold whatever COLUMNSIZE/ROWSIZE happened to be at
+        // the time of some earlier edit (saveuserD() persists them on every
+        // edit, for any file), not a real per-file preference -- for CSV mode,
+        // isExcelSheetData() just correctly computed COLUMNSIZE/ROWSIZE from
+        // *this* file's actual parsed extent, and blindly overwriting that with
+        // a stale value left over from a previous, unrelated (often much
+        // smaller) file silently made most of a large CSV's rows/columns
+        // unreachable in the grid. Confirmed via instrumentation: gridCells
+        // stuck at exactly DEFAULT_ROW_NUMBER * DEFAULT_COLUMN_NUMBER (201201)
+        // regardless of the CSV's real ~1.4M-cell extent. xlsx mode's existing
+        // behavior here is left unchanged.
+        if !isCSV {
+            if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
+                COLUMNSIZE = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
+            }
+
+            if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
+                ROWSIZE = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
+            }
         }
-        
-        if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
-            ROWSIZE = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
-        }
-        
-        
-        
-        
+
+
+
+
+        // saveAsLocalJson() itself starts with another filterEmptyContent() call
+        // -- if localFileNames is empty (as it very likely is for CSV mode,
+        // since it's built from appd.sheetNames, an xlsx-workbook concept),
+        // filterEmptyContent's full O(n) scan runs a second time here, on top
+        // of the one a few lines up in this same function, on every edit.
+        perfLog(String(format: "PERF initSheetData.localFileNamesCheck localFileNames.count=%d", localFileNames.count))
         if localFileNames.count == 0 {
+            let __redundantSaveStart = CFAbsoluteTimeGetCurrent()
             let newfile = "csv_sheet1"
             saveAsLocalJson(filename: newfile)
+            perfLog(String(format: "PERF initSheetData.redundantSaveAsLocalJson: %.3fs", CFAbsoluteTimeGetCurrent() - __redundantSaveStart))
         }
-        
+
     }
     
     //=EXP(A1) -> e^(A1), COMPLEX(x,y)
@@ -7142,7 +7293,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             //
             
             calcPrep()
-            calculatormode_update_main()
+            if !isCSV {
+                calculatormode_update_main()
+            }
 
             DispatchQueue.main.async() {
                 appd.collectionViewCellSizeChanged = 1
