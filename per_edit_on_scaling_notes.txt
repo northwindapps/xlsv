@@ -1,0 +1,106 @@
+O(n)-per-edit problems fixed today (CSV data entry on a ~1.4M-cell sheet)
+================================================================================
+
+Common shape behind all six items below: each one is individually a plain
+O(n) scan/rebuild over the *whole sheet* (n = total cell count, ~1.4M for
+the test file). None of that is a problem on its own for a one-time load.
+The actual bug in every case is where it was being called from -- every one
+of these ran on EVERY SINGLE CELL EDIT (via storeInput()/initSheetData(),
+the two functions every keystroke commit passes through), turning an
+operation that should cost O(1) per edited cell into O(n) per edit. Typing
+m cells into the sheet was therefore costing O(n*m), not O(m) -- which is
+exactly "eternity" once n is 1.4M and m is more than a couple of cells.
+
+None of these were made asymptotically faster (no algorithm was changed).
+They were removed from the per-edit path for CSV specifically, because
+CSV mode doesn't need what they compute (see the "why" under each one).
+xlsx mode still runs all of them unchanged, since it does need them and
+was not reporting this symptom.
+
+
+1. initExcelLocation() -- O(n) location string rebuild
+------------------------------------------------------------------
+Rebuilds locationInExcel (Excel A1-style strings like "B7") for every
+entry in `location`, from scratch, by splitting and reformatting each one.
+Was called unconditionally from three separate places per edit
+(patchJsonCacheAndRefresh, loadExcelSheet, and a third call baked directly
+into storeInput() itself -- easy to miss since it's not in either "reload"
+function). CSV never displays or uses A1-style references anywhere in its
+UI, so this was pure wasted O(n) work on every keystroke.
+Fix: guarded `if !isCSV` at all three sites.
+
+
+2. excel_fomula_transformation() -- O(n) content scan
+------------------------------------------------------------------
+Scans every entry of `content` rewriting Excel function call syntax (e.g.
+PI(), EXP(1)) before the formula engine runs. CSV never runs the formula
+engine at all (see item 6), so rewriting function syntax nobody will ever
+evaluate is O(n) wasted work called from initSheetData() on every edit.
+Fix: guarded `if !isCSV`.
+
+
+3. filterEmptyContent() -- O(n) rescan, and running 2-3x per edit
+------------------------------------------------------------------
+Rescans content/location to drop empty cells. Was actually running up to
+three times per single edit: once via initSheetData()'s own call, once via
+an explicit call in the return-key handler's saveAsLocalJson(), and
+sometimes a third time via a `localFileNames.count == 0` branch that
+triggered yet another saveAsLocalJson(). storeInput() already removes a
+cell from content/location directly the instant it's cleared, and
+parseCSVFile never emits an empty entry in the first place (skips blank
+CSV fields on parse) -- so for CSV this O(n) rescan was guaranteed to find
+nothing, up to three times, on every edit.
+Fix: guarded `if !isCSV` at each call site.
+
+
+4. fontcolorClass.storeValues() -- a hidden O(n) copy, not an O(n) scan
+------------------------------------------------------------------
+This one is the odd one out: the function itself is O(1) -- it aliases
+appd.RC/appd.RL (a 9-deep undo ring buffer) to the current content/location
+arrays via plain Swift assignment, which is cheap because arrays are
+copy-on-write. The O(n) cost lands one line later and in a different
+function: storeInput()'s *next* mutation of content/location forces Swift
+to silently deep-copy the full 1.4M-entry array, because the COW buffer
+is no longer uniquely referenced after the alias. So every single edit
+paid for one full-array copy, invisibly, with nothing in storeInput()
+itself looking expensive.
+Confirmed via grep that the only consumer, restore() (via
+colorclass.outValues()), has zero call sites anywhere in the codebase --
+this undo mechanism is unreachable dead code.
+Fix: guarded `if !isCSV` at all 5 call sites (2 per file were already
+missed once and had to be re-added after a later, unrelated edit reverted
+one of them -- worth double-checking these specific lines if this file is
+ever "cleaned up").
+
+
+5. calculatormode_update_main() -- O(n) rebuild, plus a crash risk
+------------------------------------------------------------------
+Builds filteredLocationInExcel/literalLocationInExcel by indexing
+locationInExcel[index] for every entry in content/location -- another full
+O(n) rebuild on every edit, needed for formula dependency tracking that
+CSV doesn't have. Had 7 call sites per file (loadExcelSheet,
+patchJsonCacheAndRefresh, fillDateInSelectedCellContent, a second similar
+fill function, input(), virtual_input(), a sheet-tab-switch handler).
+Only 2 of the 7 were guarded on the first pass, which surfaced as a crash
+("Fatal error: Index out of range") the first time CSV mode reached one of
+the other 5: locationInExcel was stale/undersized once item 1 above
+started skipping its rebuild for CSV, so this indexed past the end of it.
+Fix: all 7 sites guarded `if !isCSV`.
+
+
+6. saveJsonFile's serialize+write -- genuinely O(n), moved off the main thread
+------------------------------------------------------------------
+JSONSerialization.data(withJSONObject:) + write(to:) over the full
+content/location/style arrays. Measured at ~2.0-2.1s at 1.4M cells via
+direct instrumentation (PERF saveJsonFile.serializeAndWrite) -- this one
+is different from items 1-5: it's real, necessary work (every edit does
+need to be persisted), not redundant/skippable Excel-only work.
+Fix: not skipped, just no longer blocking. Moved onto a dedicated serial
+background queue (`localJsonSaveQueue`, FileFillViewController.swift:44)
+so the ~2s cost still happens on every edit but doesn't freeze input while
+it runs. Applies to both CSV and xlsx.
+
+
+Net result (confirmed via the user's own on-device PERF logs): items 1-5
+dropped from multi-second-per-edit to 0.000s for CSV. Item 6 stayed at
+~2s but stopped blocking. xlsx behavior is unchanged in every case.
