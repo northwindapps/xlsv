@@ -722,19 +722,13 @@ class Service {
     // normalizes self-closing tags away (see SWXMLHash's XMLElement.swift), so it isn't
     // guaranteed to reproduce the original bytes an exact-match splice into xmlString needs
     // -- that's what originalElementRange below is for.
-    private func sheetDataRows(in xmlString: String) -> [XMLIndexer] {
-        let xml = XMLHash.parse(xmlString)
-        return xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children ?? []
-    }
-
-    private func rowExists(_ rowNumber: String, in rows: [XMLIndexer]) -> Bool {
-        rows.contains { $0.element?.attribute(by: "r")?.text == rowNumber }
-    }
-
-    private func cellExists(_ ref: String, inRow rowNumber: String, rows: [XMLIndexer]) -> Bool {
-        rows.first(where: { $0.element?.attribute(by: "r")?.text == rowNumber })?
-            .children.contains { $0.element?.attribute(by: "r")?.text == ref } ?? false
-    }
+    // sheetDataRows()/rowExists() used to parse the entire sheet via
+    // XMLHash.parse() just to answer "does this row exist" -- at 100k rows /
+    // 1.4M cells that was the actual crash cause on every single-cell edit to
+    // a not-yet-populated cell. Replaced by originalElementRange's targeted
+    // string search (Case 2) and rowInsertionPoint's regex tag-scan (Case 3),
+    // neither of which builds a DOM tree of the whole sheet. Removed as dead
+    // code once nothing called them anymore.
 
     // Carves the exact original text of a <tag ... r="attributeValue" ...> element
     // (self-closing or with a separate close tag) out of xmlString. Anchored on the
@@ -781,27 +775,42 @@ class Service {
             styleIdx = appd.excelStyleIdx[slocatinIdx]
         }
 
+        let __readStart = CFAbsoluteTimeGetCurrent()
         guard var xmlString = try? String(contentsOf: url2) else { return nil }
         let backUpXmlString = xmlString
+        perfLog(String(format: "PERF testUpdateString.readSheetXML: %.3fs", CFAbsoluteTimeGetCurrent() - __readStart))
 
         let newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
 
         let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        let rows = sheetDataRows(in: xmlString)
+        let __case1CheckStart = CFAbsoluteTimeGetCurrent()
 
         // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
-        // -- splice in just that one element.
-        if cellExists(index, inRow: rowNumber, rows: rows),
-           let cellRange = originalElementRange(tag: "c", attributeValue: index, in: xmlString) {
+        // -- splice in just that one element. Checked via originalElementRange alone
+        // (a targeted string search, not a parse) so editing an existing cell -- the
+        // overwhelmingly common case on an already-populated sheet -- never needs
+        // sheetDataRows()'s full XMLHash.parse() of the whole sheet at all. That parse
+        // builds a DOM node for every row and every cell; at 100k rows / 1.4M cells it
+        // was taking long enough to get the app killed by the watchdog on every single
+        // keystroke -- confirmed via PERF logs showing every stage up through
+        // sharedStringsLookup completing in well under a second, then nothing, on a
+        // real device. Same architectural mistake this project already found and fixed
+        // once before for the initial-load path (see readExcel2/FastWorksheetParser).
+        if let cellRange = originalElementRange(tag: "c", attributeValue: index, in: xmlString) {
+            perfLog(String(format: "PERF testUpdateString.case1Hit: %.3fs", CFAbsoluteTimeGetCurrent() - __case1CheckStart))
             xmlString.replaceSubrange(cellRange, with: newElement)
             let validator = XMLValidator()
             return validator.validateXML(xmlString: xmlString) ? xmlString : backUpXmlString
         }
+        perfLog(String(format: "PERF testUpdateString.case1Miss: %.3fs -- falling through to full parse", CFAbsoluteTimeGetCurrent() - __case1CheckStart))
 
-        // Case 2/3: the cell doesn't exist yet -- find its row, then either insert the
-        // cell in sorted column order within that row, or create the row itself (in
-        // sorted row order) if the row is entirely new.
-        if rowExists(rowNumber, in: rows), let rowRange = originalElementRange(tag: "row", attributeValue: rowNumber, in: xmlString) {
+        // Case 2/3: the cell doesn't exist yet -- find its row via the same targeted
+        // string search as Case 1 (no full-sheet parse needed just to answer "does
+        // this row exist").
+        let __rowCheckStart = CFAbsoluteTimeGetCurrent()
+        let rowRangeIfExists = originalElementRange(tag: "row", attributeValue: rowNumber, in: xmlString)
+        perfLog(String(format: "PERF testUpdateString.rowCheck: %.3fs", CFAbsoluteTimeGetCurrent() - __rowCheckStart))
+        if let rowRange = rowRangeIfExists {
             // Row exists but this cell doesn't -- append it, then re-sort just this
             // row's cells by column so the insertion lands in the right place.
             let targetRowTag = String(xmlString[rowRange])
@@ -813,56 +822,88 @@ class Service {
                 rowPart += ">"
             }
             let opened = rowPart.replacingOccurrences(of: "</row>", with: "") + newElement + "</row>"
-            let candidate = xmlString.replacingOccurrences(of: targetRowTag, with: opened)
 
-            let validator0 = XMLValidator()
-            guard validator0.validateXML(xmlString: candidate) else { return backUpXmlString }
-
+            // Parse and sort only this one row's own XML fragment (a single <row>
+            // with, at most, a few hundred <c> cells) instead of the whole sheet --
+            // this is the same mistake as sheetDataRows() above, just for a single
+            // row instead of every row: at 100k rows / 1.4M cells, XMLHash.parse()
+            // over the full modified sheet just to sort ~15 cells within one row
+            // was the actual crash (confirmed via PERF logs showing every stage up
+            // to here completing in well under a second on a real device, then
+            // nothing).
+            let __rowParseStart = CFAbsoluteTimeGetCurrent()
             var rebuiltRowPart = ""
-            let xml = XMLHash.parse(candidate)
-            if let rows2 = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children {
-                for row in rows2 {
-                    guard row.element?.attribute(by: "r")?.text == rowNumber else { continue }
-                    let sortedCells = row.children.sorted { c1, c2 -> Bool in
-                        guard let n1 = c1.element?.attribute(by: "r")?.text, let i1 = extractIndices(from: n1),
-                              let n2 = c2.element?.attribute(by: "r")?.text, let i2 = extractIndices(from: n2) else { return false }
-                        return i1.column < i2.column
-                    }
-                    for cell in sortedCells {
-                        rebuiltRowPart += cell.description
-                    }
+            let rowXml = XMLHash.parse(opened)
+            if let rowNode = rowXml.children.first {
+                let sortedCells = rowNode.children.sorted { c1, c2 -> Bool in
+                    guard let n1 = c1.element?.attribute(by: "r")?.text, let i1 = extractIndices(from: n1),
+                          let n2 = c2.element?.attribute(by: "r")?.text, let i2 = extractIndices(from: n2) else { return false }
+                    return i1.column < i2.column
+                }
+                for cell in sortedCells {
+                    rebuiltRowPart += cell.description
                 }
             }
+            perfLog(String(format: "PERF testUpdateString.rowFragmentParseAndSort: %.3fs", CFAbsoluteTimeGetCurrent() - __rowParseStart))
 
-            guard !rebuiltRowPart.isEmpty else { return validator0.validateXML(xmlString: candidate) ? candidate : backUpXmlString }
-            let final = candidate.replacingOccurrences(of: opened, with: "<row r=\"\(rowNumber)\">" + rebuiltRowPart + "</row>")
+            guard !rebuiltRowPart.isEmpty else { return backUpXmlString }
+            let final = xmlString.replacingOccurrences(of: targetRowTag, with: "<row r=\"\(rowNumber)\">" + rebuiltRowPart + "</row>")
             let validator = XMLValidator()
             return validator.validateXML(xmlString: final) ? final : backUpXmlString
         }
 
-        // Row doesn't exist at all -- insert a brand-new <row> right after the
-        // <sheetData> open tag, then re-sort all rows by their r= attribute via
-        // XMLHash so it lands in numeric row order.
+        // Row doesn't exist at all -- rows are already written in ascending
+        // numeric order (Excel writes them that way, and this function preserves
+        // it), so find the correct insertion point with a direct scan for
+        // existing <row r="N"> tags instead of naively inserting at the front and
+        // then re-parsing + re-sorting all 100k+ rows via XMLHash to fix the
+        // ordering afterward -- same crash-causing mistake as Case 2 above, just
+        // worse (it re-serialized every single row's XMLHash .description, not
+        // just one row's).
+        guard let newRowNum = Int(rowNumber) else { return backUpXmlString }
+        let newRowElement = "<row r=\"\(rowNumber)\">\(newElement)</row>"
+
         var replaced = xmlString
         if replaced.contains("<sheetData/>") {
             replaced = replaced.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
         }
-        replaced = replaced.replacingOccurrences(of: "<sheetData>", with: "<sheetData><row r=\"\(rowNumber)\">\(newElement)</row>")
 
-        guard let sheetDataSubstring = extractSheetDataSubstring(from: replaced) else { return backUpXmlString }
-        let xml = XMLHash.parse(replaced)
-        guard let rows3 = xml.children.first?.children.first(where: { $0.element?.name == "sheetData" })?.children else {
+        if let insertionPoint = rowInsertionPoint(before: newRowNum, in: replaced) {
+            replaced.insert(contentsOf: newRowElement, at: insertionPoint)
+        } else if let closeRange = replaced.range(of: "</sheetData>") {
+            // No existing row numbered higher than this one -- append as the last row.
+            replaced.insert(contentsOf: newRowElement, at: closeRange.lowerBound)
+        } else {
             return backUpXmlString
         }
-        let sortedRows = rows3.sorted { r1, r2 -> Bool in
-            guard let t1 = r1.element?.attribute(by: "r")?.text, let n1 = Int(t1),
-                  let t2 = r2.element?.attribute(by: "r")?.text, let n2 = Int(t2) else { return false }
-            return n1 < n2
-        }
-        let rebuiltSheetData = "<sheetData>" + sortedRows.map { $0.description }.joined() + "</sheetData>"
-        let final = replaced.replacingOccurrences(of: sheetDataSubstring, with: rebuiltSheetData)
+
         let validator = XMLValidator()
-        return validator.validateXML(xmlString: final) ? final : backUpXmlString
+        return validator.validateXML(xmlString: replaced) ? replaced : backUpXmlString
+    }
+
+    // Scans for the first <row r="N"> tag with N > targetRowNum, returning the
+    // index right before it -- since existing rows are already in ascending
+    // order, that's exactly where a new row numbered targetRowNum belongs.
+    // Pure regex tag-matching over the raw string, no DOM tree construction, so
+    // this stays cheap even across 100k+ rows (unlike XMLHash.parse(), which
+    // allocates a node per row *and* per cell). Returns nil if every existing
+    // row number is smaller (caller appends at the end of <sheetData>).
+    private func rowInsertionPoint(before targetRowNum: Int, in xmlString: String) -> String.Index? {
+        guard let regex = try? NSRegularExpression(pattern: "<row r=\"(\\d+)\"") else { return nil }
+        let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+        var result: String.Index?
+        regex.enumerateMatches(in: xmlString, range: nsRange) { match, _, stop in
+            guard let match = match,
+                  let numRange = Range(match.range(at: 1), in: xmlString),
+                  let rowNum = Int(xmlString[numRange]) else { return }
+            if rowNum > targetRowNum {
+                if let fullRange = Range(match.range, in: xmlString) {
+                    result = fullRange.lowerBound
+                }
+                stop.pointee = true
+            }
+        }
+        return result
     }
     
     //making row
@@ -2182,6 +2223,10 @@ class Service {
     
     func testUpdateStringBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int?, fString:String? = nil, bulkAry:[String] = [], calculated:[String] = [],calculated_location:[String] = [],content:[String] = [],locationInExcel:[String] = []) -> Bool? {
         var isError = false
+        let __tusbStart = CFAbsoluteTimeGetCurrent()
+        defer {
+            perfLog(String(format: "PERF testUpdateStringBox.total: %.3fs", CFAbsoluteTimeGetCurrent() - __tusbStart))
+        }
         do {
             // Get the sandbox directory for documents
             if let sandBox = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -2230,10 +2275,13 @@ class Service {
                     }
                 } else {
                     // Move the file to the subdirectory
+                    let __copyStart = CFAbsoluteTimeGetCurrent()
                     try FileManager.default.copyItem(at: URL.init(fileURLWithPath: fp), to: destinationURL)
                     print("File moved successfully to: \(destinationURL.path)")
+                    perfLog(String(format: "PERF testUpdateStringBox.copyToSandbox: %.3fs", CFAbsoluteTimeGetCurrent() - __copyStart))
                 }
                 
+                let __unzipStart = CFAbsoluteTimeGetCurrent()
                 do {
                     //unzip
                     let rlt = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
@@ -2242,6 +2290,7 @@ class Service {
                     print("Error unzipping file: \(error)")
                     return false
                 }
+                perfLog(String(format: "PERF testUpdateStringBox.unzip: %.3fs", CFAbsoluteTimeGetCurrent() - __unzipStart))
                 
                 do {
                     //delete imported2.zip or imported2.xlsx
@@ -2254,6 +2303,7 @@ class Service {
                 
                 //TODO update sytle.xml here
                 let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+                let __styleStart = CFAbsoluteTimeGetCurrent()
                 testExtractTheme(url: themeXMLURL)
                 let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
                 let modifiedStylesStr = testExtractStyle(url:styleXMLURL)
@@ -2273,6 +2323,7 @@ class Service {
                         return false
                     }
                 }
+                perfLog(String(format: "PERF testUpdateStringBox.themeAndStyle: %.3fs", CFAbsoluteTimeGetCurrent() - __styleStart))
                 
                     
                 //shardString update test
@@ -2299,7 +2350,9 @@ class Service {
                 if input.count > 0{
                     var check = false
                     //sharedString update, if no index, it just add new element
+                    let __sharedStart = CFAbsoluteTimeGetCurrent()
                     let sharedStringIdAndString = checkSharedStringsIndex(url: shardStringXMLURL,SSlist:oldAry!,word: input)
+                    perfLog(String(format: "PERF testUpdateStringBox.sharedStringsLookup: %.3fs", CFAbsoluteTimeGetCurrent() - __sharedStart))
                     
                     //writing updated sharedString
                     if(sharedStringIdAndString.0 != nil && sharedStringIdAndString.1 != nil){
@@ -2317,16 +2370,24 @@ class Service {
                     // sibling cells' s= style, shared-formula compression, style-only
                     // placeholder cells) instead of rebuilding the whole <sheetData> from
                     // the whole-sheet content/locationInExcel arrays on every edit.
+                    let __patchStart = CFAbsoluteTimeGetCurrent()
                     guard let patchedXML = testUpdateString(url: worksheetXMLURL, content: input, index: cellIdxString, sharedStringIndex: sharedStringIdAndString.0, calculated: calculated, calculatedLocation: calculated_location) else {
                         return false
                     }
+                    perfLog(String(format: "PERF testUpdateStringBox.patchCell: %.3fs", CFAbsoluteTimeGetCurrent() - __patchStart))
                     do {
                         try patchedXML.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                     } catch {
                         print("failed to update sheetdata")
                         return false
                     }
-                    print("sheet data",patchedXML)
+                    // patchedXML is the *entire* sheet's XML (testUpdateString reads the
+                    // whole sheetN.xml into a string to splice in one cell and returns it
+                    // whole) -- was ~47MB on the heavy test file. print()'ing that on every
+                    // single keystroke commit was almost certainly the actual crash cause
+                    // reported after today's calculation-path fix: the calculation got fast
+                    // enough to reach this line, which was always this expensive, just never
+                    // reached in time to matter before.
                     print("shared string",sharedStringIdAndString)
                     check = true
                 }else{
@@ -2371,6 +2432,7 @@ class Service {
                 let fpURL = URL(fileURLWithPath: fp)
                 let productURL = subdirectoryURL.appendingPathComponent(fpURL.lastPathComponent)
                 //appendingPathComponent("imported2.xlsx")
+                let __rezipStart = CFAbsoluteTimeGetCurrent()
                 let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
                 // Check if the destination file exists
                 if FileManager.default.fileExists(atPath: fpURL.path) {
@@ -2379,6 +2441,7 @@ class Service {
                 }
                 //overwrite or update xlsx
                 let rlt = try FileManager.default.copyItem(at: zipFilePath, to: fpURL)//productURL
+                perfLog(String(format: "PERF testUpdateStringBox.rezipAndCopyBack: %.3fs", CFAbsoluteTimeGetCurrent() - __rezipStart))
                 
                 for fileURL in files {
                    do {

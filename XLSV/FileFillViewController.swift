@@ -499,6 +499,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     private var fLocationIndexCacheCount = -1
     private var excelStyleLocationIndexCache: [String: Int] = [:]
     private var excelStyleLocationIndexCacheCount = -1
+    // Reverse of locationIndexCache -- keys on locationInExcel's A1-style labels
+    // ("O2") instead of location's "col,row" strings, so a formula's cell
+    // references can be resolved to a content/location index in O(1) instead of
+    // locationInExcel.firstIndex(of:)'s O(n) scan. Used by
+    // recalculateSingleCell's incremental formula path.
+    private var excelLocationIndexCache: [String: Int] = [:]
+    private var excelLocationIndexCacheCount = -1
 
     private func invalidateLocationIndexCache() {
         locationIndexCacheCount = -1
@@ -511,11 +518,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // location/f_location/excelStyleLocation get fully reassigned (not appended to)
     // whenever a different sheet's data loads (see isExcelSheetData). The count-based
     // checks above can't detect that -- a same-size sheet swap leaves the old sheet's
-    // key->index mappings in place -- so any full reassignment must invalidate all three.
+    // key->index mappings in place -- so any full reassignment must invalidate all four.
     private func invalidateAllRenderIndexCaches() {
         locationIndexCacheCount = -1
         fLocationIndexCacheCount = -1
         excelStyleLocationIndexCacheCount = -1
+        excelLocationIndexCacheCount = -1
     }
 
     private func locationIndex(for key: String) -> Int? {
@@ -540,6 +548,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             fLocationIndexCacheCount = f_location.count
         }
         return fLocationIndexCache[key]
+    }
+
+    private func excelLocationIndex(for key: String) -> Int? {
+        if excelLocationIndexCacheCount != locationInExcel.count {
+            excelLocationIndexCache.removeAll(keepingCapacity: true)
+            excelLocationIndexCache.reserveCapacity(locationInExcel.count)
+            for (idx, loc) in locationInExcel.enumerated() where excelLocationIndexCache[loc] == nil {
+                excelLocationIndexCache[loc] = idx
+            }
+            excelLocationIndexCacheCount = locationInExcel.count
+        }
+        return excelLocationIndexCache[key]
     }
 
     private func excelStyleLocationIndex(_ locations: [String], key: String) -> Int? {
@@ -1575,25 +1595,37 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
         perfLog(String(format: "PERF patchJsonCacheAndRefresh.storeValues: %.3fs", CFAbsoluteTimeGetCurrent() - __storeValuesStart))
 
-        // locationInExcel is only consumed by formula processing (skipped below
-        // for CSV) and xlsx-XML-writing functions (no-op for CSV, no
-        // imported_xlsx_file_path) -- rebuilding it for every cell on every edit
-        // is pure waste for CSV mode.
-        if !isCSV {
-            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
-            initExcelLocation()
-            perfLog(String(format: "PERF patchJsonCacheAndRefresh.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
-        }
+        // Full initExcelLocation() rebuild removed -- this function's only two
+        // callers (shouldChangeTextIn, datainputFromOtherComtroller) already
+        // call storeInput() first, which now keeps locationInExcel in sync
+        // incrementally (see storeInput's edit/first-entry/clear cases). A full
+        // rebuild here was pure redundant ~4.7s waste on a 1.4M-cell sheet on
+        // every single keyboard-committed edit.
 
         if !isCSV {
             let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
             resolveCellStyles()
             perfLog(String(format: "PERF patchJsonCacheAndRefresh.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
-
-            let __calcMainStart = CFAbsoluteTimeGetCurrent()
-            calculatormode_update_main()
-            perfLog(String(format: "PERF patchJsonCacheAndRefresh.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
         }
+        // calculatormode_update_main() used to run here unconditionally on every
+        // keyboard-committed edit -- but this function's only two callers
+        // (shouldChangeTextIn's "\n" handler, datainputFromOtherComtroller) both
+        // already call storeInput() first, which now recalculates the edited
+        // cell itself via recalculateSingleCell (see storeInput). Re-running the
+        // full whole-sheet calculatormode_update_main() here was pure redundant
+        // ~4s+ waste on a 1.4M-cell sheet, AND could silently disagree with
+        // storeInput's already-correct result -- confirmed via a self-referential
+        // formula (typed directly into the cell it references) where this full
+        // pass's circular-dependency handling left f_calculated empty/stale for
+        // that cell while storeInput's scoped pass had already set it correctly,
+        // and because FileCollectionView was never reloaded either (see below),
+        // the cell kept showing raw "=..." text instead of either result.
+        //
+        // FileCollectionView itself was never reloaded after a keyboard edit at
+        // all in this function (unlike its sibling loadExcelSheet, which does) --
+        // that alone meant the edited cell never got a fresh cellForItemAt call
+        // to pick up storeInput's result, regardless of which calculation ran.
+        FileCollectionView.reloadData()
         completion?()
     }
 
@@ -3313,16 +3345,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
 
             if let j = location.firstIndex(of: posKey) {
-                excelIndice.append(locationInExcel[j])
-                
+                // locationInExcel is never populated for CSV (initExcelLocation()
+                // is skipped there), so indexing/removing from it here would
+                // crash ("Index out of range") the moment location's real index
+                // exceeds locationInExcel's stale/empty size -- exactly what
+                // happened dragging a "=..." fill on a large CSV. excelIndice's
+                // actual values are never read below either way (only its
+                // count), so track presence with posKey instead for CSV.
+                if !isCSV {
+                    excelIndice.append(locationInExcel[j])
+                    locationInExcel.remove(at: j)
+                } else {
+                    excelIndice.append(posKey)
+                }
+
                 location.remove(at: j)
-                locationInExcel.remove(at: j)
                 content.remove(at: j)
                 tcolor.remove(at: j)
                 textsize.remove(at: j)
                 bgcolor.remove(at: j)
             }
-            
+
             if let k = f_location.firstIndex(of: posKey) {
                 f_calculated.remove(at: k)
                 f_location_alphabet.remove(at: k)
@@ -3370,7 +3413,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
         }
 
-        var excelIndice = [String]()
         var generatedFormulas = [String]()
 
         for (i, each) in sortedSelection.enumerated() {
@@ -3379,17 +3421,25 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 continue
             }
             let posKey = "\(each.item),\(each.section)"
-            
+
             let colOffset = each.item - firstIndexPath.item
             let rowOffset = each.section - firstIndexPath.section
             let newFormula = shiftFormula(baseFormula, colOffset: colOffset, rowOffset: rowOffset)
             generatedFormulas.append(newFormula)
 
             if let j = location.firstIndex(of: posKey) {
-                excelIndice.append(locationInExcel[j])
-                
+                // locationInExcel is never populated for CSV (initExcelLocation()
+                // is skipped there) -- removing from it here crashed ("Index out
+                // of range") the moment location's real index exceeded
+                // locationInExcel's stale/empty size, e.g. dragging a "=..."
+                // formula fill on a large CSV. The values collected here were
+                // never read anywhere below (dead code, confirmed via grep), so
+                // just drop this array entirely rather than guard a no-op.
+                if !isCSV {
+                    locationInExcel.remove(at: j)
+                }
+
                 location.remove(at: j)
-                locationInExcel.remove(at: j)
                 content.remove(at: j)
                 tcolor.remove(at: j)
                 textsize.remove(at: j)
@@ -4907,21 +4957,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         
         //it take care of empty string
+        // storeInput already recalculates just this one cell (see
+        // recalculateSingleCell) and updates f_location/f_location_alphabet/
+        // f_calculated incrementally -- no full calculatormode_update_main()
+        // rebuild needed here anymore. f_content is dead (never read anywhere,
+        // only ever .removeAll()'d), kept as a no-op like its sibling call sites.
         storeInput(IPd: IP, elementd: element)
-        
-        //if element.hasPrefix("="){
         f_content.removeAll()
-        f_calculated.removeAll()
-        f_location_alphabet.removeAll()
-        f_location.removeAll()
-        // The comment below says "always excel, no such thing as csv case" --
-        // that assumption doesn't hold; this path is reachable from CSV mode
-        // too (confirmed via a real crash: calculatormode_update_main indexes
-        // locationInExcel[index], which CSV mode never keeps in sync since
-        // initExcelLocation is skipped there).
-        if !isCSV {
-            calculatormode_update_main()
-        }
 
         //always excel, no such thing as csv case
         if element == ""{
@@ -5125,21 +5167,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
         
         //it take care of empty string
+        // storeInput already recalculates just this one cell (see
+        // recalculateSingleCell) and updates f_location/f_location_alphabet/
+        // f_calculated incrementally -- no full calculatormode_update_main()
+        // rebuild needed here anymore. f_content is dead (never read anywhere,
+        // only ever .removeAll()'d), kept as a no-op like its sibling call sites.
+        // Multi-cell drag-fill callers (fillFunctionInSelectedCellContent /
+        // fillDateInSelectedCellContent) still run their own full
+        // calculatormode_update_main() pass after their loop of virtual_input
+        // calls completes, so correctness across a filled range is unaffected.
         storeInput(IPd: IP, elementd: element)
-        
-        //if element.hasPrefix("="){
         f_content.removeAll()
-        f_calculated.removeAll()
-        f_location_alphabet.removeAll()
-        f_location.removeAll()
-        // The comment below says "always excel, no such thing as csv case" --
-        // that assumption doesn't hold; this path is reachable from CSV mode
-        // too (confirmed via a real crash: calculatormode_update_main indexes
-        // locationInExcel[index], which CSV mode never keeps in sync since
-        // initExcelLocation is skipped there).
-        if !isCSV {
-            calculatormode_update_main()
-        }
 
         //always excel, no such thing as csv case
         if element == ""{
@@ -5869,11 +5907,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 location[i] = IPd
                 perfLog(String(format: "PERF storeInput.mutateExisting: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __mutateStart, content.count))
 
+                // location[i] still equals IPd (that's how i was found), so
+                // locationInExcel[i] is already correct -- no rebuild needed.
+                if !isCSV {
+                    recalculateSingleCell(index: i, posKey: IPd)
+                }
 
             }else{
                 content.append(elementd)
                 location.append(IPd)
-                
+
                 switch UIDevice.current.userInterfaceIdiom {
                 case .pad:
                     //updated
@@ -5881,7 +5924,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     bgcolor.append(selectingBgColor)
                     tcolor.append(selectingColor)
                     break
-                    
+
                 default:
                     //updated
                     textsize.append(String(selectingSize))
@@ -5889,7 +5932,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     tcolor.append(selectingColor)
                     break
                 }
-                
+
+                // First entry into a previously-empty cell -- locationInExcel
+                // needs a matching new entry appended (not rebuilt from scratch;
+                // see the perf note below on why a full rebuild here crashed).
+                if !isCSV {
+                    let newIndex = content.count - 1
+                    let parts = IPd.components(separatedBy: ",")
+                    if let colStr = parts.first, let colInt = Int(colStr), let rowStr = parts.last {
+                        locationInExcel.append(getExcelColumnName(columnNumber: colInt) + rowStr)
+                    } else {
+                        locationInExcel.append("")
+                    }
+                    recalculateSingleCell(index: newIndex, posKey: IPd)
+                }
+
             }
         }else{
             if let i = locationIndex(for: IPd) {
@@ -5898,20 +5955,25 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 textsize.remove(at: i)
                 bgcolor.remove(at: i)
                 tcolor.remove(at: i)
+                if !isCSV {
+                    if i < locationInExcel.count {
+                        locationInExcel.remove(at: i)
+                    }
+                    removeFormulaEntry(posKey: IPd)
+                }
             }
         }
 
-        //updating locationInExcel
-        // Unconditional call here, separate from the ones already guarded in
-        // loadExcelSheet/patchJsonCacheAndRefresh -- same reasoning applies
-        // (locationInExcel unused by CSV mode's formula-free, xlsx-XML-free
-        // path), and this one runs on literally every single edit regardless of
-        // which caller reached storeInput.
-        if !isCSV {
-            let __initExcelLocationStart = CFAbsoluteTimeGetCurrent()
-            initExcelLocation()
-            perfLog(String(format: "PERF storeInput.initExcelLocation: %.3fs", CFAbsoluteTimeGetCurrent() - __initExcelLocationStart))
-        }
+        // locationInExcel/f_location/f_calculated are now updated incrementally
+        // above (just the touched cell), not via a full initExcelLocation() +
+        // calculatormode_update_main() rebuild across the whole sheet on every
+        // single edit. Confirmed via PERF log that initExcelLocation() alone
+        // cost 4.68s per keystroke on a 100k-row/1.4M-cell file, with
+        // calculatormode_update_main() immediately after it and no completion
+        // log -- i.e. this was blocking the main thread long enough for iOS to
+        // kill the app mid-calculation. Tradeoff: other formula cells that
+        // reference the one just edited won't live-update until they're
+        // themselves re-entered (see recalculateSingleCell's comment).
         perfLog(String(format: "PERF storeInput.total: %.3fs", CFAbsoluteTimeGetCurrent() - __storeInputStart))
     }
     
@@ -6110,7 +6172,94 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
         return true
     }
-    
+
+    // Removes posKey's entry from f_location/f_location_alphabet/f_calculated,
+    // if it has one -- used when a cell that used to hold a formula gets
+    // overwritten with plain content or cleared entirely.
+    private func removeFormulaEntry(posKey: String) {
+        if let k = fLocationIndex(for: posKey) {
+            f_calculated.remove(at: k)
+            f_location_alphabet.remove(at: k)
+            f_location.remove(at: k)
+            invalidateFLocationIndexCache()
+        }
+    }
+
+    // Scoped counterpart to calculatormode_update_main() -- recalculates just
+    // the one cell that was actually edited (via storeInput's "edit" or "first
+    // entry" cases) instead of rebuilding f_location/f_calculated for every
+    // formula cell in the sheet. On a 100k-row file, calculatormode_update_main's
+    // substitution loop is O(formulas * literals) and its own comment already
+    // documents this as a crash risk at scale -- confirmed live via a PERF log
+    // showing storeInput's own initExcelLocation() alone costing 4.68s per
+    // keystroke, with calculatormode_update_main immediately after it and no
+    // completion log, i.e. the app was killed mid-calculation.
+    //
+    // Tradeoff (accepted): this only updates the cell you just edited. Any OTHER
+    // formula cell elsewhere that references this one will keep showing its
+    // previously-computed value until it is itself re-entered -- formulas are no
+    // longer "live" across the whole sheet on every edit. SUM/AVERAGE/MIN/MAX
+    // still fall back to the full calculatormode_update_main() pass below, since
+    // ExcelHelper's excel_sum/average/min/max already scan every literal cell
+    // internally to resolve a range regardless of how they're called, so scoping
+    // just this call site wouldn't avoid that cost anyway -- only direct
+    // reference/arithmetic formulas (e.g. "=O2*2") get the fast path, which is
+    // also exactly the case that was observed crashing.
+    private func recalculateSingleCell(index: Int, posKey: String) {
+        guard index >= 0, index < content.count else { return }
+        let raw = content[index]
+
+        guard raw.hasPrefix("=") else {
+            removeFormulaEntry(posKey: posKey)
+            return
+        }
+
+        guard index < locationInExcel.count else { return }
+        let excelLoc = locationInExcel[index]
+        let formulaText = raw.replacingOccurrences(of: " ", with: "")
+
+        let upper = formulaText.uppercased()
+        if upper.hasPrefix("=SUM(") || upper.hasPrefix("=AVERAGE(") || upper.hasPrefix("=MIN(") || upper.hasPrefix("=MAX(") {
+            calculatormode_update_main()
+            return
+        }
+
+        var currentFormula = formulaText.replacingOccurrences(of: "=", with: "")
+        for ref in extractCellIndices(from: currentFormula) {
+            guard let refIdx = excelLocationIndex(for: ref), refIdx < content.count else { continue }
+            var val: String? = nil
+            let refContent = content[refIdx]
+            if refContent.hasPrefix("="), refIdx < location.count, let k = fLocationIndex(for: location[refIdx]) {
+                val = f_calculated[k]
+            } else {
+                let trimmed = refContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                if Double(trimmed) != nil { val = trimmed }
+            }
+            if let v = val {
+                currentFormula = applyValue(formula: currentFormula, ref: ref, value: v)
+            }
+        }
+
+        var resultStr = "error"
+        if let numericValue = Double(currentFormula) {
+            resultStr = String(numericValue)
+        } else if isReadyToCalculate(expression: currentFormula) {
+            let service = ASTCalculationService()
+            if service.parseExpression(currentFormula) != nil, let result = try? service.evaluate(currentFormula) {
+                resultStr = String(result)
+            }
+        }
+
+        if let k = fLocationIndex(for: posKey) {
+            f_calculated[k] = resultStr
+        } else {
+            f_location.append(posKey)
+            f_location_alphabet.append(excelLoc)
+            f_calculated.append(resultStr)
+            invalidateFLocationIndexCache()
+        }
+    }
+
     @objc func calculatormode_update_main(isFullupdate: Bool = true){
 //        if isFullupdate {
             f_calculated.removeAll()

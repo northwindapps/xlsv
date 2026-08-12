@@ -1,0 +1,143 @@
+xlsx single-cell-edit crash on a large file (100k rows / 1.4M cells / 47MB) -- root causes and fixes
+================================================================================
+
+Context: unlike the earlier CSV data-entry work, this was an ordinary xlsx
+file (Form Fill mode), editing single cells (e.g. "=O2*5") after the file
+was already loaded. The app crashed (iOS watchdog killing an unresponsive
+main thread, not a Swift exception) partway through persisting the edit.
+Found via iterative on-device PERF-log captures, each fix narrowing down
+where the remaining time was going. Four separate, stacked problems, fixed
+in order of discovery -- all in FileFillViewController.swift/ViewController.swift
+(mirrored in both) and service.swift unless noted.
+
+
+1. calculatormode_update_main()/initExcelLocation() ran twice per edit,
+   once fast + once slow, and could disagree
+------------------------------------------------------------------
+storeInput() (the single chokepoint every cell commit passes through) was
+given a new scoped recalculation this session: recalculateSingleCell(index:
+posKey:) -- resolves just the edited cell's own formula (direct
+cell-reference lookups via a new O(1) excelLocationIndex cache, keyed on
+locationInExcel's "O2"-style labels) instead of calculatormode_update_main's
+whole-sheet O(formulas * literals) rebuild. SUM/AVERAGE/MIN/MAX still fall
+back to the full pass, since ExcelHelper's excel_sum/average/min/max scan
+every literal cell internally regardless of caller. locationInExcel itself
+is now updated incrementally in storeInput too (O(1) per edit: unchanged on
+mutate, one append on first-entry, one remove on clear) instead of via a
+full initExcelLocation() rebuild.
+
+This alone didn't fix the reported symptom, because a SEPARATE function,
+patchJsonCacheAndRefresh -- the "fast path" alternative to loadExcelSheet,
+switched on by useFastCellEditReload (defaults true) -- ran immediately
+after storeInput() via shouldChangeTextIn's "\n"-key handler, and
+unconditionally re-ran the FULL calculatormode_update_main() and
+initExcelLocation() again, redundantly (~9s combined on the test file) AND
+capable of silently overwriting storeInput's already-correct scoped result
+with a different one. Confirmed concretely with a self-referential formula
+(typed "=O2*5" directly into cell O2): the full pass's circular-dependency
+handling in calculatormode_update_main left f_calculated empty/stale for
+that cell, while storeInput's scoped pass had already computed the correct
+"error" result for it moments earlier.
+
+Fix: removed the redundant initExcelLocation()/calculatormode_update_main()
+calls from patchJsonCacheAndRefresh entirely -- both of its only two callers
+(shouldChangeTextIn, datainputFromOtherComtroller) already call storeInput()
+first, which now does this work correctly and incrementally.
+
+Not yet fixed (flagged, user chose to leave for now): patchJsonCacheAndRefresh
+still calls the full initSheetData(), whose formulaTransform +
+filterEmptyContent sub-stages are themselves now redundant for the same
+reason (~4.5s/edit) -- not touched because initSheetData() is shared with
+the legitimate full-load path (loadExcelSheet), so trimming it needs either
+a parameter or a different entry point, not done this pass.
+
+
+2. FileCollectionView was never reloaded after a keyboard-committed edit
+------------------------------------------------------------------
+patchJsonCacheAndRefresh had NO FileCollectionView.reloadData() call
+anywhere, unlike its sibling loadExcelSheet (which does). Since
+useFastCellEditReload defaults true, patchJsonCacheAndRefresh has been the
+*only* path exercised in practice, not an experimental branch. This meant
+the just-edited cell's UICollectionViewCell was never told to redraw --
+it kept showing whatever it displayed before the edit (typically the raw
+"=..." formula text), regardless of whether the underlying calculation was
+correct. This is very likely why the codebase's own earlier "=3-1 shows raw
+text" bug (fixed separately this session via an fLocationIndex cache
+invalidation fix) appeared to work when retested -- most retests probably
+involved scrolling or switching sheets, which incidentally triggers a fresh
+cellForItemAt call and masks this gap. It only became unmissable on a large
+file with a self-referencing formula, where nothing else happened to force
+a redraw.
+
+Likely origin (not confirmed, inferred from patchJsonCacheAndRefresh's own
+comment: "Both call sites used to call loadExcelSheet() directly; this just
+routes to the fast path..."): whoever added the fast-path alternative
+faithfully re-implemented the data-correctness side but dropped the one
+line handling the UI-visible side effect -- an easy thing to miss since it
+doesn't crash or corrupt data, just silently fails to redraw.
+
+Fix: added FileCollectionView.reloadData() to patchJsonCacheAndRefresh,
+right before completion?().
+
+
+3. testUpdateString() ran a full XMLHash.parse() (DOM parse) of the entire
+   sheet on every edit, even to answer "does this cell already exist"
+------------------------------------------------------------------
+service.swift's testUpdateString(url:content:index:...) -- called from
+testUpdateStringBox() -> excelEntry(), which persists an edit into the
+actual sheetN.xml inside the .xlsx archive -- unconditionally called
+sheetDataRows(in: xmlString), which does XMLHash.parse(xmlString): a full
+DOM parse of the *entire* sheet XML (1.4M cells, 100k rows) into a tree of
+nodes, BEFORE even checking whether the edited cell already exists. This
+is the exact same class of mistake this project already found and fixed
+once before for the initial-load path (see readExcel2/FastWorksheetParser
+in an earlier session -- SWXMLHash's DOM parse was already known too slow
+at 73k elements; this was 1.4M, on every single keystroke, not just at
+load time). This was the actual crash: PERF logs showed every earlier
+stage (file copy, unzip, style/theme extraction, shared-strings lookup)
+completing in well under a second on a real device, then nothing -- the
+app was killed mid-parse.
+
+Fix, three parts (same principle throughout: answer "does X exist" via a
+targeted string search instead of parsing the whole document):
+- Case 1 (cell already exists -- the common case on an already-populated
+  sheet): checked via originalElementRange(tag:"c",...) alone, a targeted
+  string search already used elsewhere in the same function. No DOM parse
+  needed at all for this path anymore.
+- Case 2 (row exists, cell doesn't -- e.g. a column that was blank in the
+  original file, like O2 in the test case): used to build the full modified
+  document and XMLHash.parse() *that* just to find-and-sort one row's ~15
+  cells. Now parses only that one row's own small XML fragment.
+- Case 3 (row doesn't exist at all): used to naively insert the new row at
+  the very front of <sheetData> then XMLHash.parse() the whole document to
+  re-sort every row (worse than Case 2 -- re-serialized every row via
+  XMLHash's .description). Replaced with a new helper,
+  rowInsertionPoint(before:in:), which finds the correct insertion point via
+  a plain regex scan for existing <row r="N"> tags (existing rows are
+  already in ascending order, so no re-sort is needed) -- no DOM tree at all.
+
+sheetDataRows()/rowExists() became fully dead after this and were removed.
+
+
+4. (Found but left as-is, user chose to leave it) XMLValidator().validateXML()
+   still re-parses the whole document after every splice
+------------------------------------------------------------------
+After fix #3, the remaining per-edit cost surfaced clearly in PERF logs:
+testUpdateString's own case1Hit branch is instant (0.000s), but the
+enclosing testUpdateStringBox.patchCell timer still showed ~8.6s -- all of
+it in XMLValidator().validateXML(xmlString:) at the end of each case, which
+runs Foundation's XMLParser (SAX, not DOM, so it doesn't crash) over the
+*entire* modified ~47MB string just to confirm well-formedness after a
+small, well-defined local splice. Same "whole document for a local
+question" shape as fix #3, just a cheaper (SAX vs DOM) parser, so it's a
+latency problem rather than a crash. Not fixed -- user explicitly chose to
+leave this and the still-redundant patchJsonCacheAndRefresh/initSheetData
+cost (~4.5s, see item 1) as accepted, known latency (~13-18s per edit on
+this 47MB test file) rather than touch more of this code right now.
+
+
+Net result: no more crash, calculated values now display correctly
+(including edge cases like self-referencing formulas, which correctly show
+"error" instead of stale/raw text). Editing this file's cells is still slow
+(~13-18s/edit) but that's now a latency tradeoff, not a hang/crash --
+scoped, understood, and intentionally left for a future pass if wanted.
