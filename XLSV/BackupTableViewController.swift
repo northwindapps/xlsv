@@ -252,6 +252,66 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
 
                     window.makeKeyAndVisible()
                 }
+        } else if selectedFileURL.pathExtension.lowercased() == "csv" {
+            // Same shape as the CSV import path in iCloudViewController -- parse
+            // the file, save it as the "csv_sheet1" JSON sidecar isExcelSheetData's
+            // isExcel==false branch already reads, and present with isCSV=true so
+            // loadExcelSheet skips the xlsx-parsing block entirely.
+            let (csvContent, csvLocation, csvFontSize, csvFontColor, csvBgColor, csvRowSize, csvColumnSize) = ExcelHelper().parseCSVFile(at: selectedFileURL)
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+            let dict: [String: Any] = [
+                "filename": "csv_sheet1",
+                "date": dateFormatter.string(from: Date()),
+                "content": csvContent,
+                "location": csvLocation,
+                "fontsize": csvFontSize,
+                "fontcolor": csvFontColor,
+                "bgcolor": csvBgColor,
+                "rowsize": csvRowSize,
+                "columnsize": csvColumnSize,
+                "customcellWidth": [Double](),
+                "customcellHeight": [Double](),
+                "ccwLocation": [Int](),
+                "cchLocation": [Int](),
+                "formulaResult": [String](),
+                "inputOrder": [String]()
+            ]
+            ReadWriteJSON().saveJsonFile(source: dict, title: "csv_sheet1")
+
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            // Same per-mode field split as the xlsx branch above -- clear whichever
+            // field this mode reads so a stale path can't make loadExcelSheet take
+            // the xlsx-parsing branch instead of the CSV one.
+            if isFileFillMode {
+                appd.imported_xlsx_file_path = ""
+            } else {
+                appd.imported_xlsx_file_path_ss = ""
+            }
+
+            let rootViewController: UIViewController
+            if isFileFillMode {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
+                targetViewController.isExcel = false
+                targetViewController.isCSV = true
+                rootViewController = targetViewController
+            } else {
+                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
+                targetViewController.isExcel = false
+                targetViewController.isCSV = true
+                rootViewController = targetViewController
+            }
+
+            if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+               let window = appDelegate.window {
+
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                    window.rootViewController = rootViewController
+                }, completion: nil)
+
+                window.makeKeyAndVisible()
+            }
         }
     }
     //Delete Backups Function, swipe the row

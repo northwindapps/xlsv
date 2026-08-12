@@ -6890,6 +6890,19 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 return
             }
 
+            // A CSV-mode sheet has no source .xlsx to hand off to
+            // writeXlsxBackup -- write a .csv backup directly from content/
+            // location instead, into the same Backups/FileFill directory.
+            if self.isCSV {
+                let url = self.writeCsvBackup(filename: fileName)
+                if url == nil {
+                    self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
+                } else {
+                    self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
+                }
+                return
+            }
+
             let serviceInstance = Service(
                 imp_sheetNumber: 0,
                 imp_stringContents: [String](),
@@ -6919,6 +6932,65 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         alert.addAction(saveAction)
         
         self.present(alert, animated: true)
+    }
+
+    // Builds a CSV string from content/location (same row/column-walking shape
+    // csvexport already uses for the email-attachment path, minus the
+    // f_calculated formula-result substitution -- CSV mode never has formulas,
+    // see loadExcelSheet's isCSV guard around calculatormode_update_main) and
+    // writes it into the same Backups/FileFill directory writeXlsxBackup uses.
+    // Manual "Save Backup" only -- takeDailyBackup() is untouched and does not
+    // call this.
+    private func writeCsvBackup(filename: String) -> URL? {
+        var locationIndex: [String: Int] = [:]
+        locationIndex.reserveCapacity(location.count)
+        for (idx, loc) in location.enumerated() {
+            if locationIndex[loc] == nil {
+                locationIndex[loc] = idx
+            }
+        }
+
+        let csvString = NSMutableString()
+        for i in (1..<ROWSIZE) {
+            for j in (1..<COLUMNSIZE) {
+                let path = String(j) + "," + String(i)
+                if let k = locationIndex[path] {
+                    if content[k].contains(",") {
+                        csvString.append(content[k].replacingOccurrences(of: ",", with: "#comma#"))
+                    } else if content[k].contains("\n") {
+                        // dropped, matching csvexport's own handling
+                    } else {
+                        csvString.append(content[k])
+                    }
+                } else {
+                    csvString.append("")
+                }
+                if j != COLUMNSIZE - 1 {
+                    csvString.append(",")
+                }
+            }
+            csvString.append("\n")
+        }
+
+        guard let data = (csvString as String).data(using: .utf8) else { return nil }
+        guard let backupDirURL = ExcelHelper().getBackupDirectory(forFileFill: true) else { return nil }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmm"
+        let timestamp = formatter.string(from: Date())
+        let safeName = filename.replacingOccurrences(of: " ", with: "") == "" ? "backup" : filename
+        let backupURL = backupDirURL.appendingPathComponent("\(safeName)_\(timestamp)_ff.csv")
+
+        do {
+            if FileManager.default.fileExists(atPath: backupURL.path) {
+                try FileManager.default.removeItem(at: backupURL)
+            }
+            try data.write(to: backupURL, options: .atomic)
+            return backupURL
+        } catch {
+            print("Failed to write CSV backup: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     // Helper function to reduce duplication
