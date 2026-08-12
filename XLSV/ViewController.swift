@@ -6456,6 +6456,13 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         f_calculated = filteredResult
         f_location = filteredLocation
         f_location_alphabet = filteredLocationInExcel
+
+        // See matching comment in FileFillViewController.calculatormode_update_main:
+        // fLocationIndex(for:)'s count-based cache can't detect a same-count
+        // reassignment of f_location (e.g. replacing one formula cell's
+        // content with another), which leaves stale key->index mappings and
+        // makes cellForItemAt fall back to showing the raw "=..." text.
+        invalidateFLocationIndexCache()
     }
     
     
@@ -6886,6 +6893,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // 1001-row/201-column default regardless of the file's real size.
                 appd.numberofRow = ROWSIZE
                 appd.numberofColumn = COLUMNSIZE
+                // See matching comment in FileFillViewController.isExcelSheetData:
+                // appd.diff_start_index/diff_end_index only get reset inside the
+                // xlsx-only ExcelHelper.readExcel2, so a CSV opened right after an
+                // xlsx with merged cells inherited that xlsx's merge ranges. CSV has
+                // no merge-cell concept at all -- always clear both on CSV load.
+                appd.diff_start_index.removeAll()
+                appd.diff_end_index.removeAll()
+                // f_location/f_calculated/f_location_alphabet are only ever
+                // populated OR cleared inside calculatormode_update_main(), which
+                // is skipped entirely for CSV (if !isCSV) -- so switching from an
+                // xlsx with formulas straight to a CSV left these full of the
+                // xlsx's formula results, and cellForItemAt's fLocationIndex(for:)
+                // lookup would still match against that stale data for any CSV
+                // cell whose key happens to coincide with a leftover formula
+                // location. CSV has no formula engine, so these must always be
+                // empty for CSV. (invalidateAllRenderIndexCaches() already ran at
+                // the top of this function, so fLocationIndexCache is already
+                // invalidated too.)
+                f_location.removeAll()
+                f_location_alphabet.removeAll()
+                f_calculated.removeAll()
                 perfLog("PERF isExcelSheetData.csvBranch ROWSIZE=\(ROWSIZE) COLUMNSIZE=\(COLUMNSIZE) content=\(content.count) location=\(location.count)")
                 appd.customSizedWidth = sheet1Json.customcellWidth
                 appd.customSizedHeight = sheet1Json.customcellHeight

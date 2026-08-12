@@ -6322,6 +6322,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         f_calculated = filteredResult
         f_location = filteredLocation
         f_location_alphabet = filteredLocationInExcel
+
+        // fLocationIndex(for:)'s cache only rebuilds when f_location.count
+        // changes -- editing an existing formula cell (replace one formula
+        // with another, same total formula-cell count) reassigns f_location
+        // to an array of the same length, so that count check silently
+        // passes and cellForItemAt keeps using stale key->index mappings,
+        // falling back to displaying the raw "=..." text instead of
+        // f_calculated's value. Same bug class as the already-fixed
+        // locationIndex staleness -- force a hard invalidation here instead
+        // of relying on the count heuristic for this specific array, since
+        // this function is the only place f_location gets reassigned.
+        invalidateFLocationIndexCache()
     }
     
     
@@ -6755,6 +6767,33 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 // 1001-row grid regardless of the file's actual size.
                 appd.numberofRow = ROWSIZE
                 appd.numberofColumn = COLUMNSIZE
+                // appd.diff_start_index/diff_end_index (CustomCollectionViewLayout's
+                // merge-cell ranges) are only ever reset inside ExcelHelper.readExcel2,
+                // which is xlsx-only and never runs for CSV -- so opening a CSV right
+                // after an xlsx with merged cells left those merge ranges in appd and
+                // CustomCollectionViewLayout kept drawing the previous file's merges on
+                // top of the CSV grid. CSV has no concept of merged cells at all, so
+                // always clear both on CSV load. Confirmed via PERF
+                // CustomCollectionViewLayout.prepare's merged=41 persisting straight
+                // through a CSV load right after a 41-merge xlsx file.
+                appd.diff_start_index.removeAll()
+                appd.diff_end_index.removeAll()
+                // Same stale-state shape as the merge-cell fix above: f_location/
+                // f_calculated/f_location_alphabet are only ever populated OR
+                // cleared inside calculatormode_update_main(), which is skipped
+                // entirely for CSV (if !isCSV). So switching from an xlsx with
+                // formulas straight to a CSV left these full of the xlsx's
+                // formula results -- cellForItemAt's fLocationIndex(for:) lookup
+                // would still match against that stale data for any CSV cell
+                // whose key happens to coincide with a leftover formula location,
+                // silently showing the old file's calculated value instead of the
+                // CSV's real content. CSV has no formula engine at all, so these
+                // must always be empty for CSV.
+                f_location.removeAll()
+                f_location_alphabet.removeAll()
+                f_calculated.removeAll()
+                // (invalidateAllRenderIndexCaches() already ran at the top of this
+                // function, so fLocationIndexCache is already invalidated here too.)
                 perfLog("PERF isExcelSheetData.csvBranch ROWSIZE=\(ROWSIZE) COLUMNSIZE=\(COLUMNSIZE) content=\(content.count) location=\(location.count)")
                 appd.customSizedWidth = sheet1Json.customcellWidth
                 appd.customSizedHeight = sheet1Json.customcellHeight
