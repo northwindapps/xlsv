@@ -1,0 +1,201 @@
+CSV data entry -- what was fixed (per-edit slowness, then a grid-size correctness bug)
+================================================================================
+
+Context: importing/editing a large CSV (~94k rows x 15 cols, ~1.4M cells,
+originally converted from the 100k-row xlsx load-test file) was unusably
+slow on every single cell edit, then, once the per-edit cost was fixed,
+turned out to also render capped at the default empty-grid size (1001 rows
+x 201 cols) regardless of the file's real extent. Two unrelated problem
+classes, fixed in order: per-edit performance first, then a render-grid
+sizing correctness bug that only became visible once the app didn't hang
+long enough to reveal it. All fixed in FileFillViewController.swift and
+ViewController.swift unless noted -- PlaygroundViewController.swift was not
+touched, it has no CSV support today.
+
+
+PART 1 -- per-edit performance ("eternity" to enter one cell)
+================================================================================
+
+The single chokepoint every cell-content commit passes through is
+storeInput(IPd:elementd:). CSV mode was running the full Excel pipeline on
+every keystroke commit even though none of it applies to CSV data. Fixed by
+gating each stage behind `if !isCSV`:
+
+1. saveAsLocalJson()'s JSON serialize+write (ReadWriteJSON.saveJsonFile) was
+   synchronous on the main thread. At 1.4M cells this alone is ~2.0-2.1s
+   (confirmed via PERF saveJsonFile.serializeAndWrite instrumentation).
+   Fix: moved onto a dedicated serial background queue
+   (`localJsonSaveQueue`, FileFillViewController.swift:44), used from
+   saveAsLocalJson (call site ~3832). Array-reading (filterEmptyContent,
+   dict-building) stays synchronous since Swift arrays are COW-safe to
+   capture into the closure; only the write itself is backgrounded. Cost is
+   now off the main thread, not eliminated -- ~2s is considered acceptable
+   since it no longer blocks input.
+
+2. initExcelLocation() (builds Excel A1-style location strings) was called
+   unconditionally from THREE separate places: patchJsonCacheAndRefresh,
+   loadExcelSheet, and a third call baked directly into storeInput() itself
+   (easy to miss since it's not in either of the two "reload" functions).
+   All three guarded `if !isCSV` (storeInput's own guard: ~1079; see also
+   ~1456/1465/1475/1498 area for the reload-path call sites).
+
+3. excel_fomula_transformation() (rewrites Excel function syntax, e.g.
+   PI()/EXP()) in initSheetData() -- CSV never runs the formula engine
+   (calculatormode_update_main is already skipped for isCSV, see Part
+   below), so scanning every cell for Excel function syntax on CSV content
+   is pure wasted work. Guarded `if !isCSV` (~6754 area in initSheetData).
+
+4. filterEmptyContent() was running 2-3 times per edit: once via
+   initSheetData()'s own call, once via an explicit call in the return-key
+   handler's saveAsLocalJson(), and occasionally a third time via a
+   localFileNames.count == 0 branch triggering another saveAsLocalJson()
+   call. storeInput() already keeps content/location clean directly on
+   every edit, and parseCSVFile never introduces an empty entry in the
+   first place (skips blank fields when parsing) -- so for CSV this full
+   O(n) rescan finds nothing to remove. Guarded `if !isCSV` everywhere it's
+   called from the edit path.
+
+5. fontcolorClass.storeValues(rl:rc:rsize:csize:) (colorclass.swift) --
+   maintains a 9-deep undo ring buffer (appd.RC...RC9, appd.RL...RL9) via
+   Swift array assignment. `appd.RC = rc` aliases the buffer cheaply
+   (arrays are COW), but the *next* mutation of content/location in
+   storeInput then forces a silent full-array deep copy, since the buffer
+   is no longer uniquely referenced -- a hidden perf trap at 1.4M-element
+   scale that doesn't show up by reading either function in isolation.
+   Confirmed via grep that the only consumer, restore() (via
+   colorclass.outValues()), has zero call sites anywhere in the codebase or
+   storyboards -- fully dead code. Guarded `if !isCSV` at all 5 call sites
+   per file (~1080/1457/1574/4711/4961), each with a comment explaining the
+   COW trap so it isn't "cleaned up" back to unconditional later.
+
+6. calculatormode_update_main() had 7 call sites per file (loadExcelSheet,
+   patchJsonCacheAndRefresh, fillDateInSelectedCellContent, a second similar
+   fill function, input(), virtual_input(), and a sheet-tab-switch handler).
+   It builds filteredLocationInExcel/literalLocationInExcel by indexing
+   locationInExcel[index] -- crashes with "Fatal error: Index out of range"
+   if locationInExcel is stale/undersized relative to content/location,
+   which is guaranteed once initExcelLocation() is skipped for CSV (fix #2
+   above). Only 2 of the 7 sites were guarded initially, which produced
+   exactly that crash the first time CSV mode reached one of the other 5.
+   All 7 sites now guarded `if !isCSV` (~1499/1594/3354/3424/4923/5141/7297).
+   One site had a stale, wrong comment ("always excel, no such thing as csv
+   case") that was corrected in place.
+
+Net effect confirmed via the user's own on-device PERF logs: every one of
+the above stages dropped from multi-second to 0.000s per edit.
+
+
+PART 2 -- ROWSIZE/COLUMNSIZE UserDefaults override (wrong grid size, CSV only)
+================================================================================
+
+initSheetData() was unconditionally overwriting the just-correctly-parsed
+COLUMNSIZE/ROWSIZE with whatever NEWCsize/NEWRsize happened to be in
+UserDefaults:
+
+    if UserDefaults["NEWCsize"] exists { COLUMNSIZE = that value }
+    if UserDefaults["NEWRsize"] exists { ROWSIZE = that value }
+
+NEWCsize/NEWRsize are written by saveuserD() on every edit for *any* file
+(not a per-file preference -- just "whatever COLUMNSIZE/ROWSIZE were during
+the last edit of whichever file was open last"), so for a large CSV this
+silently replaced its real, freshly-computed size with a small stale value
+left over from a previous, smaller file. Fixed by guarding this block
+`if !isCSV` (FileFillViewController.swift ~4689-4694 for one call site,
+plus the matching block inside initSheetData). xlsx's own behavior here is
+unchanged.
+
+This alone was NOT enough to fix the symptom -- see Part 3.
+
+
+PART 3 -- grid rendering capped at 1001 rows x 201 cols (CSV only)
+================================================================================
+
+Symptom (reported after Part 1 and Part 2 above were already fixed and
+verified): "the app cropped the file at 1000 rows including header." The
+underlying content/location arrays were confirmed intact the whole time
+(1,414,300 entries in every PERF log, before and after this fix) -- this
+was purely a render-grid-dimension bug, not data loss.
+
+Root cause, in two parts:
+
+1. CustomCollectionViewLayout.prepare() sizes the actual on-screen grid
+   (c = columns, r = rows) from appd.numberofRow / appd.numberofColumn,
+   floored against appd.DEFAULT_ROW_NUMBER/DEFAULT_COLUMN_NUMBER (1001/201)
+   and against UserDefaults NEWRsize/NEWCsize. Every xlsx import/restore
+   path (iCloudViewController.swift, BackupTableViewController.swift,
+   CalcViewController.swift, SearchController.swift, etc.) sets
+   appd.numberofRow/numberofColumn at load time -- but nothing in the CSV
+   import/restore/load path ever did. So CSV always fell through to the
+   1001x201 default regardless of the file's real size.
+
+   Fix: isExcelSheetData()'s CSV branch (FileFillViewController.swift
+   ~6756-6757, ViewController.swift matching branch) now sets
+   `appd.numberofRow = ROWSIZE` / `appd.numberofColumn = COLUMNSIZE`
+   immediately after reading them from the csv_sheet1 JSON sidecar -- this
+   is the single load-time chokepoint for CSV (covers first import,
+   reopen, and restore-from-backup alike), mirroring what the xlsx paths
+   already do individually.
+
+2. Even with fix (1) in place, the correct size was observed briefly (log
+   showed gridCells=20102211, lazy=true right after import) and then
+   collapsed back down to gridCells=201201 moments later. Cause:
+   myCollectionView (the row/column header-strip collection view, separate
+   from the main data grid) has its own numberOfSections/
+   numberOfItemsInSection implementations that *unconditionally*
+   recompute rowsize/columnsize from DEFAULT_ROW_NUMBER/DEFAULT_COLUMN_NUMBER
+   + UserDefaults NEWRsize/NEWCsize only, then write the result straight
+   into appd.numberofRow/appd.numberofColumn -- stomping the correct value
+   fix (1) had just set the moment that header view reloaded, since
+   NEWRsize/NEWCsize are stale/global (same staleness as Part 2) and don't
+   know anything about the current CSV's real size.
+
+   Fix: both functions (FileFillViewController.swift ~216-243/251-278,
+   ViewController.swift matching functions) now also take the *current*
+   appd.numberofRow/appd.numberofColumn as an additional floor before
+   writing back -- i.e. `if appd.numberofRow > rowsize { rowsize =
+   appd.numberofRow }` before the final assignment. This mirrors the exact
+   extend-only floor pattern CustomCollectionViewLayout.prepare() already
+   uses for the same two properties, so once a large CSV's real size is
+   set, nothing downstream can silently collapse it back to the default
+   for the rest of the session.
+
+Verified via PERF isExcelSheetData.csvBranch (added alongside this fix) and
+CustomCollectionViewLayout.prepare()'s own gridCells log: ROWSIZE/COLUMNSIZE
+now read the file's real parsed extent and gridCells stays at that value
+across subsequent prepare() calls instead of reverting to 201201.
+
+Known pre-existing quirk, left alone (not introduced by this fix, matches
+existing app behavior): the floor logic everywhere in this chain is
+extend-only -- once appd.numberofRow/numberofColumn grow for a large file,
+nothing shrinks them back down for a smaller file opened later in the same
+session except the unrelated "something went wrong" reset path in
+initSheetData/noInternet (UserDefaults full wipe on a location/content
+count mismatch). Not touched, since CustomCollectionViewLayout.prepare()
+already had this same shape before any of today's changes.
+
+
+Other CSV-adjacent fixes from the same investigation, not perf-related
+================================================================================
+
+- iCloudViewController.swift's CSV import (documentPicker didPickDocumentAt)
+  and BackupTableViewController.swift's CSV restore both run
+  ExcelHelper().parseCSVFile + ReadWriteJSON().saveJsonFile on
+  DispatchQueue.global(qos: .userInitiated), then hand off to a new
+  presentCSVTarget() method on the main queue only after that background
+  work finishes -- avoids a race where the newly-presented view
+  controller's viewDidLoad reads the csv_sheet1 JSON sidecar before the
+  background save has written it.
+
+- parseCSVFile (ExcelHelper.swift:763) is shared by both import paths
+  rather than duplicated. Uses 1-indexed "col,row" location strings
+  (colIndex+1, rowIndex+1) so index 0 stays reserved for the grid's own
+  header row/column, matching xlsx's convention -- the CSV's own first
+  (key-name) row is not a special case, it just lands at row 1 like every
+  other data row.
+
+- rowSize/columnSize computed as
+  `max(DEFAULT_ROW_NUMBER, rows.count + 10)` /
+  `max(DEFAULT_COLUMN_NUMBER, maxCol + 1)` -- floored against the app's
+  normal empty-grid defaults, with a +10 row pad mirroring the xlsx path's
+  GetRowSize headroom. This was always correct; it's the value that Part 3
+  above was failing to actually reach the render layer.
