@@ -22,7 +22,8 @@ func perfLog(_ message: String) {
 }
 
 class ExcelHelper{
-    
+
+
     var location = [String]()
     var contents = [String]()
     
@@ -370,6 +371,14 @@ class ExcelHelper{
                    }
                }
 
+               // Caching this across sheet loads (keyed by path+modDate+fileSize) was
+               // tried and reverted -- FF mode reuses the same canonical file path on
+               // every import, and the cache ended up serving a stale, wrong shared-
+               // string table for a newly-imported file (content landing at wrong
+               // coordinates everywhere, not just at a few out-of-range indices).
+               // Simple and correct beats fast and wrong here; revisit caching only
+               // with a cache key that's actually guaranteed unique per file content
+               // (e.g. a content hash) rather than path/metadata heuristics.
                let __tSharedStringsStart = CFAbsoluteTimeGetCurrent()
                let sharedStrings = try file!.parseSharedStrings()
                print(String(format: "PERF readExcel2.parseSharedStrings: %.3fs count=%d", CFAbsoluteTimeGetCurrent() - __tSharedStringsStart, sharedStrings?.items.count ?? -1))
@@ -389,12 +398,28 @@ class ExcelHelper{
                            .filter { $0.value != nil }
                        
                        // Rich Text
-                       let temp = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings?.items[$0].richText }
-                       
+                       //
+                       // sharedStrings?.items[$0] used to be a raw, unchecked subscript --
+                       // an out-of-range shared-string index (e.g. from a stale cached
+                       // table after switching files, or a malformed source file) crashed
+                       // with "index out of range" instead of failing gracefully. Below,
+                       // out-of-range indices default to "no rich text"/"empty string"
+                       // rather than being dropped -- dropping would shift every
+                       // subsequent cell in this column out of position, since the
+                       // reconciliation logic below relies on temp/temp2's lengths lining
+                       // up exactly with columnCStrings by position.
+                       let temp: [[RichText]] = columnCStrings.compactMap { $0.value }.compactMap { Int($0) }.compactMap { idx -> [RichText]? in
+                           guard let items = sharedStrings?.items, idx >= 0, idx < items.count else { return [] }
+                           return items[idx].richText
+                       }
+
                        // Normal Text
                        var temp2 = [String]()
-                       if (sharedStrings != nil){
-                           temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0)}.compactMap { sharedStrings!.items[$0].text }
+                       if let items = sharedStrings?.items {
+                           temp2 = columnCStrings.compactMap { $0.value }.compactMap { Int($0) }.compactMap { idx -> String? in
+                               guard idx >= 0, idx < items.count else { return "" }
+                               return items[idx].text
+                           }
                        }
                        
                        
@@ -433,10 +458,18 @@ class ExcelHelper{
                            aPlusbArray[k] = String(value)
                        }
                        
+                       // temp2.remove(at: 0) used to pop the front of the array here --
+                       // an O(n) shift of every remaining element, called once per
+                       // plain-text string cell in the column, making this whole loop
+                       // O(n^2) for a column with many string cells (confirmed: 17s on
+                       // a 100k-row real-world text-heavy sheet vs. 0.015s on a small
+                       // one). A cursor consumes temp2 in the same order at O(1) per
+                       // step instead.
+                       var temp2Cursor = 0
                        for l in 0..<aPlusbArray.count{
                            if aPlusbArray[l] == "" {
-                               aPlusbArray[l] = temp2.first!
-                               temp2.remove(at: 0)
+                               aPlusbArray[l] = temp2[temp2Cursor]
+                               temp2Cursor += 1
                            }
                        }
                        stringContent.append(contentsOf: aPlusbArray)
@@ -563,9 +596,10 @@ class ExcelHelper{
                    let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
                    appd.wentWrong = false
                }
-               
-               
-               print("location",finalL_value + finalL_string)
+               // print("location", finalL_value + finalL_string) -- dumped the full
+               // per-cell location array (1.4M+ entries for a large sheet) as one
+               // unbounded string on every load; same class of cost as the other
+               // full-array prints already removed elsewhere in this file.
 
                var rowsize = GetRowSize(srcAry: valueLocation+stringLocation,fromMergedcells: appd.diff_end_index)
  

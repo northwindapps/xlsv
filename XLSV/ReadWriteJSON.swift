@@ -154,9 +154,17 @@ class ReadWriteJSON {
                         break
                     }
                 }
-                saveuserAll()
+                // saveuserAll() used to re-dump the just-read location/content/etc
+                // (up to 1.4M entries for a large sheet) straight into UserDefaults on
+                // every single sheet load -- nothing in the three active view
+                // controllers ever reads those keys back (only orphaned legacy
+                // screens do: CalcViewController, SearchController, StyleReadFile,
+                // SharedReadFile, inDevViewController -- none reachable from the
+                // current app flow), so this was pure dead weight, and for a large
+                // sheet it's the actual source of the ">= 4MB in NSUserDefaults" OS
+                // warning plus a multi-second, multi-hundred-MB hit on every load.
                 return true
-                
+
             } catch {
                 print(error)
             }
@@ -411,12 +419,12 @@ class ReadWriteJSON {
                         break
                     }
                 }
-                saveuserAll()
-                
+                // saveuserAll() removed here too -- see readJsonFile()'s comment above.
+
             } catch {
                 print(error)
             }
         }
-        
+
     }
 }

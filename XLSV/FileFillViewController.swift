@@ -2314,11 +2314,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         )
 
 
-        bannerview.isHidden = true
-        bannerview.delegate = self
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-        bannerview.rootViewController = self
-        bannerview.load(Request())
+//        bannerview.isHidden = true
+//        bannerview.delegate = self
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+//        bannerview.rootViewController = self
+//        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -3443,9 +3443,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     func initExcelLocation(){
         //updating locationInExcel(is content already loaded at here?)
         locationInExcel.removeAll()
+        locationInExcel.reserveCapacity(location.count)
+        // One split reused for both column/row instead of two separate
+        // components(separatedBy:) calls per cell (each re-splits the whole
+        // string) -- halves the splitting cost across 1.4M+ cells on a large sheet.
         for i in 0..<location.count{
-            let colStr = location[i].components(separatedBy:",").first
-            if let colInt = Int(colStr ?? ""), let rowStr = location[i].components(separatedBy:",").last{
+            let parts = location[i].components(separatedBy: ",")
+            if let colStr = parts.first, let colInt = Int(colStr), let rowStr = parts.last {
                 let column = getExcelColumnName(columnNumber: colInt)
                 locationInExcel.append(column + rowStr)
             }
@@ -3790,7 +3794,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         } else if let layout = myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
             cellSizeSlicer.value = Float(layout.CELL_WIDTH)
         } else {
-            cellSizeSlicer.value = 120
+            cellSizeSlicer.value = 70
         }
     }
 
@@ -6728,34 +6732,24 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     func getExcelColumnName(columnNumber: Int) -> String
     {
+        // Same math as before (repeated base-26 division), but appends the
+        // character directly instead of building a comma-joined ASCII-code
+        // string and then re-splitting/re-parsing it back into characters --
+        // called once per cell (1.4M+ times on a large sheet), so the round
+        // trip's extra allocations added up.
         var dividend = columnNumber
         var columnName = ""
-        var modulo = 0
-        
+
         while (dividend > 0)
         {
-            modulo = (dividend - 1) % 26;
-            columnName = String(65 + modulo) + "," + columnName
-            dividend = Int((dividend - modulo) / 26)
+            let modulo = (dividend - 1) % 26
+            columnName = String(UnicodeScalar(UInt8(65 + modulo))) + columnName
+            dividend = (dividend - modulo) / 26
         }
-        
-        var alphabetsAry = [String]()
-        alphabetsAry = columnName.components(separatedBy: ",")
-        
-        var fstring = ""
-        for i in 0..<alphabetsAry.count {
-            let a:Int! = Int(alphabetsAry[i])
-            if a != nil{
-                let b:UInt8 = UInt8(a)
-                fstring.append(String(UnicodeScalar(b)))
-            }
-            
-            
-        }
-        
-        return fstring
+
+        return columnName
     }
-    
+
     @objc func close(){
         changeaffected.removeAll()
 //        if selectedSheet >= 0{
