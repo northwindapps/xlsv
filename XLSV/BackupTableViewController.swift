@@ -243,15 +243,22 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 rootViewController = targetViewController
             }
 
-            if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-                   let window = appDelegate.window {
-
-                    UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                        window.rootViewController = rootViewController
-                    }, completion: nil)
-
-                    window.makeKeyAndVisible()
-                }
+            // This screen is always reached via a real modal presentation
+            // (moveToBackupsView()'s present(...)), so presenter and presented
+            // VC hold each other strongly. Swapping window.rootViewController
+            // directly without dismissing first only drops the window's
+            // reference -- it leaves this VC and its presenter leaking each
+            // other (and everything each retains, e.g.
+            // CustomCollectionViewLayout's full cellAttrsDictionary) forever.
+            // Same fire-and-forget dismiss()-then-swap pattern as
+            // ViewController.moveToHome()/moveToFilefill()/moveToPlayground()
+            // and their FileFillViewController/PlaygroundViewController
+            // equivalents.
+            self.dismiss(animated: false, completion: nil)
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = rootViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         } else if selectedFileURL.pathExtension.lowercased() == "csv" {
             // Same shape as the CSV import path in iCloudViewController -- parse
             // the file, save it as the "csv_sheet1" JSON sidecar isExcelSheetData's
@@ -303,14 +310,11 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 rootViewController = targetViewController
             }
 
-            if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-               let window = appDelegate.window {
-
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                    window.rootViewController = rootViewController
-                }, completion: nil)
-
-                window.makeKeyAndVisible()
+            // See matching comment on the xlsx branch above -- same leak, same fix.
+            self.dismiss(animated: false, completion: nil)
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                window.rootViewController = rootViewController
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
             }
         }
     }
