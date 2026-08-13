@@ -1195,14 +1195,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     //Hiding Keyboard
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         if(text == "\n") {
+            let __shouldChangeTextInStart = CFAbsoluteTimeGetCurrent()
             changeaffected.removeAll()
-            
+
             //data input
             input()
-            
+
             saveuserF()
             saveuserD()
-            
+
 //            if selectedSheet >= 0{
             //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex{
             if !isExcel{
@@ -1210,25 +1211,31 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 saveAsLocalJson(filename: "csv_sheet1")
             }
             //}
-            
-            
-            let locationIdx = location.firstIndex(of: cursor)
+
+
+            let locationIdx = locationIndex(for: cursor)
             if locationIdx != nil && content[locationIdx!] != ""{
                 datainputview.stringbox.text = content[locationIdx!]
             }
-            
+
+            perfLog(String(format: "PERF shouldChangeTextIn.syncPortion: %.3fs isCSV=%@ content=%d", CFAbsoluteTimeGetCurrent() - __shouldChangeTextInStart, isCSV ? "true" : "false", content.count))
+
             DispatchQueue.main.async {
                 let appd = UIApplication.shared.delegate as! AppDelegate
 
                 self.applyCellEditAndRefresh(idx: appd.wsSheetIndex) {
 
+                    perfLog(String(format: "PERF shouldChangeTextIn.total (through applyCellEditAndRefresh): %.3fs", CFAbsoluteTimeGetCurrent() - __shouldChangeTextInStart))
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if self.myCollectionView.collectionViewLayout is CustomCollectionViewLayout {
-                            self.myCollectionView.collectionViewLayout.invalidateLayout()
-                            self.myCollectionView.reloadData()
-
+                            // reloadData/invalidateLayout already happened inside
+                            // applyCellEditAndRefresh -> patchJsonCacheAndRefresh; doing it
+                            // again here was pure duplicate work. animated:false avoids
+                            // driving prepare() on every frame of the re-center scroll,
+                            // which dominates edit latency on large (lazyInteriorCells) grids.
                             self.myCollectionView.selectItem(at: self.currentindex,
-                                                             animated: true,
+                                                             animated: false,
                                                              scrollPosition: [.centeredVertically, .centeredHorizontally])
                             self.collectionView(self.myCollectionView, didSelectItemAt: self.currentindex)
 
@@ -1236,8 +1243,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     }
                 }
             }
-            
-            
+
+
 
 
 
@@ -1289,7 +1296,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                             opendatainputview()
                         
                         }
-                        let locationIdx = location.firstIndex(of: cursor)
+                        let locationIdx = locationIndex(for: cursor)
                         if (locationIdx != nil) && datainputview != nil {
                             datainputview.stringbox.text = content[locationIdx!]
                         }
@@ -1556,6 +1563,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // opened and unaffected by a plain value edit; formula recalc reads
     // content/location directly).
     func patchJsonCacheAndRefresh(idx: Int, completion: (() -> Void)? = nil) {
+        let __patchJsonCacheAndRefreshStart = CFAbsoluteTimeGetCurrent()
+        defer {
+            perfLog(String(format: "PERF patchJsonCacheAndRefresh.total: %.3fs isCSV=%@ content=%d", CFAbsoluteTimeGetCurrent() - __patchJsonCacheAndRefreshStart, isCSV ? "true" : "false", content.count))
+        }
         let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
         if isExcel {
@@ -1625,7 +1636,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // all in this function (unlike its sibling loadExcelSheet, which does) --
         // that alone meant the edited cell never got a fresh cellForItemAt call
         // to pick up storeInput's result, regardless of which calculation ran.
+        let __reloadStart = CFAbsoluteTimeGetCurrent()
         FileCollectionView.reloadData()
+        perfLog(String(format: "PERF patchJsonCacheAndRefresh.reloadData: %.3fs", CFAbsoluteTimeGetCurrent() - __reloadStart))
         completion?()
     }
 
@@ -2537,8 +2550,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         else { return }
         let startRow = indexPath.section
         let startCol = indexPath.item
-        let idxInLocation = location.firstIndex(of: cursor) ?? -1
-        let lIndex = locationInExcel.firstIndex(of: label.text ?? "") ?? -1
+        let idxInLocation = locationIndex(for: cursor) ?? -1
+        let lIndex = excelLocationIndex(for: label.text ?? "") ?? -1
         
         switch gesture.state {
         case .began:
