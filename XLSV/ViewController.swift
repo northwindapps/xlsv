@@ -1574,11 +1574,36 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
 
             // CSV cells have no cellStyleId (no styles.xml to resolve against) --
-            // resolveCellStyles() already no-ops via its own cellStyleId.count ==
-            // location.count guard, but skip it outright for clarity/cost.
+            // resolveCellStyles() is skipped outright for clarity/cost. But
+            // skipping it means nothing ever resets cellBold/cellItalic/
+            // cellBorder*/cellHorizontalAlign/cellVerticalAlign/cellWrapText --
+            // resolveCellStyles()'s own guard (cellStyleId.count == location.count)
+            // wouldn't help either, since it just returns without clearing
+            // anything. cellForItemAt only bounds-checks "i < cellBold.count"
+            // etc., which a leftover xlsx-sized array (from whatever file was
+            // open before) always passes -- so a CSV opened right after an xlsx
+            // silently rendered that xlsx's bold/italic/border/alignment
+            // decoration at matching positions. CSV has no concept of any of
+            // this, so always clear it outright.
             let __resolveCellStylesStart = CFAbsoluteTimeGetCurrent()
             if !isCSV {
                 resolveCellStyles()
+            } else {
+                cellBold.removeAll()
+                cellItalic.removeAll()
+                cellUnderline.removeAll()
+                cellStrike.removeAll()
+                cellBorderLeftStyle.removeAll()
+                cellBorderLeftColor.removeAll()
+                cellBorderRightStyle.removeAll()
+                cellBorderRightColor.removeAll()
+                cellBorderTopStyle.removeAll()
+                cellBorderTopColor.removeAll()
+                cellBorderBottomStyle.removeAll()
+                cellBorderBottomColor.removeAll()
+                cellHorizontalAlign.removeAll()
+                cellVerticalAlign.removeAll()
+                cellWrapText.removeAll()
             }
             print(String(format: "PERF loadExcelSheet.resolveCellStyles: %.3fs", CFAbsoluteTimeGetCurrent() - __resolveCellStylesStart))
 
