@@ -50,6 +50,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         print("DEINIT ViewController \(ObjectIdentifier(self))")
     }
 
+    @IBOutlet weak var unsavedDataReminder: UIButton!
     @IBOutlet weak var bannerview: BannerView!
     @IBOutlet weak var menuButton: UIButton!
     @IBOutlet weak var fileTitle: UILabel!
@@ -575,6 +576,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // gesture handler.
     private var excelLocationIndexCache: [String: Int] = [:]
     private var excelLocationIndexCacheCount = -1
+
+    // Deferred-write tracking (see PendingXlsxChangeSet.swift) -- excelEntry/
+    // excelEntryBulk record edits here instead of writing to the real .xlsx on
+    // every keystroke; the real write only happens on Export/Save/sheet-management
+    // ops/the daily-backup dialog/backgrounding (see flushPendingXlsxChangesIfNeeded
+    // and AppDelegate.applicationDidEnterBackground). A fresh instance per
+    // ViewController session means this starts empty automatically -- no explicit
+    // "new file" reset needed, it's only cleared in resetSheet's full-wipe flow,
+    // reloadAfterRestore, and after a successful flush.
+    let pendingXlsxChanges = PendingXlsxChangeSet()
 
     private func invalidateLocationIndexCache() {
         locationIndexCacheCount = -1
@@ -1629,11 +1640,89 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 calculatormode_update_main()
             }
             print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
+
+            // Must run after calculatormode_update_main above, not before --
+            // otherwise its whole-sheet recompute (driven by what readExcel2 just
+            // read off disk) would immediately overwrite the reapplied values.
+            reapplyPendingXlsxChanges(forSheet: idx)
+
             completion?()
 
         }catch {
             print(error)
         }
+    }
+
+    // Re-establishes any not-yet-flushed edits (see PendingXlsxChangeSet.swift)
+    // on top of a fresh disk reload. loadExcelSheet's readExcel2 call above
+    // repopulates content/location/f_calculated purely from what's on disk --
+    // without this, switching sheet tabs and back would silently revert an
+    // unflushed edit's visible effect, since loadExcelSheet runs on every tab
+    // tap, not just when a genuinely new file is opened. Deliberately
+    // reapplies in memory rather than flushing to disk here: flushing on an
+    // ordinary tab switch would write to disk on an incidental UI action,
+    // defeating the point of deferring the write to Export/Save.
+    private func reapplyPendingXlsxChanges(forSheet sheetIndex: Int) {
+        guard isExcel else { return }
+        let ehp = ExcelHelper()
+        for (key, edit) in pendingXlsxChanges.edits(forSheet: sheetIndex) {
+            let posKey: String
+            if let i = excelLocationIndex(for: key.cellId), i < content.count {
+                content[i] = edit.content
+                posKey = location[i]
+            } else {
+                // Cell had no prior entry at all (e.g. a blank template cell
+                // never previously written to) -- readExcel2's reload has
+                // nothing to overwrite, so append a fresh slot the same way
+                // storeInput's "first entry" branch does. Style defaults match
+                // storeInput's own selectingSize/selectingBgColor/selectingColor
+                // initial values -- a toolbar style picked mid-session before
+                // the original edit isn't recoverable here, so this always
+                // falls back to the base style rather than guessing.
+                let letters = String(key.cellId.prefix(while: { $0.isLetter }))
+                let digits = String(key.cellId.drop(while: { $0.isLetter }))
+                guard let col = ehp.columnToNumber(letters), let row = Int(digits) else { continue }
+                posKey = "\(col),\(row)"
+                content.append(edit.content)
+                location.append(posKey)
+                locationInExcel.append(key.cellId)
+                cellStyleId.append("")
+                textsize.append(String(10))
+                bgcolor.append("white")
+                tcolor.append("black")
+            }
+            if edit.content.hasPrefix("=") {
+                if let k = fLocationIndex(for: posKey) {
+                    f_calculated[k] = edit.calculatedValue
+                } else {
+                    f_location.append(posKey)
+                    f_location_alphabet.append(key.cellId)
+                    f_calculated.append(edit.calculatedValue)
+                    invalidateFLocationIndexCache()
+                }
+            } else {
+                removeFormulaEntry(posKey: posKey)
+            }
+        }
+    }
+
+    // Writes every not-yet-flushed edit (see PendingXlsxChangeSet.swift) into
+    // the real .xlsx via service.swift's flushPendingEditsToXlsx, then clears
+    // pendingXlsxChanges on success. No-op (returns true immediately) when
+    // there's nothing pending. Call this before anything that reads
+    // local_xlsx_file_path off disk -- export/save/email/iCloud upload and the
+    // sheet-management operations (copy/add/delete/rename) -- since none of
+    // those re-serialize from memory themselves.
+    @discardableResult
+    func flushPendingXlsxChangesIfNeeded() -> Bool {
+        guard pendingXlsxChanges.isDirty else { return true }
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "", imp_formula: [String]())
+        let ok = serviceInstance.flushPendingEditsToXlsx(fp: local_xlsx_file_path, edits: pendingXlsxChanges.edits)
+        if ok {
+            pendingXlsxChanges.clear()
+            updateUnsavedDataReminderVisibility()
+        }
+        return ok
     }
 
     // Single entry point for the post-cell-edit refresh. Both call sites
@@ -2151,7 +2240,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.cursor = String()
             self.tcolor.removeAll()
             self.textsize.removeAll()
-            
+            self.pendingXlsxChanges.clear()
+            self.updateUnsavedDataReminderVisibility()
+
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
             UserDefaults.standard.synchronize()
@@ -2283,7 +2374,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             self.cursor = String()
             self.tcolor.removeAll()
             self.textsize.removeAll()
-            
+            self.pendingXlsxChanges.clear()
+            self.updateUnsavedDataReminderVisibility()
+
             
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -2580,22 +2673,86 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderReleased(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         configureCellSizeSlider()
 
+        let isJapanese = (NSLocale.preferredLanguages.first ?? "en").hasPrefix("ja")
+        unsavedDataReminder.setTitle(isJapanese ? "未保存" : "Unsaved", for: .normal)
+        unsavedDataReminder.addTarget(self, action: #selector(unsavedDataReminderTapped), for: .touchUpInside)
+        unsavedDataReminder.isUserInteractionEnabled = true
+        // This button was an unused placeholder already sitting in the
+        // storyboard (no prior connections) before being wired up here --
+        // bring it to the front of its own parent in case some sibling view
+        // in that same header area (added later in z-order, e.g. by an
+        // Auto Layout pass resolving differently than in Interface Builder's
+        // canvas) is sitting on top of it and swallowing its touches.
+        unsavedDataReminder.superview?.bringSubview(toFront: unsavedDataReminder)
+        updateUnsavedDataReminderVisibility()
+
     }
-    
+
+    // Shows/hides unsavedDataReminder to match whether there are pending xlsx
+    // edits not yet flushed to disk (see PendingXlsxChangeSet.swift). Call
+    // this at every point pendingXlsxChanges is mutated (record or clear).
+    func updateUnsavedDataReminderVisibility() {
+        unsavedDataReminder.isHidden = !pendingXlsxChanges.isDirty
+    }
+
+    @objc func unsavedDataReminderTapped() {
+        // Same "Save Backup" filename-prompt modal as the toolbar's save
+        // button (filesave()) -- it already flushes pendingXlsxChanges
+        // internally before writing, so the button hides itself via
+        // updateUnsavedDataReminderVisibility() inside that flush once it
+        // succeeds.
+        filesave()
+    }
+
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
         let calendar = Calendar.current
         let today = Date()
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
-        if !calendar.isDate(appd.lastLaunchDate, inSameDayAs: today) {
-            appd.lastLaunchDate = today
-            takeDailyBackup(msg: "daily_")
-            UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
+        guard !calendar.isDate(appd.lastLaunchDate, inSameDayAs: today) else { return }
+
+        appd.lastLaunchDate = today
+        UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
+
+        func proceedWithDailyBackup() {
+            self.takeDailyBackup(msg: "daily_")
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let rlt = serviceInstance.removeXlsxBackup()
             if rlt == false{
                 print("auto backup removal failed")
             }
+        }
+
+        guard pendingXlsxChanges.isDirty else {
+            proceedWithDailyBackup()
+            return
+        }
+
+        // Unflushed edits exist (see PendingXlsxChangeSet.swift) and this is
+        // the once-daily backup trigger -- backing up now would otherwise
+        // silently snapshot a stale on-disk file. Let the user choose.
+        var message = "You have unsaved changes. Save them now before today's backup?"
+        var saveNow = "Save now"
+        var notNow = "Not now"
+        let locationstr = (NSLocale.preferredLanguages[0] as String?) ?? "en"
+        if locationstr.contains("ja") {
+            message = "未保存の変更があります。今日のバックアップの前に保存しますか？"
+            saveNow = "今すぐ保存"
+            notNow = "後で"
+        }
+
+        let alert = UIAlertController(title: "Unsaved Changes", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: saveNow, style: .default) { [weak self] _ in
+            self?.flushPendingXlsxChangesIfNeeded()
+            proceedWithDailyBackup()
+        })
+        alert.addAction(UIAlertAction(title: notNow, style: .cancel) { _ in
+            proceedWithDailyBackup()
+        })
+        // Deferred a turn -- this is called from viewDidLoad, before this
+        // controller is necessarily in the window hierarchy yet.
+        DispatchQueue.main.async {
+            self.present(alert, animated: true)
         }
     }
     
@@ -4029,6 +4186,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         isExcel = !local_xlsx_file_path.isEmpty
         isCSV = !isExcel
+        pendingXlsxChanges.clear()
+        updateUnsavedDataReminderVisibility()
 
         appd.collectionViewCellSizeChanged = 1
         appd.cswLocation.removeAll()
@@ -5478,9 +5637,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
-            var numFmt = 0
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
+
             //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
             //TODO save as a formula
             //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
@@ -5540,12 +5697,12 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            let isOK = serviceInstance.testUpdateStringBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
-            print("excelEntry: testUpdateStringBox(\(cellId)) returned \(String(describing: isOK))")
-
-            if !(isOK ?? false){
-                return false
-            }
+            // Deferred write (see PendingXlsxChangeSet.swift): record in memory
+            // instead of calling testUpdateStringBox on every keystroke. The
+            // real xlsx write only happens at Export/Save/sheet-management ops/
+            // the daily-backup dialog/backgrounding (flushPendingXlsxChangesIfNeeded).
+            pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: cellId, content: element, calculatedValue: calculated)
+            updateUnsavedDataReminderVisibility()
         }
         return true
     }
@@ -5560,9 +5717,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
+            // numFmt is computed by the date/time parsing below but no longer
+            // consumed (used to be passed to testUpdateStringBox) -- kept as a
+            // no-op sink since this whole function has zero call sites today
+            // (see the deferred-write comment above excelEntry) and the
+            // element-mutation side effects below still matter if it's ever
+            // wired up.
             var numFmt = 0
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
+
             //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
             //TODO save as a formula
             //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
@@ -5616,11 +5778,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if element == " "{
                 element = ""
             }
-            _ = serviceInstance.testUpdateStringBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
-            
+            // Deferred write, same as excelEntry -- record the primary cell and
+            // every bulk-delete target as cleared instead of writing to disk.
+            pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: cellId, content: element, calculatedValue: "")
+            for clearedCellId in bka {
+                pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: clearedCellId, content: "", calculatedValue: "")
+            }
+            updateUnsavedDataReminderVisibility()
         }
     }
-    
+
     //rowDeleteOperation
     func excelRowsDelete(rowRange:[Int] = [])
     {
@@ -5834,12 +6001,15 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            
+            // Structural sheet operation reading straight off disk below --
+            // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
-            
+
+
             let rlt = service.testGetSheetDataBox(fp: local_xlsx_file_path.isEmpty ? "" : local_xlsx_file_path)
             
             
@@ -5857,8 +6027,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            
-            
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            // Harmless no-op here when already flushed by an excelCopySheet caller.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             
@@ -5976,6 +6148,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         if isExcel {
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
@@ -6055,6 +6230,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         if isExcel {
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
@@ -7387,6 +7565,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     func proceedToEmail() {
         isMail = true
+        // Explicit export/share action reading straight off disk below --
+        // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+        flushPendingXlsxChangesIfNeeded()
+
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel file creation
@@ -7471,6 +7653,23 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 return
             }
 
+            // A CSV-mode sheet has no source .xlsx to hand off to
+            // writeXlsxBackup -- write a .csv backup directly from content/
+            // location instead, into the same Backups directory.
+            if self.isCSV {
+                let url = self.writeCsvBackup(filename: fileName)
+                if url == nil {
+                    self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
+                } else {
+                    self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
+                }
+                return
+            }
+
+            // Explicit save action reading straight off disk below -- must see
+            // any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+            self.flushPendingXlsxChangesIfNeeded()
+
             let serviceInstance = Service(
                 imp_sheetNumber: 0,
                 imp_stringContents: [String](),
@@ -7499,6 +7698,58 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         alert.addAction(saveAction)
         
         self.present(alert, animated: true)
+    }
+
+    private func writeCsvBackup(filename: String) -> URL? {
+        var locationIndex: [String: Int] = [:]
+        locationIndex.reserveCapacity(location.count)
+        for (idx, loc) in location.enumerated() {
+            if locationIndex[loc] == nil {
+                locationIndex[loc] = idx
+            }
+        }
+
+        let csvString = NSMutableString()
+        for i in (1..<ROWSIZE) {
+            for j in (1..<COLUMNSIZE) {
+                let path = String(j) + "," + String(i)
+                if let k = locationIndex[path] {
+                    if content[k].contains(",") {
+                        csvString.append(content[k].replacingOccurrences(of: ",", with: "#comma#"))
+                    } else if content[k].contains("\n") {
+                        // dropped, matching csvexport's own handling
+                    } else {
+                        csvString.append(content[k])
+                    }
+                } else {
+                    csvString.append("")
+                }
+                if j != COLUMNSIZE - 1 {
+                    csvString.append(",")
+                }
+            }
+            csvString.append("\n")
+        }
+
+        guard let data = (csvString as String).data(using: .utf8) else { return nil }
+        guard let backupDirURL = ExcelHelper().getBackupDirectory() else { return nil }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmm"
+        let timestamp = formatter.string(from: Date())
+        let safeName = filename.replacingOccurrences(of: " ", with: "") == "" ? "backup" : filename
+        let backupURL = backupDirURL.appendingPathComponent("\(safeName)_\(timestamp).csv")
+
+        do {
+            if FileManager.default.fileExists(atPath: backupURL.path) {
+                try FileManager.default.removeItem(at: backupURL)
+            }
+            try data.write(to: backupURL, options: .atomic)
+            return backupURL
+        } catch {
+            print("Failed to write CSV backup: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     // Helper function to reduce duplication

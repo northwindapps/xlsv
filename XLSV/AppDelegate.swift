@@ -291,21 +291,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 
-        // FileFillViewController defers xlsx writes to memory (pendingXlsxChanges,
-        // see PendingXlsxChangeSet.swift) until an explicit Save/Export or a
-        // sheet-management op -- unlike the old eager per-edit write, a
-        // background/kill with edits still unflushed would previously lose
-        // them silently, with no crash and no error. Flush here as a safety
-        // net so backgrounding (including the app then being killed while
-        // backgrounded, e.g. under memory pressure) durably saves whatever
-        // was pending. Overwriting the real file in place is fine -- that's
-        // exactly what flushPendingXlsxChangesIfNeeded already does for an
-        // explicit Save. window.rootViewController is FileFillViewController
-        // itself whenever FF mode is the active mode (mode switches swap
+        // Both FileFillViewController and ViewController defer xlsx writes to
+        // memory (pendingXlsxChanges, see PendingXlsxChangeSet.swift) until an
+        // explicit Save/Export or a sheet-management op -- unlike the old
+        // eager per-edit write, a background/kill with edits still unflushed
+        // would previously lose them silently, with no crash and no error.
+        // Flush here as a safety net so backgrounding (including the app then
+        // being killed while backgrounded, e.g. under memory pressure)
+        // durably saves whatever was pending. Overwriting the real file in
+        // place is fine -- that's exactly what flushPendingXlsxChangesIfNeeded
+        // already does for an explicit Save. window.rootViewController is
+        // whichever mode is currently active (mode switches swap
         // rootViewController directly; transient modals like Settings/Backups
         // are presented on top of it, not swapped in), so this check finds
         // it regardless of what's presented above it.
-        guard let ff = window?.rootViewController as? FileFillViewController else { return }
+        let flush: () -> Bool
+        if let ff = window?.rootViewController as? FileFillViewController {
+            flush = { ff.flushPendingXlsxChangesIfNeeded() }
+        } else if let vc = window?.rootViewController as? ViewController {
+            flush = { vc.flushPendingXlsxChangesIfNeeded() }
+        } else {
+            return
+        }
 
         // unzip+splice+rezip on a large xlsx (e.g. a 100k-row/47MB file) can
         // take longer than iOS's default ~5s grace period before suspending a
@@ -318,7 +325,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             bgTask = UIBackgroundTaskInvalid
         }
 
-        _ = ff.flushPendingXlsxChangesIfNeeded()
+        _ = flush()
 
         if bgTask != UIBackgroundTaskInvalid {
             application.endBackgroundTask(bgTask)

@@ -3,9 +3,9 @@
 //  XLSV
 //
 //  In-memory tracking of xlsx cell edits that haven't been written to disk yet.
-//  FileFillViewController-only (see the deferred-write redesign notes) --
-//  ViewController.swift keeps writing every edit to disk immediately via
-//  service.swift's testUpdateStringBox/testUpdateString, unchanged.
+//  Used by both FileFillViewController and ViewController, each owning its own
+//  instance keyed against its own open file (imported_xlsx_file_path /
+//  local_xlsx_file_path respectively) -- see the deferred-write redesign notes.
 //
 
 import Foundation
