@@ -1,0 +1,112 @@
+2026-08-13 session -- CSV edit latency fix, formula-recalc mode toggle, Settings/Home nav
+================================================================================
+
+Continuation of the same session that produced xlsx_heavy_edit_crash_notes.txt
+(that file covers the crash fixes on a 100k-row/1.4M-cell xlsx in Form Fill
+mode -- read it first if revisiting that work). This file covers what came
+after: a real-device perf report on a 100k-row CSV, and a UI/settings feature
+that grew out of a follow-up question about the formula engine.
+
+
+1. Single-cell CSV edit took ~12s on a real device (confirmed on a 2nd-gen
+   iPhone SE), even though every individual sub-stage already logged near-0s
+------------------------------------------------------------------
+Instrumented shouldChangeTextIn/patchJsonCacheAndRefresh with PERF logs and
+retested on a 100k-row CSV file. Found two stacked issues:
+
+- location.firstIndex(of: cursor) (an O(n) linear scan) was still being used
+  in a few spots instead of the cached locationIndex(for:)/excelLocationIndex(for:)
+  lookups added earlier in the session. Fixed by switching all remaining call
+  sites (FileFillViewController.swift and ViewController.swift, 3 each) to the
+  cached versions.
+
+- The real dominant cost: shouldChangeTextIn had a legacy
+  DispatchQueue.main.asyncAfter(+0.1s) block that ran, on every single edit,
+  an invalidateLayout()+reloadData() (fully redundant -- patchJsonCacheAndRefresh
+  already reloads, per xlsx_heavy_edit_crash_notes.txt fix #2) followed by an
+  ANIMATED selectItem(scrollPosition: [.centeredVertically, .centeredHorizontally])
+  to re-center on the next cell. On a lazyInteriorCells grid this large
+  (100k x 201 = ~20.1M cells), an animated scroll drives
+  CustomCollectionViewLayout.prepare() on every frame of the scroll animation --
+  confirmed in the PERF log as a burst of hundreds of back-to-back prepare()
+  calls sitting right next to multi-second "Hang detected" messages.
+
+  Fix: removed the duplicate invalidateLayout()+reloadData(), changed
+  animated: true -> false on the selectItem call. 3 call sites total
+  (FileFillViewController.shouldChangeTextIn, ViewController.shouldChangeTextIn,
+  ViewController.commitSpeechSegment). Confirmed via retest on the SE:
+  ~12s -> ~1-2s per edit.
+
+  Residual ~1-2s left as accepted, unfixed: CustomCollectionViewLayout's
+  shouldInvalidateLayout(forBoundsChange:) unconditionally returns true --
+  likely required for the frozen row-0/column-0 sticky headers (see
+  didSelectItemAt's item==0/section==0 special-casing) to stay pinned to the
+  current scroll offset. Even with animated:false, the post-edit jump +
+  reloadData()'s content-size change still produces a few bounds-change
+  notifications while the scroll view settles, each retriggering prepare() on
+  the 20M-cell grid. Any further fix here needs to scope invalidation more
+  narrowly without breaking the frozen headers -- not attempted this pass.
+
+
+2. Formula recalc mode: reverted ViewController to full recalc, then made it
+   a user-facing setting instead of a hardcoded difference
+------------------------------------------------------------------
+Earlier in the session (see xlsx_heavy_edit_crash_notes.txt fix #1),
+storeInput() was changed to call a scoped recalculateSingleCell() (recalculates
+just the edited cell) instead of the full calculatormode_update_main() (every
+formula cell in the sheet) on every edit, in BOTH ViewController.swift and
+FileFillViewController.swift, to fix a crash on the 100k-row Form Fill file.
+
+Follow-up ask: revert ViewController specifically back to full recalc (so
+formulas stay "live" sheet-wide there), leaving FileFillViewController's
+scoped fast path alone. Done first as a hardcoded per-file difference.
+
+Then asked to make this configurable instead of hardcoded. Added:
+
+- AppDelegate.fullFormulaRecalcEnabled: Bool, UserDefaults-backed, defaults to
+  true (full recalc, matching prior unconditional behavior).
+- recalculateAfterEdit(index:posKey:) in both view controllers -- reads the
+  setting and calls either calculatormode_update_main() (full) or
+  recalculateSingleCell() (scoped). storeInput() in both files now calls this
+  dispatcher instead of a hardcoded choice. recalculateSingleCell() was
+  restored in ViewController.swift (it had just been deleted as dead code in
+  the prior step) since it's needed again for the off case.
+- SettingsViewController: added a "Full Formula Recalc" UISwitch + label,
+  built in code (not the storyboard) in setUpFullFormulaRecalcToggle(),
+  called from viewDidLoad(). Built in code specifically because this class
+  backs TWO different storyboard scenes ("Settings" identifier, the real one
+  with the cell-size buttons; "SettingsViewController" identifier, an
+  apparently-unused stub that just shows "Loading...") -- a code-added control
+  shows up on both without needing to touch either scene's layout.
+
+Note: calculatormode_update_main(isFullupdate: Bool = true)'s own isFullupdate
+parameter was NOT touched -- its one internal usage (`if isFullupdate {`) is
+already commented out with a "// TODO is this needed?" note, i.e. it's dead
+regardless of value. The real decision point is recalculateAfterEdit, one
+level up in storeInput, not that parameter.
+
+
+3. Home screen: added a Settings entry point, fixed Settings' "no file open"
+   fallback to point at it
+------------------------------------------------------------------
+- HomeController (the mode-picker screen: Spreadsheet / Form Fill /
+  Playground) had no way to reach Settings. Added a small gearshape-icon
+  button, top-right corner, built in code same as the rest of this screen.
+  openSettings() presents SettingsViewController (storyboard id "Settings")
+  the same way the other three mode buttons present their targets.
+
+- SettingsViewController.showAnimate() (called by all 4 cell-size buttons and
+  the "return"/back button, which is wired to middiumCell: in the storyboard)
+  had a stale fallback: when no file is open yet
+  (appd.imported_xlsx_file_path == ""), it presented the old "StartLine"
+  ViewController screen. That predates HomeController. Changed the fallback
+  to present HomeController (storyboard id "Home") instead, so backing out of
+  Settings from the home screen returns to the home screen rather than
+  dropping into the old direct-to-spreadsheet flow.
+
+
+Net result: CSV editing on a 100k-row file is no longer painful on older
+hardware (~12s -> ~1-2s), users can choose between "formulas always live"
+and "fast scoped edits" per their own file size/device via a real Settings
+toggle instead of that being a hardcoded per-mode decision, and Settings is
+now reachable (and returns correctly) from the new home screen.
