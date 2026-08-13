@@ -28,11 +28,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     @IBOutlet weak var bannerview: BannerView!
     @IBOutlet weak var menuButton: UIButton!
-    @IBOutlet weak var fileTitle: UILabel!
-    
+
     @IBOutlet weak var FileCollectionView: UICollectionView!
     @IBOutlet weak var cellSizeSlicer: UISlider!
-
+    
+    
+    @IBOutlet weak var unsavedDataReiminderBUtton: UIButton!
+    
     // saveAsLocalJson's actual disk write (JSONSerialization + file write) used to
     // run synchronously on the main thread on every single cell-edit commit --
     // for CSV mode specifically, this fires on every keystroke-commit (see
@@ -506,6 +508,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // recalculateSingleCell's incremental formula path.
     private var excelLocationIndexCache: [String: Int] = [:]
     private var excelLocationIndexCacheCount = -1
+
+    // Deferred-write tracking (see PendingXlsxChangeSet.swift) -- excelEntry/
+    // excelEntryBulk record edits here instead of writing to the real .xlsx on
+    // every keystroke; the real write only happens on Export/Save (see
+    // flushPendingXlsxChangesIfNeeded). A fresh instance per Form Fill session
+    // (HomeController always instantiates a new FileFillViewController) means
+    // this starts empty automatically -- no explicit "new file" reset needed,
+    // it's only cleared in resetAllContent()'s full-wipe flow and after a
+    // successful flush.
+    let pendingXlsxChanges = PendingXlsxChangeSet()
 
     private func invalidateLocationIndexCache() {
         locationIndexCacheCount = -1
@@ -1526,11 +1538,90 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 calculatormode_update_main()
             }
             print(String(format: "PERF loadExcelSheet.calculatormode_update_main: %.3fs", CFAbsoluteTimeGetCurrent() - __calcMainStart))
+
+            // Must run after calculatormode_update_main above, not before --
+            // otherwise its whole-sheet recompute (driven by what readExcel2 just
+            // read off disk) would immediately overwrite the reapplied values.
+            reapplyPendingXlsxChanges(forSheet: idx)
+
             completion?()
 
         }catch {
             print(error)
         }
+    }
+
+    // Re-establishes any not-yet-flushed edits (see PendingXlsxChangeSet.swift)
+    // on top of a fresh disk reload. loadExcelSheet's readExcel2 call above
+    // repopulates content/location/f_calculated purely from what's on disk --
+    // without this, switching sheet tabs and back would silently revert an
+    // unflushed edit's visible effect, since loadExcelSheet runs on every tab
+    // tap, not just when a genuinely new file is opened. Deliberately
+    // reapplies in memory rather than flushing to disk here: flushing on an
+    // ordinary tab switch would write to disk on an incidental UI action,
+    // defeating the point of deferring the write to Export/Save.
+    private func reapplyPendingXlsxChanges(forSheet sheetIndex: Int) {
+        guard isExcel else { return }
+        let ehp = ExcelHelper()
+        for (key, edit) in pendingXlsxChanges.edits(forSheet: sheetIndex) {
+            let posKey: String
+            if let i = excelLocationIndex(for: key.cellId), i < content.count {
+                content[i] = edit.content
+                posKey = location[i]
+            } else {
+                // Cell had no prior entry at all (e.g. a blank template cell
+                // never previously written to) -- readExcel2's reload has
+                // nothing to overwrite, so append a fresh slot the same way
+                // storeInput's "first entry" branch does. Style defaults match
+                // storeInput's own selectingSize/selectingBgColor/selectingColor
+                // initial values -- a toolbar style picked mid-session before
+                // the original edit isn't recoverable here, so this always
+                // falls back to the base style rather than guessing.
+                let letters = String(key.cellId.prefix(while: { $0.isLetter }))
+                let digits = String(key.cellId.drop(while: { $0.isLetter }))
+                guard let col = ehp.columnToNumber(letters), let row = Int(digits) else { continue }
+                posKey = "\(col),\(row)"
+                content.append(edit.content)
+                location.append(posKey)
+                locationInExcel.append(key.cellId)
+                cellStyleId.append("")
+                textsize.append(String(10))
+                bgcolor.append("white")
+                tcolor.append("black")
+            }
+            if edit.content.hasPrefix("=") {
+                if let k = fLocationIndex(for: posKey) {
+                    f_calculated[k] = edit.calculatedValue
+                } else {
+                    f_location.append(posKey)
+                    f_location_alphabet.append(key.cellId)
+                    f_calculated.append(edit.calculatedValue)
+                    invalidateFLocationIndexCache()
+                }
+            } else {
+                removeFormulaEntry(posKey: posKey)
+            }
+        }
+    }
+
+    // Writes every not-yet-flushed edit (see PendingXlsxChangeSet.swift) into
+    // the real .xlsx via service.swift's flushPendingEditsToXlsx, then clears
+    // pendingXlsxChanges on success. No-op (returns true immediately) when
+    // there's nothing pending. Call this before anything that reads
+    // appd.imported_xlsx_file_path off disk -- export/save/email/iCloud
+    // upload and the sheet-management operations (copy/add/delete/rename) --
+    // since none of those re-serialize from memory themselves.
+    @discardableResult
+    func flushPendingXlsxChangesIfNeeded() -> Bool {
+        guard pendingXlsxChanges.isDirty else { return true }
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "", imp_formula: [String]())
+        let ok = serviceInstance.flushPendingEditsToXlsx(fp: appd.imported_xlsx_file_path, edits: pendingXlsxChanges.edits)
+        if ok {
+            pendingXlsxChanges.clear()
+            updateUnsavedDataReminderVisibility()
+        }
+        return ok
     }
 
     // Single entry point for the post-cell-edit refresh. Both call sites
@@ -1546,10 +1637,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
 
     // Fast path for a single-cell edit commit. storeInput() already applied
-    // the edit to content/location (and excelEntry() already persisted it
-    // into the xlsx file itself, which stays the durable source of truth),
-    // so there's no need to unzip and re-parse the whole xlsx again just to
-    // reconstruct state that's already sitting correctly in memory --
+    // the edit to content/location -- excelEntry() no longer writes it into
+    // the xlsx file immediately (see PendingXlsxChangeSet.swift: it's recorded
+    // in memory and only flushed to disk on Export/Save), but the in-memory
+    // arrays are still the correct live state regardless -- so there's no need
+    // to unzip and re-parse the whole xlsx again just to reconstruct state
+    // that's already sitting correctly in memory --
     // that's what loadExcelSheet's readExcel2 + testReadXMLSandBox +
     // isExcelSheetData round trip does, and it's the "too slow" path flagged
     // in ExcelHelper.readExcel2's saveJsonFile comment.
@@ -1595,7 +1688,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
 
         let __initSheetDataStart = CFAbsoluteTimeGetCurrent()
-        initSheetData()
+        // skipRescan: true -- this is the post-single-cell-edit fast path, and
+        // storeInput already keeps content clean/transformed incrementally for
+        // the one cell that changed (see initSheetData's own doc comment).
+        initSheetData(skipRescan: true)
         perfLog(String(format: "PERF patchJsonCacheAndRefresh.initSheetData: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __initSheetDataStart, content.count))
 
         let __storeValuesStart = CFAbsoluteTimeGetCurrent()
@@ -2082,7 +2178,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.cursor = String()
             self.tcolor.removeAll()
             self.textsize.removeAll()
-            
+            self.pendingXlsxChanges.clear()
+            self.updateUnsavedDataReminderVisibility()
+
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
             UserDefaults.standard.synchronize()
@@ -2102,9 +2200,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 self.FileCollectionView.reloadData()
                 
                 self.customview2.removeFromSuperview()
-                
-                self.fileTitle.text = ""
-                
+
             }
             
             //delete local excel -- FF mode's own dedicated copy, never
@@ -2216,7 +2312,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.cursor = String()
             self.tcolor.removeAll()
             self.textsize.removeAll()
-            
+            self.pendingXlsxChanges.clear()
+            self.updateUnsavedDataReminderVisibility()
+
             
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -2308,7 +2406,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             appd.wsSheetIndex = savedSheetIndex
         }
 
-        fileTitle.text = ""
         super.viewDidLoad()
 
         columninNumber.removeAll()
@@ -2489,6 +2586,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderReleased(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         configureCellSizeSlider()
 
+        let isJapanese = (NSLocale.preferredLanguages.first ?? "en").hasPrefix("ja")
+        unsavedDataReiminderBUtton.setTitle(isJapanese ? "未保存" : "Unsaved", for: .normal)
+        unsavedDataReiminderBUtton.addTarget(self, action: #selector(unsavedDataReminderTapped), for: .touchUpInside)
+        updateUnsavedDataReminderVisibility()
+
+    }
+
+    // Shows/hides unsavedDataReiminderBUtton to match whether there are
+    // pending xlsx edits not yet flushed to disk (see PendingXlsxChangeSet.swift).
+    // Call this at every point pendingXlsxChanges is mutated (record or clear).
+    func updateUnsavedDataReminderVisibility() {
+        unsavedDataReiminderBUtton.isHidden = !pendingXlsxChanges.isDirty
+    }
+
+    @objc func unsavedDataReminderTapped() {
+        // Same "Save Backup" filename-prompt modal as the toolbar's save
+        // button (filesave()) -- it already flushes pendingXlsxChanges
+        // internally before writing, so the button hides itself via
+        // updateUnsavedDataReminderVisibility() inside that flush once it
+        // succeeds.
+        filesave()
     }
     
     func checkAndUpdateLaunchDateAlsoTakeDailyBackup() {
@@ -2496,15 +2614,50 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         let today = Date()
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
-        if !calendar.isDate(appd.lastLaunchDate, inSameDayAs: today) {
-            appd.lastLaunchDate = today
-            takeDailyBackup(msg: "daily_")
-            UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
+        guard !calendar.isDate(appd.lastLaunchDate, inSameDayAs: today) else { return }
+
+        appd.lastLaunchDate = today
+        UserDefaults.standard.set(today, forKey: "lastLaunchDateKey")
+
+        func proceedWithDailyBackup() {
+            self.takeDailyBackup(msg: "daily_")
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let rlt = serviceInstance.removeXlsxBackup(forFileFill: true)
             if rlt == false{
                 print("auto backup removal failed")
             }
+        }
+
+        guard pendingXlsxChanges.isDirty else {
+            proceedWithDailyBackup()
+            return
+        }
+
+        // Unflushed edits exist (see PendingXlsxChangeSet.swift) and this is
+        // the once-daily backup trigger -- backing up now would otherwise
+        // silently snapshot a stale on-disk file. Let the user choose.
+        var message = "You have unsaved changes. Save them now before today's backup?"
+        var saveNow = "Save now"
+        var notNow = "Not now"
+        let locationstr = (NSLocale.preferredLanguages[0] as String?) ?? "en"
+        if locationstr.contains("ja") {
+            message = "未保存の変更があります。今日のバックアップの前に保存しますか？"
+            saveNow = "今すぐ保存"
+            notNow = "後で"
+        }
+
+        let alert = UIAlertController(title: "Unsaved Changes", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: saveNow, style: .default) { [weak self] _ in
+            self?.flushPendingXlsxChangesIfNeeded()
+            proceedWithDailyBackup()
+        })
+        alert.addAction(UIAlertAction(title: notNow, style: .cancel) { _ in
+            proceedWithDailyBackup()
+        })
+        // Deferred a turn -- this is called from viewDidLoad, before this
+        // controller is necessarily in the window hierarchy yet.
+        DispatchQueue.main.async {
+            self.present(alert, animated: true)
         }
     }
 
@@ -3808,9 +3961,84 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Backups" ) as! BackupTableViewController
         targetViewController.isFileFillMode = true
         targetViewController.modalPresentationStyle = .fullScreen
+        targetViewController.onRestoreComplete = { [weak self] in
+            self?.reloadAfterRestore()
+        }
         present(targetViewController, animated: true, completion: nil)
         if customview2 != nil{
             customview2.removeFromSuperview()
+        }
+    }
+
+    // Called via BackupTableViewController's onRestoreComplete after a Restore
+    // action updates appd.imported_xlsx_file_path (xlsx) or clears it + writes
+    // the csv_sheet1 JSON sidecar (csv) and dismisses back to this same,
+    // already-presented instance -- reloads the newly-restored file in place
+    // instead of BackupTableViewController constructing an entirely new
+    // FileFillViewController and swapping window.rootViewController, which
+    // needed both the old (already fully loaded) and new instances resident
+    // in memory at once and was confirmed to cause an OOM crash on the
+    // 100k-row test file. Mirrors the reset-then-loadExcelSheet pattern
+    // already used for an ordinary sheet-tab switch (see the tab-tap handler
+    // above), just for a different file's worth of data instead of a
+    // different sheet within the same file -- including the pendingXlsxChanges
+    // clear that a same-file sheet switch deliberately does NOT do (see
+    // reapplyPendingXlsxChanges), since a genuinely different file has no
+    // relation to whatever was still unflushed from the old one.
+    func reloadAfterRestore() {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        isExcel = !appd.imported_xlsx_file_path.isEmpty
+        isCSV = !isExcel
+        pendingXlsxChanges.clear()
+        updateUnsavedDataReminderVisibility()
+
+        appd.collectionViewCellSizeChanged = 1
+        appd.cswLocation.removeAll()
+        appd.customSizedWidth.removeAll()
+        appd.cshLocation.removeAll()
+        appd.customSizedHeight.removeAll()
+
+        f_calculated.removeAll()
+        f_content.removeAll()
+        content.removeAll()
+        location.removeAll()
+        f_location_alphabet.removeAll()
+        stringboxText = ""
+
+        // isExcelSheetData assigns these straight from a freshly-decoded
+        // sheet1Json (e.g. "textsize = sheet1Json.fontsize") -- the decode
+        // itself builds the whole new array (up to ~1.4M entries) before that
+        // assignment runs. On a brand-new VC instance these start out empty,
+        // so the old restore path (which always built a fresh VC) never paid
+        // for both copies at once. Now that this same instance is reused,
+        // failing to clear these first meant the OLD file's full-size arrays
+        // stayed resident right through the NEW file's decode -- doubling
+        // peak memory for every one of these arrays simultaneously, which is
+        // exactly the kind of spike that would surge/crash on a 100k-row file.
+        cellStyleId.removeAll()
+        textsize.removeAll()
+        bgcolor.removeAll()
+        tcolor.removeAll()
+        f_location.removeAll()
+        // Appended to unconditionally on every loadExcelSheet call (never
+        // cleared anywhere), so it grows by COLUMNSIZE entries on every
+        // restore/tab-switch. Small per-call, but there's no reason to keep
+        // the previous file's column-letter cache around either.
+        columnNames.removeAll()
+
+        // Restoring a different file entirely -- always start at sheet 1
+        // rather than whatever sheet the previous file happened to have
+        // selected, which might not even exist in the new workbook.
+        appd.wsSheetIndex = 1
+
+        loadExcelSheet(idx: appd.wsSheetIndex) { [weak self] in
+            guard let self = self else { return }
+            if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)) {
+                self.currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
+            }
+            self.FileCollectionView.reloadData()
+            self.myCollectionView.reloadData()
         }
     }
     
@@ -5226,9 +5454,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
-            var numFmt = 0
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
+
             //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
             //TODO save as a formula
             //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
@@ -5288,11 +5514,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if (f_idx != nil){
                 calculated = f_calculated[f_idx!]
             }
-            let isOK = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,calculated: f_calculated,calculated_location: f_location_alphabet,content: content, locationInExcel: locationInExcel)
-            
-            if !(isOK ?? false){
-                return false
-            }
+            // Deferred write (see PendingXlsxChangeSet.swift): record in memory
+            // instead of calling testUpdateStringBox on every keystroke. The
+            // real xlsx write only happens at Export/Save
+            // (flushPendingXlsxChangesIfNeeded).
+            pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: cellId, content: element, calculatedValue: calculated)
+            updateUnsavedDataReminderVisibility()
         }
         return true
     }
@@ -5307,9 +5534,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
             //excel work
+            // numFmt is computed by the date/time parsing below but no longer
+            // consumed (used to be passed to testUpdateStringBox) -- kept as a
+            // no-op sink since this whole function has zero call sites today
+            // (see the deferred-write comment above excelEntry) and the
+            // element-mutation side effects below still matter if it's ever
+            // wired up.
             var numFmt = 0
-            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            
+
             //https://p-space.jp/index.php/development/open-xml-sdk/84-openxmlsdk8
             //TODO save as a formula
             //if !element.hasPrefix("="){//mathematical expression doesnt support in Excel
@@ -5363,8 +5595,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if element == " "{
                 element = ""
             }
-            _ = serviceInstance.testUpdateStringBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path, input: element, cellIdxString: cellId,numFmt:numFmt,bulkAry: bka,content: content,locationInExcel: locationInExcel)
-            
+            // Deferred write, same as excelEntry -- record the primary cell and
+            // every bulk-delete target as cleared instead of writing to disk.
+            pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: cellId, content: element, calculatedValue: "")
+            for clearedCellId in bka {
+                pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: clearedCellId, content: "", calculatedValue: "")
+            }
+            updateUnsavedDataReminderVisibility()
         }
     }
     
@@ -5581,7 +5818,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            
+            // Structural sheet operation reading straight off disk below --
+            // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
@@ -5604,8 +5844,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if isExcel {
-            
-            
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            // Harmless no-op here when already flushed by an excelCopySheet caller.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             
@@ -5723,6 +5965,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
         
         if isExcel {
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
@@ -5730,8 +5975,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             var yes = "OK"
             var no = "No"
             let locationstr = (NSLocale.preferredLanguages[0] as String?)!
-            
-            
+
+
             let alert = UIAlertController(title: "SHEET NAME", message: message, preferredStyle: .alert)
             alert.addTextField()
             
@@ -5802,6 +6047,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         
         
         if isExcel {
+            // Structural sheet operation -- see the matching comment in excelCopySheet.
+            flushPendingXlsxChangesIfNeeded()
+
             let sheetIdx = Int(appd.sheetNameIds[self.currentFileNameCollectionViewIdx.item])
             appd.wsSheetIndex = sheetIdx!
             print("wsSheetIndex",appd.wsSheetIndex)
@@ -5916,7 +6164,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 // the entire array before applying this one-cell edit. Timing
                 // isolates exactly that.
                 let __mutateStart = CFAbsoluteTimeGetCurrent()
-                content[i] = elementd
+                content[i] = isCSV ? elementd : transformFormulaSyntax(elementd)
                 location[i] = IPd
                 perfLog(String(format: "PERF storeInput.mutateExisting: %.3fs content=%d", CFAbsoluteTimeGetCurrent() - __mutateStart, content.count))
 
@@ -5927,7 +6175,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 }
 
             }else{
-                content.append(elementd)
+                content.append(isCSV ? elementd : transformFormulaSyntax(elementd))
                 location.append(IPd)
 
                 switch UIDevice.current.userInterfaceIdiom {
@@ -6980,7 +7228,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return false
     }
     
-    func initSheetData(){
+    // skipRescan: true for the post-edit fast path (patchJsonCacheAndRefresh).
+    // A single storeInput() call already keeps content/location clean and
+    // formula-syntax-transformed incrementally for the one cell that changed
+    // (see transformFormulaSyntax's call sites in storeInput, and storeInput's
+    // "clear" branch which removes an emptied cell directly) -- so re-running
+    // excel_fomula_transformation/filterEmptyContent's whole-array O(n) scans
+    // here finds nothing to do on a real edit, just costs ~3.5s at 1.4M cells
+    // doing it. Left false (i.e. still runs) for loadExcelSheet's call, which
+    // is the genuine full-load path: content there just came straight from a
+    // raw XML/JSON read that storeInput never touched, and still needs both
+    // passes once.
+    func initSheetData(skipRescan: Bool = false){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //EXCEL FORMULA TRANSFORMATION STARTS
         //PI(),EXP(1)
@@ -6988,10 +7247,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // already skipped for isCSV), so rewriting Excel function syntax here is
         // pure wasted work scanning every cell for CSV specifically.
         let __formulaTransformStart = CFAbsoluteTimeGetCurrent()
-        if !isCSV {
+        if !isCSV && !skipRescan {
             content = excel_fomula_transformation(src:content)
         }
-        perfLog(String(format: "PERF initSheetData.formulaTransform: %.3fs isCSV=%@", CFAbsoluteTimeGetCurrent() - __formulaTransformStart, isCSV ? "true" : "false"))
+        perfLog(String(format: "PERF initSheetData.formulaTransform: %.3fs isCSV=%@ skipRescan=%@", CFAbsoluteTimeGetCurrent() - __formulaTransformStart, isCSV ? "true" : "false", skipRescan ? "true" : "false"))
 
         //Taking out Empty Cells
         // storeInput() already removes a cell from content/location directly the
@@ -7000,13 +7259,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // CSV mode, content/location are already guaranteed clean by
         // construction, and this full O(n) re-scan finds nothing to remove.
         // Confirmed via instrumentation: ~3.5s at 1.4M cells, running redundantly
-        // on every single edit. xlsx mode doesn't have that guarantee (content
-        // can come from a raw JSON/xlsx read), so it still filters normally.
+        // on every single edit. xlsx mode doesn't have that guarantee at load
+        // time (content can come from a raw JSON/xlsx read), so it still
+        // filters normally there -- just not on the skipRescan fast path.
         let __filterEmptyStart = CFAbsoluteTimeGetCurrent()
-        if !isCSV {
+        if !isCSV && !skipRescan {
             filterEmptyContent()
         }
-        perfLog(String(format: "PERF initSheetData.filterEmptyContent: %.3fs isCSV=%@ content=%d", CFAbsoluteTimeGetCurrent() - __filterEmptyStart, isCSV ? "true" : "false", content.count))
+        perfLog(String(format: "PERF initSheetData.filterEmptyContent: %.3fs isCSV=%@ skipRescan=%@ content=%d", CFAbsoluteTimeGetCurrent() - __filterEmptyStart, isCSV ? "true" : "false", skipRescan ? "true" : "false", content.count))
 
         //SOME THING WENT WRONG RESET PROCESS STARTS
         if location.count != content.count {
@@ -7107,19 +7367,29 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     }
     
+    // Single-cell core of excel_fomula_transformation below -- also called
+    // directly from storeInput so a freshly-typed cell is transformed
+    // immediately, instead of relying on initSheetData's whole-array pass to
+    // catch it on the next refresh (see initSheetData's skipRescan parameter).
+    private func transformFormulaSyntax(_ s: String) -> String {
+        var result = s
+        if result.contains("EXP") {
+            result = result.replacingOccurrences(of: "EXP", with: "e^")
+        }
+        if result.contains("PI()") {
+            result = result.replacingOccurrences(of: "PI()", with: "pi")
+        }
+        return result
+    }
+
     //=EXP(A1) -> e^(A1), COMPLEX(x,y)
     //https://stackoverflow.com/questions/43012632/how-to-succinctly-get-the-first-5-characters-of-a-string-in-swift
     func excel_fomula_transformation(src:[String])->[String]{
         var ary = src
         for i in 0..<ary.count {
-            if ary[i].contains("EXP"){
-                ary[i] = ary[i].replacingOccurrences(of: "EXP", with: "e^")
-            }
-            if ary[i].contains("PI()"){
-                ary[i] = ary[i].replacingOccurrences(of: "PI()", with: "pi")
-            }
+            ary[i] = transformFormulaSyntax(ary[i])
         }
-        
+
         return ary
     }
     
@@ -7185,6 +7455,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     func proceedToEmail() {
         isMail = true
+        // Explicit export/share action reading straight off disk below --
+        // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+        flushPendingXlsxChangesIfNeeded()
+
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //excel file creation
@@ -7281,6 +7555,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 }
                 return
             }
+
+            // Explicit save action reading straight off disk below -- must see
+            // any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+            self.flushPendingXlsxChangesIfNeeded()
 
             let serviceInstance = Service(
                 imp_sheetNumber: 0,
@@ -7396,8 +7674,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     func uploadFileToICloud(url: URL,filename: String) {
+        // Explicit export/share action copying straight off disk below -- must
+        // see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+        flushPendingXlsxChangesIfNeeded()
+
         let fileManager = FileManager.default
-        
+
         if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
             if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
                 do {
@@ -7503,7 +7785,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             initSheetData()
             //
             FileCollectionView.reloadData()
-            fileTitle.text = localFileNames[selectedSheet]
             //
             
             calcPrep()

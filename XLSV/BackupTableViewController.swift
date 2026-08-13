@@ -14,6 +14,18 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     // controller restore(selectedFileURL:) navigates back to -- FileFillViewController
     // for "_ff" backups, ViewController otherwise.
     var isFileFillMode = false
+
+    // Set by the presenting controller (FileFillViewController.moveToBackupsView /
+    // ViewController.moveToBackupsView) before this view loads. restore() calls this
+    // after dismissing back to that same already-presented instance, instead of
+    // constructing an entirely new FileFillViewController/ViewController and swapping
+    // window.rootViewController -- the old approach needed both the already-loaded
+    // presenter and the freshly-loading replacement resident in memory at once, which
+    // was confirmed to cause an OOM crash restoring a 100k-row file. This screen is
+    // always reached via a real modal presentation on top of that instance (see the
+    // doc comment above), so it's always still there underneath, just not currently
+    // showing the newly-restored file yet.
+    var onRestoreComplete: (() -> Void)?
     
     let tableView = UITableView()
     
@@ -220,7 +232,20 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 appd.imported_xlsx_file_path_ss=fp
             }
             appd.excelfilename=excelName
-            readExcel(path: fp)
+            // readExcel(path:) used to run here -- a full, unoptimized CoreXLSX/
+            // XMLCoder decode of the entire workbook (the same class of cost
+            // FastWorksheetParser was added to ExcelHelper.readExcel2 to avoid,
+            // but this older copy never got that fix). Its output was parsed
+            // from fp (the temp/backup source path, before
+            // replaceLocalFileWithImportedOne below even sets the real
+            // destination path) and nothing between here and dismiss() ever
+            // read any of it -- reloadAfterRestore() -> loadExcelSheet() ->
+            // readExcel2() fully re-parses the actual restored file right
+            // after dismiss anyway, resetting the exact same appd fields. So
+            // this was a second full-workbook parse, entirely thrown away,
+            // running at the worst possible moment: while the old heavy VC
+            // underneath was still fully loaded. Removed as dead/superseded
+            // work rather than just moving it, since nothing needs it.
 
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
 
@@ -229,35 +254,20 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             
             replaceLocalFileWithImportedOne()
 
-            // Restoring a "_ff" backup needs to land back in FileFillViewController,
-            // not the regular ViewController -- otherwise a form-fill-mode save would
-            // open in the full editing view it was deliberately kept out of.
-            let rootViewController: UIViewController
-            if isFileFillMode {
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
-                targetViewController.isExcel = true
-                rootViewController = targetViewController
-            } else {
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController//Landscape
-                targetViewController.isExcel = true
-                rootViewController = targetViewController
-            }
-
-            // This screen is always reached via a real modal presentation
-            // (moveToBackupsView()'s present(...)), so presenter and presented
-            // VC hold each other strongly. Swapping window.rootViewController
-            // directly without dismissing first only drops the window's
-            // reference -- it leaves this VC and its presenter leaking each
-            // other (and everything each retains, e.g.
-            // CustomCollectionViewLayout's full cellAttrsDictionary) forever.
-            // Same fire-and-forget dismiss()-then-swap pattern as
-            // ViewController.moveToHome()/moveToFilefill()/moveToPlayground()
-            // and their FileFillViewController/PlaygroundViewController
-            // equivalents.
-            self.dismiss(animated: false, completion: nil)
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = rootViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            // Previously constructed an entirely new FileFillViewController/
+            // ViewController and swapped window.rootViewController in to show
+            // it -- this screen is always reached via a real modal
+            // presentation (moveToBackupsView()'s present(...)) on top of
+            // that same instance, so it was already sitting right there
+            // underneath, just not yet showing the newly-restored file. The
+            // swap needed both the old (already fully loaded) and new
+            // instances resident in memory at once, confirmed to cause an
+            // OOM crash restoring a 100k-row file. Dismissing back to the
+            // existing instance and having it reload in place (see
+            // reloadAfterRestore() in FileFillViewController/ViewController)
+            // avoids ever having two heavy instances alive together.
+            self.dismiss(animated: true) {
+                self.onRestoreComplete?()
             }
         } else if selectedFileURL.pathExtension.lowercased() == "csv" {
             // Same shape as the CSV import path in iCloudViewController -- parse
@@ -297,24 +307,9 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
                 appd.imported_xlsx_file_path_ss = ""
             }
 
-            let rootViewController: UIViewController
-            if isFileFillMode {
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
-                targetViewController.isExcel = false
-                targetViewController.isCSV = true
-                rootViewController = targetViewController
-            } else {
-                let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "StartLine" ) as! ViewController
-                targetViewController.isExcel = false
-                targetViewController.isCSV = true
-                rootViewController = targetViewController
-            }
-
-            // See matching comment on the xlsx branch above -- same leak, same fix.
-            self.dismiss(animated: false, completion: nil)
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                window.rootViewController = rootViewController
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            // See matching comment on the xlsx branch above -- same fix.
+            self.dismiss(animated: true) {
+                self.onRestoreComplete?()
             }
         }
     }

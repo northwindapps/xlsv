@@ -759,14 +759,17 @@ class Service {
         return tagOpenRange.lowerBound..<closeTagRange.upperBound
     }
 
-    // Patches a single cell into sheetN.xml's <sheetData>, leaving every other byte
-    // (row ht=/spans=/customFormat=/thickBot=, sibling cells' s= style, shared-formula
-    // compression, style-only placeholder cells) untouched -- as opposed to
-    // testUpdateStringBox's old behavior of rebuilding the whole <sheetData> from the
-    // whole-sheet content/locationInExcel arrays on every single edit.
-    func testUpdateString(url: URL? = nil, content: String, index: String?, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = []) -> String? {
+    // Splices one cell's XML into an in-memory sheet-XML string -- the shared
+    // core previously inlined directly in testUpdateString. Extracted (no disk
+    // I/O, no validation -- both are the caller's job) so both the single-cell
+    // path (testUpdateString: read once, splice once, validate once) and the
+    // Form-Fill deferred-write batch flush (flushPendingEditsToXlsx: read once,
+    // splice N times against the same in-memory string, validate once) share
+    // one splice implementation instead of the batch path re-deriving it.
+    // Returns false if the splice couldn't be applied (caller falls back to
+    // its own backup string, same as this used to do inline per-case).
+    private func applyCellSplice(to xmlString: inout String, index: String, content: String, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = []) -> Bool {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        guard let url2 = url, let index = index else { return nil }
 
         // Preserve the cell's original style index across the rewrite -- same
         // parallel-array lookup already used live by testDeleteRows/testAddRows/testDeleteCols.
@@ -775,15 +778,8 @@ class Service {
             styleIdx = appd.excelStyleIdx[slocatinIdx]
         }
 
-        let __readStart = CFAbsoluteTimeGetCurrent()
-        guard var xmlString = try? String(contentsOf: url2) else { return nil }
-        let backUpXmlString = xmlString
-        perfLog(String(format: "PERF testUpdateString.readSheetXML: %.3fs", CFAbsoluteTimeGetCurrent() - __readStart))
-
         let newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
-
         let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        let __case1CheckStart = CFAbsoluteTimeGetCurrent()
 
         // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
         // -- splice in just that one element. Checked via originalElementRange alone
@@ -797,19 +793,14 @@ class Service {
         // real device. Same architectural mistake this project already found and fixed
         // once before for the initial-load path (see readExcel2/FastWorksheetParser).
         if let cellRange = originalElementRange(tag: "c", attributeValue: index, in: xmlString) {
-            perfLog(String(format: "PERF testUpdateString.case1Hit: %.3fs", CFAbsoluteTimeGetCurrent() - __case1CheckStart))
             xmlString.replaceSubrange(cellRange, with: newElement)
-            let validator = XMLValidator()
-            return validator.validateXML(xmlString: xmlString) ? xmlString : backUpXmlString
+            return true
         }
-        perfLog(String(format: "PERF testUpdateString.case1Miss: %.3fs -- falling through to full parse", CFAbsoluteTimeGetCurrent() - __case1CheckStart))
 
         // Case 2/3: the cell doesn't exist yet -- find its row via the same targeted
         // string search as Case 1 (no full-sheet parse needed just to answer "does
         // this row exist").
-        let __rowCheckStart = CFAbsoluteTimeGetCurrent()
         let rowRangeIfExists = originalElementRange(tag: "row", attributeValue: rowNumber, in: xmlString)
-        perfLog(String(format: "PERF testUpdateString.rowCheck: %.3fs", CFAbsoluteTimeGetCurrent() - __rowCheckStart))
         if let rowRange = rowRangeIfExists {
             // Row exists but this cell doesn't -- append it, then re-sort just this
             // row's cells by column so the insertion lands in the right place.
@@ -831,7 +822,6 @@ class Service {
             // was the actual crash (confirmed via PERF logs showing every stage up
             // to here completing in well under a second on a real device, then
             // nothing).
-            let __rowParseStart = CFAbsoluteTimeGetCurrent()
             var rebuiltRowPart = ""
             let rowXml = XMLHash.parse(opened)
             if let rowNode = rowXml.children.first {
@@ -844,12 +834,10 @@ class Service {
                     rebuiltRowPart += cell.description
                 }
             }
-            perfLog(String(format: "PERF testUpdateString.rowFragmentParseAndSort: %.3fs", CFAbsoluteTimeGetCurrent() - __rowParseStart))
 
-            guard !rebuiltRowPart.isEmpty else { return backUpXmlString }
-            let final = xmlString.replacingOccurrences(of: targetRowTag, with: "<row r=\"\(rowNumber)\">" + rebuiltRowPart + "</row>")
-            let validator = XMLValidator()
-            return validator.validateXML(xmlString: final) ? final : backUpXmlString
+            guard !rebuiltRowPart.isEmpty else { return false }
+            xmlString = xmlString.replacingOccurrences(of: targetRowTag, with: "<row r=\"\(rowNumber)\">" + rebuiltRowPart + "</row>")
+            return true
         }
 
         // Row doesn't exist at all -- rows are already written in ascending
@@ -860,25 +848,46 @@ class Service {
         // ordering afterward -- same crash-causing mistake as Case 2 above, just
         // worse (it re-serialized every single row's XMLHash .description, not
         // just one row's).
-        guard let newRowNum = Int(rowNumber) else { return backUpXmlString }
+        guard let newRowNum = Int(rowNumber) else { return false }
         let newRowElement = "<row r=\"\(rowNumber)\">\(newElement)</row>"
 
-        var replaced = xmlString
-        if replaced.contains("<sheetData/>") {
-            replaced = replaced.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
+        if xmlString.contains("<sheetData/>") {
+            xmlString = xmlString.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
         }
 
-        if let insertionPoint = rowInsertionPoint(before: newRowNum, in: replaced) {
-            replaced.insert(contentsOf: newRowElement, at: insertionPoint)
-        } else if let closeRange = replaced.range(of: "</sheetData>") {
+        if let insertionPoint = rowInsertionPoint(before: newRowNum, in: xmlString) {
+            xmlString.insert(contentsOf: newRowElement, at: insertionPoint)
+        } else if let closeRange = xmlString.range(of: "</sheetData>") {
             // No existing row numbered higher than this one -- append as the last row.
-            replaced.insert(contentsOf: newRowElement, at: closeRange.lowerBound)
+            xmlString.insert(contentsOf: newRowElement, at: closeRange.lowerBound)
         } else {
-            return backUpXmlString
+            return false
         }
+        return true
+    }
+
+    // Patches a single cell into sheetN.xml's <sheetData>, leaving every other byte
+    // (row ht=/spans=/customFormat=/thickBot=, sibling cells' s= style, shared-formula
+    // compression, style-only placeholder cells) untouched -- as opposed to
+    // testUpdateStringBox's old behavior of rebuilding the whole <sheetData> from the
+    // whole-sheet content/locationInExcel arrays on every single edit. Thin wrapper
+    // around applyCellSplice: read once, splice once, validate once -- unchanged
+    // external behavior, still used by ViewController's own eager per-edit path.
+    func testUpdateString(url: URL? = nil, content: String, index: String?, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = []) -> String? {
+        guard let url2 = url, let index = index else { return nil }
+
+        let __readStart = CFAbsoluteTimeGetCurrent()
+        guard var xmlString = try? String(contentsOf: url2) else { return nil }
+        let backUpXmlString = xmlString
+        perfLog(String(format: "PERF testUpdateString.readSheetXML: %.3fs", CFAbsoluteTimeGetCurrent() - __readStart))
+
+        let __spliceStart = CFAbsoluteTimeGetCurrent()
+        let applied = applyCellSplice(to: &xmlString, index: index, content: content, sharedStringIndex: sharedStringIndex, calculated: calculated, calculatedLocation: calculatedLocation)
+        perfLog(String(format: "PERF testUpdateString.applyCellSplice: %.3fs", CFAbsoluteTimeGetCurrent() - __spliceStart))
+        guard applied else { return backUpXmlString }
 
         let validator = XMLValidator()
-        return validator.validateXML(xmlString: replaced) ? replaced : backUpXmlString
+        return validator.validateXML(xmlString: xmlString) ? xmlString : backUpXmlString
     }
 
     // Scans for the first <row r="N"> tag with N > targetRowNum, returning the
@@ -2476,7 +2485,172 @@ class Service {
             return false
         }
     }
-    
+
+    // Updates the <sst count=".." uniqueCount="..> attributes on the opening
+    // tag to match the actual number of <si> elements now present.
+    // checkSharedStringsIndex never did this (see flushPendingEditsToXlsx's
+    // comment), leaving those attributes stale after any splice. "count"
+    // (total string references across the workbook, can include duplicates)
+    // isn't tracked anywhere in this codebase, so this sets both attributes
+    // to the unique count -- self-consistent with the actual <si> element
+    // count, which matters more for a reader validating structure than an
+    // exactly accurate reference tally.
+    private func updateSstCounts(in xmlString: String, uniqueCount: Int) -> String {
+        guard let sstTagStart = xmlString.range(of: "<sst"),
+              let sstTagEnd = xmlString.range(of: ">", range: sstTagStart.upperBound..<xmlString.endIndex) else {
+            return xmlString
+        }
+        var openTag = String(xmlString[sstTagStart.lowerBound..<sstTagEnd.upperBound])
+        guard let countRegex = try? NSRegularExpression(pattern: "count=\"\\d+\""),
+              let uniqueCountRegex = try? NSRegularExpression(pattern: "uniqueCount=\"\\d+\"") else {
+            return xmlString
+        }
+        openTag = uniqueCountRegex.stringByReplacingMatches(in: openTag, range: NSRange(openTag.startIndex..<openTag.endIndex, in: openTag), withTemplate: "uniqueCount=\"\(uniqueCount)\"")
+        openTag = countRegex.stringByReplacingMatches(in: openTag, range: NSRange(openTag.startIndex..<openTag.endIndex, in: openTag), withTemplate: "count=\"\(uniqueCount)\"")
+        return xmlString[xmlString.startIndex..<sstTagStart.lowerBound] + openTag + xmlString[sstTagEnd.upperBound...]
+    }
+
+    // Batch counterpart to testUpdateStringBox/testUpdateString, for
+    // FileFillViewController's deferred-write design (see
+    // PendingXlsxChangeSet.swift): unzips the archive ONCE, applies every
+    // pending cell edit (possibly across multiple sheets) against in-memory
+    // XML strings via the same applyCellSplice core the single-cell path
+    // uses, validates ONCE per touched sheet, rezips ONCE. Looping
+    // testUpdateStringBox itself per cell would redundantly unzip, rewrite
+    // styles.xml/sharedStrings.xml, and rezip on every single call -- this
+    // exists specifically to avoid paying that N times for a batch of N
+    // pending edits (confirmed during design as the dominant cost of the old
+    // per-edit write on a large file; see xlsx_heavy_edit_crash_notes.txt
+    // item 4 and csv_edit_perf_and_recalc_toggle_notes.txt).
+    func flushPendingEditsToXlsx(fp: String, edits: [PendingXlsxEditKey: PendingXlsxEdit]) -> Bool {
+        guard !edits.isEmpty else { return true }
+        let __flushStart = CFAbsoluteTimeGetCurrent()
+        defer {
+            perfLog(String(format: "PERF flushPendingEditsToXlsx.total: %.3fs cells=%d", CFAbsoluteTimeGetCurrent() - __flushStart, edits.count))
+        }
+
+        guard FileManager.default.fileExists(atPath: fp) else { return false }
+
+        do {
+            let directoryURL = URL(fileURLWithPath: fp).deletingLastPathComponent()
+            let subdirectoryURL = directoryURL.appendingPathComponent("importedExcel")
+
+            if !FileManager.default.fileExists(atPath: subdirectoryURL.path) {
+                try FileManager.default.createDirectory(at: subdirectoryURL, withIntermediateDirectories: true, attributes: nil)
+            } else {
+                let existingFiles = try FileManager.default.contentsOfDirectory(at: subdirectoryURL, includingPropertiesForKeys: nil)
+                for fileURL in existingFiles {
+                    try FileManager.default.removeItem(at: fileURL)
+                }
+            }
+
+            let destinationURL = subdirectoryURL.appendingPathComponent("imported2.zip")
+            try FileManager.default.copyItem(at: URL(fileURLWithPath: fp), to: destinationURL)
+            _ = try Zip.unzipFile(destinationURL, destination: subdirectoryURL, overwrite: true, password: nil)
+            try FileManager.default.removeItem(at: destinationURL)
+
+            // Theme/style rewrite -- once for the whole batch, same work
+            // testUpdateStringBox used to redundantly repeat on every call.
+            let themeXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("theme").appendingPathComponent("theme1.xml")
+            testExtractTheme(url: themeXMLURL)
+            let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
+            if let modifiedStylesStr = testExtractStyle(url: styleXMLURL) {
+                try modifiedStylesStr.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+            }
+
+            let sharedStringsXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
+            if !FileManager.default.fileExists(atPath: sharedStringsXMLURL.path) {
+                let emptySst = """
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                    <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0">
+                    </sst>
+                    """
+                try? emptySst.write(to: sharedStringsXMLURL, atomically: true, encoding: .utf8)
+            }
+            // Read once, mutate purely in memory across the whole batch, write once
+            // at the end -- this used to call checkSharedStringsIndex (which reads
+            // AND writes sharedStringsXMLURL from/to disk) once per newly-seen
+            // unique string in the batch. Beyond being slow, checkSharedStringsIndex
+            // only ever splices a new <si> element in before </sst> and never
+            // updates the <sst count=".." uniqueCount="..> attributes on the
+            // opening tag -- so after N splices those attributes stayed stuck at
+            // their original (often "0") value while N new <si> elements piled up
+            // underneath. That mismatch between declared and actual shared-string
+            // count is the likely cause of saved/exported files failing to reopen.
+            var sharedStringsList = testStringUniqueAry(url: sharedStringsXMLURL) ?? []
+            guard var sharedStringsXml = try? String(contentsOf: sharedStringsXMLURL) else { return false }
+            var newSharedStringElements = ""
+
+            // Group by sheet -- each sheet's XML is read once, spliced N times in
+            // memory, validated once, written once.
+            let editsBySheet = Dictionary(grouping: edits, by: { $0.key.sheetIndex })
+
+            for (sheetIndex, sheetEdits) in editsBySheet {
+                let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet\(sheetIndex).xml")
+                guard var xmlString = try? String(contentsOf: worksheetXMLURL) else { continue }
+
+                for (key, edit) in sheetEdits {
+                    var sharedStringIndex: Int? = nil
+                    let trimmed = edit.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let needsSharedString = !trimmed.isEmpty && !trimmed.hasPrefix("=") && Double(trimmed) == nil
+                    if needsSharedString {
+                        if let existingIdx = sharedStringsList.firstIndex(of: edit.content) {
+                            sharedStringIndex = existingIdx
+                        } else {
+                            sharedStringIndex = sharedStringsList.count
+                            sharedStringsList.append(edit.content)
+                            newSharedStringElements += "<si><t>\(xmlEscapeText(edit.content))</t></si>"
+                        }
+                    }
+
+                    _ = applyCellSplice(to: &xmlString, index: key.cellId, content: edit.content, sharedStringIndex: sharedStringIndex, calculated: [edit.calculatedValue], calculatedLocation: [key.cellId])
+                }
+
+                guard XMLValidator().validateXML(xmlString: xmlString) else {
+                    print("flushPendingEditsToXlsx: sheet \(sheetIndex) failed validation, skipping write for this sheet")
+                    continue
+                }
+                try xmlString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
+            }
+
+            // One write for sharedStrings.xml regardless of how many new strings
+            // were added across however many sheets/cells in this batch -- splice
+            // every new <si> in together and bring count/uniqueCount in sync with
+            // the actual element count this time.
+            if !newSharedStringElements.isEmpty {
+                if let range = sharedStringsXml.range(of: "</sst>") {
+                    sharedStringsXml.replaceSubrange(range, with: newSharedStringElements + "</sst>")
+                } else if let range = sharedStringsXml.range(of: "/>", options: .backwards) {
+                    sharedStringsXml.replaceSubrange(range, with: ">" + newSharedStringElements + "</sst>")
+                }
+                sharedStringsXml = updateSstCounts(in: sharedStringsXml, uniqueCount: sharedStringsList.count)
+                if XMLValidator().validateXML(xmlString: sharedStringsXml) {
+                    try? sharedStringsXml.write(to: sharedStringsXMLURL, atomically: true, encoding: .utf8)
+                } else {
+                    print("flushPendingEditsToXlsx: sharedStrings.xml failed validation after batch update, leaving on-disk version untouched")
+                }
+            }
+
+            // Rezip once and overwrite fp once.
+            let files = try FileManager.default.contentsOfDirectory(at: subdirectoryURL, includingPropertiesForKeys: nil)
+            let fpURL = URL(fileURLWithPath: fp)
+            let zipFilePath = try Zip.quickZipFiles(files, fileName: "outputInAppContainer")
+            if FileManager.default.fileExists(atPath: fpURL.path) {
+                try FileManager.default.removeItem(at: fpURL)
+            }
+            try FileManager.default.copyItem(at: zipFilePath, to: fpURL)
+
+            for fileURL in files {
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+
+            return true
+        } catch {
+            print("flushPendingEditsToXlsx failed: \(error)")
+            return false
+        }
+    }
+
     func testRowsDeleteBox(fp: String = "", url: URL? = nil, input:String = "", cellIdxString:String = "", numFmt:Int? = 0, fString:String? = nil, bulkAry:[String] = [], calculated:String = "", rowRange:[Int] = [], locationInExcel:[String] = []) -> URL? {
         do {
             // Get the sandbox directory for documents

@@ -3973,9 +3973,84 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @objc func moveToBackupsView(){
         let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Backups" ) as! BackupTableViewController
         targetViewController.modalPresentationStyle = .fullScreen
+        targetViewController.onRestoreComplete = { [weak self] in
+            self?.reloadAfterRestore()
+        }
         present(targetViewController, animated: true, completion: nil)
         if customview2 != nil{
             customview2.removeFromSuperview()
+        }
+    }
+
+    // Called via BackupTableViewController's onRestoreComplete after a Restore
+    // action updates appd.imported_xlsx_file_path_ss (xlsx) or clears it +
+    // writes the csv_sheet1 JSON sidecar (csv) and dismisses back to this
+    // same, already-presented instance -- reloads the newly-restored file in
+    // place instead of BackupTableViewController constructing an entirely new
+    // ViewController and swapping window.rootViewController, which needed
+    // both the old (already fully loaded) and new instances resident in
+    // memory at once and was confirmed to cause an OOM crash on the 100k-row
+    // test file. Mirrors the reset-then-loadExcelSheet pattern already used
+    // for an ordinary sheet-tab switch (see the tab-tap handler above), just
+    // for a different file's worth of data instead of a different sheet
+    // within the same file. Claims imported_xlsx_file_path_ss into
+    // local_xlsx_file_path the same way viewDidLoad does, since loadExcelSheet
+    // here reads local_xlsx_file_path, not the appd field directly.
+    func reloadAfterRestore() {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+
+        local_xlsx_file_path = appd.imported_xlsx_file_path_ss
+        appd.imported_xlsx_file_path_ss = ""
+
+        isExcel = !local_xlsx_file_path.isEmpty
+        isCSV = !isExcel
+
+        appd.collectionViewCellSizeChanged = 1
+        appd.cswLocation.removeAll()
+        appd.customSizedWidth.removeAll()
+        appd.cshLocation.removeAll()
+        appd.customSizedHeight.removeAll()
+
+        f_calculated.removeAll()
+        f_content.removeAll()
+        content.removeAll()
+        location.removeAll()
+        f_location_alphabet.removeAll()
+        stringboxText = ""
+
+        // isExcelSheetData assigns these straight from a freshly-decoded
+        // sheet1Json (e.g. "textsize = sheet1Json.fontsize") -- the decode
+        // itself builds the whole new array (up to ~1.4M entries) before that
+        // assignment runs. On a brand-new VC instance these start out empty,
+        // so the old restore path (which always built a fresh VC) never paid
+        // for both copies at once. Now that this same instance is reused,
+        // failing to clear these first meant the OLD file's full-size arrays
+        // stayed resident right through the NEW file's decode -- doubling
+        // peak memory for every one of these arrays simultaneously, which is
+        // exactly the kind of spike that would surge/crash on a 100k-row file.
+        cellStyleId.removeAll()
+        textsize.removeAll()
+        bgcolor.removeAll()
+        tcolor.removeAll()
+        f_location.removeAll()
+        // Appended to unconditionally on every loadExcelSheet call (never
+        // cleared anywhere), so it grows by COLUMNSIZE entries on every
+        // restore/tab-switch. Small per-call, but there's no reason to keep
+        // the previous file's column-letter cache around either.
+        columnNames.removeAll()
+
+        // Restoring a different file entirely -- always start at sheet 1
+        // rather than whatever sheet the previous file happened to have
+        // selected, which might not even exist in the new workbook.
+        appd.wsSheetIndex = 1
+
+        loadExcelSheet(idx: appd.wsSheetIndex) { [weak self] in
+            guard let self = self else { return }
+            if let matchIndex = appd.sheetNameIds.firstIndex(of: String(appd.wsSheetIndex)) {
+                self.currentFileNameCollectionViewIdx = IndexPath(item: matchIndex, section: 0)
+            }
+            self.FileCollectionView.reloadData()
+            self.myCollectionView.reloadData()
         }
     }
     
