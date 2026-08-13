@@ -70,6 +70,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // a separate field to hand a Spreadsheet restore to ViewController without it colliding
     // with whatever FileFillViewController last left on the shared field.
     var imported_xlsx_file_path_ss=""
+    // Global user setting controlling whether storeInput() triggers a full
+    // whole-sheet calculatormode_update_main() (formulas stay live everywhere,
+    // but O(formulas * literals) cost -- a confirmed crash risk on very large
+    // sheets) or the scoped recalculateSingleCell() (only the edited cell
+    // updates immediately; other formulas referencing it go stale until
+    // themselves re-entered). Read by both ViewController.storeInput and
+    // FileFillViewController.storeInput. Defaults to true (full recalc) to
+    // match the app's prior unconditional behavior.
+    var fullFormulaRecalcEnabled: Bool {
+        get {
+            if UserDefaults.standard.object(forKey: "fullFormulaRecalcEnabled") == nil {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: "fullFormulaRecalcEnabled")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "fullFormulaRecalcEnabled")
+        }
+    }
     // Raw XML text of the currently loaded worksheet part (e.g. xl/worksheets/sheet1.xml),
     // captured as-is at import time in ExcelHelper.readExcel2 -- CoreXLSX only exposes a
     // decoded Worksheet struct, not the original markup, so this is read independently via

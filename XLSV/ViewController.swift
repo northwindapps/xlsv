@@ -571,7 +571,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // ("O2") instead of location's "col,row" strings, so a formula's cell
     // references can be resolved to a content/location index in O(1) instead of
     // locationInExcel.firstIndex(of:)'s O(n) scan. Used by
-    // recalculateSingleCell's incremental formula path.
+    // recalculateSingleCell's incremental formula path and the cell-tap
+    // gesture handler.
     private var excelLocationIndexCache: [String: Int] = [:]
     private var excelLocationIndexCacheCount = -1
 
@@ -1684,8 +1685,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // initExcelLocation()/calculatormode_update_main() removed from here --
         // this function's callers already call storeInput() first, which now
         // keeps locationInExcel in sync and recalculates the edited cell itself
-        // incrementally (see storeInput's recalculateSingleCell). Re-running the
-        // full whole-sheet versions here was pure redundant multi-second waste
+        // (full or scoped, see recalculateAfterEdit). Re-running the full
+        // whole-sheet versions here too was pure redundant multi-second waste
         // on a large sheet, AND could silently disagree with storeInput's
         // already-correct result for edge cases like a self-referential formula
         // (see the matching comment in FileFillViewController.patchJsonCacheAndRefresh).
@@ -5125,10 +5126,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         
         
         //it take care of empty string
-        // storeInput already recalculates just this one cell (see
-        // recalculateSingleCell) and updates f_location/f_location_alphabet/
-        // f_calculated incrementally -- no full calculatormode_update_main()
-        // rebuild needed here anymore. f_content is dead (never read anywhere,
+        // storeInput already recalculates this cell itself (full or scoped,
+        // see recalculateAfterEdit). f_content is dead (never read anywhere,
         // only ever .removeAll()'d), kept as a no-op like its sibling call sites.
         storeInput(IPd: IP, elementd: element)
         f_content.removeAll()
@@ -5335,10 +5334,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         
         //it take care of empty string
-        // storeInput already recalculates just this one cell (see
-        // recalculateSingleCell) and updates f_location/f_location_alphabet/
-        // f_calculated incrementally -- no full calculatormode_update_main()
-        // rebuild needed here anymore. f_content is dead (never read anywhere,
+        // storeInput already recalculates this cell itself (full or scoped,
+        // see recalculateAfterEdit). f_content is dead (never read anywhere,
         // only ever .removeAll()'d), kept as a no-op like its sibling call sites.
         // Multi-cell drag-fill callers (fillFunctionInSelectedCellContent /
         // fillDateInSelectedCellContent) still run their own full
@@ -6067,7 +6064,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 // location[i] still equals IPd (that's how i was found), so
                 // locationInExcel[i] is already correct -- no rebuild needed.
                 if !isCSV {
-                    recalculateSingleCell(index: i, posKey: IPd)
+                    recalculateAfterEdit(index: i, posKey: IPd)
                 }
 
             }else{
@@ -6112,7 +6109,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                     } else {
                         locationInExcel.append("")
                     }
-                    recalculateSingleCell(index: newIndex, posKey: IPd)
+                    recalculateAfterEdit(index: newIndex, posKey: IPd)
                 }
 
             }
@@ -6135,12 +6132,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             }
         }
 
-        // locationInExcel/f_location/f_calculated are now updated incrementally
-        // above (just the touched cell), not via a full initExcelLocation() +
-        // calculatormode_update_main() rebuild across the whole sheet on every
-        // single edit. Tradeoff: other formula cells that reference the one
-        // just edited won't live-update until they're themselves re-entered
-        // (see recalculateSingleCell's comment).
+        // locationInExcel is updated incrementally above (just the touched
+        // cell). f_location/f_calculated go through recalculateAfterEdit,
+        // which is either a full calculatormode_update_main() rebuild (formulas
+        // stay live everywhere) or the scoped recalculateSingleCell() (only the
+        // edited cell updates immediately), per AppDelegate.fullFormulaRecalcEnabled
+        // -- see SettingsViewController for the user-facing toggle.
+    }
+
+    // Reads AppDelegate.fullFormulaRecalcEnabled (user setting, see
+    // SettingsViewController) to decide whether an edit triggers a full
+    // whole-sheet recalc or just recalculates the cell that was touched.
+    private func recalculateAfterEdit(index: Int, posKey: String) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if appd.fullFormulaRecalcEnabled {
+            calculatormode_update_main()
+        } else {
+            recalculateSingleCell(index: index, posKey: posKey)
+        }
     }
 
     func saveuserD() {
@@ -6361,7 +6370,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // documents this as a crash risk at scale -- confirmed live via a PERF log
     // showing storeInput's own initExcelLocation() alone costing 4.68s per
     // keystroke, with calculatormode_update_main immediately after it and no
-    // completion log, i.e. the app was killed mid-calculation.
+    // completion log, i.e. the app was killed mid-calculation. Used when
+    // AppDelegate.fullFormulaRecalcEnabled is off (see recalculateAfterEdit).
     //
     // Tradeoff (accepted): this only updates the cell you just edited. Any OTHER
     // formula cell elsewhere that references this one will keep showing its

@@ -82,6 +82,15 @@ class HomeController: UIViewController {
         return button
     }
 
+    private func makeSettingsButton() -> UIButton {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "gearshape"), for: .normal)
+        button.tintColor = .secondaryLabel
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityLabel = "Settings"
+        return button
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -109,6 +118,9 @@ class HomeController: UIViewController {
         let playgroundButton = makeButton(title: "Playground", subtitle: "Good for checking 3D surface graphs")
         playgroundButton.addTarget(self, action: #selector(openPlayground), for: .touchUpInside)
 
+        let settingsButton = makeSettingsButton()
+        settingsButton.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
+
         let stack = UIStackView(arrangedSubviews: [spreadsheetButton, formFillButton, playgroundButton])
         stack.axis = .vertical
         stack.spacing = 16
@@ -134,11 +146,17 @@ class HomeController: UIViewController {
         view.addSubview(stack)
         view.addSubview(disclaimerLabel)
         view.addSubview(creditLabel)
+        view.addSubview(settingsButton)
 
         view.addSubview(loadingOverlay)
         loadingOverlay.addSubview(loadingSpinner)
 
         NSLayoutConstraint.activate([
+            settingsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            settingsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            settingsButton.widthAnchor.constraint(equalToConstant: 32),
+            settingsButton.heightAnchor.constraint(equalToConstant: 32),
+
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
@@ -204,5 +222,15 @@ class HomeController: UIViewController {
                 self.hideLoading()
             }
         }
+    }
+
+    @objc private func openSettings() {
+        // No file is open yet at this point (this is the home screen), so
+        // SettingsViewController's idx stays nil -- its own showAnimate()
+        // already handles that case by falling back to StartLine rather than
+        // trying to reload a specific sheet.
+        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "Settings") as! SettingsViewController
+        targetViewController.modalPresentationStyle = .fullScreen
+        self.present(targetViewController, animated: true, completion: nil)
     }
 }

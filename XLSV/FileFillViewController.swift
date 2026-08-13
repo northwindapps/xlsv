@@ -5923,7 +5923,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 // location[i] still equals IPd (that's how i was found), so
                 // locationInExcel[i] is already correct -- no rebuild needed.
                 if !isCSV {
-                    recalculateSingleCell(index: i, posKey: IPd)
+                    recalculateAfterEdit(index: i, posKey: IPd)
                 }
 
             }else{
@@ -5957,7 +5957,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     } else {
                         locationInExcel.append("")
                     }
-                    recalculateSingleCell(index: newIndex, posKey: IPd)
+                    recalculateAfterEdit(index: newIndex, posKey: IPd)
                 }
 
             }
@@ -6198,6 +6198,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
     }
 
+    // Reads AppDelegate.fullFormulaRecalcEnabled (user setting, see
+    // SettingsViewController) to decide whether an edit triggers a full
+    // whole-sheet recalc or just recalculates the cell that was touched.
+    private func recalculateAfterEdit(index: Int, posKey: String) {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        if appd.fullFormulaRecalcEnabled {
+            calculatormode_update_main()
+        } else {
+            recalculateSingleCell(index: index, posKey: posKey)
+        }
+    }
+
     // Scoped counterpart to calculatormode_update_main() -- recalculates just
     // the one cell that was actually edited (via storeInput's "edit" or "first
     // entry" cases) instead of rebuilding f_location/f_calculated for every
@@ -6206,7 +6218,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // documents this as a crash risk at scale -- confirmed live via a PERF log
     // showing storeInput's own initExcelLocation() alone costing 4.68s per
     // keystroke, with calculatormode_update_main immediately after it and no
-    // completion log, i.e. the app was killed mid-calculation.
+    // completion log, i.e. the app was killed mid-calculation. Used when
+    // AppDelegate.fullFormulaRecalcEnabled is off (see recalculateAfterEdit).
     //
     // Tradeoff (accepted): this only updates the cell you just edited. Any OTHER
     // formula cell elsewhere that references this one will keep showing its
