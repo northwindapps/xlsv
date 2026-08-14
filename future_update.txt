@@ -55,3 +55,42 @@ If this needs fixing later:
 - Test with a real Excel-365-generated xlsx containing a linked data type (Data Types >
   Stocks) or a dynamic array formula, plus a sheet with boolean/error cells, to confirm
   the gap is closed.
+
+2026-08-14: LLM "data consultant" feature -- targeted for next-next version
+=========================================================================
+
+Idea:
+- Let the user ask natural-language questions about their open sheet(s) and get an
+  answer back from an LLM API. Motivating example from the user:
+    "are those cols, or cols in different sheets same? or almost matched?"
+  i.e. column/data comparison and fuzzy-matching questions across sheets, phrased
+  informally rather than as a formula.
+
+Design constraint 1 -- don't send raw cell data to the LLM at scale:
+- This app now handles 100k-row files (see large_file_load_perf_notes.txt /
+  xlsx_heavy_edit_crash_notes.txt). Two full columns at that size is far past any
+  practical LLM context window, and would be slow and expensive even if it fit.
+- The right split: do the actual comparison in native Swift first (exact-match %,
+  fuzzy/edit-distance overlap, set intersection, type/format mismatches -- all fast,
+  deterministic, and already have the data in memory as content/location arrays), then
+  hand the LLM only that computed summary plus the user's original question. The LLM's
+  job is understanding the ambiguous natural-language question and phrasing the answer,
+  not digesting the raw dataset. Same "compute first, explain second" split any
+  LLM-over-large-data feature needs.
+
+Design constraint 2 -- this is the app's first network dependency:
+- Current app positioning (this session's discussion) is offline / local-file-first /
+  no-subscription-required, as the actual differentiator against Excel's iPad
+  subscription wall and against Google Sheets. An LLM API call requires network and
+  sends data to a third party -- in tension with that pitch if it's not clearly scoped.
+- Should ship as an explicitly optional, isolated feature (e.g. an "Ask about this
+  data" entry point) that's simply inert with no connection -- not something core
+  editing/viewing flows route through. Needs its own clear user consent/opt-in before
+  any sheet data leaves the device, given files may contain business/DB-export data.
+
+Open questions for when this gets scoped for real:
+- Which LLM API/provider, and what's the actual latency/cost budget per query.
+- Exactly what summary statistics to compute per comparison type (column-vs-column,
+  sheet-vs-sheet) before handing off to the LLM.
+- Where the entry point lives in the UI, and how results get displayed (inline
+  highlight of matching/mismatched cells vs. a plain text answer).
