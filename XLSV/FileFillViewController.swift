@@ -2831,11 +2831,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         )
 
 
-//        bannerview.isHidden = true
-//        bannerview.delegate = self
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-//        bannerview.rootViewController = self
-//        bannerview.load(Request())
+        bannerview.isHidden = true
+        bannerview.delegate = self
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+        bannerview.rootViewController = self
+        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)

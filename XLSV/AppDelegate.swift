@@ -284,11 +284,92 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()
-        
+
         return true
 
     }
-   
+
+    // Lets Mail/Gmail/Files hand an .xlsx attachment straight to this app via
+    // "Open in XLSV"/"Copy to XLSV" -- requires the UTI declarations in
+    // Info.plist (CFBundleDocumentTypes + UTImportedTypeDeclarations for
+    // org.openxmlformats.spreadsheetml.sheet) for iOS to offer XLSV in that
+    // list at all; this handler is where the OS lands once the user picks it.
+    //
+    // Mirrors iCloudViewController.documentPicker(_:didPickDocumentAt:)'s xlsx
+    // branch + replaceLocalFileWithImportedOne() (isFileFillMode branch):
+    // stage the incoming file, unzip it via Service.testSandBox (populates
+    // appd.themeColors/style tables -- still required even though readExcel2
+    // does its own independent parse later, same as every other import path
+    // in this app), then land it at importedExcel/initialXLSX_ff.xlsx.
+    // FileFillViewController's own viewDidLoad already loads from that
+    // well-known default path whenever appd.imported_xlsx_file_path is empty,
+    // so a freshly-instantiated FileFillViewController picks this up with no
+    // extra plumbing -- same as a cold launch with no prior file would.
+    //
+    // Lands in Form Fill mode (FileFillViewController), not Spreadsheet --
+    // changed 2026-08-16 per explicit request.
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        guard url.pathExtension.lowercased() == "xlsx" else { return false }
+
+        let pathDirectory = ExcelHelper().getRootDocumentsDirectory()
+        let stagedURL = pathDirectory.appendingPathComponent(url.lastPathComponent)
+
+        do {
+            if FileManager.default.fileExists(atPath: stagedURL.path) {
+                try FileManager.default.removeItem(at: stagedURL)
+            }
+            // Mail/Gmail hand off a copy already sitting in this app's own
+            // Inbox folder -- moveItem both relocates it out of Inbox (which
+            // iOS expects the receiving app to clean up) and avoids a
+            // separate copy+delete step.
+            try FileManager.default.moveItem(at: url, to: stagedURL)
+        } catch {
+            print("Open-in xlsx: failed to stage incoming file: \(error)")
+            return false
+        }
+
+        excelfilename = url.lastPathComponent
+        imported_xlsx_file_path = stagedURL.path
+
+        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "", imp_formula: [String]())
+        _ = serviceInstance.testSandBox(fp: stagedURL.path)
+
+        let destinationFilePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX_ff.xlsx")
+        do {
+            try FileManager.default.createDirectory(at: destinationFilePath.deletingLastPathComponent(), withIntermediateDirectories: true)
+            // Same non-backup "Import" branch replaceLocalFileWithImportedOne()
+            // uses -- replaceItemAt succeeds whether or not destinationFilePath
+            // already exists, and consumes (deletes) stagedURL as part of the
+            // atomic replace.
+            try FileManager.default.replaceItemAt(destinationFilePath, withItemAt: stagedURL)
+            imported_xlsx_file_path = destinationFilePath.path
+        } catch {
+            print("Open-in xlsx: failed to finalize import: \(error)")
+            return false
+        }
+
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let target = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
+        target.isExcel = true
+        target.modalPresentationStyle = .fullScreen
+
+        // Same dismiss-then-unconditional-swap pattern the
+        // rootViewController-swap-leak fix established (see memory) --
+        // window.rootViewController might currently be HomeController (cold
+        // launch) or an already-open FileFillViewController/ViewController/
+        // PlaygroundViewController (app already running); dismiss whatever's
+        // presented on top of it first so the swap below doesn't leak a
+        // presenter<->presented retain cycle, and perform the swap
+        // unconditionally right after rather than nesting it in dismiss's
+        // completion (nesting it broke "Exit Playground" previously -- see
+        // memory for why).
+        window?.rootViewController?.dismiss(animated: false, completion: nil)
+        window?.rootViewController = target
+        window?.makeKeyAndVisible()
+
+        return true
+    }
+
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
