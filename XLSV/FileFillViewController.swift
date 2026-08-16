@@ -3854,8 +3854,14 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     func shiftFormula(_ formula: String, colOffset: Int, rowOffset: Int) -> String {
         // セル番地（例: A1, B10, AA100）にマッチする正規表現
+        // caseInsensitive -- a formula typed/stored with lowercase letters
+        // (e.g. "=c4*5", no autocapitalization forces uppercase) would
+        // otherwise silently fail to match at all here and never shift.
+        // excelColumnToIndex() already uppercases internally and
+        // indexToExcelColumn() always outputs uppercase, so matching
+        // case-insensitively is enough -- no other normalization needed.
         let pattern = "([A-Z]+)([0-9]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return formula }
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return formula }
         
         let nsString = formula as NSString
         var offsetFormula = formula
@@ -5053,11 +5059,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 //just string
                 if Double(ary[0]) == nil && Int(ary[1]) != nil{
                     if (Double(ary[0]) == nil) && Int(ary[1])! > 0{
+                        //what about =C4...10↓? this falls in here too
                         var product = ""
+                        // If ary[0] contains a cell reference (e.g. "=C4*5"),
+                        // shift the reference per cell (down: row+i, right:
+                        // col+i) via the same shiftFormula() the drag-select
+                        // "Fill range with functions?" path already uses,
+                        // instead of repeating the identical formula text.
+                        let goingDown = down_bool ? true : (right_bool ? false : true)
+                        // extractCellIndices() is uppercase-only -- uppercase
+                        // just for this detection check (shiftFormula() below
+                        // is already case-insensitive, so ary[0] itself is
+                        // passed through unchanged).
+                        let hasCellRef = !extractCellIndices(from: ary[0].uppercased()).isEmpty
                         for i in 0 ..< Int(ary[1])!{
-                            product = product + ary[0] + ":"
+                            if hasCellRef {
+                                product = product + shiftFormula(ary[0], colOffset: goingDown ? 0 : i, rowOffset: goingDown ? i : 0) + ":"
+                            } else {
+                                product = product + ary[0] + ":"
+                            }
                         }
-                        
+
                         if down_bool == true {
                             product = product + "↓"
                         }else if right_bool == true {
