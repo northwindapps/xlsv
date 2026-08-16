@@ -2112,7 +2112,6 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
     
     override func viewDidLoad() {
         hiddenTextField.becomeFirstResponder()
-        menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
         

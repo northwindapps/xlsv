@@ -2709,7 +2709,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     override func viewDidLoad() {
         hiddenTextField.becomeFirstResponder()
-        menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
 
@@ -2897,6 +2896,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         bannerview.isHidden = true
         bannerview.delegate = self
+        // adSize is a plain assign property with no default until set (the
+        // storyboard instantiates this view via init(coder:), never
+        // init(adSize:)) -- standard 320x50 banner, fits within the
+        // storyboard's constraint-driven ~61pt container.
+        bannerview.adSize = AdSizeBanner
         bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
         bannerview.rootViewController = self
         bannerview.load(Request())
@@ -4240,15 +4244,22 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     
     //the end of viewdidload
-//    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-//        bannerview.isHidden = false
-//      print("bannerViewDidReceiveAd")
-//    }
-//
-//    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
-//        bannerview.isHidden = true
-//      print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
-//    }
+    // viewDidLoad sets bannerview.isHidden = true before load(_:) even starts
+    // (so a slow/failed request never flashes an empty frame) -- these are
+    // the only two places that ever flip it back, so without them the banner
+    // stays hidden forever even on a successful load. Re-enabled 2026-08-16;
+    // updated from the stale GADBannerView parameter type (pre-rename SDK
+    // naming) to BannerView, matching bannerview's own declared type and the
+    // Google-Mobile-Ads-SDK 13.6.0 header's NS_SWIFT_NAME(BannerViewDelegate).
+    func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        bannerview.isHidden = false
+        print("bannerViewDidReceiveAd")
+    }
+
+    func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        bannerview.isHidden = true
+        print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+    }
     
     func getRootDocumentsDirectory() -> URL {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
