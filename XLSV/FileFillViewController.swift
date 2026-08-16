@@ -1473,6 +1473,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 appd.visibleRows = []
             }
 
+            // loadExcelSheet below is a synchronous, potentially multi-second
+            // disk read/parse (same rationale as HomeController's overlay) --
+            // showLoading() before the hop below lets the spinner actually
+            // paint while it runs.
+            self.showLoading()
             DispatchQueue.main.async {
                 self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item])! ){
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
@@ -1496,9 +1501,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         customLayout.prepare()
                         customLayout.invalidateLayout() // Call the method on the instance
                         self.myCollectionView.reloadData()
+                        self.hideLoading()
                         self.present(alert, animated: true)
                     } else {
                         print("CustomCollectionViewLayout is not set as the current layout")
+                        self.hideLoading()
                     }
                 }
 
