@@ -1460,6 +1460,19 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             print("selectedSheet",Int(appd.sheetNameIds[indexPath.item]))
             let sheetIdx = Int(appd.sheetNameIds[indexPath.item])
 
+            // Row filter (columnFilters/filteredOutRows) is per-sheet data --
+            // reset it on an actual sheet switch rather than carrying it over.
+            // appd.wsSheetIndex still holds the *previous* sheet here (it's
+            // only reassigned in the completion closure below), so this only
+            // fires on a genuine switch, not a same-sheet reload (row/col
+            // ops, rename, etc.).
+            if sheetIdx != appd.wsSheetIndex {
+                self.columnFilters.removeAll()
+                self.filteredOutRows.removeAll()
+                appd.rowFilterActive = false
+                appd.visibleRows = []
+            }
+
             DispatchQueue.main.async {
                 self.loadExcelSheet(idx:Int(appd.sheetNameIds[indexPath.item])! ){
                     if let customLayout = self.myCollectionView.collectionViewLayout as? CustomCollectionViewLayout {
@@ -1614,6 +1627,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             // otherwise its whole-sheet recompute (driven by what readExcel2 just
             // read off disk) would immediately overwrite the reapplied values.
             reapplyPendingXlsxChanges(forSheet: idx)
+
+            // An active filter's conditions (columnFilters) carry over across
+            // a sheet switch, but filteredOutRows/appd.visibleRows were
+            // computed against the *previous* sheet's content -- recompute
+            // them against what was just loaded so the new sheet renders
+            // correctly filtered rather than using stale results.
+            if !columnFilters.isEmpty {
+                applyRowFilters()
+            }
 
             completion?()
 
@@ -2468,11 +2490,54 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     
+    // Gives the user feedback during a synchronous, potentially multi-second
+    // operation (row filtering over a large sheet, email export, save
+    // backup) -- doesn't make the work itself any faster, same pattern/
+    // rationale as HomeController's mode-button loading overlay.
+    private let loadingOverlay: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+
+    private let loadingSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.hidesWhenStopped = true
+        return spinner
+    }()
+
+    private func showLoading() {
+        view.bringSubview(toFront: loadingOverlay)
+        loadingOverlay.isHidden = false
+        loadingSpinner.startAnimating()
+        view.isUserInteractionEnabled = false
+    }
+
+    private func hideLoading() {
+        loadingSpinner.stopAnimating()
+        loadingOverlay.isHidden = true
+        view.isUserInteractionEnabled = true
+    }
+
     override func viewDidLoad() {
         hiddenTextField.becomeFirstResponder()
         menuButton.layer.borderWidth = 1.0
         myCollectionView.layer.borderWidth = 1.0
         myCollectionView.layer.borderColor = UIColor.gray.cgColor
+
+        view.addSubview(loadingOverlay)
+        loadingOverlay.addSubview(loadingSpinner)
+        NSLayoutConstraint.activate([
+            loadingOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            loadingSpinner.centerXAnchor.constraint(equalTo: loadingOverlay.centerXAnchor),
+            loadingSpinner.centerYAnchor.constraint(equalTo: loadingOverlay.centerYAnchor),
+        ])
 
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
@@ -5051,53 +5116,67 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // realRow(forDisplaySection:)) consumed by numberOfSections/prepare()/
     // cellForItemAt instead.
     func applyRowFilters() {
-        filteredOutRows.removeAll()
+        // The row scan below is O(ROWSIZE * columnFilters.count) with zero
+        // feedback otherwise -- on a large sheet that's a real, multi-second
+        // freeze. showLoading()/hideLoading() don't make it faster (same
+        // rationale as HomeController's mode-button overlay); the
+        // DispatchQueue.main.async hop just gives the spinner one runloop
+        // turn to actually paint before the synchronous work below blocks
+        // the main thread.
+        showLoading()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
 
-        if !columnFilters.isEmpty {
-            for row in 1..<ROWSIZE {
-                var rowPasses = true
-                for (col, condition) in columnFilters {
-                    guard let i = locationIndex(for: "\(col),\(row)"), condition.matches(content[i]) else {
-                        rowPasses = false
-                        break
+            self.filteredOutRows.removeAll()
+
+            if !self.columnFilters.isEmpty {
+                for row in 1..<self.ROWSIZE {
+                    var rowPasses = true
+                    for (col, condition) in self.columnFilters {
+                        guard let i = self.locationIndex(for: "\(col),\(row)"), condition.matches(self.content[i]) else {
+                            rowPasses = false
+                            break
+                        }
+                    }
+                    if !rowPasses {
+                        self.filteredOutRows.insert(row)
                     }
                 }
-                if !rowPasses {
-                    filteredOutRows.insert(row)
+            }
+
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.rowFilterActive = !self.columnFilters.isEmpty
+            if appd.rowFilterActive {
+                appd.visibleRows = (1..<self.ROWSIZE).filter { !self.filteredOutRows.contains($0) }
+            } else {
+                appd.visibleRows = []
+            }
+
+            // The grid just got smaller/reordered under the cursor -- if
+            // currentindex no longer maps to a valid display row, clamp it back
+            // to a safe position rather than letting every downstream frame/data
+            // lookup keyed off currentindex run out of bounds.
+            if let ci = self.currentindex, ci.section > 0 {
+                let stillValid = appd.rowFilterActive
+                    ? ci.section - 1 < appd.visibleRows.count
+                    : true
+                if !stillValid {
+                    self.currentindex = appd.visibleRows.isEmpty ? nil : IndexPath(item: 1, section: 1)
                 }
             }
-        }
 
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        appd.rowFilterActive = !columnFilters.isEmpty
-        if appd.rowFilterActive {
-            appd.visibleRows = (1..<ROWSIZE).filter { !filteredOutRows.contains($0) }
-        } else {
-            appd.visibleRows = []
-        }
+            // The layout only rebuilds its row-count/each_height/yPOS arrays
+            // (rather than taking the cheap "just refresh headers" path) when
+            // dataSourceDidUpdate is true, which collectionViewCellSizeChanged
+            // triggers -- see CustomCollectionViewLayout.prepare(). Without
+            // this, reloadData() alone would leave the grid laid out at its
+            // pre-filter row count.
+            appd.collectionViewCellSizeChanged = 1
+            self.myCollectionView.collectionViewLayout.invalidateLayout()
+            self.myCollectionView.reloadData()
 
-        // The grid just got smaller/reordered under the cursor -- if
-        // currentindex no longer maps to a valid display row, clamp it back
-        // to a safe position rather than letting every downstream frame/data
-        // lookup keyed off currentindex run out of bounds.
-        if let ci = currentindex, ci.section > 0 {
-            let stillValid = appd.rowFilterActive
-                ? ci.section - 1 < appd.visibleRows.count
-                : true
-            if !stillValid {
-                currentindex = appd.visibleRows.isEmpty ? nil : IndexPath(item: 1, section: 1)
-            }
+            self.hideLoading()
         }
-
-        // The layout only rebuilds its row-count/each_height/yPOS arrays
-        // (rather than taking the cheap "just refresh headers" path) when
-        // dataSourceDidUpdate is true, which collectionViewCellSizeChanged
-        // triggers -- see CustomCollectionViewLayout.prepare(). Without
-        // this, reloadData() alone would leave the grid laid out at its
-        // pre-filter row count.
-        appd.collectionViewCellSizeChanged = 1
-        myCollectionView.collectionViewLayout.invalidateLayout()
-        myCollectionView.reloadData()
     }
 
     // Single translation point between display coordinates (what
@@ -7682,62 +7761,77 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     func proceedToEmail() {
         isMail = true
-        // Explicit export/share action reading straight off disk below --
-        // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
-        flushPendingXlsxChangesIfNeeded()
 
-        let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        //excel file creation
-        let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-        
-        //save temp content
-        var result = content
-        for idx in 0..<f_calculated.count{
-            if let l_idx = location.index(of: f_location[idx]){
-                result[l_idx] = f_calculated[idx]
-            }
-        }
-        csvexport(result: result)
-        if MFMailComposeViewController.canSendMail() {
-            let today: Date = Date()
-            let dateFormatter: DateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
-            var date = dateFormatter.string(from: today)
+        // flushPendingXlsxChangesIfNeeded/writeXlsxEmail/csvexport below can
+        // take real time on a large file -- showLoading()/hideLoading() give
+        // the user feedback (doesn't make the export itself faster); the
+        // DispatchQueue.main.async hop gives the spinner one runloop turn to
+        // actually paint before the synchronous work blocks the main thread
+        // (same pattern as applyRowFilters()/HomeController's overlay).
+        showLoading()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
 
-            let mail = MFMailComposeViewController()
-            mail.mailComposeDelegate = self
+            // Explicit export/share action reading straight off disk below --
+            // must see any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+            self.flushPendingXlsxChangesIfNeeded()
 
-            mail.setSubject("from ios")
-
-            //creating backup file name
-
-            var fileName = date + "_XLSV_"
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            if appd.excelfilename != ""{
-                fileName = fileName + appd.excelfilename
-                fileName = fileName.removingPercentEncoding!
-                if !fileName.hasSuffix(".xlsx"){
-                    fileName += ".xlsx"
+            //excel file creation
+            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+
+            //save temp content
+            var result = self.content
+            for idx in 0..<self.f_calculated.count{
+                if let l_idx = self.location.index(of: self.f_location[idx]){
+                    result[l_idx] = self.f_calculated[idx]
                 }
             }
-            
-            
-            //print("ViewController" ,filePath)
-            if isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
-            }else{
-                print("noContent")
+            self.csvexport(result: result)
+
+            self.hideLoading()
+
+            if MFMailComposeViewController.canSendMail() {
+                let today: Date = Date()
+                let dateFormatter: DateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+                var date = dateFormatter.string(from: today)
+
+                let mail = MFMailComposeViewController()
+                mail.mailComposeDelegate = self
+
+                mail.setSubject("from ios")
+
+                //creating backup file name
+
+                var fileName = date + "_XLSV_"
+                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                if appd.excelfilename != ""{
+                    fileName = fileName + appd.excelfilename
+                    fileName = fileName.removingPercentEncoding!
+                    if !fileName.hasSuffix(".xlsx"){
+                        fileName += ".xlsx"
+                    }
+                }
+
+
+                //print("ViewController" ,filePath)
+                if self.isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
+                    mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
+                }else{
+                    print("noContent")
+                }
+
+                //csv
+                mail.addAttachmentData(self.data!, mimeType: "text/csv", fileName: date + ".csv")
+
+                self.present(mail, animated: true, completion: nil)
+
+                self.isMail = false
+            } else {
+                // show failure alert
             }
-
-            //csv
-            mail.addAttachmentData(data!, mimeType: "text/csv", fileName: date + ".csv")
-
-            present(mail, animated: true, completion: nil)
-            
-            isMail = false
-        } else {
-            // show failure alert
         }
     }
 
@@ -7770,44 +7864,56 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 return
             }
 
-            // A CSV-mode sheet has no source .xlsx to hand off to
-            // writeXlsxBackup -- write a .csv backup directly from content/
-            // location instead, into the same Backups/FileFill directory.
-            if self.isCSV {
-                let url = self.writeCsvBackup(filename: fileName)
+            // The disk write below (CSV or xlsx) can take real time on a
+            // large file -- showLoading()/hideLoading() give the user
+            // feedback (doesn't make the write itself faster); the
+            // DispatchQueue.main.async hop gives the spinner one runloop
+            // turn to actually paint before the synchronous work blocks the
+            // main thread (same pattern as applyRowFilters()/proceedToEmail()).
+            self.showLoading()
+            DispatchQueue.main.async {
+                // A CSV-mode sheet has no source .xlsx to hand off to
+                // writeXlsxBackup -- write a .csv backup directly from content/
+                // location instead, into the same Backups/FileFill directory.
+                if self.isCSV {
+                    let url = self.writeCsvBackup(filename: fileName)
+                    self.hideLoading()
+                    if url == nil {
+                        self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
+                    } else {
+                        self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
+                    }
+                    return
+                }
+
+                // Explicit save action reading straight off disk below -- must see
+                // any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
+                self.flushPendingXlsxChangesIfNeeded()
+
+                let serviceInstance = Service(
+                    imp_sheetNumber: 0,
+                    imp_stringContents: [String](),
+                    imp_locations: [String](),
+                    imp_idx: [Int](),
+                    imp_fileName: "",
+                    imp_formula: [String]()
+                )
+
+                let appd = UIApplication.shared.delegate as! AppDelegate
+
+                let url = serviceInstance.writeXlsxBackup(
+                    fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
+                    filename: fileName,
+                    filenameSuffix: "_ff"
+                )
+
+                self.hideLoading()
+
                 if url == nil {
                     self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
                 } else {
                     self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
                 }
-                return
-            }
-
-            // Explicit save action reading straight off disk below -- must see
-            // any not-yet-flushed edits first (see PendingXlsxChangeSet.swift).
-            self.flushPendingXlsxChangesIfNeeded()
-
-            let serviceInstance = Service(
-                imp_sheetNumber: 0,
-                imp_stringContents: [String](),
-                imp_locations: [String](),
-                imp_idx: [Int](),
-                imp_fileName: "",
-                imp_formula: [String]()
-            )
-
-            let appd = UIApplication.shared.delegate as! AppDelegate
-
-            let url = serviceInstance.writeXlsxBackup(
-                fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path,
-                filename: fileName,
-                filenameSuffix: "_ff"
-            )
-
-            if url == nil {
-                self.showResultAlert(title: "Save Failed", message: "Something went wrong while making a backup.")
-            } else {
-                self.showResultAlert(title: "Backup Saved", message: "Your file has been saved successfully.")
             }
         }
         
