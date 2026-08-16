@@ -58,17 +58,60 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     
     var test = true
 
+    // Gives the user feedback during restore() -- reading/copying the backup
+    // file plus the full readExcel2 reparse it triggers after dismiss can be
+    // a real multi-second wait on a large file, same pattern/rationale as
+    // HomeController's mode-button loading overlay.
+    private let loadingOverlay: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+
+    private let loadingSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.hidesWhenStopped = true
+        return spinner
+    }()
+
+    private func showLoading() {
+        view.bringSubview(toFront: loadingOverlay)
+        loadingOverlay.isHidden = false
+        loadingSpinner.startAnimating()
+        view.isUserInteractionEnabled = false
+    }
+
+    private func hideLoading() {
+        loadingSpinner.stopAnimating()
+        loadingOverlay.isHidden = true
+        view.isUserInteractionEnabled = true
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         self.title = "Backups"
-        
+
         setupLayout()
-        
+
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
-        
+
+        view.addSubview(loadingOverlay)
+        loadingOverlay.addSubview(loadingSpinner)
+        NSLayoutConstraint.activate([
+            loadingOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            loadingSpinner.centerXAnchor.constraint(equalTo: loadingOverlay.centerXAnchor),
+            loadingSpinner.centerYAnchor.constraint(equalTo: loadingOverlay.centerYAnchor),
+        ])
+
         loadData()
     }
 
@@ -211,6 +254,22 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
     }
     
     func restore(selectedFileURL:URL){
+        // The work below (testSandBox's copy, replaceLocalFileWithImportedOne,
+        // CSV parsing) plus the readExcel2 reparse reloadAfterRestore()
+        // triggers right after dismiss can be a real multi-second wait on a
+        // large file -- showLoading()/hideLoading() don't make any of that
+        // faster, just give the user something to look at (same rationale as
+        // HomeController's mode-button overlay). The DispatchQueue.main.async
+        // hop gives the spinner one runloop turn to actually paint before the
+        // synchronous work below blocks the main thread.
+        showLoading()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.restoreAfterShowingLoading(selectedFileURL: selectedFileURL)
+        }
+    }
+
+    private func restoreAfterShowingLoading(selectedFileURL:URL){
         if selectedFileURL.absoluteString.contains(".xlsx"){
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             
@@ -266,6 +325,7 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             // existing instance and having it reload in place (see
             // reloadAfterRestore() in FileFillViewController/ViewController)
             // avoids ever having two heavy instances alive together.
+            self.hideLoading()
             self.dismiss(animated: true) {
                 self.onRestoreComplete?()
             }
@@ -308,6 +368,7 @@ class BackupTableViewController: UIViewController, UITableViewDelegate, UITableV
             }
 
             // See matching comment on the xlsx branch above -- same fix.
+            self.hideLoading()
             self.dismiss(animated: true) {
                 self.onRestoreComplete?()
             }
