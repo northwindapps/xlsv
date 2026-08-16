@@ -245,8 +245,55 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             return true
         }
     }
+    // Second, ANDed-in date-range condition on the same column (see
+    // Datafilter.xib's datefromfield/datetofield). Deliberately a plain
+    // From/To pair rather than ColumnFilterCondition's ==,>=,<=,<,> syntax --
+    // filtering dates is almost always "between X and Y", and either side
+    // left blank is an open-ended bound. Parsing is lenient about the
+    // separator: "yyyy/mm/dd" and "yyyy-mm-dd" both work (dashes are
+    // normalized to slashes before parsing against a single formatter).
+    struct DateFilterCondition {
+        var from: Date?
+        var to: Date?
+
+        static let dateFormatter: DateFormatter = {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy/MM/dd"
+            f.locale = Locale(identifier: "en_US_POSIX")
+            return f
+        }()
+
+        private static func parseDate(_ text: String) -> Date? {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            return dateFormatter.date(from: trimmed.replacingOccurrences(of: "-", with: "/"))
+        }
+
+        static func parse(from fromText: String, to toText: String) -> DateFilterCondition? {
+            let from = parseDate(fromText)
+            let to = parseDate(toText)
+            guard from != nil || to != nil else { return nil }
+            return DateFilterCondition(from: from, to: to)
+        }
+
+        func fromDisplayString() -> String {
+            from.map { DateFilterCondition.dateFormatter.string(from: $0) } ?? ""
+        }
+
+        func toDisplayString() -> String {
+            to.map { DateFilterCondition.dateFormatter.string(from: $0) } ?? ""
+        }
+
+        func matches(_ rawValue: String) -> Bool {
+            guard let value = DateFilterCondition.parseDate(rawValue) else { return false }
+            if let from = from, value < from { return false }
+            if let to = to, value > to { return false }
+            return true
+        }
+    }
     var datafilter: Datafilter!
     var columnFilters: [Int: ColumnFilterCondition] = [:]
+    var columnDateFilters: [Int: DateFilterCondition] = [:]
     var filteredOutRows: Set<Int> = []
     private var currentFilterColumn: Int = -1
     
@@ -890,7 +937,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         cell.label2?.text = getExcelColumnName(columnNumber: indexPath.item)//ABCDE...
                         columninNumber.append(getExcelColumnName(columnNumber: indexPath.item))
                         // Small dot marking a column with an active Datafilter condition.
-                        cell.setFilterBadge(visible: columnFilters[indexPath.item] != nil)
+                        cell.setFilterBadge(visible: columnFilters[indexPath.item] != nil || columnDateFilters[indexPath.item] != nil)
                     }
 
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
@@ -1521,6 +1568,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if sheetIdx != appd.wsSheetIndex {
                 self.columnFilters.removeAll()
                 self.filteredOutRows.removeAll()
+                self.columnDateFilters.removeAll()
                 appd.rowFilterActive = false
                 appd.visibleRows = []
             }
@@ -2334,6 +2382,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.updateUnsavedDataReminderVisibility()
             self.columnFilters.removeAll()
             self.filteredOutRows.removeAll()
+            self.columnDateFilters.removeAll()
 
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -2472,6 +2521,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.updateUnsavedDataReminderVisibility()
             self.columnFilters.removeAll()
             self.filteredOutRows.removeAll()
+            self.columnDateFilters.removeAll()
 
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -4209,6 +4259,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         updateUnsavedDataReminderVisibility()
         columnFilters.removeAll()
         filteredOutRows.removeAll()
+        columnDateFilters.removeAll()
         appd.rowFilterActive = false
         appd.visibleRows = []
 
@@ -5061,6 +5112,20 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     if (Double(ary[0]) == nil) && Int(ary[1])! > 0{
                         //what about =C4...10↓? this falls in here too
                         var product = ""
+
+                        // yyyy/mm/dd or yyyy-mm-dd start -- increments by one
+                        // day per cell (Excel/Sheets date drag-fill), same
+                        // "always advance regardless of ↓/→" behavior as the
+                        // 1000...10↓ numeric case above -- direction only
+                        // decides which axis the colon-joined values spread
+                        // across. Whichever separator was typed ("/" or "-")
+                        // is kept in the output. Reuses DateFilterCondition's
+                        // formatter (Datafilter's date-range fields) instead
+                        // of a second one.
+                        let dateSeparator: Character = ary[0].contains("-") ? "-" : "/"
+                        let normalizedDateStr = ary[0].replacingOccurrences(of: "-", with: "/")
+                        let startDate = DateFilterCondition.dateFormatter.date(from: normalizedDateStr)
+
                         // If ary[0] contains a cell reference (e.g. "=C4*5"),
                         // shift the reference per cell (down: row+i, right:
                         // col+i) via the same shiftFormula() the drag-select
@@ -5073,7 +5138,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         // passed through unchanged).
                         let hasCellRef = !extractCellIndices(from: ary[0].uppercased()).isEmpty
                         for i in 0 ..< Int(ary[1])!{
-                            if hasCellRef {
+                            if let start = startDate {
+                                let shifted = Calendar.current.date(byAdding: .day, value: i, to: start) ?? start
+                                let formatted = DateFilterCondition.dateFormatter.string(from: shifted).replacingOccurrences(of: "/", with: String(dateSeparator))
+                                product = product + formatted + ":"
+                            } else if hasCellRef {
                                 product = product + shiftFormula(ary[0], colOffset: goingDown ? 0 : i, rowOffset: goingDown ? i : 0) + ":"
                             } else {
                                 product = product + ary[0] + ":"
@@ -5092,10 +5161,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         return ""
                     }
                 }
-                    
-                
+
+
                 return ""
-                
+
             }
         }else{
             return ""
@@ -5126,7 +5195,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         currentFilterColumn = column
 
         if datafilter == nil {
-            datafilter = Datafilter(frame: CGRect(x: 15, y: 50, width: 250, height: 170))
+            datafilter = Datafilter(frame: CGRect(x: 15, y: 50, width: 290, height: 205))
             datafilter.closebutton.addTarget(self, action: #selector(closeDatafilter), for: .touchUpInside)
             datafilter.applybutton.addTarget(self, action: #selector(applyDatafilterTapped), for: .touchUpInside)
             datafilter.deselectbutton.addTarget(self, action: #selector(deselectDatafilterTapped), for: .touchUpInside)
@@ -5136,6 +5205,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // column, so reopening the dialog shows the current filter instead
         // of always starting blank.
         datafilter.conditionfield.text = columnFilters[column]?.displayString()
+        datafilter.datefromfield.text = columnDateFilters[column]?.fromDisplayString()
+        datafilter.datetofield.text = columnDateFilters[column]?.toDisplayString()
 
         if datafilter.superview == nil {
             self.view.addSubview(datafilter)
@@ -5157,6 +5228,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             columnFilters.removeValue(forKey: currentFilterColumn)
         }
 
+        if let dateCondition = DateFilterCondition.parse(from: datafilter.datefromfield.text ?? "", to: datafilter.datetofield.text ?? "") {
+            columnDateFilters[currentFilterColumn] = dateCondition
+        } else {
+            columnDateFilters.removeValue(forKey: currentFilterColumn)
+        }
+
         closeDatafilter()
         applyRowFilters()
     }
@@ -5164,6 +5241,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     @objc func deselectDatafilterTapped() {
         guard currentFilterColumn >= 0 else { return }
         columnFilters.removeValue(forKey: currentFilterColumn)
+        columnDateFilters.removeValue(forKey: currentFilterColumn)
         closeDatafilter()
         applyRowFilters()
     }
@@ -5199,7 +5277,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
             self.filteredOutRows.removeAll()
 
-            if !self.columnFilters.isEmpty {
+            if !self.columnFilters.isEmpty || !self.columnDateFilters.isEmpty {
                 for row in 1..<self.ROWSIZE {
                     var rowPasses = true
                     for (col, condition) in self.columnFilters {
@@ -5223,6 +5301,25 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                             break
                         }
                     }
+                    if rowPasses {
+                        for (col, dateCondition) in self.columnDateFilters {
+                            let key = "\(col),\(row)"
+                            guard let i = self.locationIndex(for: key) else {
+                                rowPasses = false
+                                break
+                            }
+                            let valueToCheck: String
+                            if let fIdx = self.fLocationIndex(for: key), fIdx < self.f_calculated.count {
+                                valueToCheck = self.f_calculated[fIdx]
+                            } else {
+                                valueToCheck = self.content[i]
+                            }
+                            guard dateCondition.matches(valueToCheck) else {
+                                rowPasses = false
+                                break
+                            }
+                        }
+                    }
                     if !rowPasses {
                         self.filteredOutRows.insert(row)
                     }
@@ -5230,7 +5327,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
 
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            appd.rowFilterActive = !self.columnFilters.isEmpty
+            appd.rowFilterActive = !self.columnFilters.isEmpty || !self.columnDateFilters.isEmpty
             if appd.rowFilterActive {
                 appd.visibleRows = (1..<self.ROWSIZE).filter { !self.filteredOutRows.contains($0) }
             } else {
