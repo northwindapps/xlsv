@@ -47,6 +47,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var customSizedWidth_temp = [Double]()
     var cshLocation_temp = [Int]()
     var customSizedHeight_temp = [Double]()
+
+    // Row filter (FileFillViewController's Datafilter dialog). When active,
+    // display section i+1 shows real row visibleRows[i] -- content/location
+    // keep their real row numbers untouched, only the render/layout
+    // coordinate space is compacted. ViewController never sets these, so its
+    // own grid is unaffected.
+    var rowFilterActive = false
+    var visibleRows: [Int] = []
     //
 //    var border_ids = [Int]()
 //    var borders_left_style = [String]()

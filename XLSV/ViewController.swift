@@ -2459,6 +2459,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
+        // FileFillViewController's row filter (Datafilter dialog) compacts
+        // the shared CustomCollectionViewLayout's row coordinate space via
+        // appd.rowFilterActive/visibleRows -- ViewController never sets
+        // these but shares the same layout class, so a fresh instance must
+        // not inherit stale compaction state left over from Form-Fill mode.
+        appd.rowFilterActive = false
+        appd.visibleRows = []
+
         // Claim whatever file path BackupTableViewController's local restore handed over on
         // its ViewController-dedicated appd field, then clear it immediately so it can't leak
         // into whichever controller loads next -- see local_xlsx_file_path above.

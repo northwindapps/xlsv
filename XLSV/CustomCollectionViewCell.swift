@@ -33,6 +33,12 @@ class CustomCollectionViewCell: UICollectionViewCell {
     private var topBorderWidth: CGFloat = 0
     private var bottomBorderWidth: CGFloat = 0
 
+    // Small dot shown on a column-header cell when that column has an
+    // active Datafilter condition -- positioned in the top-right corner,
+    // sized/laid out in layoutSubviews() like the edge border layers above.
+    private let filterBadgeLayer = CALayer()
+    private let filterBadgeDiameter: CGFloat = 6
+
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)!
         setup()
@@ -53,6 +59,17 @@ class CustomCollectionViewCell: UICollectionViewCell {
             edgeLayer.isHidden = true
             layer.addSublayer(edgeLayer)
         }
+
+        filterBadgeLayer.backgroundColor = UIColor.systemBlue.cgColor
+        filterBadgeLayer.cornerRadius = filterBadgeDiameter / 2
+        filterBadgeLayer.isHidden = true
+        layer.addSublayer(filterBadgeLayer)
+    }
+
+    // Callers set this every reuse (same convention as setEdgeBorders) --
+    // dequeued cells otherwise keep whatever a previous index path last set.
+    func setFilterBadge(visible: Bool) {
+        filterBadgeLayer.isHidden = !visible
     }
 
     // Pass nil (or a width <= 0) for a side to hide it -- callers must reset all
@@ -96,6 +113,10 @@ class CustomCollectionViewCell: UICollectionViewCell {
         rightBorderLayer.frame = CGRect(x: bounds.width - rightBorderWidth, y: 0, width: rightBorderWidth, height: bounds.height)
         topBorderLayer.frame = CGRect(x: 0, y: 0, width: bounds.width, height: topBorderWidth)
         bottomBorderLayer.frame = CGRect(x: 0, y: bounds.height - bottomBorderWidth, width: bounds.width, height: bottomBorderWidth)
+
+        let inset: CGFloat = 2
+        filterBadgeLayer.frame = CGRect(x: bounds.width - filterBadgeDiameter - inset, y: inset,
+                                         width: filterBadgeDiameter, height: filterBadgeDiameter)
     }
     
     // 再利用時に呼ばれるシステムメソッド
@@ -103,6 +124,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
         // 枠線の状態をデフォルトの初期状態（枠線なし）に戻す
         clearAllEdgeBorders()
+        setFilterBadge(visible: false)
     }
 
     // 4辺のカスタム枠線をすべてクリアしてデフォルトの薄い網線に戻すメソッド

@@ -192,6 +192,17 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                 r = appd.numberofRow
             }
 
+            // r above is the real, full-grid row count -- kept for
+            // appd.numberofRow bookkeeping below. The layout itself (every
+            // array/index from here on: each_height/yPOS/mergedAnchors/etc.)
+            // operates in the same, possibly filter-compacted display
+            // coordinate space the collection view's own numberOfSections
+            // returns, so r is reassigned to that count and used as-is
+            // throughout the rest of this class.
+            let realRowTotal = r
+            if appd.rowFilterActive {
+                r = 1 + appd.visibleRows.count
+            }
 
             for _ in 0..<r {
                 each_height.append(CELL_HEIGHT)
@@ -211,16 +222,20 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
 
         //read temp when it's count was not 0
         for i in 0..<each_height.count{
+            // cshLocation/cshLocation_temp are keyed by real row -- translate
+            // this display index back before probing them (see the matching
+            // realRow(forDisplaySection:) helper in FileFillViewController).
+            let realI = (appd.rowFilterActive && i > 0 && i - 1 < appd.visibleRows.count) ? appd.visibleRows[i - 1] : i
             switch appd.cshLocation_temp.count {
             case 0:
-                if appd.cshLocation.contains(i){
-                    let l = appd.cshLocation.index(of: i)
+                if appd.cshLocation.contains(realI){
+                    let l = appd.cshLocation.index(of: realI)
                     let doubled = Double(appd.customSizedHeight[l!])
                     each_height[i] = doubled
                 }
             default:
-                if appd.cshLocation_temp.contains(i){
-                    let l = appd.cshLocation_temp.index(of: i)
+                if appd.cshLocation_temp.contains(realI){
+                    let l = appd.cshLocation_temp.index(of: realI)
                     let doubled = Double(appd.customSizedHeight_temp[l!])
                     each_height[i] = doubled
                 }
@@ -272,7 +287,7 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             each_width[j] = xPOS[j + 1] - xPOS[j]
         }
 
-            appd.numberofRow = r
+            appd.numberofRow = realRowTotal
             appd.numberofColumn = c
 
 
@@ -398,7 +413,13 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
             // xPOS/yPOS/each_width/each_height (already O(r+c), computed above)
             // plus mergedAnchors (computed below, O(merge count)).
             mergedAnchors.removeAll(keepingCapacity: true)
-            if appd.diff_start_index.count == appd.diff_end_index.count {
+            // Merge-cell frame math assumes row/col numbers are contiguous;
+            // once a row filter compacts the grid a merge span may include
+            // hidden rows, so merges are simply not rendered while filtering
+            // is active (matches the earlier decision to accept this
+            // trade-off rather than risk the merge-span-over-compacted-rows
+            // arithmetic that previously caused a crash).
+            if !appd.rowFilterActive && appd.diff_start_index.count == appd.diff_end_index.count {
                 for (idx, start) in appd.diff_start_index.enumerated() {
                     let startCol = getExcelColumnNumber(columnName: alphabetOnlyString(text: start))
                     guard let startRow = Int(numberOnlyString(text: start)),
@@ -416,7 +437,9 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
         } else {
             // Original eager path, unchanged: materialize every interior cell,
             // then patch merge-anchor cells over the ordinary frames just written.
-            let mergedRangesValid = appd.diff_start_index.count == appd.diff_end_index.count
+            // See matching comment on the lazy path above -- merges are
+            // skipped entirely while a row filter is compacting the grid.
+            let mergedRangesValid = !appd.rowFilterActive && appd.diff_start_index.count == appd.diff_end_index.count
             var mergedStartIndex: [String: Int] = [:]
             if mergedRangesValid {
                 mergedStartIndex.reserveCapacity(appd.diff_start_index.count)

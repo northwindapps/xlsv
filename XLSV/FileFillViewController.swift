@@ -169,6 +169,34 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     var datainputview :Datainputview!
     let speechInputHelper = SpeechInputHelper()
     var Hintview:Hint!
+
+    // Row filter (see Datafilter.swift/.xib -- dialog opened by tapping a
+    // column header). columnFilters is keyed by column index (indexPath.item);
+    // each column's four fields are ANDed together (e.g. numLarger + numLesser
+    // makes a range), and columns are ANDed with each other. filteredOutRows is
+    // computed once by applyRowFilters() -- "before rendering cells", per the
+    // request -- rather than re-evaluated per cell during scroll.
+    struct ColumnFilterCondition {
+        var textEqual: String?
+        var numLarger: Double?
+        var numLesser: Double?
+        var numEqual: Double?
+
+        func matches(_ value: String) -> Bool {
+            if let textEqual = textEqual, value != textEqual { return false }
+            if numLarger != nil || numLesser != nil || numEqual != nil {
+                guard let numValue = Double(value) else { return false }
+                if let numLarger = numLarger, !(numValue > numLarger) { return false }
+                if let numLesser = numLesser, !(numValue < numLesser) { return false }
+                if let numEqual = numEqual, numValue != numEqual { return false }
+            }
+            return true
+        }
+    }
+    var datafilter: Datafilter!
+    var columnFilters: [Int: ColumnFilterCondition] = [:]
+    var filteredOutRows: Set<Int> = []
+    private var currentFilterColumn: Int = -1
     
     //forexport
     var data: Data? = nil
@@ -250,12 +278,20 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
 
             appd.numberofRow = rowsize
+
+            // rowsize/ROWSIZE/appd.numberofRow above stay the *real* total
+            // (row-insert/delete and other code depend on that) -- only the
+            // section count actually handed to the collection view is
+            // compacted, via appd.visibleRows built by applyRowFilters().
+            if appd.rowFilterActive {
+                return 1 + appd.visibleRows.count
+            }
             return rowsize
-            
+
         }else{
             return 1
         }
-        
+
     }
     
     
@@ -616,8 +652,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             cell.label2?.minimumScaleFactor = 0.4
 
             removePanGestureRecognizerFromCell(cell)
+            cell.setFilterBadge(visible: false)
 
-            let key = String(indexPath.item)+","+String(indexPath.section)
+            // realRow translates the (possibly filter-compacted) display
+            // section back to the real, absolute row that content/location
+            // are actually keyed by -- see realRow(forDisplaySection:).
+            let key = String(indexPath.item)+","+String(realRow(forDisplaySection: indexPath.section))
 
             //content
             if let i = locationIndex(for: key) {
@@ -764,12 +804,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }else{
                 cell.label2?.backgroundColor = UIColor.white
                 cell.label2?.textColor = UIColor.black
-                
+
                 if indexPath.item == 0{
 
                     if indexPath.section > 0{
-                        cell.label2?.text = String(indexPath.section)
-                        rowinNumber.append("r" + String(indexPath.section))
+                        // Show the real row number (may have gaps once a
+                        // filter is active), not the compacted display
+                        // position -- see realRow(forDisplaySection:).
+                        let realSectionRow = realRow(forDisplaySection: indexPath.section)
+                        cell.label2?.text = String(realSectionRow)
+                        rowinNumber.append("r" + String(realSectionRow))
                     }
 
                     cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
@@ -793,6 +837,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     if indexPath.item > 0{//0,0 == greyzone
                         cell.label2?.text = getExcelColumnName(columnNumber: indexPath.item)//ABCDE...
                         columninNumber.append(getExcelColumnName(columnNumber: indexPath.item))
+                        // Small dot marking a column with an active Datafilter condition.
+                        cell.setFilterBadge(visible: columnFilters[indexPath.item] != nil)
                     }
 
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
@@ -865,7 +911,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             //print("width size",cell.frame.width)
             let predifinedIds = [31]
-            let ipstr = String(indexPath.section) + "," + String(indexPath.row)
+            let ipstr = String(realRow(forDisplaySection: indexPath.section)) + "," + String(indexPath.row)
             let styleId = excelStyleLocationIndex(appd.excelStyleLocation, key: ipstr)
             if (styleId != nil && (appd.excelStyleIdx[styleId!] != -1) && appd.cellXfs.count != 0 && appd.numFmtIds.count != 0 && appd.numFmts.count != 0 && appd.excelStyleIdx.count != 0){
                 var c = 0
@@ -1179,7 +1225,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
             }
         }
-        cursor = String(currentindex.item) + "," + String(currentindex.section)
+        cursor = String(currentindex.item) + "," + String(realRow(forDisplaySection: currentindex.section))
             
         saveuserF()
         saveuserD()
@@ -1278,9 +1324,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         if collectionView === myCollectionView{
             //reset change history
             currentindex = indexPath
-            cursor = String(currentindex!.item)+","+String(currentindex!.section)
-            
-            
+            // cursor is compared against cellForItemAt's key, which is keyed
+            // by real row -- translate the (possibly display-compacted)
+            // currentindex.section accordingly.
+            cursor = String(currentindex!.item)+","+String(realRow(forDisplaySection: currentindex!.section))
+
+
             getIndexlabel()
             
                 let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -1295,10 +1344,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     
                     
                 }else if indexPath.section == 0{
-                    //do nothing
-                    //settingCellSelected  = true
-                    //numberviewopen()
-                    
+                    openDatafilter(forColumn: indexPath.item)
                 }else{
                     //version 1.3.6 csv mode only not in excel file viewer mode
                     //if !isExcel && !settingCellSelected{
@@ -2205,13 +2251,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.textsize.removeAll()
             self.pendingXlsxChanges.clear()
             self.updateUnsavedDataReminderVisibility()
+            self.columnFilters.removeAll()
+            self.filteredOutRows.removeAll()
 
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
             UserDefaults.standard.synchronize()
-            
+
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-            
+            appd.rowFilterActive = false
+            appd.visibleRows = []
+
             //Delete all xml files
             let fileList = appd.sheetNameIds.map { "sheet\($0)" }
             
@@ -2339,13 +2389,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.textsize.removeAll()
             self.pendingXlsxChanges.clear()
             self.updateUnsavedDataReminderVisibility()
+            self.columnFilters.removeAll()
+            self.filteredOutRows.removeAll()
 
-            
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
             UserDefaults.standard.synchronize()
-            
+
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            appd.rowFilterActive = false
+            appd.visibleRows = []
             appd.cswLocation.removeAll()
             appd.cshLocation.removeAll()
             appd.customSizedWidth.removeAll()
@@ -3388,7 +3441,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             let ecol = ExcelHelper().GetExcelColumnName(columnNumber: currentindex.item)
             let alert = UIAlertController(
                 title: "Copy & Paste Selected Cell Values",
-                message: "Do you want to paste them starting from cell " + ecol + String(currentindex.section) + "?",
+                message: "Do you want to paste them starting from cell " + ecol + String(realRow(forDisplaySection: currentindex.section)) + "?",
                 preferredStyle: .alert
             )
             
@@ -3400,14 +3453,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 print("wsSheetIndex",appd.wsSheetIndex)
 
 
+                // tempRangeSelected holds display sections (possibly filter-
+                // compacted) -- translate to real rows before touching
+                // content/location, which are keyed by real row.
+                let realRangeSelected = self.tempRangeSelected.map {
+                    IndexPath(item: $0.item, section: self.realRow(forDisplaySection: $0.section))
+                }
+
                 //find copy origin point(left top)
-                let minCol = self.tempRangeSelected.map { $0.item }.min() ?? 0
-                let minRow = self.tempRangeSelected.map { $0.section }.min() ?? 0
-                
+                let minCol = realRangeSelected.map { $0.item }.min() ?? 0
+                let minRow = realRangeSelected.map { $0.section }.min() ?? 0
+
                 //find paste origin point
                 let destBaseCol = self.currentindex.item
-                let destBaseRow = self.currentindex.section
-                
+                let destBaseRow = self.realRow(forDisplaySection: self.currentindex.section)
+
                 var locationIndex: [String: Int] = [:]
                 locationIndex.reserveCapacity(self.location.count)
                 for (idx, loc) in self.location.enumerated() {
@@ -3418,7 +3478,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
                 var copyBuffer: [(colOffset: Int, rowOffset: Int, value: String)] = []
 
-                for each in self.tempRangeSelected {
+                for each in realRangeSelected {
                     if let idx = locationIndex["\(each.item),\(each.section)"] {
                         copyBuffer.append((
                             colOffset: each.item - minCol,
@@ -4017,6 +4077,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         isCSV = !isExcel
         pendingXlsxChanges.clear()
         updateUnsavedDataReminderVisibility()
+        columnFilters.removeAll()
+        filteredOutRows.removeAll()
+        appd.rowFilterActive = false
+        appd.visibleRows = []
 
         appd.collectionViewCellSizeChanged = 1
         appd.cswLocation.removeAll()
@@ -4909,9 +4973,147 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             Hintview.removeFromSuperview()
         }
     }
-    
-    
-    
+
+    // MARK: - Row filter (Datafilter dialog, opened by tapping a column header)
+
+    func openDatafilter(forColumn column: Int) {
+        currentFilterColumn = column
+
+        if datafilter == nil {
+            datafilter = Datafilter(frame: CGRect(x: 15, y: 50, width: 250, height: 378))
+            datafilter.closebutton.addTarget(self, action: #selector(closeDatafilter), for: .touchUpInside)
+            datafilter.applybutton.addTarget(self, action: #selector(applyDatafilterTapped), for: .touchUpInside)
+            datafilter.deselectbutton.addTarget(self, action: #selector(deselectDatafilterTapped), for: .touchUpInside)
+        }
+
+        // Pre-populate with whatever condition is already active on this
+        // column, so reopening the dialog shows the current filter instead
+        // of always starting blank.
+        let existing = columnFilters[column]
+        datafilter.textequalfield.text = existing?.textEqual
+        datafilter.numlargerfield.text = existing?.numLarger.map { String($0) }
+        datafilter.numlesserfield.text = existing?.numLesser.map { String($0) }
+        datafilter.numequalfield.text = existing?.numEqual.map { String($0) }
+
+        if datafilter.superview == nil {
+            self.view.addSubview(datafilter)
+        }
+    }
+
+    @objc func closeDatafilter() {
+        if datafilter != nil {
+            datafilter.removeFromSuperview()
+        }
+    }
+
+    @objc func applyDatafilterTapped() {
+        guard currentFilterColumn >= 0 else { return }
+
+        let textEqual = datafilter.textequalfield.text?.isEmpty == false ? datafilter.textequalfield.text : nil
+        let numLarger = datafilter.numlargerfield.text.flatMap { Double($0) }
+        let numLesser = datafilter.numlesserfield.text.flatMap { Double($0) }
+        let numEqual = datafilter.numequalfield.text.flatMap { Double($0) }
+
+        if textEqual == nil && numLarger == nil && numLesser == nil && numEqual == nil {
+            columnFilters.removeValue(forKey: currentFilterColumn)
+        } else {
+            columnFilters[currentFilterColumn] = ColumnFilterCondition(
+                textEqual: textEqual, numLarger: numLarger, numLesser: numLesser, numEqual: numEqual
+            )
+        }
+
+        closeDatafilter()
+        applyRowFilters()
+    }
+
+    @objc func deselectDatafilterTapped() {
+        guard currentFilterColumn >= 0 else { return }
+        columnFilters.removeValue(forKey: currentFilterColumn)
+        closeDatafilter()
+        applyRowFilters()
+    }
+
+    // Computes filteredOutRows/visibleRows once -- "before rendering cells" --
+    // rather than re-evaluating every column filter per cell during scroll.
+    // colA AND colB AND ... across columns; within one column, whichever of
+    // the four fields were set are ANDed together (see
+    // ColumnFilterCondition.matches). Uses locationIndex(for:)'s existing
+    // O(1) (col,row) lookup cache -- no need for a separate per-column array,
+    // content/location just aren't sorted by row at all.
+    //
+    // Non-matching rows are removed from the *display* coordinate space only
+    // (visibleRows), never from content/location -- those keep their real,
+    // absolute row numbers so formulas (which store row refs as literal
+    // text, e.g. "=O2*2") and persisted xlsx data are never rewritten. A
+    // prior attempt collapsed row height to 0 in place instead and crashed
+    // (see memory feedback-zero-height-collapse-reverted); this compacts via
+    // an explicit display->real mapping (appd.visibleRows,
+    // realRow(forDisplaySection:)) consumed by numberOfSections/prepare()/
+    // cellForItemAt instead.
+    func applyRowFilters() {
+        filteredOutRows.removeAll()
+
+        if !columnFilters.isEmpty {
+            for row in 1..<ROWSIZE {
+                var rowPasses = true
+                for (col, condition) in columnFilters {
+                    guard let i = locationIndex(for: "\(col),\(row)"), condition.matches(content[i]) else {
+                        rowPasses = false
+                        break
+                    }
+                }
+                if !rowPasses {
+                    filteredOutRows.insert(row)
+                }
+            }
+        }
+
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        appd.rowFilterActive = !columnFilters.isEmpty
+        if appd.rowFilterActive {
+            appd.visibleRows = (1..<ROWSIZE).filter { !filteredOutRows.contains($0) }
+        } else {
+            appd.visibleRows = []
+        }
+
+        // The grid just got smaller/reordered under the cursor -- if
+        // currentindex no longer maps to a valid display row, clamp it back
+        // to a safe position rather than letting every downstream frame/data
+        // lookup keyed off currentindex run out of bounds.
+        if let ci = currentindex, ci.section > 0 {
+            let stillValid = appd.rowFilterActive
+                ? ci.section - 1 < appd.visibleRows.count
+                : true
+            if !stillValid {
+                currentindex = appd.visibleRows.isEmpty ? nil : IndexPath(item: 1, section: 1)
+            }
+        }
+
+        // The layout only rebuilds its row-count/each_height/yPOS arrays
+        // (rather than taking the cheap "just refresh headers" path) when
+        // dataSourceDidUpdate is true, which collectionViewCellSizeChanged
+        // triggers -- see CustomCollectionViewLayout.prepare(). Without
+        // this, reloadData() alone would leave the grid laid out at its
+        // pre-filter row count.
+        appd.collectionViewCellSizeChanged = 1
+        myCollectionView.collectionViewLayout.invalidateLayout()
+        myCollectionView.reloadData()
+    }
+
+    // Single translation point between display coordinates (what
+    // indexPath.section / currentindex.section are, once a filter has
+    // compacted the grid) and real, absolute spreadsheet row numbers (what
+    // content/location/formulas/persisted xlsx data are keyed by). Header
+    // row (section == 0) and the no-filter case both fall through unchanged,
+    // so call sites never need their own "if filtered" branch.
+    func realRow(forDisplaySection section: Int) -> Int {
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        guard appd.rowFilterActive, section > 0, section - 1 < appd.visibleRows.count else { return section }
+        return appd.visibleRows[section - 1]
+    }
+
+
+
     func noInternet(sheetIdx:Int){
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         
@@ -5215,7 +5417,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if down_bool{
                 currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
             }
-            cursor = String(currentindex.item) + "," + String(currentindex.section)
+            cursor = String(currentindex.item) + "," + String(realRow(forDisplaySection: currentindex.section))
             
             stringboxText = element
             return
@@ -5247,7 +5449,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         if down_bool{
             currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
         }
-        cursor = String(currentindex.item) + "," + String(currentindex.section)
+        cursor = String(currentindex.item) + "," + String(realRow(forDisplaySection: currentindex.section))
         stringboxText = element
         
         return
@@ -5428,7 +5630,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if down_bool{
                 currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
             }
-            cursor = String(currentindex.item) + "," + String(currentindex.section)
+            cursor = String(currentindex.item) + "," + String(realRow(forDisplaySection: currentindex.section))
             return
         }
         
@@ -5461,7 +5663,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         if down_bool{
             currentindex = IndexPath(item:currentindex.item, section: currentindex.section+1)
         }
-        cursor = String(currentindex.item) + "," + String(currentindex.section)
+        cursor = String(currentindex.item) + "," + String(realRow(forDisplaySection: currentindex.section))
         return
     }
     
@@ -6980,9 +7182,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     func getIndexlabel() -> String{
-        
+
         let column = getExcelColumnName(columnNumber: currentindex.item)
-        let row = currentindex.section
+        let row = realRow(forDisplaySection: currentindex.section)
         
         label.text = String(column)+String(row)
         
@@ -6999,7 +7201,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     func getIndexlabelForExcel(mode:Int=0) -> String{
         let column = getExcelColumnName(columnNumber: currentindex.item)
-        let row = currentindex.section
+        let row = realRow(forDisplaySection: currentindex.section)
         switch mode {
         case 0:
             return String(column)+String(row)
