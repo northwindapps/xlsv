@@ -721,6 +721,46 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return excelStyleLocationIndexCache[key]
     }
 
+    // content/f_calculated only ever hold the raw stored value -- for a cell
+    // styled as a date (numFmt 14/31, or a >49 custom code containing
+    // "yyyy"+"mm"), that raw value is an Excel day-serial number (e.g.
+    // "45671"), never "yyyy/MM/dd" text. That text only ever exists
+    // transiently in a rendered UILabel (see cellForItemAt's numId branches
+    // below) -- this mirrors that exact serial->Date conversion so the
+    // date-range filter (applyRowFilters) compares against the same date a
+    // user actually sees on screen, not the underlying serial number.
+    // excelStyleLocation is keyed "row,col" (see ExcelHelper.swift's
+    // locationIdx), unlike content/location's "col,row" -- easy to get
+    // backwards, so this is centralized here rather than inlined at the call
+    // site.
+    private func excelDateIfFormatted(row: Int, col: Int, rawValue: String) -> Date? {
+        guard let serial = Float(rawValue) else { return nil }
+        let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let ipstr = String(row) + "," + String(col)
+        guard let styleId = excelStyleLocationIndex(appd.excelStyleLocation, key: ipstr),
+              appd.excelStyleIdx[styleId] != -1,
+              appd.cellXfs.count > appd.excelStyleIdx[styleId],
+              appd.numFmtIds.count > appd.excelStyleIdx[styleId] else { return nil }
+
+        let numId = appd.numFmtIds[appd.excelStyleIdx[styleId]]
+        var idx = appd.numFmts.firstIndex(of: String(numId))
+        if idx == nil { idx = appd.numFmtIds.firstIndex(of: numId) }
+
+        let isDateFormat: Bool
+        if numId == 14 || numId == 31 {
+            isDateFormat = true
+        } else if numId > 49, let idx = idx, appd.formatCodes.count > idx {
+            let code = appd.formatCodes[idx]
+            isDateFormat = code.contains("yyyy") && (code.contains("mm") || code.contains("m"))
+        } else {
+            isDateFormat = false
+        }
+        guard isDateFormat else { return nil }
+
+        let timestamp = TimeInterval((serial - 25569) * 86400)
+        return Date(timeIntervalSince1970: timestamp)
+    }
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         //something went wrong maybe fix it in future..maybe
@@ -3557,8 +3597,16 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                     f_location[k!] = ""
                     invalidateFLocationIndexCache()
                 }
+
+                // Deferred write (see PendingXlsxChangeSet.swift), same as
+                // excelEntry -- record the clear so it actually reaches the
+                // xlsx at the next flush instead of only living in the
+                // in-memory content/location arrays above.
+                let excelCol = ExcelHelper().GetExcelColumnName(columnNumber: column)
+                pendingXlsxChanges.record(sheetIndex: appd.wsSheetIndex, cellId: excelCol + String(row), content: "", calculatedValue: "")
             }
-            
+            updateUnsavedDataReminderVisibility()
+
             content = content.filter { $0 != "" }
             locationInExcel = locationInExcel.filter { $0 != "" }
             
@@ -5314,7 +5362,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                             } else {
                                 valueToCheck = self.content[i]
                             }
-                            guard dateCondition.matches(valueToCheck) else {
+                            // If this cell is styled as a date, valueToCheck
+                            // is the raw Excel day-serial number (e.g.
+                            // "45671"), not "yyyy/MM/dd" text -- convert
+                            // before handing it to DateFilterCondition.
+                            let dateCheckValue: String
+                            if let asDate = self.excelDateIfFormatted(row: row, col: col, rawValue: valueToCheck) {
+                                dateCheckValue = DateFilterCondition.dateFormatter.string(from: asDate)
+                            } else {
+                                dateCheckValue = valueToCheck
+                            }
+                            guard dateCondition.matches(dateCheckValue) else {
                                 rowPasses = false
                                 break
                             }
