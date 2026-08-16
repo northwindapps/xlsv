@@ -2172,13 +2172,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if self.view.subviews.contains(Hintview){
                 Hintview.removeFromSuperview()
             }else{
-                Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
+                Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 413))
                 Hintview.hintCloseButton.addTarget(self, action: #selector(FileFillViewController.closeHview), for: UIControl.Event.touchUpInside)
                 
                 self.view.addSubview(Hintview)
             }
         }else{
-            Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
+            Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 413))
             Hintview.hintCloseButton.addTarget(self, action: #selector(FileFillViewController.closeHview), for: UIControl.Event.touchUpInside)
             
             self.view.addSubview(Hintview)
@@ -3210,8 +3210,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 changeaffected.removeAll()
             }
             
-            content = content.filter { $0 != "" }
-            locationInExcel = locationInExcel.filter { $0 != "" }
+            // content/locationInExcel must stay index-aligned --
+            // testRangeOperationsBox zips them by index (for i in
+            // 0..<locationInExcel.count { content[i] }). Filtering each
+            // independently by its own emptiness, as this used to do, can
+            // drop a different set of indices from each array whenever
+            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
+            // different positions -- desyncing their lengths and crashing
+            // testRangeOperationsBox with an out-of-index error. Filter as
+            // pairs instead so both arrays always drop the same indices.
+            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
+            content = keptPairs.map { $0.0 }
+            locationInExcel = keptPairs.map { $0.1 }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
@@ -3312,8 +3322,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 changeaffected.removeAll()
             }
             
-            content = content.filter { $0 != "" }
-            locationInExcel = locationInExcel.filter { $0 != "" }
+            // content/locationInExcel must stay index-aligned --
+            // testRangeOperationsBox zips them by index (for i in
+            // 0..<locationInExcel.count { content[i] }). Filtering each
+            // independently by its own emptiness, as this used to do, can
+            // drop a different set of indices from each array whenever
+            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
+            // different positions -- desyncing their lengths and crashing
+            // testRangeOperationsBox with an out-of-index error. Filter as
+            // pairs instead so both arrays always drop the same indices.
+            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
+            content = keptPairs.map { $0.0 }
+            locationInExcel = keptPairs.map { $0.1 }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
@@ -3402,8 +3422,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 changeaffected.removeAll()
             }
             
-            content = content.filter { $0 != "" }
-            locationInExcel = locationInExcel.filter { $0 != "" }
+            // content/locationInExcel must stay index-aligned --
+            // testRangeOperationsBox zips them by index (for i in
+            // 0..<locationInExcel.count { content[i] }). Filtering each
+            // independently by its own emptiness, as this used to do, can
+            // drop a different set of indices from each array whenever
+            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
+            // different positions -- desyncing their lengths and crashing
+            // testRangeOperationsBox with an out-of-index error. Filter as
+            // pairs instead so both arrays always drop the same indices.
+            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
+            content = keptPairs.map { $0.0 }
+            locationInExcel = keptPairs.map { $0.1 }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
@@ -3499,8 +3529,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 changeaffected.removeAll()
             }
             
-            content = content.filter { $0 != "" }
-            locationInExcel = locationInExcel.filter { $0 != "" }
+            // content/locationInExcel must stay index-aligned --
+            // testRangeOperationsBox zips them by index (for i in
+            // 0..<locationInExcel.count { content[i] }). Filtering each
+            // independently by its own emptiness, as this used to do, can
+            // drop a different set of indices from each array whenever
+            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
+            // different positions -- desyncing their lengths and crashing
+            // testRangeOperationsBox with an out-of-index error. Filter as
+            // pairs instead so both arrays always drop the same indices.
+            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
+            content = keptPairs.map { $0.0 }
+            locationInExcel = keptPairs.map { $0.1 }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
@@ -3607,8 +3647,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
             updateUnsavedDataReminderVisibility()
 
-            content = content.filter { $0 != "" }
-            locationInExcel = locationInExcel.filter { $0 != "" }
+            // content/locationInExcel must stay index-aligned --
+            // testRangeOperationsBox zips them by index (for i in
+            // 0..<locationInExcel.count { content[i] }). Filtering each
+            // independently by its own emptiness, as this used to do, can
+            // drop a different set of indices from each array whenever
+            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
+            // different positions -- desyncing their lengths and crashing
+            // testRangeOperationsBox with an out-of-index error. Filter as
+            // pairs instead so both arrays always drop the same indices.
+            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
+            content = keptPairs.map { $0.0 }
+            locationInExcel = keptPairs.map { $0.1 }
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )

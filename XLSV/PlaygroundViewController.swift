@@ -1476,13 +1476,13 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
             if self.view.subviews.contains(Hintview){
                 Hintview.removeFromSuperview()
             }else{
-                Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
+                Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 413))
                 Hintview.hintCloseButton.addTarget(self, action: #selector(PlaygroundViewController.closeHview), for: UIControl.Event.touchUpInside)
                 
                 self.view.addSubview(Hintview)
             }
         }else{
-            Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 330))
+            Hintview = Hint(frame: CGRect(x:Int(15),y:Int(50), width: 300,height: 413))
             Hintview.hintCloseButton.addTarget(self, action: #selector(PlaygroundViewController.closeHview), for: UIControl.Event.touchUpInside)
             
             self.view.addSubview(Hintview)
