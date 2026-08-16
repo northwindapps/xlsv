@@ -172,23 +172,75 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     // Row filter (see Datafilter.swift/.xib -- dialog opened by tapping a
     // column header). columnFilters is keyed by column index (indexPath.item);
-    // each column's four fields are ANDed together (e.g. numLarger + numLesser
-    // makes a range), and columns are ANDed with each other. filteredOutRows is
+    // a column's comparisons are ANDed together (e.g. ">=10,<=20" makes a
+    // range), and columns are ANDed with each other. filteredOutRows is
     // computed once by applyRowFilters() -- "before rendering cells", per the
     // request -- rather than re-evaluated per cell during scroll.
     struct ColumnFilterCondition {
-        var textEqual: String?
-        var numLarger: Double?
-        var numLesser: Double?
-        var numEqual: Double?
+        enum Operator: String {
+            case equal = "=="
+            case greaterOrEqual = ">="
+            case lessOrEqual = "<="
+            case greater = ">"
+            case less = "<"
+        }
+        struct Comparison {
+            var op: Operator
+            var operand: String
+        }
+        var comparisons: [Comparison]
 
-        func matches(_ value: String) -> Bool {
-            if let textEqual = textEqual, value != textEqual { return false }
-            if numLarger != nil || numLesser != nil || numEqual != nil {
-                guard let numValue = Double(value) else { return false }
-                if let numLarger = numLarger, !(numValue > numLarger) { return false }
-                if let numLesser = numLesser, !(numValue < numLesser) { return false }
-                if let numEqual = numEqual, numValue != numEqual { return false }
+        // Parses a comma-separated chain of comparisons (e.g. ">=10,<=20"
+        // for a range, "==apple", or a bare "apple" as shorthand for
+        // "==apple"). Longer operators (==, >=, <=) are checked before their
+        // single-char prefixes (>, <) so ">=10" isn't misread as ">"+"=10".
+        static func parse(_ input: String) -> ColumnFilterCondition? {
+            let parts = input.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            guard !parts.isEmpty else { return nil }
+            let comparisons: [Comparison] = parts.map { part in
+                for op: Operator in [.equal, .greaterOrEqual, .lessOrEqual, .greater, .less] {
+                    if part.hasPrefix(op.rawValue) {
+                        let operand = String(part.dropFirst(op.rawValue.count)).trimmingCharacters(in: .whitespaces)
+                        return Comparison(op: op, operand: operand)
+                    }
+                }
+                return Comparison(op: .equal, operand: part)
+            }
+            return ColumnFilterCondition(comparisons: comparisons)
+        }
+
+        // Reconstructs the parseable text this condition came from, so
+        // reopening the dialog on an already-filtered column shows what was
+        // typed rather than starting blank.
+        func displayString() -> String {
+            comparisons.map { $0.op.rawValue + $0.operand }.joined(separator: ",")
+        }
+
+        func matches(_ rawValue: String) -> Bool {
+            // Double.init(String) does not trim whitespace/newlines -- a cell
+            // value like "50\n" or "50 " (trailing content stored alongside
+            // the number, e.g. from a pasted/imported value) would otherwise
+            // fail to parse and silently drop out of every numeric
+            // comparison, even == against the exact same number.
+            let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            for c in comparisons {
+                switch c.op {
+                case .equal:
+                    if let opNum = Double(c.operand), let valNum = Double(value) {
+                        if valNum != opNum { return false }
+                    } else if value != c.operand {
+                        return false
+                    }
+                case .greaterOrEqual, .lessOrEqual, .greater, .less:
+                    guard let opNum = Double(c.operand), let valNum = Double(value) else { return false }
+                    switch c.op {
+                    case .greaterOrEqual: if !(valNum >= opNum) { return false }
+                    case .lessOrEqual: if !(valNum <= opNum) { return false }
+                    case .greater: if !(valNum > opNum) { return false }
+                    case .less: if !(valNum < opNum) { return false }
+                    case .equal: break
+                    }
+                }
             }
             return true
         }
@@ -5052,7 +5104,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         currentFilterColumn = column
 
         if datafilter == nil {
-            datafilter = Datafilter(frame: CGRect(x: 15, y: 50, width: 250, height: 378))
+            datafilter = Datafilter(frame: CGRect(x: 15, y: 50, width: 250, height: 170))
             datafilter.closebutton.addTarget(self, action: #selector(closeDatafilter), for: .touchUpInside)
             datafilter.applybutton.addTarget(self, action: #selector(applyDatafilterTapped), for: .touchUpInside)
             datafilter.deselectbutton.addTarget(self, action: #selector(deselectDatafilterTapped), for: .touchUpInside)
@@ -5061,11 +5113,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // Pre-populate with whatever condition is already active on this
         // column, so reopening the dialog shows the current filter instead
         // of always starting blank.
-        let existing = columnFilters[column]
-        datafilter.textequalfield.text = existing?.textEqual
-        datafilter.numlargerfield.text = existing?.numLarger.map { String($0) }
-        datafilter.numlesserfield.text = existing?.numLesser.map { String($0) }
-        datafilter.numequalfield.text = existing?.numEqual.map { String($0) }
+        datafilter.conditionfield.text = columnFilters[column]?.displayString()
 
         if datafilter.superview == nil {
             self.view.addSubview(datafilter)
@@ -5081,17 +5129,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     @objc func applyDatafilterTapped() {
         guard currentFilterColumn >= 0 else { return }
 
-        let textEqual = datafilter.textequalfield.text?.isEmpty == false ? datafilter.textequalfield.text : nil
-        let numLarger = datafilter.numlargerfield.text.flatMap { Double($0) }
-        let numLesser = datafilter.numlesserfield.text.flatMap { Double($0) }
-        let numEqual = datafilter.numequalfield.text.flatMap { Double($0) }
-
-        if textEqual == nil && numLarger == nil && numLesser == nil && numEqual == nil {
-            columnFilters.removeValue(forKey: currentFilterColumn)
+        if let condition = ColumnFilterCondition.parse(datafilter.conditionfield.text ?? "") {
+            columnFilters[currentFilterColumn] = condition
         } else {
-            columnFilters[currentFilterColumn] = ColumnFilterCondition(
-                textEqual: textEqual, numLarger: numLarger, numLesser: numLesser, numEqual: numEqual
-            )
+            columnFilters.removeValue(forKey: currentFilterColumn)
         }
 
         closeDatafilter()
@@ -5140,7 +5181,22 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 for row in 1..<self.ROWSIZE {
                     var rowPasses = true
                     for (col, condition) in self.columnFilters {
-                        guard let i = self.locationIndex(for: "\(col),\(row)"), condition.matches(self.content[i]) else {
+                        let key = "\(col),\(row)"
+                        guard let i = self.locationIndex(for: key) else {
+                            rowPasses = false
+                            break
+                        }
+                        // Formula cells store the literal formula text in
+                        // content[i] (e.g. "=A1+B1") -- filter against the
+                        // calculated result instead, same lookup
+                        // cellForItemAt uses to decide what to display.
+                        let valueToCheck: String
+                        if let fIdx = self.fLocationIndex(for: key), fIdx < self.f_calculated.count {
+                            valueToCheck = self.f_calculated[fIdx]
+                        } else {
+                            valueToCheck = self.content[i]
+                        }
+                        guard condition.matches(valueToCheck) else {
                             rowPasses = false
                             break
                         }
