@@ -58,6 +58,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
     // triggered from FF mode never ends up overwriting/showing in ViewController.
     var isFileFillMode = false
 
+    // Set by V2ViewController before presenting this screen (it's shared between v2 and v3,
+    // not duplicated). Same purpose as isFileFillMode above -- without it, every import
+    // triggered from Classic mode landed back in v3's ViewController instead of V2ViewController.
+    // Checked ahead of isFileFillMode below since the two origins are mutually exclusive.
+    var isV2Mode = false
+
     @IBOutlet weak var aci: UIActivityIndicatorView!
     //var activityIndicator: UIActivityIndicatorView!
     
@@ -255,10 +261,15 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
             print("end iCloudController")
 
             // Return to whichever controller triggered this import -- FileFillViewController
-            // set isFileFillMode before presenting; otherwise this came from ViewController's
-            // own "Local Load" and must land back there, not in FF mode.
+            // sets isFileFillMode and V2ViewController sets isV2Mode before presenting;
+            // otherwise this came from v3 ViewController's own "Local Load" and must land
+            // back there.
             let rootViewController: UIViewController
-            if isFileFillMode {
+            if isV2Mode {
+                let targetViewController = UIStoryboard(name: "V2", bundle: nil).instantiateViewController( withIdentifier: "StartLine" ) as! V2ViewController
+                targetViewController.isExcel = isExcel
+                rootViewController = targetViewController
+            } else if isFileFillMode {
                 let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
                 targetViewController.isExcel = isExcel
                 rootViewController = targetViewController
@@ -282,7 +293,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         // Unsupported file type -- no import happened, just return to whichever
         // controller triggered the picker.
         let targetViewController: UIViewController
-        if isFileFillMode {
+        if isV2Mode {
+            let vc = UIStoryboard(name: "V2", bundle: nil).instantiateViewController( withIdentifier: "StartLine" ) as! V2ViewController
+            vc.isExcel = true
+            vc.isCSV = false
+            targetViewController = vc
+        } else if isFileFillMode {
             let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
             ffViewController.isExcel = true
             ffViewController.isCSV = false
@@ -308,7 +324,12 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         appd2.imported_xlsx_file_path = ""
 
         let targetViewController: UIViewController
-        if isFileFillMode {
+        if isV2Mode {
+            let vc = UIStoryboard(name: "V2", bundle: nil).instantiateViewController( withIdentifier: "StartLine" ) as! V2ViewController
+            vc.isExcel = false
+            vc.isCSV = true
+            targetViewController = vc
+        } else if isFileFillMode {
             let ffViewController = self.storyboard!.instantiateViewController( withIdentifier: "Filefill" ) as! FileFillViewController
             ffViewController.isExcel = false
             ffViewController.isCSV = true

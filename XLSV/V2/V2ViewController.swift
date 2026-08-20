@@ -831,15 +831,21 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
     func loadExcelSheet(idx:Int?)
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        if V2State.wsPath == "" {
+        // Was V2State.wsPath -- but nothing populates that anymore now that file-open flows
+        // to route through v3's shared iCloudViewController/SettingsViewController/etc.
+        // (only those legacy-only screens ever wrote the old shared ws_path field). Every
+        // other read in this class already uses appd.imported_xlsx_file_path, which those
+        // shared screens do populate -- this was the one holdout, and it's why sheet
+        // switching fell into the isExcel = false branch and reloaded the wrong cache.
+        if appd.imported_xlsx_file_path.isEmpty {
             self.isExcel = false
             self.sheetIdx = idx ?? 1
         }
-        
-        if V2State.wsPath != "" {
-            print("yourExcelfile",V2State.wsPath)
+
+        if !appd.imported_xlsx_file_path.isEmpty {
+            print("yourExcelfile",appd.imported_xlsx_file_path)
             let ehp = V2ExcelHelper()
-            ehp.readExcel2(path: V2State.wsPath, wsIndex: appd.wsSheetIndex)
+            ehp.readExcel2(path: appd.imported_xlsx_file_path, wsIndex: appd.wsSheetIndex)
             // Do any additional setup after loading the view.
             let serviceInstance = V2Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -1351,7 +1357,8 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
                 print("An error occurred while deleting the file: \(error.localizedDescription)")
             }
             
-            let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController( withIdentifier: "iCloud" )//Landscape
+            let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController( withIdentifier: "iCloud" ) as! iCloudViewController//Landscape
+            targetViewController.isV2Mode = true
             targetViewController.modalPresentationStyle = .fullScreen
             self.present( targetViewController, animated: true, completion: nil)
         }))
@@ -1683,6 +1690,19 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
 
         // Migration itself now runs once at app launch regardless of mode (see AppDelegate) --
         // this only decides whether to surface the "Recovered Files" entry point below.
+        //
+        // didLoadSheetInViewDidLoad mirrors v3 ViewController's viewDidLoad (see its comments
+        // for the full history). Without it, a freshly-imported file -- imported_xlsx_file_path
+        // already set by the shared iCloudViewController before this VC was even presented --
+        // never actually got parsed: this block only runs when imported_xlsx_file_path is
+        // still empty, and the unconditional isExcelSheetData/initSheetData below only reads
+        // the per-sheet JSON *cache*, not the xlsx itself. iCloudViewController used to
+        // pre-parse via readExcel(path:) itself before presenting the target VC, but that call
+        // was removed as a v3 perf fix (readExcel2 in loadExcelSheet already redoes the parse
+        // from scratch) -- true for v3's ViewController, which calls loadExcelSheet from
+        // viewDidLoad, but V2ViewController never did.
+        var didLoadSheetInViewDidLoad = false
+
         if appd.imported_xlsx_file_path == "" && isCSV == false{
             let pathDirectory = getRootDocumentsDirectory()
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")
@@ -1691,14 +1711,8 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
             sheetIdx = 1
             if fileExists{
                 appd.imported_xlsx_file_path=filePath.path
-                //appd.sheetNames
-                let icc = iCloudViewController()
-                icc.readExcel(path: filePath.path)
-                //let serviceInstance = V2Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                //let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                //let url = serviceInstance.testSandBox(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
-                //createxlsxSheet()
-                
+                self.loadExcelSheet(idx: appd.wsSheetIndex)
+                didLoadSheetInViewDidLoad = true
             }
             if !fileExists {
                 print("File doesn't exist at path: \(filePath.path)")
@@ -1707,20 +1721,25 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
                     do {
                         let icc = iCloudViewController()
                         icc.loadInitialXLSX(url: URL(fileURLWithPath: filePath2))
-                        //                    appd.imported_xlsx_file_path=filePath.path
-                        //                    icc.readExcel(path: filePath.path)
+                        // loadInitialXLSX copies the bundled file into place and sets
+                        // appd.imported_xlsx_file_path itself -- loadExcelSheet below reads
+                        // it directly.
+                        self.loadExcelSheet(idx: appd.wsSheetIndex)
+                        didLoadSheetInViewDidLoad = true
                     } catch {
                         print("Error reading file: \(error)")
                     }
                 }
             }
         }
-        
-        //checkSheet
-        isExcelSheetData(sheetIdx: sheetIdx)
-        initSheetData(sheetIdx: sheetIdx)
-        otherclass.storeValues(rl:location,rc:content,rsize:ROWSIZE,csize:COLUMNSIZE)
-        initExcelLocation()
+
+        // loadExcelSheet() above already runs isExcelSheetData/initSheetData/storeValues/
+        // initExcelLocation -- only fall back to calling them here when that didn't already
+        // happen (i.e. imported_xlsx_file_path was already set *before* this viewDidLoad ran,
+        // such as being presented straight from the document-picker import flow).
+        if !didLoadSheetInViewDidLoad {
+            self.loadExcelSheet(idx: appd.wsSheetIndex)
+        }
         
         //https://stackoverflow.com/questions/31774006/how-to-get-height-of-keyboard
         NotificationCenter.default.addObserver(
