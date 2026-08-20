@@ -127,18 +127,18 @@ class V2Datainputview: UIView {
         case .phone:
             // It's an iPhone
             let bundle = Bundle(for: type(of: self))
-            let nib = UINib(nibName: "Datainput",bundle: bundle)
+            let nib = UINib(nibName: "V2Datainput",bundle: bundle)
             let view = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
             return view
         case .pad:
             // It's an iPad
             let bundle = Bundle(for: type(of: self))
-            let nib = UINib(nibName: "Input4Pad",bundle: bundle)
+            let nib = UINib(nibName: "V2Input4Pad",bundle: bundle)
             let view = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
             return view
         default:
             let bundle = Bundle(for: type(of: self))
-            let nib = UINib(nibName: "Datainput",bundle: bundle)
+            let nib = UINib(nibName: "V2Datainput",bundle: bundle)
             let view = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
             return view
         }

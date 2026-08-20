@@ -117,6 +117,13 @@
 		2004E6372E54A632D6D6D14B /* V2xl_rels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06A0448E56DA940235F2B95 /* V2xl_rels.swift */; };
 		582517B5FC15A4F657BE1D12 /* Manager.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B13D98B947744A505445414A /* Manager.storyboard */; };
 		E9D803F47FAE14C730E5708C /* V2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3FD36FED9FE120FB1867B639 /* V2.storyboard */; };
+		F81A188627F8F694EB0C8449 /* numberkeyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 00D9986BF0926C8138CF6202 /* numberkeyView.xib */; };
+		3AE7461B83EB6ACA7805AAF1 /* V2Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 964A53F64DF8860939BF3F7C /* V2Customviewboard2.xib */; };
+		805E88094282D4FD1420CCC7 /* V2Customviewboard3.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3570E946F63271FC1AA0EC4E /* V2Customviewboard3.xib */; };
+		C717D6E39BDD246D4AC27148 /* V2Datainput.xib in Resources */ = {isa = PBXBuildFile; fileRef = A44C5495E215A172E9D8EF8C /* V2Datainput.xib */; };
+		5D6CA9F2778E29D914DD2382 /* V2Input4Pad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 589750BAD861E3DF2468A560 /* V2Input4Pad.xib */; };
+		2AC8B8D88D4FC4B66338F2E0 /* V2formatviewboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = DF9F3E23B489D4833FC753D9 /* V2formatviewboard.xib */; };
+		4F708AA32CDDB37CDD0DC542 /* V2Hint.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5A7F331C98C2E3621DACC02E /* V2Hint.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -281,6 +288,13 @@
 		E06A0448E56DA940235F2B95 /* V2xl_rels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2xl_rels.swift; sourceTree = "<group>"; };
 		B13D98B947744A505445414A /* Manager.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Manager.storyboard; sourceTree = "<group>"; };
 		3FD36FED9FE120FB1867B639 /* V2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = V2.storyboard; sourceTree = "<group>"; };
+		00D9986BF0926C8138CF6202 /* numberkeyView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = numberkeyView.xib; sourceTree = "<group>"; };
+		964A53F64DF8860939BF3F7C /* V2Customviewboard2.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2Customviewboard2.xib; sourceTree = "<group>"; };
+		3570E946F63271FC1AA0EC4E /* V2Customviewboard3.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2Customviewboard3.xib; sourceTree = "<group>"; };
+		A44C5495E215A172E9D8EF8C /* V2Datainput.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2Datainput.xib; sourceTree = "<group>"; };
+		589750BAD861E3DF2468A560 /* V2Input4Pad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2Input4Pad.xib; sourceTree = "<group>"; };
+		DF9F3E23B489D4833FC753D9 /* V2formatviewboard.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2formatviewboard.xib; sourceTree = "<group>"; };
+		5A7F331C98C2E3621DACC02E /* V2Hint.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = V2Hint.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -405,6 +419,13 @@
 		3F56F9615A502B549EC18AC9 /* V2 */ = {
 			isa = PBXGroup;
 			children = (
+				964A53F64DF8860939BF3F7C /* V2Customviewboard2.xib */,
+				3570E946F63271FC1AA0EC4E /* V2Customviewboard3.xib */,
+				A44C5495E215A172E9D8EF8C /* V2Datainput.xib */,
+				589750BAD861E3DF2468A560 /* V2Input4Pad.xib */,
+				DF9F3E23B489D4833FC753D9 /* V2formatviewboard.xib */,
+				5A7F331C98C2E3621DACC02E /* V2Hint.xib */,
+				00D9986BF0926C8138CF6202 /* numberkeyView.xib */,
 				2EEB2B85B174E5632C2EDF03 /* V2CalculationService.swift */,
 				1EBAC7BB01402FCC2754A080 /* V2CustomCollectionViewCell.swift */,
 				2FFB4A7539B52BA87AAF9BDC /* V2CustomCollectionViewLayout.swift */,
@@ -615,6 +636,13 @@
 				2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
 				2B0FEED02F782629005BF38E /* V3.storyboard in Resources */,
+				3AE7461B83EB6ACA7805AAF1 /* V2Customviewboard2.xib in Resources */,
+				805E88094282D4FD1420CCC7 /* V2Customviewboard3.xib in Resources */,
+				C717D6E39BDD246D4AC27148 /* V2Datainput.xib in Resources */,
+				5D6CA9F2778E29D914DD2382 /* V2Input4Pad.xib in Resources */,
+				2AC8B8D88D4FC4B66338F2E0 /* V2formatviewboard.xib in Resources */,
+				4F708AA32CDDB37CDD0DC542 /* V2Hint.xib in Resources */,
+				F81A188627F8F694EB0C8449 /* numberkeyView.xib in Resources */,
 				582517B5FC15A4F657BE1D12 /* Manager.storyboard in Resources */,
 				E9D803F47FAE14C730E5708C /* V2.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,

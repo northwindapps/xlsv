@@ -1681,11 +1681,8 @@ class V2ViewController: UIViewController, UICollectionViewDataSource, UICollecti
         myCollectionView.delegate = self
         orientaion = "P"
 
-        // One-time recovery for users upgrading from the 1.3.6-era file format: moves any
-        // leftover legacy sheets out of Documents/sub/ into Documents/RecoveredFiles/ so they're
-        // no longer invisible. Idempotent / safe to call every launch - see V2LegacyMigration.swift.
-        V2LegacyMigration.migrateLegacySheetsIfNeeded()
-
+        // Migration itself now runs once at app launch regardless of mode (see AppDelegate) --
+        // this only decides whether to surface the "Recovered Files" entry point below.
         if appd.imported_xlsx_file_path == "" && isCSV == false{
             let pathDirectory = getRootDocumentsDirectory()
             let filePath = pathDirectory.appendingPathComponent("importedExcel").appendingPathComponent("initialXLSX.xlsx")

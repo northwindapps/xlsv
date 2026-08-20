@@ -4276,7 +4276,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     @objc func moveToHome(){
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "Manager", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
 
         // This screen was reached via HomeController.present(...), a real modal
@@ -4301,7 +4301,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     @objc func moveToPlayground(){
         self.customview2.removeFromSuperview()
 
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "V3", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
 
         // See moveToHome() above for why dismiss() runs as fire-and-forget cleanup

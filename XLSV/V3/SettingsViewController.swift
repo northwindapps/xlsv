@@ -87,9 +87,39 @@ class SettingsViewController: UIViewController,UITextFieldDelegate {
 
         setUpFullFormulaRecalcToggle()
 
-
+        // Shared between v2 and v3 (this screen isn't duplicated) -- only shown to users who
+        // actually have recovered legacy sheets waiting in Documents/RecoveredFiles/. See
+        // V2LegacyMigration.swift for how they get there.
+        if V2LegacyMigration.hasRecoveredFiles() {
+            addRecoveredFilesButton()
+        }
 
         // Do any additional setup after loading the view.
+    }
+
+    private func addRecoveredFilesButton() {
+        let recoveredButton = UIButton(type: .system)
+        recoveredButton.setTitle("Recovered Files", for: .normal)
+        recoveredButton.backgroundColor = UIColor.white
+        recoveredButton.layer.borderWidth = 1.0
+        recoveredButton.layer.borderColor = UIColor.gray.cgColor
+        recoveredButton.layer.cornerRadius = 6
+        recoveredButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        recoveredButton.contentEdgeInsets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+        recoveredButton.translatesAutoresizingMaskIntoConstraints = false
+        recoveredButton.addTarget(self, action: #selector(showRecoveredFiles), for: .touchUpInside)
+        view.addSubview(recoveredButton)
+        NSLayoutConstraint.activate([
+            recoveredButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
+            recoveredButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8)
+        ])
+    }
+
+    @objc private func showRecoveredFiles() {
+        let listViewController = V2RecoveredFilesViewController()
+        let nav = UINavigationController(rootViewController: listViewController)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -105,7 +135,7 @@ class SettingsViewController: UIViewController,UITextFieldDelegate {
     {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         if appd.imported_xlsx_file_path == "" {
-            let next = storyboard!.instantiateViewController(withIdentifier: "Home") as! HomeController
+            let next = UIStoryboard(name: "Manager", bundle: nil).instantiateViewController(withIdentifier: "Home") as! HomeController
             next.modalPresentationStyle = .fullScreen
             self.present(next,animated: true, completion: nil)
             return true

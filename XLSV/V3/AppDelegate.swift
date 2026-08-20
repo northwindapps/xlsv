@@ -276,11 +276,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         
         
+        // Runs regardless of which mode (v2 Classic or v3) the user opens first -- this is a
+        // pure FileManager move on Documents/sub/, no UI/engine dependency, and it's the only
+        // thing that makes 1.3.6-era legacy sheets ever become visible again (see
+        // V2LegacyMigration.swift). Idempotent, safe to call on every launch.
+        V2LegacyMigration.migrateLegacySheetsIfNeeded()
+
         let initialViewController = storyboard.instantiateViewController(withIdentifier: "Home")
-        
-        
-        
-        
+
+
+
+
         self.window?.rootViewController = initialViewController
         self.window?.frame = self.window!.bounds
         self.window?.makeKeyAndVisible()

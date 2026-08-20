@@ -48,14 +48,14 @@ class CreditController: UIViewController {
 //            return
 //        }
         
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
+        let targetViewController = UIStoryboard(name: "Manager", bundle: nil).instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
         targetViewController.modalPresentationStyle = .fullScreen
         self.present( targetViewController, animated: true, completion: nil)
         
     }
     
     @objc func returnTOP() {
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
+        let targetViewController = UIStoryboard(name: "Manager", bundle: nil).instantiateViewController( withIdentifier: "Home" ) as! HomeController//Landscape
         targetViewController.modalPresentationStyle = .fullScreen
         self.present( targetViewController, animated: true, completion: nil)
     }

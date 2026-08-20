@@ -4018,7 +4018,7 @@ class PlaygroundViewController: UIViewController, UICollectionViewDataSource, UI
         // See quitPlaygroundAction() above for why this has to run before leaving.
         tearDownHostingControllerIfPresent()
 
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "Manager", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
 
         // Playground keeps no dedicated working file of its own (unlike FileFillViewController's

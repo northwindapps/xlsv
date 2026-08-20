@@ -91,7 +91,7 @@ class V2formatview: UIView {
     func loadviewfromNib() ->UIView
     {
         let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "formatviewboard",bundle: bundle)
+        let nib = UINib(nibName: "V2formatviewboard",bundle: bundle)
         let view = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
         
         return view

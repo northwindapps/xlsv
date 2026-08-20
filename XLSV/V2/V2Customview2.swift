@@ -56,7 +56,7 @@ class V2Customview2: UIView {
     func loadviewfromNib() ->UIView
     {
         let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "Customviewboard2",bundle: bundle)
+        let nib = UINib(nibName: "V2Customviewboard2",bundle: bundle)
         let view2 = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
         
         return view2

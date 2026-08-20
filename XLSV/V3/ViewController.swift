@@ -4419,7 +4419,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     @objc func moveToHome(){
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "Manager", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Home") as! HomeController
 
         // This screen was reached via HomeController.present(...), a real modal
@@ -4455,7 +4455,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         appd.imported_xlsx_file_path = ""
         local_xlsx_file_path = ""
 
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "V3", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
 
         // See moveToHome() above for why dismiss() runs as fire-and-forget cleanup
@@ -4479,7 +4479,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
         appd.imported_xlsx_file_path = local_xlsx_file_path
 
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "V3", bundle: nil)
         let targetViewController = storyboard.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
 
         // See moveToHome() above for why dismiss() runs as fire-and-forget cleanup

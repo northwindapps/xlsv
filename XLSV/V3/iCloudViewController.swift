@@ -452,8 +452,10 @@ class iCloudViewController: UIViewController,UIDocumentMenuDelegate,UIDocumentPi
         
         let sheet1Json = ReadWriteJSON()
         sheet1Json.deleteJsonFile(title: "csv_sheet1")
-        
-        let targetViewController = self.storyboard!.instantiateViewController( withIdentifier: "LoadingViewController" )
+
+        // Cancelling the import leaves nothing to load -- go back to Home rather than
+        // presenting LoadingViewController against an now-empty imported_xlsx_file_path.
+        let targetViewController = UIStoryboard(name: "Manager", bundle: nil).instantiateViewController(withIdentifier: "Home")
         targetViewController.modalPresentationStyle = .fullScreen
         DispatchQueue.main.async {
             self.present(targetViewController, animated: true, completion: nil)
