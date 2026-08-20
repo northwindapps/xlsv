@@ -900,24 +900,6 @@ Copyright 2019 Yujin Yano . All rights reserved.</string>
             </objects>
             <point key="canvasLocation" x="-1429" y="-6546"/>
         </scene>
-        <!--Home Controller-->
-        <scene sceneID="Aei-aj-GWs">
-            <objects>
-                <viewController storyboardIdentifier="Home" id="4SW-rT-QAD" customClass="HomeController" customModule="XLSV" customModuleProvider="target" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="aKh-fs-Qdc"/>
-                        <viewControllerLayoutGuide type="bottom" id="ULW-Zw-dZH"/>
-                    </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="sku-BZ-QvA">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="9iU-sB-T8W" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-3795" y="-8390"/>
-        </scene>
         <!--File Fill View Controller-->
         <scene sceneID="l73-sl-8ef">
             <objects>

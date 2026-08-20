@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0DF1BC15910BB6B6AAD57802 /* Pods_XLSV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */; };
-		2B0FEED02F782629005BF38E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* Main.storyboard */; };
+		2B0FEED02F782629005BF38E /* V3.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B0FEECF2F782629005BF38E /* V3.storyboard */; };
 		2B26DDA32F9E3E4700109430 /* 1sheetinitialXLSX.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = 2B26DDA22F9E3E4700109430 /* 1sheetinitialXLSX.xlsx */; };
 		2B2E18852F94E60300E243D9 /* Customviewboard3.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B2E18842F94E60200E243D9 /* Customviewboard3.xib */; };
 		2B37287E2F74054200D27F01 /* RangeSelectionOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */; };
@@ -83,6 +83,40 @@
 		8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8DF476F21E6C2B020006D940 /* formatviewboard.xib */; };
 		8DF796AE1E4E799500BE7D38 /* NilController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF796AD1E4E799500BE7D38 /* NilController.swift */; };
 		D7171088DEDDB576E261E29F /* PendingXlsxChangeSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */; };
+		D65FED5CC1F870C4098CF3F0 /* V2CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEB2B85B174E5632C2EDF03 /* V2CalculationService.swift */; };
+		F228B86AA2A498AC045B62AC /* V2CustomCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBAC7BB01402FCC2754A080 /* V2CustomCollectionViewCell.swift */; };
+		1118701177BEEA72F98B36EE /* V2CustomCollectionViewLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FFB4A7539B52BA87AAF9BDC /* V2CustomCollectionViewLayout.swift */; };
+		F257A351BB480AFB0BF4A9D7 /* V2Customview2.swift in Sources */ = {isa = PBXBuildFile; fileRef = F762DBC4C0BC52103DE72DB4 /* V2Customview2.swift */; };
+		772ED11CAC836B2C97A1692F /* V2Customview3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643FA214990E08DFB9CF653C /* V2Customview3.swift */; };
+		C50524842D5F2DEB3C2D933B /* V2Datainputview.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B89036EA732FD06EB0F49C /* V2Datainputview.swift */; };
+		EAB2F27B4E5471B0D047CBF1 /* V2ExcelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802B8FCE76F27B072B24C2F1 /* V2ExcelHelper.swift */; };
+		CEE5DC91EE37F4594B59B242 /* V2FileCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C31CC3DF505F317543B56F8 /* V2FileCollectionViewCell.swift */; };
+		0E8DF7D33E0D38D2A069EAB8 /* V2Hint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78A63026C2B5A4B0477CB4FE /* V2Hint.swift */; };
+		4B8E181C53D4CF784E3DE958 /* V2LegacyMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC19A5797C10DCC396D4458 /* V2LegacyMigration.swift */; };
+		32D3C0B7173F00FE6CCDB273 /* V2NilController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB24DB91212FEBA7C9B208A /* V2NilController.swift */; };
+		25081F1FDEC745E82ECF9782 /* V2ReadWriteJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D41936FAF14CE21CBB3219 /* V2ReadWriteJSON.swift */; };
+		1AB73FD6901780DC3C5C219B /* V2RecoveredFilesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1D2E9DE8A895E228E411E4 /* V2RecoveredFilesViewController.swift */; };
+		815D068D08DAC91A0A7A2796 /* V2ScreenSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26155FF37E9E945FEBD18574 /* V2ScreenSize.swift */; };
+		B1720519C182C854664263FE /* V2SpreadSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D32E2B070CD1FDFBA52B06 /* V2SpreadSheet.swift */; };
+		EE3F28E204FEAA22713D050B /* V2ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A0B082DD2DE8EFE8DF99822 /* V2ViewController.swift */; };
+		FA2D196539354A6D20C28942 /* V2adapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7DADB4A5ACBEF364D3D8EE /* V2adapter.swift */; };
+		513A98A7AABB026AAFB5979D /* V2app.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B8D0353E475097F5FDF3E4 /* V2app.swift */; };
+		97DC11FC2270507F5FB05D3D /* V2colorclass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA1FAF7DCC9D580740C0C15 /* V2colorclass.swift */; };
+		2697C33CE0B2B7C1E0BF1FAB /* V2contenttype.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC46B70527558FDA480D454 /* V2contenttype.swift */; };
+		868D4215FF3BBB93CCD71D4E /* V2core.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8672B95043EEF9BD3198032 /* V2core.swift */; };
+		A396454D320D47F6A174CEB8 /* V2formatview.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BB4CD963196613B0D9320F /* V2formatview.swift */; };
+		000730BDA02A71D2C11078A8 /* V2helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54BEF4EECEA44F6EF13E66D0 /* V2helper.swift */; };
+		240A6385C91377DA81F11917 /* V2numberkey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331EFC74B95A39571D859F4A /* V2numberkey.swift */; };
+		D384F4A340D73F56ACDD6659 /* V2rels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A32504AC450E074F563FC /* V2rels.swift */; };
+		5D3B4F94B59A7F742CF46AFF /* V2service.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3EC3993452FF7BD1DECCD5 /* V2service.swift */; };
+		B541FA8EBC09B4A382856CE1 /* V2sharedstring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B08F5953DB840F62B165AB /* V2sharedstring.swift */; };
+		5EB3D977329583D8170CFD83 /* V2sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B954C3C73036B6DF8732DF36 /* V2sheet.swift */; };
+		183BE659B074C132F87FFCA2 /* V2styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15862FCD229BE9C35C37321D /* V2styles.swift */; };
+		80CC68516F2CC361B40F29FA /* V2theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644497CE35702E2D56CCFB7F /* V2theme.swift */; };
+		D520166EA6DD9FE6C30A3081 /* V2workbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EDC15587D51379BE0643093 /* V2workbook.swift */; };
+		2004E6372E54A632D6D6D14B /* V2xl_rels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06A0448E56DA940235F2B95 /* V2xl_rels.swift */; };
+		582517B5FC15A4F657BE1D12 /* Manager.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B13D98B947744A505445414A /* Manager.storyboard */; };
+		E9D803F47FAE14C730E5708C /* V2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3FD36FED9FE120FB1867B639 /* V2.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,7 +133,7 @@
 		08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInputHelper.swift; sourceTree = "<group>"; };
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		1C076B50B1FF440F7B42B318 /* CellStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CellStore.swift; sourceTree = "<group>"; };
-		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		2B0FEECF2F782629005BF38E /* V3.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = V3.storyboard; sourceTree = "<group>"; };
 		2B26DDA22F9E3E4700109430 /* 1sheetinitialXLSX.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = 1sheetinitialXLSX.xlsx; sourceTree = "<group>"; };
 		2B2DAAEC2C07881E00C149A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B2E18842F94E60200E243D9 /* Customviewboard3.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Customviewboard3.xib; sourceTree = "<group>"; };
@@ -213,6 +247,40 @@
 		E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_XLSV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3156E3FD5FC5086E4F2AEBA /* Pods-MultiDirectionCollectionView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.debug.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.debug.xcconfig"; sourceTree = "<group>"; };
 		FB5D95361ABE5E6B00E7C8CD /* XLSV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLSV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2EEB2B85B174E5632C2EDF03 /* V2CalculationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2CalculationService.swift; sourceTree = "<group>"; };
+		1EBAC7BB01402FCC2754A080 /* V2CustomCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2CustomCollectionViewCell.swift; sourceTree = "<group>"; };
+		2FFB4A7539B52BA87AAF9BDC /* V2CustomCollectionViewLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2CustomCollectionViewLayout.swift; sourceTree = "<group>"; };
+		F762DBC4C0BC52103DE72DB4 /* V2Customview2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Customview2.swift; sourceTree = "<group>"; };
+		643FA214990E08DFB9CF653C /* V2Customview3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Customview3.swift; sourceTree = "<group>"; };
+		D0B89036EA732FD06EB0F49C /* V2Datainputview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Datainputview.swift; sourceTree = "<group>"; };
+		802B8FCE76F27B072B24C2F1 /* V2ExcelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2ExcelHelper.swift; sourceTree = "<group>"; };
+		5C31CC3DF505F317543B56F8 /* V2FileCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2FileCollectionViewCell.swift; sourceTree = "<group>"; };
+		78A63026C2B5A4B0477CB4FE /* V2Hint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Hint.swift; sourceTree = "<group>"; };
+		CEC19A5797C10DCC396D4458 /* V2LegacyMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2LegacyMigration.swift; sourceTree = "<group>"; };
+		DBB24DB91212FEBA7C9B208A /* V2NilController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2NilController.swift; sourceTree = "<group>"; };
+		05D41936FAF14CE21CBB3219 /* V2ReadWriteJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2ReadWriteJSON.swift; sourceTree = "<group>"; };
+		6E1D2E9DE8A895E228E411E4 /* V2RecoveredFilesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2RecoveredFilesViewController.swift; sourceTree = "<group>"; };
+		26155FF37E9E945FEBD18574 /* V2ScreenSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2ScreenSize.swift; sourceTree = "<group>"; };
+		97D32E2B070CD1FDFBA52B06 /* V2SpreadSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2SpreadSheet.swift; sourceTree = "<group>"; };
+		9A0B082DD2DE8EFE8DF99822 /* V2ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2ViewController.swift; sourceTree = "<group>"; };
+		DC7DADB4A5ACBEF364D3D8EE /* V2adapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2adapter.swift; sourceTree = "<group>"; };
+		30B8D0353E475097F5FDF3E4 /* V2app.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2app.swift; sourceTree = "<group>"; };
+		6EA1FAF7DCC9D580740C0C15 /* V2colorclass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2colorclass.swift; sourceTree = "<group>"; };
+		9DC46B70527558FDA480D454 /* V2contenttype.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2contenttype.swift; sourceTree = "<group>"; };
+		B8672B95043EEF9BD3198032 /* V2core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2core.swift; sourceTree = "<group>"; };
+		D7BB4CD963196613B0D9320F /* V2formatview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2formatview.swift; sourceTree = "<group>"; };
+		54BEF4EECEA44F6EF13E66D0 /* V2helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2helper.swift; sourceTree = "<group>"; };
+		331EFC74B95A39571D859F4A /* V2numberkey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2numberkey.swift; sourceTree = "<group>"; };
+		916A32504AC450E074F563FC /* V2rels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2rels.swift; sourceTree = "<group>"; };
+		DA3EC3993452FF7BD1DECCD5 /* V2service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2service.swift; sourceTree = "<group>"; };
+		23B08F5953DB840F62B165AB /* V2sharedstring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2sharedstring.swift; sourceTree = "<group>"; };
+		B954C3C73036B6DF8732DF36 /* V2sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2sheet.swift; sourceTree = "<group>"; };
+		15862FCD229BE9C35C37321D /* V2styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2styles.swift; sourceTree = "<group>"; };
+		644497CE35702E2D56CCFB7F /* V2theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2theme.swift; sourceTree = "<group>"; };
+		6EDC15587D51379BE0643093 /* V2workbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2workbook.swift; sourceTree = "<group>"; };
+		E06A0448E56DA940235F2B95 /* V2xl_rels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2xl_rels.swift; sourceTree = "<group>"; };
+		B13D98B947744A505445414A /* Manager.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Manager.storyboard; sourceTree = "<group>"; };
+		3FD36FED9FE120FB1867B639 /* V2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = V2.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,55 +305,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6A1F5E062542D70E002796C0 /* xmlProject */ = {
-			isa = PBXGroup;
-			children = (
-				6A1F5E1D2542D74A002796C0 /* service.swift */,
-				6A1F5E162542D734002796C0 /* app.swift */,
-				6A9743BC2BB3A74E005D341C /* helper.swift */,
-				6A1F5E172542D734002796C0 /* core.swift */,
-				6A1F5E132542D734002796C0 /* rels.swift */,
-				6A1F5E152542D734002796C0 /* styles.swift */,
-				6A1F5E142542D734002796C0 /* theme.swift */,
-				6A1F5E082542D727002796C0 /* adapter.swift */,
-				6A1F5E092542D727002796C0 /* calcChain.swift */,
-				6A1F5E0A2542D728002796C0 /* sharedstring.swift */,
-				6A1F5E072542D727002796C0 /* sheet.swift */,
-				6A1F5E0B2542D728002796C0 /* workbook.swift */,
-				6A1F5E0C2542D728002796C0 /* xl_rels.swift */,
-				6A1F5E042542D704002796C0 /* contenttype.swift */,
-			);
-			name = xmlProject;
-			sourceTree = "<group>";
-		};
-		6A50326A24276688008F62C5 /* XLSX_MAKING */ = {
-			isa = PBXGroup;
-			children = (
-				6AB0A814245B14F3007703C0 /* StyleReadFile.swift */,
-				6AB0A812245B14E5007703C0 /* Unzipping.swift */,
-				6AB0A80E245B14D3007703C0 /* SharedReadFile.swift */,
-				6AB0A80C245B14D3007703C0 /* SheetReadFile.swift */,
-				6AB0A80D245B14D3007703C0 /* SpreadSheet.swift */,
-				6AB0A80A245B14C1007703C0 /* MoveFile.swift */,
-			);
-			name = XLSX_MAKING;
-			sourceTree = "<group>";
-		};
-		6AC8322A24663CA8006FA917 /* boards */ = {
-			isa = PBXGroup;
-			children = (
-				8D3014501F0A74720026E961 /* Datainputview.swift */,
-				8DB0D36D1E5023C80075E103 /* speechView.swift */,
-				6AAFEA03255D56CB000612B8 /* Hint.swift */,
-				8D6A11351E4D6A3D00019BEA /* formatview.swift */,
-				8DB176C71E1492AA009DCD75 /* Customview2.swift */,
-				2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */,
-				6AB0A801245AE82C007703C0 /* Customview3.swift */,
-				2B7F428F303148EA00550E31 /* Datafilter.swift */,
-			);
-			name = boards;
-			sourceTree = "<group>";
-		};
 		6ACE5BB22B9C646B00CBA907 /* XLSVTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -350,44 +369,16 @@
 			isa = PBXGroup;
 			children = (
 				2BE0EB922F9850F9001FBD72 /* XLSV.entitlements */,
-				8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */,
-				6AD9361123E59D2E00479881 /* mergedCellStyle.swift */,
-				3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */,
-				6A9743C02BB428F3005D341C /* ExcelHelper.swift */,
-				8DF796AD1E4E799500BE7D38 /* NilController.swift */,
-				6AC8322B24663D3E006FA917 /* JSONModel.swift */,
-				6AB0A81A245B320B007703C0 /* ViewController.swift */,
-				2BB3DD17300CFFB100040AA8 /* HomeController.swift */,
-				A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */,
-				2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */,
-				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
-				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
-				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
-				6AC83230246658C2006FA917 /* ReadWriteJSON.swift */,
-				6AD456152AF4F8B20049198C /* CalculationService.swift */,
-				6AC832282465CBC2006FA917 /* FileCollectionViewCell.swift */,
-				3C40887021D6321D005D0E6D /* colorclass.swift */,
-				3C6F503820E3D151001EC20D /* TableViewCell.swift */,
-				8DB176C21E1492AA009DCD75 /* CreditViewController.swift */,
-				2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */,
-				08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */,
-				2B9503372FA5855A00D681BF /* BarcodeViewController.swift */,
-				3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */,
-				6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */,
 				2B26DDA22F9E3E4700109430 /* 1sheetinitialXLSX.xlsx */,
 				2B67BE002FA970BA0016DF24 /* initialXLSX.xlsx */,
-				6A9743C22BB436FD005D341C /* LoadingFileController.swift */,
-				8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */,
-				6A1F5E062542D70E002796C0 /* xmlProject */,
-				8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */,
-				6AC8322A24663CA8006FA917 /* boards */,
-				6A50326A24276688008F62C5 /* XLSX_MAKING */,
 				6A496CA623B8ED1A00E7AE0F /* Images.xcassets */,
 				6AAFEA07255D6A96000612B8 /* Hint.xib */,
 				6A6E8520245DA1D5008AFA03 /* LaunchScreen.xib */,
 				8DB177B71E1499F0009DCD75 /* InfoPlist.strings */,
 				3C22A79621DCD860001ADDD9 /* Input4Pad.xib */,
-				2B0FEECF2F782629005BF38E /* Main.storyboard */,
+				2B0FEECF2F782629005BF38E /* V3.storyboard */,
+				B13D98B947744A505445414A /* Manager.storyboard */,
+				3FD36FED9FE120FB1867B639 /* V2.storyboard */,
 				8D3863D61F0C4C3C00F2220D /* Datainput.xib */,
 				2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */,
 				2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */,
@@ -397,7 +388,8 @@
 				2B404E3B3013908300208952 /* speechView.xib */,
 				FB5D95391ABE5E6B00E7C8CD /* Supporting Files */,
 				6A6E851E245DA132008AFA03 /* Launch Screen.storyboard */,
-				1C076B50B1FF440F7B42B318 /* CellStore.swift */,
+				3F56F9615A502B549EC18AC9 /* V2 */,
+				5A40EF22CAB2D622F99D39B8 /* V3 */,
 			);
 			path = XLSV;
 			sourceTree = "<group>";
@@ -408,6 +400,108 @@
 				2B2DAAEC2C07881E00C149A5 /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		3F56F9615A502B549EC18AC9 /* V2 */ = {
+			isa = PBXGroup;
+			children = (
+				2EEB2B85B174E5632C2EDF03 /* V2CalculationService.swift */,
+				1EBAC7BB01402FCC2754A080 /* V2CustomCollectionViewCell.swift */,
+				2FFB4A7539B52BA87AAF9BDC /* V2CustomCollectionViewLayout.swift */,
+				F762DBC4C0BC52103DE72DB4 /* V2Customview2.swift */,
+				643FA214990E08DFB9CF653C /* V2Customview3.swift */,
+				D0B89036EA732FD06EB0F49C /* V2Datainputview.swift */,
+				802B8FCE76F27B072B24C2F1 /* V2ExcelHelper.swift */,
+				5C31CC3DF505F317543B56F8 /* V2FileCollectionViewCell.swift */,
+				78A63026C2B5A4B0477CB4FE /* V2Hint.swift */,
+				CEC19A5797C10DCC396D4458 /* V2LegacyMigration.swift */,
+				DBB24DB91212FEBA7C9B208A /* V2NilController.swift */,
+				05D41936FAF14CE21CBB3219 /* V2ReadWriteJSON.swift */,
+				6E1D2E9DE8A895E228E411E4 /* V2RecoveredFilesViewController.swift */,
+				26155FF37E9E945FEBD18574 /* V2ScreenSize.swift */,
+				97D32E2B070CD1FDFBA52B06 /* V2SpreadSheet.swift */,
+				9A0B082DD2DE8EFE8DF99822 /* V2ViewController.swift */,
+				DC7DADB4A5ACBEF364D3D8EE /* V2adapter.swift */,
+				30B8D0353E475097F5FDF3E4 /* V2app.swift */,
+				6EA1FAF7DCC9D580740C0C15 /* V2colorclass.swift */,
+				9DC46B70527558FDA480D454 /* V2contenttype.swift */,
+				B8672B95043EEF9BD3198032 /* V2core.swift */,
+				D7BB4CD963196613B0D9320F /* V2formatview.swift */,
+				54BEF4EECEA44F6EF13E66D0 /* V2helper.swift */,
+				331EFC74B95A39571D859F4A /* V2numberkey.swift */,
+				916A32504AC450E074F563FC /* V2rels.swift */,
+				DA3EC3993452FF7BD1DECCD5 /* V2service.swift */,
+				23B08F5953DB840F62B165AB /* V2sharedstring.swift */,
+				B954C3C73036B6DF8732DF36 /* V2sheet.swift */,
+				15862FCD229BE9C35C37321D /* V2styles.swift */,
+				644497CE35702E2D56CCFB7F /* V2theme.swift */,
+				6EDC15587D51379BE0643093 /* V2workbook.swift */,
+				E06A0448E56DA940235F2B95 /* V2xl_rels.swift */,
+			);
+			path = V2;
+			sourceTree = "<group>";
+		};
+		5A40EF22CAB2D622F99D39B8 /* V3 */ = {
+			isa = PBXGroup;
+			children = (
+				8DB176BF1E1492AA009DCD75 /* AppDelegate.swift */,
+				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
+				2B9503372FA5855A00D681BF /* BarcodeViewController.swift */,
+				6AD456152AF4F8B20049198C /* CalculationService.swift */,
+				1C076B50B1FF440F7B42B318 /* CellStore.swift */,
+				8DB176C21E1492AA009DCD75 /* CreditViewController.swift */,
+				8DB176C31E1492AA009DCD75 /* CustomCollectionViewCell.swift */,
+				8DB176C41E1492AA009DCD75 /* CustomCollectionViewLayout.swift */,
+				8DB176C71E1492AA009DCD75 /* Customview2.swift */,
+				6AB0A801245AE82C007703C0 /* Customview3.swift */,
+				2B7F428F303148EA00550E31 /* Datafilter.swift */,
+				8D3014501F0A74720026E961 /* Datainputview.swift */,
+				6A9743C02BB428F3005D341C /* ExcelHelper.swift */,
+				6AC832282465CBC2006FA917 /* FileCollectionViewCell.swift */,
+				2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */,
+				2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */,
+				6AAFEA03255D56CB000612B8 /* Hint.swift */,
+				2BB3DD17300CFFB100040AA8 /* HomeController.swift */,
+				6AC8322B24663D3E006FA917 /* JSONModel.swift */,
+				6A9743C22BB436FD005D341C /* LoadingFileController.swift */,
+				6A7377872BA5D1D40041EFA9 /* LoadingViewController.swift */,
+				6AB0A80A245B14C1007703C0 /* MoveFile.swift */,
+				8DF796AD1E4E799500BE7D38 /* NilController.swift */,
+				A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */,
+				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
+				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
+				2B37287D2F74054200D27F01 /* RangeSelectionOpsView.swift */,
+				6AC83230246658C2006FA917 /* ReadWriteJSON.swift */,
+				3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */,
+				6AB0A80E245B14D3007703C0 /* SharedReadFile.swift */,
+				6AB0A80C245B14D3007703C0 /* SheetReadFile.swift */,
+				08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */,
+				6AB0A80D245B14D3007703C0 /* SpreadSheet.swift */,
+				6AB0A814245B14F3007703C0 /* StyleReadFile.swift */,
+				3C6F503820E3D151001EC20D /* TableViewCell.swift */,
+				6AB0A812245B14E5007703C0 /* Unzipping.swift */,
+				6AB0A81A245B320B007703C0 /* ViewController.swift */,
+				6A1F5E082542D727002796C0 /* adapter.swift */,
+				6A1F5E162542D734002796C0 /* app.swift */,
+				6A1F5E092542D727002796C0 /* calcChain.swift */,
+				3C40887021D6321D005D0E6D /* colorclass.swift */,
+				6A1F5E042542D704002796C0 /* contenttype.swift */,
+				6A1F5E172542D734002796C0 /* core.swift */,
+				8D6A11351E4D6A3D00019BEA /* formatview.swift */,
+				6A9743BC2BB3A74E005D341C /* helper.swift */,
+				3C22A76A21D9DCD8001ADDD9 /* iCloudViewController.swift */,
+				6AD9361123E59D2E00479881 /* mergedCellStyle.swift */,
+				6A1F5E132542D734002796C0 /* rels.swift */,
+				6A1F5E1D2542D74A002796C0 /* service.swift */,
+				6A1F5E0A2542D728002796C0 /* sharedstring.swift */,
+				6A1F5E072542D727002796C0 /* sheet.swift */,
+				8DB0D36D1E5023C80075E103 /* speechView.swift */,
+				6A1F5E152542D734002796C0 /* styles.swift */,
+				6A1F5E142542D734002796C0 /* theme.swift */,
+				6A1F5E0B2542D728002796C0 /* workbook.swift */,
+				6A1F5E0C2542D728002796C0 /* xl_rels.swift */,
+			);
+			path = V3;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -520,7 +614,9 @@
 				2B2E18852F94E60300E243D9 /* Customviewboard3.xib in Resources */,
 				2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */,
 				8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */,
-				2B0FEED02F782629005BF38E /* Main.storyboard in Resources */,
+				2B0FEED02F782629005BF38E /* V3.storyboard in Resources */,
+				582517B5FC15A4F657BE1D12 /* Manager.storyboard in Resources */,
+				E9D803F47FAE14C730E5708C /* V2.storyboard in Resources */,
 				6A6E851F245DA132008AFA03 /* Launch Screen.storyboard in Resources */,
 				8D3863D41F0C4C3C00F2220D /* Datainput.xib in Resources */,
 				2B26DDA32F9E3E4700109430 /* 1sheetinitialXLSX.xlsx in Resources */,
@@ -626,6 +722,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D65FED5CC1F870C4098CF3F0 /* V2CalculationService.swift in Sources */,
+				F228B86AA2A498AC045B62AC /* V2CustomCollectionViewCell.swift in Sources */,
+				1118701177BEEA72F98B36EE /* V2CustomCollectionViewLayout.swift in Sources */,
+				F257A351BB480AFB0BF4A9D7 /* V2Customview2.swift in Sources */,
+				772ED11CAC836B2C97A1692F /* V2Customview3.swift in Sources */,
+				C50524842D5F2DEB3C2D933B /* V2Datainputview.swift in Sources */,
+				EAB2F27B4E5471B0D047CBF1 /* V2ExcelHelper.swift in Sources */,
+				CEE5DC91EE37F4594B59B242 /* V2FileCollectionViewCell.swift in Sources */,
+				0E8DF7D33E0D38D2A069EAB8 /* V2Hint.swift in Sources */,
+				4B8E181C53D4CF784E3DE958 /* V2LegacyMigration.swift in Sources */,
+				32D3C0B7173F00FE6CCDB273 /* V2NilController.swift in Sources */,
+				25081F1FDEC745E82ECF9782 /* V2ReadWriteJSON.swift in Sources */,
+				1AB73FD6901780DC3C5C219B /* V2RecoveredFilesViewController.swift in Sources */,
+				815D068D08DAC91A0A7A2796 /* V2ScreenSize.swift in Sources */,
+				B1720519C182C854664263FE /* V2SpreadSheet.swift in Sources */,
+				EE3F28E204FEAA22713D050B /* V2ViewController.swift in Sources */,
+				FA2D196539354A6D20C28942 /* V2adapter.swift in Sources */,
+				513A98A7AABB026AAFB5979D /* V2app.swift in Sources */,
+				97DC11FC2270507F5FB05D3D /* V2colorclass.swift in Sources */,
+				2697C33CE0B2B7C1E0BF1FAB /* V2contenttype.swift in Sources */,
+				868D4215FF3BBB93CCD71D4E /* V2core.swift in Sources */,
+				A396454D320D47F6A174CEB8 /* V2formatview.swift in Sources */,
+				000730BDA02A71D2C11078A8 /* V2helper.swift in Sources */,
+				240A6385C91377DA81F11917 /* V2numberkey.swift in Sources */,
+				D384F4A340D73F56ACDD6659 /* V2rels.swift in Sources */,
+				5D3B4F94B59A7F742CF46AFF /* V2service.swift in Sources */,
+				B541FA8EBC09B4A382856CE1 /* V2sharedstring.swift in Sources */,
+				5EB3D977329583D8170CFD83 /* V2sheet.swift in Sources */,
+				183BE659B074C132F87FFCA2 /* V2styles.swift in Sources */,
+				80CC68516F2CC361B40F29FA /* V2theme.swift in Sources */,
+				D520166EA6DD9FE6C30A3081 /* V2workbook.swift in Sources */,
+				2004E6372E54A632D6D6D14B /* V2xl_rels.swift in Sources */,
 				6A9743C32BB436FD005D341C /* LoadingFileController.swift in Sources */,
 				8DB176D11E1492AA009DCD75 /* Customview2.swift in Sources */,
 				8DB176CD1E1492AA009DCD75 /* CustomCollectionViewCell.swift in Sources */,

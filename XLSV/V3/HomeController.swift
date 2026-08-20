@@ -118,10 +118,13 @@ class HomeController: UIViewController {
         let playgroundButton = makeButton(title: "Playground", subtitle: "Good for checking 3D surface graphs")
         playgroundButton.addTarget(self, action: #selector(openPlayground), for: .touchUpInside)
 
+        let classicButton = makeButton(title: "Classic", subtitle: "The original spreadsheet editor")
+        classicButton.addTarget(self, action: #selector(openClassicSpreadsheet), for: .touchUpInside)
+
         let settingsButton = makeSettingsButton()
         settingsButton.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [spreadsheetButton, formFillButton, playgroundButton])
+        let stack = UIStackView(arrangedSubviews: [spreadsheetButton, formFillButton, playgroundButton, classicButton])
         stack.axis = .vertical
         stack.spacing = 16
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -194,7 +197,7 @@ class HomeController: UIViewController {
         // thread -- without this hop, startAnimating() and the freeze would be
         // scheduled in the same runloop pass and nothing would ever be drawn.
         DispatchQueue.main.async {
-            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine") as! ViewController
+            let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController(withIdentifier: "StartLine") as! ViewController
             targetViewController.modalPresentationStyle = .fullScreen
             self.present(targetViewController, animated: true) {
                 self.hideLoading()
@@ -205,7 +208,7 @@ class HomeController: UIViewController {
     @objc private func openFormFill() {
         showLoading()
         DispatchQueue.main.async {
-            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
+            let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
             targetViewController.modalPresentationStyle = .fullScreen
             self.present(targetViewController, animated: true) {
                 self.hideLoading()
@@ -216,7 +219,7 @@ class HomeController: UIViewController {
     @objc private func openPlayground() {
         showLoading()
         DispatchQueue.main.async {
-            let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
+            let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController(withIdentifier: "StartLine2") as! PlaygroundViewController
             targetViewController.modalPresentationStyle = .fullScreen
             self.present(targetViewController, animated: true) {
                 self.hideLoading()
@@ -229,8 +232,19 @@ class HomeController: UIViewController {
         // SettingsViewController's idx stays nil -- its own showAnimate()
         // already handles that case by falling back to StartLine rather than
         // trying to reload a specific sheet.
-        let targetViewController = self.storyboard!.instantiateViewController(withIdentifier: "Settings") as! SettingsViewController
+        let targetViewController = UIStoryboard(name: "V3", bundle: nil).instantiateViewController(withIdentifier: "Settings") as! SettingsViewController
         targetViewController.modalPresentationStyle = .fullScreen
         self.present(targetViewController, animated: true, completion: nil)
+    }
+
+    @objc private func openClassicSpreadsheet() {
+        showLoading()
+        DispatchQueue.main.async {
+            let targetViewController = UIStoryboard(name: "V2", bundle: nil).instantiateViewController(withIdentifier: "StartLine") as! V2ViewController
+            targetViewController.modalPresentationStyle = .fullScreen
+            self.present(targetViewController, animated: true) {
+                self.hideLoading()
+            }
+        }
     }
 }

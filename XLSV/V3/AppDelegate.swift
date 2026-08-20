@@ -240,8 +240,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // over one trigger of it.
         self.window?.backgroundColor = .white
         self.window?.overrideUserInterfaceStyle = .light
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        
+        let storyboard = UIStoryboard(name: "Manager", bundle: nil)
+
         if(DeviceType.IS_IPHONE_4_OR_LESS == true)
         {
             //storyboard = UIStoryboard(name: "Small", bundle: nil)
@@ -348,7 +348,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return false
         }
 
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let storyboard = UIStoryboard(name: "V3", bundle: nil)
         let target = storyboard.instantiateViewController(withIdentifier: "Filefill") as! FileFillViewController
         target.isExcel = true
         target.modalPresentationStyle = .fullScreen
