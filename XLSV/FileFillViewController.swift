@@ -955,7 +955,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         rowinNumber.append("r" + String(realSectionRow))
                     }
 
-                    cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
+                    cell.label2?.backgroundColor = UIColor(red: 255/255, green: 253/255, blue: 208/255, alpha: 1.0)
+                    cell.label2?.textAlignment = .center
+                    //UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
                     //cell.setBorder(width: 0.8, color: UIColor.lightGray, sides: .bottom)
@@ -982,7 +984,8 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
-                    cell.label2?.backgroundColor = UIColor.lightGray//UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
+                    cell.label2?.backgroundColor = UIColor(red: 255/255, green: 253/255, blue: 208/255, alpha: 1.0)
+                    cell.label2?.textAlignment = .center
                     cell.label2?.textColor = UIColor.black
                     cell.label2?.textAlignment = .center
                     cell.label2?.adjustsFontSizeToFitWidth = true
