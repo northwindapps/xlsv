@@ -982,10 +982,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             if cursor == key {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 2.0
+
+                // Excel/Sheets-style handle at the corner of the single
+                // selected cell -- dragging from it starts a range
+                // selection directly (reusing handlePanGesture, which
+                // resolves everything from touch location rather than
+                // gesture.view, so it works unmodified here). require(toFail:)
+                // makes the collection view's own scroll-pan wait to see
+                // whether this tiny handle claims the touch first, so
+                // starting a drag exactly on the handle doesn't also scroll.
+                cell.setSelectionHandle(visible: true)
+                cell.onSelectionHandlePan = { [weak self] gesture in
+                    self?.handlePanGesture(gesture)
+                }
+                myCollectionView.panGestureRecognizer.require(toFail: cell.selectionHandlePanGesture)
             }else if(changeaffected.contains(key)){
 
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 2.0
+                cell.setSelectionHandle(visible: false)
+                cell.onSelectionHandlePan = nil
+            }else{
+                cell.setSelectionHandle(visible: false)
+                cell.onSelectionHandlePan = nil
             }
 
 

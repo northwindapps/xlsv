@@ -8,6 +8,16 @@
 
 import UIKit
 
+// A UIView whose tappable region extends past its own drawn bounds by
+// `touchExpansion` points on every side, without changing how big it looks.
+class TouchExpandedView: UIView {
+    var touchExpansion: CGFloat = 0
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        bounds.insetBy(dx: -touchExpansion, dy: -touchExpansion).contains(point)
+    }
+}
+
 @IBDesignable
 class CustomCollectionViewCell: UICollectionViewCell {
    
@@ -39,6 +49,26 @@ class CustomCollectionViewCell: UICollectionViewCell {
     private let filterBadgeLayer = CALayer()
     private let filterBadgeDiameter: CGFloat = 6
 
+    // Excel/Sheets-style range-selection handle: a small circle centered on
+    // the bottom-right corner, shown only on the single cursor cell. Unlike
+    // the layers above this needs to be a real UIView (not a CALayer) so it
+    // can own a gesture recognizer of its own -- dragging from it starts a
+    // range selection directly, without the double-tap-to-arm step that
+    // handlePanGesture otherwise requires. The pan recognizer is created
+    // once here and forwards to whatever ViewController wires up per
+    // reuse via onSelectionHandlePan, since the cell has no reference to
+    // the view controller itself.
+    //
+    // The tappable area is padded well beyond the visible dot (via
+    // TouchExpandedView below) -- a finger-sized hit target drawn at full
+    // size would swallow a big corner of small spreadsheet cells, so the
+    // circle stays modest while the actual touch region is much bigger.
+    let selectionHandleView = TouchExpandedView()
+    let selectionHandlePanGesture = UIPanGestureRecognizer()
+    private let selectionHandleDiameter: CGFloat = 16
+    private let selectionHandleTouchExpansion: CGFloat = 14
+    var onSelectionHandlePan: ((UIPanGestureRecognizer) -> Void)?
+
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)!
         setup()
@@ -64,6 +94,32 @@ class CustomCollectionViewCell: UICollectionViewCell {
         filterBadgeLayer.cornerRadius = filterBadgeDiameter / 2
         filterBadgeLayer.isHidden = true
         layer.addSublayer(filterBadgeLayer)
+
+        // A rotated square reads as a diamond -- bounds/center are set in
+        // layoutSubviews() rather than frame, since frame is meaningless
+        // once a non-identity transform is applied.
+        selectionHandleView.backgroundColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1)
+        selectionHandleView.layer.borderColor = UIColor.white.cgColor
+        selectionHandleView.layer.borderWidth = 1
+        selectionHandleView.isHidden = true
+        selectionHandleView.bounds = CGRect(x: 0, y: 0, width: selectionHandleDiameter, height: selectionHandleDiameter)
+        selectionHandleView.transform = CGAffineTransform(rotationAngle: .pi / 4)
+        addSubview(selectionHandleView)
+
+        selectionHandleView.touchExpansion = selectionHandleTouchExpansion
+        selectionHandlePanGesture.addTarget(self, action: #selector(handleSelectionHandlePan(_:)))
+        selectionHandleView.addGestureRecognizer(selectionHandlePanGesture)
+    }
+
+    @objc private func handleSelectionHandlePan(_ gesture: UIPanGestureRecognizer) {
+        onSelectionHandlePan?(gesture)
+    }
+
+    // Callers set this every reuse -- dequeued cells otherwise keep whatever
+    // a previous index path last set (visible on a cell that's no longer
+    // the cursor).
+    func setSelectionHandle(visible: Bool) {
+        selectionHandleView.isHidden = !visible
     }
 
     // Callers set this every reuse (same convention as setEdgeBorders) --
@@ -117,6 +173,12 @@ class CustomCollectionViewCell: UICollectionViewCell {
         let inset: CGFloat = 2
         filterBadgeLayer.frame = CGRect(x: bounds.width - filterBadgeDiameter - inset, y: inset,
                                          width: filterBadgeDiameter, height: filterBadgeDiameter)
+
+        // Centered on the bottom-right corner (half hanging outside the
+        // cell), matching Excel/Sheets' own fill-handle placement. Set via
+        // center rather than frame -- frame isn't meaningful on a view
+        // that carries a rotation transform (see setup()).
+        selectionHandleView.center = CGPoint(x: bounds.width, y: bounds.height)
     }
     
     // 再利用時に呼ばれるシステムメソッド
@@ -125,6 +187,8 @@ class CustomCollectionViewCell: UICollectionViewCell {
         // 枠線の状態をデフォルトの初期状態（枠線なし）に戻す
         clearAllEdgeBorders()
         setFilterBadge(visible: false)
+        setSelectionHandle(visible: false)
+        onSelectionHandlePan = nil
     }
 
     // 4辺のカスタム枠線をすべてクリアしてデフォルトの薄い網線に戻すメソッド
