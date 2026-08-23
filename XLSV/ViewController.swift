@@ -171,14 +171,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var right_bool = false
     var left_bool = false
 
-    // Double-tap arms a single cell-range drag selection; the drag gesture
-    // itself is only attached to myCollectionView while this is true, so an
-    // ordinary single-finger scroll never competes with it the rest of the
-    // time. Set back to false as soon as that one drag ends (see
-    // handlePanGesture's .ended/.cancelled case) -- selecting another range
-    // needs another double-tap.
-    var isCellSelectionModeActive = false
-    var cellSelectionPanGesture: UIPanGestureRecognizer!
+    // Double-tap on a data cell opens a small panel to patch that cell's
+    // column width / row height (see handleDoubleTapToOpenCellSizePatch).
+    // Range selection now starts from the diamond drag handle on the
+    // cursor cell instead (see CustomCollectionViewCell.selectionHandleView).
+    var cellSizePatchSlider: CellSizePatchSlider?
 
     // Post-edit refresh strategy for a single-cell commit. true: patch the
     // JSON sidecar cache from the in-memory state storeInput()/excelEntry()
@@ -1546,6 +1543,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
         if customview2 != nil{
             customview2.removeFromSuperview()
+        }
+        // Selecting a different cell invalidates whatever column/row the
+        // size-patch panel was targeting (panel.targetColumn/targetRow are
+        // set once when it opens and never updated live), so leaving it
+        // open here let its sliders silently keep patching the *previous*
+        // cell's column/row after tapping away. Dismiss it the same way
+        // Hintview/customview2 already are above; a fresh double-tap
+        // reopens it for whichever cell the user meant.
+        if cellSizePatchSlider != nil {
+            cellSizePatchSlider?.removeFromSuperview()
+            cellSizePatchSlider = nil
         }
         if collectionView === myCollectionView{
             //reset change history
@@ -2959,15 +2967,14 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         
         #if !targetEnvironment(macCatalyst)
-        // Scrolling is a plain single-finger drag at all times. Cell-range
-        // selection is double-tap-to-arm instead of touch-count-gated --
-        // the drag gesture only gets attached to myCollectionView once
-        // armed (see handleDoubleTapToArmCellSelection), so it never
-        // competes with ordinary scrolling.
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTapToArmCellSelection(_:)))
+        // Scrolling is a plain single-finger drag at all times. Range
+        // selection instead starts from the diamond handle on the cursor
+        // cell (see CustomCollectionViewCell.selectionHandleView), so this
+        // double-tap is free to open the column-width/row-height patch
+        // panel for whichever cell was tapped.
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTapToOpenCellSizePatch(_:)))
         doubleTapGesture.numberOfTapsRequired = 2
         myCollectionView.addGestureRecognizer(doubleTapGesture)
-        cellSelectionPanGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         #endif
 
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
@@ -3079,21 +3086,126 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    // Double-tap arms exactly one upcoming drag as a cell-range selection.
-    // Attaching cellSelectionPanGesture here (rather than leaving it on
-    // myCollectionView permanently) is what keeps ordinary single-finger
-    // scrolling free the rest of the time.
-    @objc func handleDoubleTapToArmCellSelection(_ gesture: UITapGestureRecognizer) {
-        guard !isCellSelectionModeActive else { return }
-        isCellSelectionModeActive = true
-        myCollectionView.addGestureRecognizer(cellSelectionPanGesture)
+    // Double-tap on a data cell opens a small panel to patch just that
+    // cell's column width / row height. Header cells (row-number column,
+    // column-letter row) are skipped -- customSizedWidth/customSizedHeight
+    // are keyed by real column/row index, and column 0 / row 0 are the
+    // fixed INDEX_WIDTH/INDEX_HEIGHT headers, not resizable data.
+    @objc func handleDoubleTapToOpenCellSizePatch(_ gesture: UITapGestureRecognizer) {
+        let locationCG = gesture.location(in: myCollectionView)
+        guard let indexPath = myCollectionView.indexPathForItem(at: locationCG),
+              indexPath.section != 0, indexPath.item != 0
+        else { return }
+
+        cellSizePatchSlider?.removeFromSuperview()
+        let column = indexPath.item
+        let row = realRow(forDisplaySection: indexPath.section)
+
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let layout = myCollectionView.collectionViewLayout as? CustomCollectionViewLayout
+        let defaultWidth = Double(layout?.CELL_WIDTH ?? 70.0)
+        let defaultHeight = Double(layout?.CELL_HEIGHT ?? 30.0)
+        let currentWidth = appd.cswLocation.firstIndex(of: column).map { Double(appd.customSizedWidth[$0]) } ?? defaultWidth
+        let currentHeight = appd.cshLocation.firstIndex(of: row).map { Double(appd.customSizedHeight[$0]) } ?? defaultHeight
+
+        let panelSize = CGSize(width: 260, height: 180)
+        let panel = CellSizePatchSlider(frame: CGRect(x: (view.bounds.width - panelSize.width) / 2,
+                                                        y: (view.bounds.height - panelSize.height) / 2,
+                                                        width: panelSize.width, height: panelSize.height))
+        panel.targetColumn = column
+        panel.targetRow = row
+
+        // The xib's label frames (32x15 / 36x15) were sized for the static
+        // placeholder captions "width"/"height" -- widened here to fit the
+        // longer "Width: 123" value text this panel actually shows, since
+        // UILabel doesn't clip to bounds by default and the overflow was
+        // reading as an oversized label rather than a clipped one. Font
+        // dropped a point too so it sits comfortably inside a panel this
+        // small on a big iPad screen.
+        let labelFont = UIFont.systemFont(ofSize: 11)
+        panel.widthLabel.font = labelFont
+        panel.widthLabel.frame.size.width = 90
+        panel.heightLabel.font = labelFont
+        panel.heightLabel.frame.size.width = 90
+
+        panel.widthSlider.minimumValue = 20
+        panel.widthSlider.maximumValue = 300
+        panel.widthSlider.value = Float(currentWidth)
+        panel.widthLabel.text = "Width: \(Int(currentWidth))"
+
+        panel.heightSlider.minimumValue = 15
+        panel.heightSlider.maximumValue = 150
+        panel.heightSlider.value = Float(currentHeight)
+        panel.heightLabel.text = "Height: \(Int(currentHeight))"
+
+        panel.widthSlider.addTarget(self, action: #selector(cellSizePatchWidthChanged(_:)), for: .valueChanged)
+        panel.heightSlider.addTarget(self, action: #selector(cellSizePatchHeightChanged(_:)), for: .valueChanged)
+        panel.closebutton.addTarget(self, action: #selector(cellSizePatchClose(_:)), for: .touchUpInside)
+
+        view.addSubview(panel)
+        view.bringSubview(toFront: panel)
+        cellSizePatchSlider = panel
+    }
+
+    // Writes to the same sparse cswLocation/customSizedWidth pair that
+    // CustomCollectionViewLayout.swift already reads at layout time --
+    // append a new (column, width) pair the first time a column is
+    // patched, update customSizedWidth in place on every slider move after.
+    @objc func cellSizePatchWidthChanged(_ sender: UISlider) {
+        guard let column = cellSizePatchSlider?.targetColumn else { return }
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let newWidth = Double(sender.value)
+        if let idx = appd.cswLocation.firstIndex(of: column) {
+            appd.customSizedWidth[idx] = newWidth
+        } else {
+            appd.cswLocation.append(column)
+            appd.customSizedWidth.append(newWidth)
+        }
+        cellSizePatchSlider?.widthLabel.text = "Width: \(Int(newWidth))"
+
+        appd.collectionViewCellSizeChanged = 1
+        myCollectionView.collectionViewLayout.invalidateLayout()
+        myCollectionView.reloadData()
+    }
+
+    @objc func cellSizePatchHeightChanged(_ sender: UISlider) {
+        guard let row = cellSizePatchSlider?.targetRow else { return }
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let newHeight = Double(sender.value)
+        if let idx = appd.cshLocation.firstIndex(of: row) {
+            appd.customSizedHeight[idx] = newHeight
+        } else {
+            appd.cshLocation.append(row)
+            appd.customSizedHeight.append(newHeight)
+        }
+        cellSizePatchSlider?.heightLabel.text = "Height: \(Int(newHeight))"
+
+        appd.collectionViewCellSizeChanged = 1
+        myCollectionView.collectionViewLayout.invalidateLayout()
+        myCollectionView.reloadData()
+    }
+
+    // Persists the same way the existing row/col-delete paths already do
+    // (see minusAction) so a patched size survives an app relaunch.
+    @objc func cellSizePatchClose(_ sender: UIButton) {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let defaults = UserDefaults.standard
+        defaults.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
+        defaults.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
+        defaults.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
+        defaults.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
+
+        cellSizePatchSlider?.removeFromSuperview()
+        cellSizePatchSlider = nil
     }
 
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        // Only attached to myCollectionView (see handleDoubleTapToArmCellSelection)
-        // while a selection is armed, so the touched cell has to be resolved
-        // from the gesture's location rather than gesture.view -- that was
-        // only valid back when this recognizer was added per-cell.
+        // Triggered by the diamond drag handle on the cursor cell (see
+        // CustomCollectionViewCell.selectionHandleView/onSelectionHandlePan),
+        // which is a different view from myCollectionView -- resolving the
+        // touched cell from the gesture's location rather than gesture.view
+        // is what lets this same handler work regardless of which view the
+        // recognizer is actually attached to.
         let idxInLocation = locationIndex(for: cursor) ?? -1
         let lIndex = excelLocationIndex(for: label.text ?? "") ?? -1
 
@@ -3132,12 +3244,6 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             break
             
         case .ended, .cancelled:
-            // Disarm immediately -- this drag is over, and another range
-            // selection needs a fresh double-tap. Done up front so it still
-            // happens no matter which branch below runs afterward.
-            isCellSelectionModeActive = false
-            myCollectionView.removeGestureRecognizer(cellSelectionPanGesture)
-
             let locationCG = gesture.location(in: myCollectionView)
             if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
                 // Same duplicate guard as .changed above -- without it, the

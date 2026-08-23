@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="24765" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24743"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CellSizePatchSlider" customModule="XLSV" customModuleProvider="target">
+            <connections>
+                <outlet property="closebutton" destination="GEp-YV-JCq" id="bcX-Ig-jqw"/>
+                <outlet property="heightLabel" destination="8xb-15-JTs" id="hMT-Kh-Dkv"/>
+                <outlet property="heightSlider" destination="Mzu-KC-yHW" id="yZk-9M-m1a"/>
+                <outlet property="widthLabel" destination="w3g-M1-f3R" id="F8X-x5-j3h"/>
+                <outlet property="widthSlider" destination="CuP-Qi-iaW" id="5EN-mL-yhJ"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="290" height="205"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="CuP-Qi-iaW">
+                    <rect key="frame" x="70" y="49" width="150" height="43"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="150" id="C4Y-io-3aT"/>
+                        <constraint firstAttribute="width" secondItem="CuP-Qi-iaW" secondAttribute="height" multiplier="59:17" id="EPb-IC-Whn"/>
+                    </constraints>
+                </slider>
+                <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Mzu-KC-yHW">
+                    <rect key="frame" x="70" y="137" width="150" height="43.5"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="150" id="Qd8-Vm-RUE"/>
+                        <constraint firstAttribute="width" secondItem="Mzu-KC-yHW" secondAttribute="height" multiplier="59:17" id="fsZ-ne-Ji0"/>
+                    </constraints>
+                </slider>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="width" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="w3g-M1-f3R">
+                    <rect key="frame" x="70" y="15" width="150" height="15"/>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="I27-4h-3yk"/>
+                        <constraint firstAttribute="height" constant="15" id="plC-Ot-Dsz"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="height" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8xb-15-JTs">
+                    <rect key="frame" x="70" y="108" width="150" height="15"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="15" id="CNZ-ao-96p"/>
+                        <constraint firstAttribute="width" relation="lessThanOrEqual" constant="150" id="ClP-Kr-Kbh"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="Uv0-q9-Dvh"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GEp-YV-JCq">
+                    <rect key="frame" x="252" y="0.0" width="38" height="38"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="38" id="0aP-dO-7M7"/>
+                        <constraint firstAttribute="width" constant="38" id="eYx-MP-ty8"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                    <state key="normal" title="×">
+                        <color key="titleColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="CuP-Qi-iaW" firstAttribute="top" secondItem="w3g-M1-f3R" secondAttribute="bottom" constant="19" id="1OU-uH-IvP"/>
+                <constraint firstItem="Mzu-KC-yHW" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="1zR-Ce-DP5"/>
+                <constraint firstItem="w3g-M1-f3R" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="15" id="8c8-K1-jwB"/>
+                <constraint firstItem="8xb-15-JTs" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="DV0-Q6-rkY"/>
+                <constraint firstItem="Mzu-KC-yHW" firstAttribute="top" secondItem="8xb-15-JTs" secondAttribute="bottom" constant="14" id="Fjd-dw-LQY"/>
+                <constraint firstItem="GEp-YV-JCq" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="I0m-Zn-SbZ"/>
+                <constraint firstItem="w3g-M1-f3R" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="S1i-aG-osm"/>
+                <constraint firstAttribute="trailing" secondItem="GEp-YV-JCq" secondAttribute="trailing" id="dl7-Th-Bev"/>
+                <constraint firstItem="8xb-15-JTs" firstAttribute="top" secondItem="CuP-Qi-iaW" secondAttribute="bottom" constant="16" id="si9-AF-hd2"/>
+                <constraint firstItem="CuP-Qi-iaW" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="wgt-nm-OyY"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="-507.19999999999999" y="-55.772113943028494"/>
+        </view>
+    </objects>
+</document>
