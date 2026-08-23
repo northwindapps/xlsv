@@ -3070,15 +3070,42 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         myCollectionView.reloadData()
     }
 
-    // Persists the same way the existing row/col-delete paths already do
-    // (see minusAction) so a patched size survives an app relaunch.
+    // Persists into this sheet's own JSON sidecar -- the same per-sheet
+    // source of truth every other cell/format edit already uses (see
+    // patchJsonCacheAndRefresh's isExcel branch, which this mirrors) --
+    // rather than the old global UserDefaults keys (NEW_CELL_WIDTH etc.).
+    // Those keys weren't scoped per sheet, so resizing a column on one
+    // file bled into every other sheet/file opened afterward the moment
+    // sheet-load's UserDefaults check found them set; that read is removed
+    // (see the matching fix in ViewController.swift, mirrored here).
     @objc func cellSizePatchClose(_ sender: UIButton) {
         let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let defaults = UserDefaults.standard
-        defaults.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
-        defaults.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
-        defaults.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
-        defaults.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
+
+        if isExcel {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH:mm"
+            let dict: [String: Any] = [
+                "filename": "sheet" + String(appd.wsSheetIndex) + ".xml",
+                "date": dateFormatter.string(from: Date()),
+                "content": content,
+                "location": location,
+                "fontsize": textsize,
+                "fontcolor": tcolor,
+                "bgcolor": bgcolor,
+                "styleId": cellStyleId,
+                "rowsize": ROWSIZE,
+                "columnsize": COLUMNSIZE,
+                "customcellWidth": appd.customSizedWidth,
+                "customcellHeight": appd.customSizedHeight,
+                "ccwLocation": appd.cswLocation,
+                "cchLocation": appd.cshLocation,
+                "formulaResult": [String](),
+                "inputOrder": [String]()
+            ]
+            ReadWriteJSON().saveJsonFile(source: dict, title: "sheet" + String(appd.wsSheetIndex) + ".xml")
+        } else {
+            saveAsLocalJson(filename: "csv_sheet1")
+        }
 
         cellSizePatchSlider?.removeFromSuperview()
         cellSizePatchSlider = nil
@@ -4694,11 +4721,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         appd.customSizedWidth.removeAll()
         appd.cshLocation.removeAll()
         appd.customSizedHeight.removeAll()
-        UserDefaults.standard.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
-        UserDefaults.standard.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
-        UserDefaults.standard.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
-        UserDefaults.standard.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
-        UserDefaults.standard.synchronize()
 
         appd.collectionViewCellSizeChanged = 1
 
@@ -5678,27 +5700,20 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
         }
         
-        //FOR COLLECTIONVIEW
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") != nil) {
-            appd.customSizedWidth = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") != nil) {
-            appd.customSizedHeight = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") != nil) {
-            appd.cswLocation = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") != nil) {
-            appd.cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
-        }
-        
+        // NEW_CELL_WIDTH/HEIGHT(+_LOCATION) used to be read back here, but
+        // those UserDefaults keys are global, not scoped per sheet/file --
+        // customSizedWidth/Height/cswLocation/cshLocation were already
+        // correctly set from THIS sheet's own JSON sidecar just above, only
+        // to be unconditionally clobbered here by whatever sheet last wrote
+        // those global keys (see cellSizePatchClose, which now writes into
+        // the per-sheet sidecar instead). That's what let a column/row
+        // resized on one file bleed into every other sheet/file opened
+        // afterward. Removed; the sidecar load above is the only source now.
+
         if (UserDefaults.standard.object(forKey: "NEWCsize") != nil) {
             COLUMNSIZE = UserDefaults.standard.object(forKey: "NEWCsize") as! Int
         }
-        
+
         if (UserDefaults.standard.object(forKey: "NEWRsize") != nil) {
             ROWSIZE = UserDefaults.standard.object(forKey: "NEWRsize") as! Int
         }
@@ -8029,23 +8044,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
         }
         
-        //FOR COLLECTIONVIEW
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") != nil) {
-            appd.customSizedWidth = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") != nil) {
-            appd.customSizedHeight = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") != nil) {
-            appd.cswLocation = UserDefaults.standard.object(forKey: "NEW_CELL_WIDTH_LOCATION") as! Array
-        }
-        
-        if (UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") != nil) {
-            appd.cshLocation = UserDefaults.standard.object(forKey: "NEW_CELL_HEIGHT_LOCATION") as! Array
-        }
-        
+        // NEW_CELL_WIDTH/HEIGHT(+_LOCATION) used to be read back here too --
+        // same cross-sheet/cross-file clobbering bug as the matching removal
+        // in loadExcelSheet (see the comment there). This function doesn't
+        // reload the JSON sidecar itself -- it re-derives from whatever
+        // content/location/customSizedWidth/etc. the caller already has in
+        // memory (e.g. patchJsonCacheAndRefresh, right after writing that
+        // same in-memory state to the sidecar) -- so those UserDefaults keys
+        // were only ever clobbering an already-correct in-memory value.
+
         // NEWCsize/NEWRsize hold whatever COLUMNSIZE/ROWSIZE happened to be at
         // the time of some earlier edit (saveuserD() persists them on every
         // edit, for any file), not a real per-file preference -- for CSV mode,
