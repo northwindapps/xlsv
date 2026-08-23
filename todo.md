@@ -118,7 +118,7 @@ can shift/drop a lot of data if misapplied) -- the app shows a plain-language pr
 ("Insert 2 rows at row 6", "Delete columns I-K") for the user to confirm before actually
 executing, rather than auto-running silently.
 
-**Phased build-out:**
+**Phased build-out (v1 -- structural range ops only):**
 1. Feasibility spike: run a quantized Gemma 4 E2B via MLX Swift in a throwaway test
    target; measure load time, tokens/sec, and peak memory on an actual iPhone SE 4 (or
    nearest available A18/8GB device) -- no XLSV integration yet.
@@ -130,7 +130,39 @@ executing, rather than auto-running silently.
    `tools/xlsx_corruption_check.py` per tool -- but driven by model-generated tool calls
    instead of manual UI taps, to catch both app bugs and model tool-calling mistakes.
 
-**Explicitly out of scope for v1:** free-form cell content generation/analysis (e.g.
-"summarize this sheet") -- a different, lower-stakes read-only capability that could
-follow later. v1 is scoped to the structural range operations already tested and trusted
-today.
+**Phase 2+: broader task surface.** The model's ceiling is the tool surface, not the
+model itself -- any task becomes reachable once there's a matching deterministic Swift
+function the dispatcher can validate and call, same guarantee as v1. Candidate tasks
+discussed 2026-08-23, in roughly easiest-to-hardest order:
+- **Summarize this data** -- read-only, so none of the structural-validity concerns
+  apply; could actually ship *before* any mutating v1 tool. Needs a `read_range`/
+  `get_sheet_data` tool so the model pulls only the relevant cells into context rather
+  than the whole sheet dumped in -- watch the 128K context budget against the 100k-row
+  files already seen in this project (see Claude's memory
+  `project_xlsx_heavy_edit_crash_fixes`). No confirm-before-execute needed since nothing
+  is written.
+- **Make next month's calendar** -- the layout itself is pure deterministic date math,
+  nothing for the model to get wrong; it just recognizes intent and calls
+  `insert_calendar(sheet, start_cell, month, year)`, built entirely out of traditional
+  code and the same `set_cell`/`fill_range` primitives as v1. Low-risk proof-of-concept
+  for "generate structured content" tasks generally.
+- **Sort this file** -- genuinely new work, no existing primitive to build on. Harder
+  than insert/delete's uniform index-shifting because merged cells and formulas
+  referencing absolute positions can break under arbitrary row reordering, not just a
+  fixed offset -- needs its own correctness pass (before/after diff + corruption check)
+  same as row/col ops got this session, not a quick add-on.
+
+**Phase 2+: RAG, gated on need.** Only worth adding once a task actually hits a limit
+plain retrieval can't solve -- a single sheet past the context-window scale (100k-row
+files, again) or a query spanning multiple xlsx files (e.g. "compare this month's report
+to last month's"). For anything that fits in context, exact retrieval via
+`read_range`/`get_sheet_data` beats RAG's approximate similarity search -- don't add
+embedding-lookup uncertainty where the real cells are simple to hand over directly. If/
+when it's built: a separate, much smaller embedding model (a few hundred MB, not
+Gemma-scale), a simple on-device vector index (brute-force cosine is fine at this row
+count, no real vector DB needed), and row/range-based chunking that keeps a cell's
+row+column context attached rather than naive text splitting -- spreadsheet data isn't
+prose, chunk boundaries should respect that structure.
+
+**Explicitly out of scope for v1:** everything in the Phase 2+ sections above. v1 is
+scoped to the structural range operations already tested and trusted this session.
