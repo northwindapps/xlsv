@@ -627,6 +627,18 @@ class ExcelHelper{
                }
 
 
+               // Recover any per-column width / per-row height that survived a
+               // previous save (see service.swift's patchColumnWidths/
+               // patchRowHeights, which write these into <cols>/<row ht=>) --
+               // this file's <cols>/<row> markup was never parsed before, so a
+               // column resized via the size-patch panel, saved, and reopened
+               // silently reverted to the sheet's default width/height.
+               let customSizes = parseCustomCellSizes(from: appd.loadedSheetXML)
+               let cswLocationParsed = Array(customSizes.columns.keys)
+               let customSizedWidthParsed = cswLocationParsed.map { customSizes.columns[$0]! }
+               let cshLocationParsed = Array(customSizes.rows.keys)
+               let customSizedHeightParsed = cshLocationParsed.map { customSizes.rows[$0]! }
+
                let dict : [String:Any] = ["filename": "sheet" + String(wsIndex) + ".xml",
                                           "date": date,
                                           "content": valueContent+stringContent,
@@ -637,15 +649,15 @@ class ExcelHelper{
                                           "styleId": styleId,
                                           "rowsize": rowsize,
                                           "columnsize": columnsize+1,
-                                          "customcellWidth":[String](),
-                                          "customcellHeight": [String](),
-                                          "ccwLocation": [String](),
-                                          "cchLocation": [String](),
+                                          "customcellWidth": customSizedWidthParsed,
+                                          "customcellHeight": customSizedHeightParsed,
+                                          "ccwLocation": cswLocationParsed,
+                                          "cchLocation": cshLocationParsed,
                                           "formulaResult":[String](),
                                           "inputOrder":[String]()]
-               
-               
-               
+
+
+
                print(String(format: "PERF readExcel2.finalLoopsAndDictBuild: %.3fs", CFAbsoluteTimeGetCurrent() - __tFinalLoopsStart))
                let __tSaveJsonStart = CFAbsoluteTimeGetCurrent()
                let test = ReadWriteJSON()
@@ -653,12 +665,12 @@ class ExcelHelper{
                test.saveJsonFile(source: dict, title: "sheet" + String(wsIndex) + ".xml")
                print(String(format: "PERF readExcel2.saveJsonFile: %.3fs", CFAbsoluteTimeGetCurrent() - __tSaveJsonStart))
                //this library is too slow, abound it in the next version
-               
-               
-               appd.customSizedHeight.removeAll()
-               appd.customSizedWidth.removeAll()
-               appd.cshLocation.removeAll()
-               appd.cswLocation.removeAll()
+
+
+               appd.customSizedHeight = customSizedHeightParsed
+               appd.customSizedWidth = customSizedWidthParsed
+               appd.cshLocation = cshLocationParsed
+               appd.cswLocation = cswLocationParsed
                appd.numberofRow = rowsize
                appd.numberofColumn = columnsize
            }
@@ -666,6 +678,72 @@ class ExcelHelper{
        } catch {
            print(error)
        }
+    }
+
+    // Recovers per-column width / per-row height from a sheet's raw XML on
+    // import -- the counterpart to service.swift's patchColumnWidths/
+    // patchRowHeights, which write this into <cols>/<row ht=> on save. Runs
+    // once at import time (not per-edit), so a plain regex scan over the
+    // whole already-in-memory sheet string is cheap enough -- same
+    // technique service.swift's rowInsertionPoint already uses -- without
+    // needing to touch the perf-tuned FastWorksheetParser SAX pass below.
+    //
+    // Only a single-column <col min="N" max="N"> entry is treated as a
+    // per-column override, not a wider range: a broad range (e.g. this
+    // app's own min="1" max="16384" default-width catch-all) isn't a
+    // customization of any specific column, and expanding it would flood
+    // cswLocation with thousands of entries the sparse-override model was
+    // never meant to hold.
+    private func parseCustomCellSizes(from xmlString: String) -> (columns: [Int: Double], rows: [Int: Double]) {
+        var columns: [Int: Double] = [:]
+        if let colsRange = xmlString.range(of: "<cols>"),
+           let colsEndRange = xmlString.range(of: "</cols>", range: colsRange.upperBound..<xmlString.endIndex),
+           let colRegex = try? NSRegularExpression(pattern: "<col\\b[^>]*/>") {
+            let colsBlock = String(xmlString[colsRange.upperBound..<colsEndRange.lowerBound])
+            let nsRange = NSRange(colsBlock.startIndex..<colsBlock.endIndex, in: colsBlock)
+            colRegex.enumerateMatches(in: colsBlock, range: nsRange) { match, _, _ in
+                guard let match = match, let range = Range(match.range, in: colsBlock) else { return }
+                let colTag = String(colsBlock[range])
+                guard let min = attributeValue(colTag, name: "min").flatMap(Int.init),
+                      let max = attributeValue(colTag, name: "max").flatMap(Int.init),
+                      min == max,
+                      let width = attributeValue(colTag, name: "width").flatMap(Double.init)
+                else { return }
+                // Inverse of service.swift's excelColumnWidthUnits (points =
+                // (width-5)/7 there) -- converts Excel's character-width
+                // unit back into this app's own on-screen point width.
+                columns[min] = width * 7 + 5
+            }
+        }
+
+        var rows: [Int: Double] = [:]
+        // Narrowed to rows that actually carry customHeight="1" -- the
+        // overwhelming majority of rows in any real sheet have neither, so
+        // this keeps the scan effectively free instead of extracting and
+        // discarding a full tag for every single row.
+        if let rowRegex = try? NSRegularExpression(pattern: "<row\\b[^>]*\\bcustomHeight=\"1\"[^>]*>") {
+            let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+            rowRegex.enumerateMatches(in: xmlString, range: nsRange) { match, _, _ in
+                guard let match = match, let range = Range(match.range, in: xmlString) else { return }
+                let rowTag = String(xmlString[range])
+                guard let rowNum = attributeValue(rowTag, name: "r").flatMap(Int.init),
+                      let ht = attributeValue(rowTag, name: "ht").flatMap(Double.init)
+                else { return }
+                rows[rowNum] = ht
+            }
+        }
+
+        return (columns, rows)
+    }
+
+    // Order-independent attribute lookup -- anchored on a leading space so
+    // e.g. searching for "ht" can never match inside "customHeight" (which
+    // contains "ht" as a bare substring, just never preceded by a space).
+    private func attributeValue(_ tag: String, name: String) -> String? {
+        guard let range = tag.range(of: " \(name)=\"[^\"]*\"", options: .regularExpression) else { return nil }
+        let attr = String(tag[range])
+        guard let valueRange = attr.range(of: "\"[^\"]*\"", options: .regularExpression) else { return nil }
+        return String(attr[valueRange].dropFirst().dropLast())
     }
 
     //Making the array with unique values

@@ -48,6 +48,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var cshLocation_temp = [Int]()
     var customSizedHeight_temp = [Double]()
 
+    // Set whenever cswLocation/customSizedWidth/cshLocation/customSizedHeight
+    // change (see ViewController's cellSizePatchWidthChanged/HeightChanged) and
+    // cleared once flushPendingXlsxChangesIfNeeded has patched those values
+    // into the real xlsx's <cols>/<row ht=> -- mirrors pendingXlsxChanges.isDirty,
+    // but as a plain flag since the current array contents (not a per-cell
+    // diff) are always exactly what should be written.
+    var pendingCellSizeChanges = false
+
     // Row filter (FileFillViewController's Datafilter dialog). When active,
     // display section i+1 shows real row visibleRows[i] -- content/location
     // keep their real row numbers untouched, only the render/layout

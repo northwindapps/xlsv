@@ -739,8 +739,8 @@ class Service {
     // shape this app writes (a <row> only ever contains <c> children, a <c> never
     // contains another <c> or <row>), which is what makes a plain scan for the first
     // ">"/matching close tag exact without a general-purpose XML parser.
-    private func originalElementRange(tag: String, attributeValue: String, in xmlString: String) -> Range<String.Index>? {
-        guard let quoteRange = xmlString.range(of: "r=\"\(attributeValue)\"") else { return nil }
+    private func originalElementRange(tag: String, attributeName: String = "r", attributeValue: String, in xmlString: String) -> Range<String.Index>? {
+        guard let quoteRange = xmlString.range(of: "\(attributeName)=\"\(attributeValue)\"") else { return nil }
         guard let tagOpenRange = xmlString.range(of: "<\(tag) ", options: .backwards, range: xmlString.startIndex..<quoteRange.upperBound) else {
             return nil
         }
@@ -914,7 +914,116 @@ class Service {
         }
         return result
     }
-    
+
+    // Excel's <col width=> is in "character width" units (roughly how many
+    // digits of the sheet's default font fit), not points -- this app's own
+    // customSizedWidth is a plain on-screen point width from the resize
+    // slider. Converts using the standard Calibri-11 approximation most
+    // xlsx writers use (~7pt average digit width, ~5pt cell padding).
+    // Not pixel-exact -- there's no way to be, since Excel's unit is
+    // font-metric-based -- but keeps the saved column roughly proportional
+    // instead of wildly wrong (writing raw points as character-units would
+    // render ~7x too wide in real Excel).
+    private func excelColumnWidthUnits(fromPoints points: Double) -> Double {
+        return max((points - 5) / 7, 1)
+    }
+
+    // Sets name="value" on a tag's attribute list -- replacing an existing
+    // occurrence in place, or inserting one just before the tag's closing
+    // ">"/"/>" if absent. `tag` must be just the opening tag (including its
+    // closing bracket), never a full element with children, and the search
+    // requires a leading space before `name` so e.g. looking for "ht" can
+    // never match inside "customHeight" (which contains "ht" as a bare
+    // substring, just never preceded by a space).
+    private func replaceOrInsertAttribute(_ tag: String, name: String, value: String) -> String {
+        if let existingRange = tag.range(of: " \(name)=\"[^\"]*\"", options: .regularExpression) {
+            var result = tag
+            result.replaceSubrange(existingRange, with: " \(name)=\"\(value)\"")
+            return result
+        }
+        var result = tag
+        let insertionPoint = result.hasSuffix("/>") ? result.index(result.endIndex, offsetBy: -2) : result.index(before: result.endIndex)
+        result.insert(contentsOf: " \(name)=\"\(value)\"", at: insertionPoint)
+        return result
+    }
+
+    // Patches per-column widths into <cols> so they survive as real xlsx
+    // geometry (Excel/Sheets read <col width= customWidth=1>), not just this
+    // app's own UserDefaults+JSON-sidecar state. `columns` holds 1-based
+    // Excel column numbers (indexPath.item's own convention -- see
+    // getExcelColumnName's callers) paired with this app's on-screen point
+    // width. Creates <cols> if the sheet doesn't have one yet -- per OOXML's
+    // element order it belongs right before <sheetData>, after
+    // <sheetFormatPr>.
+    private func patchColumnWidths(in xmlString: inout String, columns: [(col: Int, width: Double)]) {
+        guard !columns.isEmpty else { return }
+
+        if let selfClosing = xmlString.range(of: "<cols/>") {
+            xmlString.replaceSubrange(selfClosing, with: "<cols></cols>")
+        } else if !xmlString.contains("<cols>") {
+            guard let sheetDataRange = xmlString.range(of: "<sheetData") else { return }
+            xmlString.insert(contentsOf: "<cols></cols>", at: sheetDataRange.lowerBound)
+        }
+
+        for (col, width) in columns {
+            let widthStr = String(format: "%.4f", excelColumnWidthUnits(fromPoints: width))
+            if let colRange = originalElementRange(tag: "col", attributeName: "min", attributeValue: String(col), in: xmlString) {
+                // Existing <col min="N" .../> for exactly this column --
+                // patch width=/customWidth= in place, leave every other
+                // attribute (style=, max=, etc.) untouched.
+                var colTag = String(xmlString[colRange])
+                colTag = replaceOrInsertAttribute(colTag, name: "width", value: widthStr)
+                colTag = replaceOrInsertAttribute(colTag, name: "customWidth", value: "1")
+                xmlString.replaceSubrange(colRange, with: colTag)
+            } else {
+                // No existing <col> for this exact column -- insert a new
+                // single-column entry. <col> ranges can overlap in xlsx (a
+                // narrower, more specific range wins for the columns it
+                // covers), so this doesn't need to split any wider default
+                // range that might already cover this column.
+                let newCol = "<col min=\"\(col)\" max=\"\(col)\" width=\"\(widthStr)\" customWidth=\"1\"/>"
+                guard let colsOpenRange = xmlString.range(of: "<cols>") else { continue }
+                xmlString.insert(contentsOf: newCol, at: colsOpenRange.upperBound)
+            }
+        }
+    }
+
+    // Patches per-row heights onto <row r="N" ht=... customHeight="1">,
+    // leaving that row's cells and every other attribute (spans=, etc.)
+    // untouched. Creates a bare, cell-less <row> if the row doesn't exist
+    // yet, reusing the same ascending-order insertion point applyCellSplice
+    // uses for a brand-new row. `rows` holds real (1-based) Excel row
+    // numbers (realRow(forDisplaySection:)'s convention) paired with this
+    // app's own point height -- xlsx's ht= is already in points, so unlike
+    // column width this needs no unit conversion.
+    private func patchRowHeights(in xmlString: inout String, rows: [(row: Int, height: Double)]) {
+        guard !rows.isEmpty else { return }
+
+        for (row, height) in rows {
+            let heightStr = String(format: "%.4f", height)
+            if let rowRange = originalElementRange(tag: "row", attributeValue: String(row), in: xmlString) {
+                let element = String(xmlString[rowRange])
+                let isSelfClosing = element.hasSuffix("/>")
+                guard let openTagEnd = element.range(of: isSelfClosing ? "/>" : ">") else { continue }
+                var openTag = String(element[element.startIndex..<openTagEnd.upperBound])
+                openTag = replaceOrInsertAttribute(openTag, name: "ht", value: heightStr)
+                openTag = replaceOrInsertAttribute(openTag, name: "customHeight", value: "1")
+                let rest = String(element[openTagEnd.upperBound...])
+                xmlString.replaceSubrange(rowRange, with: openTag + rest)
+            } else {
+                let newRowElement = "<row r=\"\(row)\" ht=\"\(heightStr)\" customHeight=\"1\"/>"
+                if xmlString.contains("<sheetData/>") {
+                    xmlString = xmlString.replacingOccurrences(of: "<sheetData/>", with: "<sheetData></sheetData>")
+                }
+                if let insertionPoint = rowInsertionPoint(before: row, in: xmlString) {
+                    xmlString.insert(contentsOf: newRowElement, at: insertionPoint)
+                } else if let closeRange = xmlString.range(of: "</sheetData>") {
+                    xmlString.insert(contentsOf: newRowElement, at: closeRange.lowerBound)
+                }
+            }
+        }
+    }
+
     //making row
     func testUpdateRow(url:URL? = nil, index:String?, overWrittenIndice:[String],overWritingIndice:[String]) -> String?{
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -2522,8 +2631,16 @@ class Service {
     // pending edits (confirmed during design as the dominant cost of the old
     // per-edit write on a large file; see xlsx_heavy_edit_crash_notes.txt
     // item 4 and csv_edit_perf_and_recalc_toggle_notes.txt).
-    func flushPendingEditsToXlsx(fp: String, edits: [PendingXlsxEditKey: PendingXlsxEdit]) -> Bool {
-        guard !edits.isEmpty else { return true }
+    // columnWidths/rowHeights/sizeSheetIndex patch appd.cswLocation/
+    // customSizedWidth/cshLocation/customSizedHeight into <cols>/<row ht=>
+    // for one sheet (the currently active one -- these arrays aren't
+    // sheet-indexed the way `edits` is, they only ever hold the active
+    // sheet's values, reloaded from its JSON sidecar on every sheet
+    // switch), reusing this same unzip/patch/rezip pass rather than paying
+    // for a second one. All three default empty/nil so every other caller
+    // (and the Form-Fill batch flush, which never passes them) is unaffected.
+    func flushPendingEditsToXlsx(fp: String, edits: [PendingXlsxEditKey: PendingXlsxEdit], columnWidths: [(col: Int, width: Double)] = [], rowHeights: [(row: Int, height: Double)] = [], sizeSheetIndex: Int? = nil) -> Bool {
+        guard !edits.isEmpty || !columnWidths.isEmpty || !rowHeights.isEmpty else { return true }
         let __flushStart = CFAbsoluteTimeGetCurrent()
         defer {
             perfLog(String(format: "PERF flushPendingEditsToXlsx.total: %.3fs cells=%d", CFAbsoluteTimeGetCurrent() - __flushStart, edits.count))
@@ -2585,7 +2702,17 @@ class Service {
             // memory, validated once, written once.
             let editsBySheet = Dictionary(grouping: edits, by: { $0.key.sheetIndex })
 
-            for (sheetIndex, sheetEdits) in editsBySheet {
+            // sizeSheetIndex may not otherwise appear in editsBySheet at all
+            // (the user only resized a column/row, no cell content edits) --
+            // union it in so that sheet still gets read/patched/written below.
+            var sheetIndices = Set(editsBySheet.keys)
+            let hasSizeChanges = !columnWidths.isEmpty || !rowHeights.isEmpty
+            if hasSizeChanges, let sizeSheetIndex = sizeSheetIndex {
+                sheetIndices.insert(sizeSheetIndex)
+            }
+
+            for sheetIndex in sheetIndices {
+                let sheetEdits = editsBySheet[sheetIndex] ?? []
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet\(sheetIndex).xml")
                 guard var xmlString = try? String(contentsOf: worksheetXMLURL) else { continue }
 
@@ -2604,6 +2731,11 @@ class Service {
                     }
 
                     _ = applyCellSplice(to: &xmlString, index: key.cellId, content: edit.content, sharedStringIndex: sharedStringIndex, calculated: [edit.calculatedValue], calculatedLocation: [key.cellId])
+                }
+
+                if hasSizeChanges && sheetIndex == sizeSheetIndex {
+                    patchColumnWidths(in: &xmlString, columns: columnWidths)
+                    patchRowHeights(in: &xmlString, rows: rowHeights)
                 }
 
                 guard XMLValidator().validateXML(xmlString: xmlString) else {
