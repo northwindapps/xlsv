@@ -2192,6 +2192,70 @@ class Service {
         xmlString.replaceSubrange(fullMergeCellsRange, with: newBlock)
     }
 
+    // A row/column insert can push sheetData rows or mergeCells past the
+    // sheet's declared <dimension ref="A1:XXNN"/> (e.g. inserting a row into
+    // a 44-row sheet leaves row 45 in use but dimension still says NN=44) --
+    // xlsx_corruption_check.py flags "merged range extends past declared
+    // dimension" for exactly this, which is a real repair-dialog trigger in
+    // Excel. Extend-only (never shrink dimension below its current bounds):
+    // a declared range larger than actual content has never been observed
+    // to trigger repair, so this only needs to grow to cover new content,
+    // not track deletes precisely.
+    private func patchDimension(in xmlString: inout String) {
+        guard let dimRange = xmlString.range(of: "<dimension ref=\"([A-Z]+)(\\d+):([A-Z]+)(\\d+)\"\\s*/>", options: .regularExpression) else { return }
+        let dimTag = String(xmlString[dimRange])
+        guard let regex = try? NSRegularExpression(pattern: "<dimension ref=\"([A-Z]+)(\\d+):([A-Z]+)(\\d+)\"\\s*/>"),
+              let m = regex.firstMatch(in: dimTag, range: NSRange(dimTag.startIndex..<dimTag.endIndex, in: dimTag)),
+              let startColRange = Range(m.range(at: 1), in: dimTag),
+              let startRowRange = Range(m.range(at: 2), in: dimTag),
+              let endColRange = Range(m.range(at: 3), in: dimTag),
+              let endRowRange = Range(m.range(at: 4), in: dimTag),
+              let declaredEndRow = Int(dimTag[endRowRange])
+        else { return }
+        let startCol = String(dimTag[startColRange])
+        let startRow = String(dimTag[startRowRange])
+        let declaredEndCol = excelColumnNumber(from: String(dimTag[endColRange]))
+
+        var maxRow = declaredEndRow
+        var maxCol = declaredEndCol
+
+        if let rowRegex = try? NSRegularExpression(pattern: "<row r=\"(\\d+)\"") {
+            let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+            rowRegex.enumerateMatches(in: xmlString, range: nsRange) { match, _, _ in
+                guard let match = match, let r = Range(match.range(at: 1), in: xmlString), let n = Int(xmlString[r]) else { return }
+                maxRow = Swift.max(maxRow, n)
+            }
+        }
+        if let cellRegex = try? NSRegularExpression(pattern: "<c r=\"([A-Z]+)(\\d+)\"") {
+            let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+            cellRegex.enumerateMatches(in: xmlString, range: nsRange) { match, _, _ in
+                guard let match = match,
+                      let colR = Range(match.range(at: 1), in: xmlString),
+                      let rowR = Range(match.range(at: 2), in: xmlString),
+                      let n = Int(xmlString[rowR])
+                else { return }
+                maxRow = Swift.max(maxRow, n)
+                maxCol = Swift.max(maxCol, excelColumnNumber(from: String(xmlString[colR])))
+            }
+        }
+        if let mergeRegex = try? NSRegularExpression(pattern: "<mergeCell ref=\"[A-Z]+\\d+:([A-Z]+)(\\d+)\"\\s*/>") {
+            let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+            mergeRegex.enumerateMatches(in: xmlString, range: nsRange) { match, _, _ in
+                guard let match = match,
+                      let colR = Range(match.range(at: 1), in: xmlString),
+                      let rowR = Range(match.range(at: 2), in: xmlString),
+                      let n = Int(xmlString[rowR])
+                else { return }
+                maxRow = Swift.max(maxRow, n)
+                maxCol = Swift.max(maxCol, excelColumnNumber(from: String(xmlString[colR])))
+            }
+        }
+
+        guard maxRow != declaredEndRow || maxCol != declaredEndCol else { return }
+        let newDim = "<dimension ref=\"\(startCol)\(startRow):\(GetExcelColumnName(columnNumber: maxCol))\(maxRow)\"/>"
+        xmlString.replaceSubrange(dimRange, with: newDim)
+    }
+
     // styleIds, when non-empty, must be index-aligned with content/locationInExcel
     // (same convention as content[i]/locationInExcel[i] referring to the same
     // logical cell) -- callers get this for free by filtering cellStyleId
@@ -2470,6 +2534,7 @@ class Service {
                     if let rowRange = insertedRowRange {
                         patchMergeCellsForInsert(in: &updatedString, isColumn: false, min: rowRange.min, count: rowRange.count)
                     }
+                    patchDimension(in: &updatedString)
                     do {
                         try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                         

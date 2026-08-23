@@ -3194,14 +3194,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         switch gesture.state {
         case .began:
             print("start")
-            let locationCG = gesture.location(in: myCollectionView)
-            guard let indexPath = myCollectionView.indexPathForItem(at: locationCG),
-                  let cell = myCollectionView.cellForItem(at: indexPath) as? CustomCollectionViewCell
-            else { return }
             tempRangeSelected = []
-            tempRangeSelected.append(indexPath)
-            // Change background color to indicate dragging started
-            cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
+            // The diamond handle sits at the corner of the cursor cell, so its
+            // touch-down point can resolve (via indexPathForItem below) to
+            // whichever cell it geometrically overlaps rather than the cursor
+            // cell it's actually attached to -- seeding the range with
+            // currentindex first guarantees the red cursor cell is always
+            // part of the selection, instead of being silently left out.
+            if let cursorIndex = currentindex {
+                tempRangeSelected.append(cursorIndex)
+                if let cursorCell = myCollectionView.cellForItem(at: cursorIndex) as? CustomCollectionViewCell {
+                    cursorCell.label2.backgroundColor = UIColor.systemBlue
+                }
+            }
+            let locationCG = gesture.location(in: myCollectionView)
+            if let indexPath = myCollectionView.indexPathForItem(at: locationCG),
+               let cell = myCollectionView.cellForItem(at: indexPath) as? CustomCollectionViewCell {
+                if tempRangeSelected.firstIndex(of: indexPath) == nil {
+                    tempRangeSelected.append(indexPath)
+                }
+                cell.label2.backgroundColor = UIColor.systemBlue
+            }
             break
             
         case .changed:
@@ -8399,35 +8412,60 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     //sendEmail
     @objc func excelEmail() {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-        let alert = UIAlertController(title: "File Export via Email", message: "Name the xlsx file", preferredStyle: .alert)
-        
+        let alert = UIAlertController(title: "Export File", message: "Name the xlsx file", preferredStyle: .alert)
+
         alert.addTextField { textField in
             textField.placeholder = appd.excelfilename.isEmpty ? "XLSV Backup File" :appd.excelfilename
             textField.text = appd.excelfilename.isEmpty ? "XLSV_Backup_File" :appd.excelfilename
 
             textField.clearButtonMode = .whileEditing
         }
-    
+
         let confirmAction = UIAlertAction(title: "OK", style: .default) { [weak self, weak alert] _ in
             guard let fileName = alert?.textFields?.first?.text, !fileName.isEmpty else {
                 return
             }
-            
+
             let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
             appd.excelfilename = fileName
-            self?.proceedToEmail()
+            self?.presentExportDestinationChoice()
         }
-        
+
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
+
         alert.addAction(confirmAction)
         alert.addAction(cancelAction)
-        
+
         self.present(alert, animated: true, completion: nil)
-        
+
     }
 
-    func proceedToEmail() {
+    // Lets the user pick where the now-named export goes: straight to a Files
+    // location (proceedToFilesExport, the default since it needs no Mail
+    // account configured) or as a Mail attachment (proceedToMailExport, the
+    // original export mechanism -- restored so it's still available for
+    // whatever workflow specifically needs Mail).
+    func presentExportDestinationChoice() {
+        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "Export via Files", style: .default) { [weak self] _ in
+            self?.proceedToFilesExport()
+        })
+        sheet.addAction(UIAlertAction(title: "Send via Email", style: .default) { [weak self] _ in
+            self?.proceedToMailExport()
+        })
+        sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        // Action sheets on iPad need a popover anchor or they crash outright --
+        // there's no natural source button here (this can be reached from more
+        // than one place), so anchor to the view's center.
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = self.view
+            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        self.present(sheet, animated: true, completion: nil)
+    }
+
+    func proceedToFilesExport() {
         // flushPendingXlsxChangesIfNeeded/writeXlsxEmail/csvexport below can
         // take real time on a large file -- showLoading()/hideLoading() give
         // the user feedback (doesn't make the export itself faster); the
@@ -8512,6 +8550,69 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         showResultAlert(title: "Export Complete", message: "Your file has been saved.")
+    }
+
+    // Restored original export mechanism (this whole file used to route
+    // through this unconditionally before proceedToFilesExport replaced it as
+    // the default) -- kept available via presentExportDestinationChoice's
+    // "Send via Email" option for whatever workflow specifically wants a
+    // Mail attachment rather than a Files save.
+    func proceedToMailExport() {
+        showLoading()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.flushPendingXlsxChangesIfNeeded()
+
+            let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
+            let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let url = serviceInstance.writeXlsxEmail(fp: appd.imported_xlsx_file_path.isEmpty ? "" : appd.imported_xlsx_file_path)
+
+            var result = self.content
+            for idx in 0..<self.f_calculated.count{
+                if let l_idx = self.location.index(of: self.f_location[idx]){
+                    result[l_idx] = self.f_calculated[idx]
+                }
+            }
+            self.csvexport(result: result)
+
+            self.hideLoading()
+
+            guard MFMailComposeViewController.canSendMail() else {
+                self.showResultAlert(title: "Mail Not Available", message: "This device isn't configured to send mail.")
+                return
+            }
+
+            let today: Date = Date()
+            let dateFormatter: DateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+            let date = dateFormatter.string(from: today)
+
+            let mail = MFMailComposeViewController()
+            mail.mailComposeDelegate = self
+            mail.setSubject("from ios")
+
+            var fileName = date + "_XLSV_"
+            if appd.excelfilename != "" {
+                fileName = fileName + appd.excelfilename
+                fileName = fileName.removingPercentEncoding ?? fileName
+            }
+            if !fileName.hasSuffix(".xlsx") {
+                fileName += ".xlsx"
+            }
+
+            if self.isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
+                mail.addAttachmentData(fileData as Data, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName: fileName)
+            } else {
+                print("noContent")
+            }
+
+            if let csvData = self.data {
+                mail.addAttachmentData(csvData, mimeType: "text/csv", fileName: date + ".csv")
+            }
+
+            self.present(mail, animated: true, completion: nil)
+        }
     }
 
 
