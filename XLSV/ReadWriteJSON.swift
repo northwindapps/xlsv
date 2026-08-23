@@ -22,6 +22,11 @@ class ReadWriteJSON {
     // font/fill/border/alignment resolution from this index happens app-side using
     // Service.testExtractStyle's tables, not at import time -- see ExcelHelper.readExcel2.
     var styleId = [String]()
+    // Raw <f>...</f> fragment per cell (see ExcelHelper.parseCellFormulaFragments),
+    // "" for a cell with no formula. Passed straight back out on save instead
+    // of being reconstructed, so Excel's shared-formula compression survives
+    // a range operation intact.
+    var formulaXml = [String]()
     var rowsize = Int()
     var columnsize = Int()
     var customcellWidth = [Double]()
@@ -138,6 +143,9 @@ class ReadWriteJSON {
                         break
                     case "styleId":
                         styleId = value as! [String]
+                        break
+                    case "formulaXml":
+                        formulaXml = value as! [String]
                         break
                     case "rowsize":
                         rowsize = value as! Int
@@ -403,6 +411,12 @@ class ReadWriteJSON {
                         break
                     case "bgcolor":
                         bgcolor = value as! [String]
+                        break
+                    case "styleId":
+                        styleId = value as! [String]
+                        break
+                    case "formulaXml":
+                        formulaXml = value as! [String]
                         break
                     case "rowsize":
                         rowsize = value as! Int

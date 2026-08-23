@@ -86,22 +86,56 @@ class SharedStringsUniqueCountParserDelegate: XMLParserHelper {
 
 // Create XMLParserDelegate
 class SharedStringsParserDelegate: XMLParserHelper {
-    // Class variables
-    var currentText2: String?
+    // Accumulates every <t> element's text within the current <si> -- an <si>
+    // can hold multiple <r><t>...</t></r> runs (rich text: e.g. a bold header
+    // followed by plain body text in the same cell), and XMLParser can also
+    // split one <t>'s own text across several foundCharacters calls for a
+    // long string. currentSiText used to be overwritten ("=") on every call
+    // instead of appended, so both cases -- multi-run rich text and any
+    // sufficiently long single-run string -- silently kept only whichever
+    // fragment was delivered last, truncating (or fully replacing) the text
+    // this delegate reports for that <si>. That's exactly what
+    // testRangeOperationsBox's "does this cell's content already match an
+    // existing shared-string entry" lookup (testStringUniqueAry) uses -- a
+    // failed match there silently drops the cell instead of writing it (see
+    // the "something went wrong, no index" fallback), which is what was
+    // actually happening to a merge-anchor cell holding a multi-paragraph
+    // note during a column delete: an empty <row r="8"></row> in the written
+    // xlsx confirmed the cell was dropped at write time, not lost on import.
+    private var currentSiText: String = ""
+    // <rPh> holds a furigana/phonetic-reading hint (e.g. "ヤノ" as the
+    // pronunciation guide for "矢野") and carries its own nested <t> --
+    // that text is not part of the cell's actual displayed/stored string,
+    // so it must be excluded from currentSiText even though it's still a
+    // <t> element inside the same <si>.
+    private var insideRPh = false
     var texts: [String] = []
     var sis: [String] = []
 
-    override func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText2 = string
-    }
-    
-    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if elementName == "t", let text = currentText2 {
-            texts.append(text)
+    override func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
+        super.parser(parser, didStartElement: elementName, namespaceURI: namespaceURI, qualifiedName: qName, attributes: attributeDict)
+        if elementName == "si" {
+            currentSiText = ""
+        } else if elementName == "rPh" {
+            insideRPh = true
         }
-        //uniquecount
-        if elementName == "si", let text = currentText2 {
-            sis.append(text)
+    }
+
+    override func parser(_ parser: XMLParser, foundCharacters string: String) {
+        if currentElement == "t" && !insideRPh {
+            currentSiText += string
+        }
+    }
+
+    override func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if elementName == "rPh" {
+            insideRPh = false
+        }
+        if elementName == "t" && !insideRPh {
+            texts.append(currentSiText)
+        }
+        if elementName == "si" {
+            sis.append(currentSiText)
         }
     }
 }

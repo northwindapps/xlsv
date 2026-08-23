@@ -85,6 +85,20 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
     override func prepare() {
         let __prepareStart = CFAbsoluteTimeGetCurrent()
         var __tookFullRebuildPath = false
+        // TEMP DIAGNOSTIC -- remove once the merged-cell width bug is confirmed fixed.
+        let __appdForDiag = UIApplication.shared.delegate as! AppDelegate
+        let __entryDataSourceDidUpdate = dataSourceDidUpdate
+        let __entryCellSizeChanged = __appdForDiag.collectionViewCellSizeChanged
+        if let docsDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+            // Stack trace only for the interesting case (about to consume the
+            // cellSizeChanged=1 flag) -- capturing it on every call would be
+            // needless noise/cost for the vast majority of calls that don't matter.
+            let stack = __entryCellSizeChanged == 1 ? "\ncallStack=\(Thread.callStackSymbols.joined(separator: "\n  "))" : ""
+            let lines = "----- prepare() ENTRY -----\ntimestamp=\(Date())\ndataSourceDidUpdate=\(__entryDataSourceDidUpdate)\ncollectionViewCellSizeChanged=\(__entryCellSizeChanged)\ncswLocation.count=\(__appdForDiag.cswLocation.count)\(stack)\n\n"
+            let logPath = docsDir + "/debug_layout_prepare_log.txt"
+            let existing = (try? String(contentsOfFile: logPath, encoding: .utf8)) ?? ""
+            try? (existing + lines).write(toFile: logPath, atomically: true, encoding: .utf8)
+        }
         defer {
             let __elapsed = CFAbsoluteTimeGetCurrent() - __prepareStart
             print(String(format: "PERF CustomCollectionViewLayout.prepare: %.3fs (fullRebuild=%@, gridCells=%d, merged=%d, lazy=%@)", __elapsed, "\(__tookFullRebuildPath)", c*r, merged.count, "\(lazyInteriorCells)"))
@@ -446,6 +460,27 @@ class CustomCollectionViewLayout: UICollectionViewLayout {
                 for (idx, start) in appd.diff_start_index.enumerated() where mergedStartIndex[start] == nil {
                     mergedStartIndex[start] = idx
                 }
+            }
+
+            // TEMP DIAGNOSTIC -- remove once the merged-cell width bug is confirmed fixed.
+            if let docsDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
+                let lines = [
+                    "----- prepare() fullRebuild -----",
+                    "timestamp=\(Date())",
+                    "rowFilterActive=\(appd.rowFilterActive)",
+                    "diff_start_index.count=\(appd.diff_start_index.count)",
+                    "diff_end_index.count=\(appd.diff_end_index.count)",
+                    "mergedRangesValid=\(mergedRangesValid)",
+                    "mergedStartIndex.count=\(mergedStartIndex.count)",
+                    "hasB2Merge=\(appd.diff_start_index.contains("B2"))",
+                    "diff_start_sample=\(appd.diff_start_index.prefix(10))",
+                    "c=\(c) r=\(r)",
+                    "cswLocation.count=\(appd.cswLocation.count) customSizedWidth.count=\(appd.customSizedWidth.count)",
+                    ""
+                ].joined(separator: "\n")
+                let logPath = docsDir + "/debug_layout_prepare_log.txt"
+                let existing = (try? String(contentsOfFile: logPath, encoding: .utf8)) ?? ""
+                try? (existing + lines).write(toFile: logPath, atomically: true, encoding: .utf8)
             }
 
             if c > 1 && r > 1 {

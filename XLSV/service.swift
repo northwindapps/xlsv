@@ -2054,7 +2054,115 @@ class Service {
         }
     }
     
-    func testRangeOperationsBox(fp: String = "", url: URL? = nil, calculated:String = "",content:[String] = [],locationInExcel:[String] = []) -> Bool? {
+    // "A" -> 1, "Z" -> 26, "AA" -> 27, etc. -- the inverse of GetExcelColumnName.
+    private func excelColumnNumber(from letters: String) -> Int {
+        var result = 0
+        for scalar in letters.unicodeScalars {
+            result = result * 26 + Int(scalar.value) - Int(Unicode.Scalar("A").value) + 1
+        }
+        return result
+    }
+
+    // Adjusts every <mergeCell ref="A1:B2"/> in xmlString for a contiguous
+    // row or column deletion, the same shift columnDeleteOperation/
+    // rowDeleteOperation already apply to content/locationInExcel:
+    //   - a merge entirely before the deleted range is untouched
+    //   - a merge entirely after it shifts left/up by `count`
+    //   - a merge the deletion fully consumes is dropped
+    //   - a merge the deletion partially overlaps shrinks to its surviving
+    //     columns/rows
+    // Previously <mergeCells> was never touched by any range operation at
+    // all, so a merge spanning the deleted column/row kept referencing the
+    // pre-delete cell positions -- exactly the failure mode row/col
+    // operations were originally shelved over.
+    private func patchMergeCellsForDelete(in xmlString: inout String, isColumn: Bool, min: Int, count: Int) {
+        guard let mergeCellsOpenRange = xmlString.range(of: "<mergeCells"),
+              let mergeCellsCloseRange = xmlString.range(of: "</mergeCells>", range: mergeCellsOpenRange.upperBound..<xmlString.endIndex)
+        else { return }
+
+        let fullMergeCellsRange = mergeCellsOpenRange.lowerBound..<mergeCellsCloseRange.upperBound
+        let mergeCellsBlock = String(xmlString[fullMergeCellsRange])
+
+        // Maps an original 1-based row/col number to its post-delete number,
+        // or nil if that row/col was itself deleted.
+        func shifted(_ n: Int) -> Int? {
+            if n >= min && n < min + count { return nil }
+            if n >= min + count { return n - count }
+            return n
+        }
+
+        var newEntries: [String] = []
+        if let regex = try? NSRegularExpression(pattern: "<mergeCell ref=\"([A-Z]+)(\\d+):([A-Z]+)(\\d+)\"\\s*/>") {
+            let nsRange = NSRange(mergeCellsBlock.startIndex..<mergeCellsBlock.endIndex, in: mergeCellsBlock)
+            regex.enumerateMatches(in: mergeCellsBlock, range: nsRange) { match, _, _ in
+                guard let match = match,
+                      let colARange = Range(match.range(at: 1), in: mergeCellsBlock),
+                      let rowARange = Range(match.range(at: 2), in: mergeCellsBlock),
+                      let colBRange = Range(match.range(at: 3), in: mergeCellsBlock),
+                      let rowBRange = Range(match.range(at: 4), in: mergeCellsBlock),
+                      let rowA = Int(mergeCellsBlock[rowARange]),
+                      let rowB = Int(mergeCellsBlock[rowBRange])
+                else { return }
+
+                let colA = excelColumnNumber(from: String(mergeCellsBlock[colARange]))
+                let colB = excelColumnNumber(from: String(mergeCellsBlock[colBRange]))
+                let minC = Swift.min(colA, colB), maxC = Swift.max(colA, colB)
+                let minR = Swift.min(rowA, rowB), maxR = Swift.max(rowA, rowB)
+
+                var newMinC = minC, newMaxC = maxC, newMinR = minR, newMaxR = maxR
+                if isColumn {
+                    let survivingCols = (minC...maxC).compactMap(shifted)
+                    guard let sMin = survivingCols.min(), let sMax = survivingCols.max() else { return } // fully consumed
+                    newMinC = sMin
+                    newMaxC = sMax
+                } else {
+                    let survivingRows = (minR...maxR).compactMap(shifted)
+                    guard let sMin = survivingRows.min(), let sMax = survivingRows.max() else { return }
+                    newMinR = sMin
+                    newMaxR = sMax
+                }
+
+                // A merge that shrank to a single cell is no longer a merge --
+                // Excel itself never writes a mergeCell ref where both corners
+                // are the same cell, and some readers reject one.
+                guard newMinC != newMaxC || newMinR != newMaxR else { return }
+
+                let newRef = "\(GetExcelColumnName(columnNumber: newMinC))\(newMinR):\(GetExcelColumnName(columnNumber: newMaxC))\(newMaxR)"
+                newEntries.append("<mergeCell ref=\"\(newRef)\"/>")
+            }
+        }
+
+        let newBlock = newEntries.isEmpty ? "" : "<mergeCells count=\"\(newEntries.count)\">" + newEntries.joined() + "</mergeCells>"
+        xmlString.replaceSubrange(fullMergeCellsRange, with: newBlock)
+    }
+
+    // styleIds, when non-empty, must be index-aligned with content/locationInExcel
+    // (same convention as content[i]/locationInExcel[i] referring to the same
+    // logical cell) -- callers get this for free by filtering cellStyleId
+    // through the same kept-indices they already use for content/locationInExcel.
+    // Left empty by any caller that doesn't have per-cell style tracked (falls
+    // back to the previous behavior: no s= attribute, i.e. default styling).
+    //
+    // deletedColumnRange/deletedRowRange (min, count), set by exactly one of
+    // columnDeleteOperation/rowDeleteOperation and left nil by every other
+    // caller (insert, clear values, copy/paste -- none of those change which
+    // columns/rows exist), adjust <mergeCells> to match the same shift this
+    // function already applies to content/locationInExcel. Previously
+    // <mergeCells> was left completely untouched by any range operation, so a
+    // merge spanning the deleted column/row kept referencing stale cell
+    // positions after the delete -- exactly the failure mode row/col
+    // operations were originally shelved over.
+    // formulaXmls, when non-empty, must be index-aligned with content/
+    // locationInExcel the same way styleIds is. A non-empty entry is a raw
+    // <f>...</f> (or self-closing <f .../>) fragment captured verbatim at
+    // import time (see ExcelHelper.parseCellFormulaFragments) -- written
+    // straight back out for that cell instead of deriving a formula/value
+    // from content, so Excel's shared-formula compression (a "follower"
+    // cell's bare <f t="shared" si="N"/>, resolved against a "master" cell's
+    // real formula purely from XML structure) survives a range operation
+    // instead of being permanently flattened into whatever value happened
+    // to be cached at that moment.
+    func testRangeOperationsBox(fp: String = "", url: URL? = nil, calculated:String = "",content:[String] = [],locationInExcel:[String] = [], styleIds: [String] = [], formulaXmls: [String] = [], deletedColumnRange: (min: Int, count: Int)? = nil, deletedRowRange: (min: Int, count: Int)? = nil) -> Bool? {
         var isError = false
         do {
             // Get the sandbox directory for documents
@@ -2188,7 +2296,9 @@ class Service {
                     
                     var cells: [ExcelCell] = []
                     for i in 0..<locationInExcel.count {
-                        cells.append(ExcelCell(excelRef: locationInExcel[i], content: content[i]))
+                        let styleId = i < styleIds.count ? styleIds[i] : ""
+                        let formulaXml = i < formulaXmls.count ? formulaXmls[i] : ""
+                        cells.append(ExcelCell(excelRef: locationInExcel[i], content: content[i], styleId: styleId, formulaXml: formulaXml))
                     }
                     
                   
@@ -2198,7 +2308,7 @@ class Service {
                         }
                         return $0.columnName < $1.columnName // ASC(A, B, C...)
                     }
-                    
+
                     print(cells)
                     let service = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
                     
@@ -2217,23 +2327,61 @@ class Service {
                             lastRowNumber = cell.rowNumber
                         }
                         
-                        if cell.content.hasPrefix("=") {
+                        // Carries the cell's own original style index (number
+                        // format, font, fill, border) through the rebuild --
+                        // previously dropped unconditionally here, which is why
+                        // e.g. a time/date-formatted cell came back as a bare
+                        // decimal fraction after any row/col insert-delete or
+                        // clear/copy-paste range operation.
+                        let styleAttr = cell.styleId.isEmpty ? "" : " s=\"\(cell.styleId)\""
+
+                        if !cell.formulaXml.isEmpty {
+                            // Preserved verbatim from import (see
+                            // ExcelHelper.parseCellFormulaFragments) -- covers
+                            // both a shared-formula "master" (its full
+                            // <f t="shared" ref="..." si="N">text</f>) and a
+                            // "follower" (bare <f t="shared" si="N"/>, which
+                            // resolves against the master purely from XML
+                            // structure with no per-cell position data to
+                            // keep in sync). content still holds this cell's
+                            // last-known cached value, written alongside so a
+                            // viewer that doesn't recalculate still shows the
+                            // right number.
+                            let cachedValue = Double(cell.content.replacingOccurrences(of: " ", with: ""))
+                            let valuePart = cachedValue != nil ? "<v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v>" : ""
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\"\(styleAttr)>\(cell.formulaXml)\(valuePart)</c>"
+                        } else if cell.content.hasPrefix("=") {
                             //Formula
                             // .replacingOccurrences(of: "=", with: "") strips every "=" in the
                             // string, not just the leading marker -- corrupts any formula with
                             // an internal comparison (e.g. IF(MONTH(B13)=MONTH(B13+1), ...)).
                             // Only the first character is the marker.
                             let formula = String(cell.content.dropFirst())
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\"><f>\(formula)</f></c>"
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\"\(styleAttr)><f>\(formula)</f></c>"
+                        } else if cell.content.isEmpty {
+                            // Style-only cell (merge-region padding, an individually
+                            // bordered blank cell) with no value/formula to preserve --
+                            // still needs its own <c> so its "s" survives the rebuild.
+                            // Falling into the Value/Txt branch below would either
+                            // false-match an empty shared-string entry (currentAry
+                            // .firstIndex(of: "")) or hit neither case and silently
+                            // drop the cell entirely (Double("") is nil) -- confirmed:
+                            // that's why merge padding and blank bordered cells kept
+                            // vanishing even once earlier fixes tracked them all the
+                            // way through to this loop. A cell with no style either has
+                            // nothing left to preserve, so it's correctly omitted.
+                            if !styleAttr.isEmpty {
+                                sheetXmlString += "<c r=\"\(cell.excelRef)\"\(styleAttr)/>"
+                            }
                         } else {
                             //Value
                             //Txt
                             let index = currentAry?.firstIndex(of: cell.content)
                             if ((index != nil)){
-                            sheetXmlString += "<c r=\"\(cell.excelRef)\" t=\"s\"><v>\(index!)</v></c>"
+                            sheetXmlString += "<c r=\"\(cell.excelRef)\"\(styleAttr) t=\"s\"><v>\(index!)</v></c>"
                             }else{
                                 if(Double(cell.content.replacingOccurrences(of: " ", with: "")) != nil){
-                                    sheetXmlString += "<c r=\"\(cell.excelRef)\" ><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
+                                    sheetXmlString += "<c r=\"\(cell.excelRef)\"\(styleAttr)><v>\(cell.content.replacingOccurrences(of: " ", with: ""))</v></c>"
                                 }
                                 else{
                                     print("something went wrong, no index")
@@ -2251,7 +2399,13 @@ class Service {
                 
                
                 if oldSheetDataPart != "" {
-                    let updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
+                    var updatedString = xmlString.replacingOccurrences(of: oldSheetDataPart, with: sheetXmlString)
+                    if let colRange = deletedColumnRange {
+                        patchMergeCellsForDelete(in: &updatedString, isColumn: true, min: colRange.min, count: colRange.count)
+                    }
+                    if let rowRange = deletedRowRange {
+                        patchMergeCellsForDelete(in: &updatedString, isColumn: false, min: rowRange.min, count: rowRange.count)
+                    }
                     do {
                         try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
                         

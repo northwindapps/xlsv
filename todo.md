@@ -36,3 +36,28 @@ Before wiring the write side in, consider hardening `parseCustomCellSizes` again
 wider variety of real Excel/Google Sheets `<cols>`/`<row>` markup (attribute order,
 missing `customHeight=`, ranged `<col min max>` spans, etc.), and testing against actual
 files exported from both.
+
+## Row/col delete (still shelved) -- scoping note for whenever this is picked up
+
+Status: not started, shelved since the original `Form-filling-mode pivot` decision
+(unresolved merge-cell render bug in the app's own grid layout -- an in-app rendering
+bug, separate from the xlsx-write correctness question below).
+
+**Correctness bar, decided 2026-08-23:** the hard requirement is *structural/schema
+validity* -- never trigger Excel/Google Sheets' "we found a problem with this file"
+repair dialog on open. That means, in priority order: (1) row/cell renumbering, (2)
+`<dimension>` staying accurate, (3) `<mergeCells>` ranges adjusted or dropped, (4)
+`<cols>` ranges shifted, (5) general XML well-formedness. Validate all of these --
+`tools/xlsx_corruption_check.py` already checks most of them.
+
+**Explicitly NOT required for a first version:** automated formula-reference-shifting
+after a delete. A formula left pointing at a stale/shifted cell, or producing `#REF!`,
+is completely valid XML/OOXML and never triggers Excel's repair dialog -- it's just a
+wrong number the user can see and fix by hand, which the user has confirmed is an
+acceptable outcome. Don't build reference-shifting (and don't build a formula AST/tree
+for it -- `CalculationService.swift`'s existing regex-based `extractExcelCellReferences`
+is the right level of machinery if this ever gets picked up) as part of the delete
+feature's launch scope; it's a lower-stakes follow-up.
+
+See `feedback_xlsx_structural_validity_over_formula_correctness` in Claude's memory for
+the full reasoning.

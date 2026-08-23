@@ -518,25 +518,27 @@ class ExcelHelper{
 
                print(String(format: "PERF readExcel2.gettingValuesLoop: %.3fs", CFAbsoluteTimeGetCurrent() - __tValuesLoopStart))
                let __tMergedAnchorStart = CFAbsoluteTimeGetCurrent()
-               // Anchor cells of merged ranges are often empty (no value) -- Excel still
-               // writes them into <sheetData> with just an "s" (style) attribute so the
-               // merged block's fill/border render correctly. valueLocation/stringLocation
-               // only capture cells with actual content, so such anchors were silently
-               // dropped and their fill never made it into "location"/"styleId" -- the
-               // merged rect then fell back to ViewController's plain-white default. Pull
-               // in just the anchor cells that carry a style but no value, as blank-content
-               // entries, so cellForItemAt() finds them.
-               if mergedCells?.items.first != nil {
-                   let existingContentRefs = Set(valueLocation + stringLocation)
-                   for item in mergedCells!.items {
-                       let anchorRef = item.reference.description.components(separatedBy: ":").first ?? ""
-                       if anchorRef.isEmpty || existingContentRefs.contains(anchorRef) { continue }
-                       guard styleIndexByLocation[anchorRef] != nil else { continue }
-                       valueLocation.append(anchorRef)
-                       valueContent.append("")
-                   }
+               // Any cell that carries a style but no value/formula text -- merge-region
+               // anchors and padding, individually bordered blank cells, or a shared-formula
+               // follower whose cached <v> is empty (<f t="shared" si="N"/><v/>) -- is
+               // excluded from valueLocation/stringLocation by the value/formulaValue filter
+               // above. That's harmless for the in-place single-cell edit path
+               // (applyCellSplice never touches a cell it isn't editing), but
+               // testRangeOperationsBox rebuilds <sheetData> purely from these tracked
+               // arrays, so any untracked cell is silently deleted from the file by any
+               // row/col operation -- confirmed: a 3-row merge's padding rows and a
+               // shared-formula follower row vanished entirely after a column delete.
+               // `container` already holds every <c> in the sheet regardless of value
+               // (see FastWorksheetParser.didEndElement "c"), so rescue whichever of them
+               // aren't already tracked, as blank-content entries.
+               let existingContentRefs = Set(valueLocation + stringLocation)
+               for cell in container {
+                   let ref = cell.reference.description
+                   if existingContentRefs.contains(ref) { continue }
+                   guard styleIndexByLocation[ref] != nil else { continue }
+                   valueLocation.append(ref)
+                   valueContent.append("")
                }
-
 
                print(String(format: "PERF readExcel2.mergedAnchorLoop: %.3fs", CFAbsoluteTimeGetCurrent() - __tMergedAnchorStart))
                let __tFinalLoopsStart = CFAbsoluteTimeGetCurrent()
@@ -619,11 +621,19 @@ class ExcelHelper{
                var fontColor = [String]()
                var bgColor = [String]()
                var styleId = [String]()
+               // Raw <f>...</f> fragment for whichever cells have one (both
+               // a shared-formula "master" and its bare-reference followers),
+               // captured verbatim so a later range operation can write it
+               // straight back out instead of rebuilding the cell from just
+               // its cached value -- see parseCellFormulaFragments.
+               let formulaFragmentsByLocation = parseCellFormulaFragments(from: appd.loadedSheetXML)
+               var formulaXml = [String]()
                for locationKey in valueLocation + stringLocation {
                    fontSize.append(DEFAULT_FONTSIZE)
                    fontColor.append("black")
                    bgColor.append("white")
                    styleId.append(styleIndexByLocation[locationKey].map { String($0) } ?? "")
+                   formulaXml.append(formulaFragmentsByLocation[locationKey] ?? "")
                }
 
 
@@ -647,6 +657,7 @@ class ExcelHelper{
                                           "fontcolor": fontColor,
                                           "bgcolor": bgColor,
                                           "styleId": styleId,
+                                          "formulaXml": formulaXml,
                                           "rowsize": rowsize,
                                           "columnsize": columnsize+1,
                                           "customcellWidth": customSizedWidthParsed,
@@ -678,6 +689,35 @@ class ExcelHelper{
        } catch {
            print(error)
        }
+    }
+
+    // Captures each cell's raw <f>...</f> (or self-closing <f .../>) fragment
+    // verbatim, keyed by cell ref -- this app never understands or expands a
+    // formula's actual meaning (in particular Excel's shared-formula
+    // compression, where a "follower" cell is just a bare
+    // <f t="shared" si="N"/> that resolves against a "master" cell's real
+    // formula text purely from XML structure, with no per-follower position
+    // data to keep in sync elsewhere). The fix for a range operation
+    // silently discarding a formula isn't to reconstruct it -- it's to never
+    // be the one that throws the original fragment away: pass it through
+    // unchanged on every write, the same way style is already preserved.
+    // Anchored on "<f" directly (not a full <c>...</c> match) so this stays
+    // cheap on a large, mostly-formula-free sheet -- it never backtracks
+    // across a cell's full <v> content, only the short <f> fragment itself.
+    private func parseCellFormulaFragments(from xmlString: String) -> [String: String] {
+        var fragments: [String: String] = [:]
+        guard let regex = try? NSRegularExpression(pattern: "<c\\b[^>]*\\br=\"([A-Z]+\\d+)\"[^>]*>(<f\\b(?:[^>]*/>|[^>]*>.*?</f>))") else {
+            return fragments
+        }
+        let nsRange = NSRange(xmlString.startIndex..<xmlString.endIndex, in: xmlString)
+        regex.enumerateMatches(in: xmlString, range: nsRange) { match, _, _ in
+            guard let match = match,
+                  let refRange = Range(match.range(at: 1), in: xmlString),
+                  let fRange = Range(match.range(at: 2), in: xmlString)
+            else { return }
+            fragments[String(xmlString[refRange])] = String(xmlString[fRange])
+        }
+        return fragments
     }
 
     // Recovers per-column width / per-row height from a sheet's raw XML on

@@ -78,6 +78,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // explicit style.
     var cellStyleId = [String]()
 
+    // Raw <f>...</f> fragment per cell (see ExcelHelper.parseCellFormulaFragments),
+    // "" for a cell with no formula. Index-aligned with content/location the
+    // same way cellStyleId is -- passed straight back out on a range
+    // operation instead of being reconstructed, so a shared formula (or any
+    // formula) survives a row/col insert-delete/clear/copy-paste intact.
+    var cellFormulaXml = [String]()
+
     // Resolved from cellStyleId + appd's style tables (populated by
     // Service.testExtractStyle) once per sheet load -- see resolveCellStyles().
     // Kept for a later xlsx export to re-emit close to the original formatting, and
@@ -324,7 +331,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     //isExcelFile?
     var isExcel = false
     var isCSV = false
-    var isMail = false
 //    var sheetIdx = 0
     
     //RangeSelection reset at the start
@@ -897,15 +903,18 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 cell.label2?.verticalAlignment = .bottom
             }
 
-            #if !targetEnvironment(macCatalyst)
-            if selection_bool {
-                //number or fx only
-                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-                cell.addGestureRecognizer(panGesture)
-            }
-            #else
-             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-             cell.addGestureRecognizer(panGesture)
+            // Range selection starts from the diamond handle on the cursor
+            // cell now (see the cursor == key branch below, and
+            // CustomCollectionViewCell.selectionHandleView) -- the old
+            // selection_bool-gated per-cell attachment here was already
+            // dead on non-macCatalyst (nothing has set selection_bool true
+            // since handleDoubleTap was replaced by
+            // handleDoubleTapToOpenCellSizePatch). Kept unconditionally on
+            // macCatalyst as a second, mouse-driven trigger, same as
+            // ViewController.swift.
+            #if targetEnvironment(macCatalyst)
+            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+            cell.addGestureRecognizer(panGesture)
             #endif
      
                 
@@ -923,10 +932,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             if cursor == key {
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 2.0
+
+                // Diamond drag-handle range selection -- mirrors
+                // ViewController.swift's cursor == key wiring. handlePanGesture
+                // resolves everything from touch location rather than
+                // gesture.view (see the matching change to that function), so
+                // it works unmodified whether triggered from this subview or
+                // the cell itself.
+                cell.setSelectionHandle(visible: true)
+                cell.onSelectionHandlePan = { [weak self] gesture in
+                    self?.handlePanGesture(gesture)
+                }
+                myCollectionView.panGestureRecognizer.require(toFail: cell.selectionHandlePanGesture)
             }else if(changeaffected.contains(key)){
 
                 cell.label2?.layer.borderColor = UIColor(red: 255/255, green: 0/255, blue: 51/255, alpha: 1).cgColor
                 cell.label2?.layer.borderWidth = 2.0
+                cell.setSelectionHandle(visible: false)
+                cell.onSelectionHandlePan = nil
+            }else{
+                cell.setSelectionHandle(visible: false)
+                cell.onSelectionHandlePan = nil
             }
 
 
@@ -1826,6 +1852,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             let posKey: String
             if let i = excelLocationIndex(for: key.cellId), i < content.count {
                 content[i] = edit.content
+                // This edit's new content supersedes whatever formula was
+                // here before the reload -- a preserved raw <f> fragment
+                // left in place would be stale (still describing the old
+                // formula, now paired with an unrelated cached value) and
+                // testRangeOperationsBox prefers it over content when
+                // deciding what to write for this cell.
+                if i < cellFormulaXml.count {
+                    cellFormulaXml[i] = ""
+                }
                 posKey = location[i]
             } else {
                 // Cell had no prior entry at all (e.g. a blank template cell
@@ -1844,6 +1879,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 location.append(posKey)
                 locationInExcel.append(key.cellId)
                 cellStyleId.append("")
+                cellFormulaXml.append("")
                 textsize.append(String(10))
                 bgcolor.append("white")
                 tcolor.append("black")
@@ -1934,6 +1970,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 "fontcolor": tcolor,
                 "bgcolor": bgcolor,
                 "styleId": cellStyleId,
+                "formulaXml": cellFormulaXml,
                 "rowsize": ROWSIZE,
                 "columnsize": COLUMNSIZE,
                 "customcellWidth": appd.customSizedWidth,
@@ -2333,10 +2370,22 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         self.rsview.removeFromSuperview()
     }
     
-    @objc func backRS2()
+    // reload: false lets a caller that's already scheduled its own async
+    // reload+relayout (columnDeleteOperation, copyPasteSelectedCellContent --
+    // both write to disk, then re-read via loadExcelSheet on the next run
+    // loop turn) skip this reloadData(). Calling it here too raced that
+    // deferred reload: this one ran first, synchronously, against
+    // content/location that had already been cleared (about to be
+    // repopulated by the pending loadExcelSheet), rendering an empty grid --
+    // and the grid stayed visually stuck that way until something else (a
+    // sheet-tab tap) forced a further reload, even though the pending one
+    // had already landed correct data in memory by then.
+    @objc func backRS2(reload: Bool = true)
     {
         selection_bool = false
-        myCollectionView.reloadData()
+        if reload {
+            myCollectionView.reloadData()
+        }
         if self.rsview != nil{
             self.rsview.removeFromSuperview()
         }
@@ -2855,10 +2904,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // storyboard instantiates this view via init(coder:), never
         // init(adSize:)) -- standard 320x50 banner, fits within the
         // storyboard's constraint-driven container.
-        bannerview.adSize = AdSizeBanner
-        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-        bannerview.rootViewController = self
-        bannerview.load(Request())
+//        bannerview.adSize = AdSizeBanner
+//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+//        bannerview.rootViewController = self
+//        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -3093,6 +3142,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 "fontcolor": tcolor,
                 "bgcolor": bgcolor,
                 "styleId": cellStyleId,
+                "formulaXml": cellFormulaXml,
                 "rowsize": ROWSIZE,
                 "columnsize": COLUMNSIZE,
                 "customcellWidth": appd.customSizedWidth,
@@ -3131,32 +3181,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        guard let cell = gesture.view as? CustomCollectionViewCell,
-                //touched cell index not selected index
-                let indexPath = myCollectionView.indexPath(for: cell)
-        else { return }
-        let startRow = indexPath.section
-        let startCol = indexPath.item
+        // Triggered by the diamond drag handle on the cursor cell (see
+        // CustomCollectionViewCell.selectionHandleView/onSelectionHandlePan)
+        // or, on macCatalyst, a per-cell gesture -- resolving the touched
+        // cell from the gesture's location rather than gesture.view is what
+        // lets this same handler work regardless of which view the
+        // recognizer is actually attached to. Mirrors ViewController.swift's
+        // handlePanGesture.
         let idxInLocation = locationIndex(for: cursor) ?? -1
         let lIndex = excelLocationIndex(for: label.text ?? "") ?? -1
-        
+
         switch gesture.state {
         case .began:
             print("start")
+            let locationCG = gesture.location(in: myCollectionView)
+            guard let indexPath = myCollectionView.indexPathForItem(at: locationCG),
+                  let cell = myCollectionView.cellForItem(at: indexPath) as? CustomCollectionViewCell
+            else { return }
             tempRangeSelected = []
             tempRangeSelected.append(indexPath)
             // Change background color to indicate dragging started
             cell.label2.backgroundColor = UIColor.systemBlue // Change the color dynamically
-            let locationCG = gesture.location(in: myCollectionView)
-            if let newIndexPath = myCollectionView.indexPathForItem(at: locationCG) {
-                if let cell2 = myCollectionView.cellForItem(at: newIndexPath) as? CustomCollectionViewCell {
-                    //cell2.label2.layer.borderWidth = 1.0
-                    cell2.label2.backgroundColor = UIColor.systemBlue
-                    if (tempRangeSelected.firstIndex(of: newIndexPath) == nil){
-                        tempRangeSelected.append(newIndexPath)
-                    }
-                }
-            }
             break
             
         case .changed:
@@ -3302,15 +3347,49 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return text.range(of: pattern, options: .regularExpression) != nil
     }
     
+    // Mirrors ViewController.swift's panGestureShow2() -- row/col insert-delete
+    // and multi-cell copy/paste were previously disabled here specifically
+    // (see git history), deliberately leaving Form Fill scoped to single-cell
+    // edits per the form-filling-mode pivot, because row/col structural edits
+    // interacting with merged cells has an unresolved render bug. Re-enabled
+    // 2026-08-23 at the user's explicit request, accepting that known risk.
+    // The target methods below (rowInsertOperation etc.) already existed in
+    // this file and are unchanged -- only the UI trigger was missing.
     func panGestureShow2() {
-        // FileFillViewController is form-filling mode: row/col insert-delete and
-        // multi-cell copy/paste aren't supported here, so unlike ViewController's
-        // panGestureShow2(), this never creates or shows RangeSelectionOpsView --
-        // just clear any leftover selection state instead.
         if rsview != nil {
             rsview.removeFromSuperview()
         }
-        tempRangeSelected = []
+
+        switch tag_int {
+        case 0:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
+        case 1:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
+        case 2:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
+        case 3:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:10, width: 220,height: 180))
+        case 4:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:200, width: 220,height: 180))
+        case 5:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:190, width: 220,height: 180))
+        default:
+            rsview = RangeSelectionOpsView(frame: CGRect(x:5,y:50, width: 220,height: 180))
+        }
+
+        rsview.layer.borderWidth = 1
+        rsview.layer.cornerRadius = 8
+        rsview.layer.borderColor = UIColor.black.cgColor
+
+        rsview.deletevalues.addTarget(self, action: #selector(clearSelectedCellContent), for: UIControl.Event.touchUpInside)
+        rsview.deleterow.addTarget(self, action: #selector(rowDeleteOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertrow.addTarget(self, action: #selector(rowInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.insertcol.addTarget(self, action: #selector(columnInsertOperation), for: UIControl.Event.touchUpInside)
+        rsview.deletecol.addTarget(self, action: #selector(columnDeleteOperation), for: UIControl.Event.touchUpInside)
+        rsview.copyandpaste.addTarget(self, action: #selector(copyPasteSelectedCellContent), for: UIControl.Event.touchUpInside)
+        rsview.return.addTarget(self, action: #selector(FileFillViewController.backRS(_:)), for: UIControl.Event.touchUpInside)
+
+        self.view.addSubview(rsview)
     }
     
     @objc func rowInsertOperation() {
@@ -3354,51 +3433,77 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             // content/locationInExcel must stay index-aligned --
             // testRangeOperationsBox zips them by index (for i in
-            // 0..<locationInExcel.count { content[i] }). Filtering each
-            // independently by its own emptiness, as this used to do, can
-            // drop a different set of indices from each array whenever
-            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
-            // different positions -- desyncing their lengths and crashing
-            // testRangeOperationsBox with an out-of-index error. Filter as
-            // pairs instead so both arrays always drop the same indices.
-            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
-            content = keptPairs.map { $0.0 }
-            locationInExcel = keptPairs.map { $0.1 }
+            // 0..<locationInExcel.count { content[i] }). Filter as pairs off a
+            // single shared index list so content, locationInExcel, and
+            // cellStyleId/cellFormulaXml (which testRangeOperationsBox needs to
+            // carry each cell's original style/formula through the rebuild)
+            // always drop exactly the same indices instead of silently
+            // desyncing (see the matching fix in service.swift's
+            // testRangeOperationsBox/ExcelCell).
+            //
+            // Key off locationInExcel alone, not content -- only cells actually
+            // being removed by this operation get their location cleared to ""
+            // above; content=="" is also true for a cell this operation never
+            // touched but that legitimately has no value (merge-region padding,
+            // an individually bordered blank cell, a shared-formula follower
+            // whose cached <v> is empty). Requiring content != "" here silently
+            // dropped every such cell in the whole sheet on every range
+            // operation -- confirmed: a 3-row merge's padding rows and a
+            // shared-formula row vanished entirely after a column delete that
+            // never touched them.
+            let keptIndices = content.indices.filter { locationInExcel[$0] != "" }
+            content = keptIndices.map { content[$0] }
+            locationInExcel = keptIndices.map { locationInExcel[$0] }
+            cellStyleId = keptIndices.map { $0 < cellStyleId.count ? cellStyleId[$0] : "" }
+            cellFormulaXml = keptIndices.map { $0 < cellFormulaXml.count ? cellFormulaXml[$0] : "" }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml )
             
             if rlt == nil{
                 print("Something went wrong")
                 return
             }
             
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            
             f_calculated.removeAll()
             f_content.removeAll()
             content.removeAll()
             location.removeAll()
             f_location_alphabet.removeAll()
-            
+
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-            
+
             print("go to file view")
             tempRangeSelected = []
-            
-            
+
+
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
+                // collectionViewCellSizeChanged=1 + clearing cswLocation/customSizedWidth
+                // used to happen synchronously above, before this async hop -- that left
+                // a window where the *ordinary* end-of-runloop UIKit layout pass (not
+                // anything this code calls explicitly -- confirmed via
+                // Thread.callStackSymbols: UICollectionView.layoutSubviews ->
+                // CustomCollectionViewLayout.prepare()) could run first, while
+                // cswLocation/diff_start_index were already cleared but not yet
+                // repopulated. That pass saw collectionViewCellSizeChanged==1, did the
+                // full rebuild with empty width/merge data, and consumed the flag --
+                // so loadExcelSheet's own completion below (which runs after the
+                // correct data is back) found the flag already spent and took the
+                // cheap headers-only path, permanently locking in wrong cell widths
+                // until something else (e.g. a sheet-tab tap) set the flag again.
+                // Setting it here instead, immediately before loadExcelSheet, leaves no
+                // such window.
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+
                 //                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
@@ -3466,51 +3571,77 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             // content/locationInExcel must stay index-aligned --
             // testRangeOperationsBox zips them by index (for i in
-            // 0..<locationInExcel.count { content[i] }). Filtering each
-            // independently by its own emptiness, as this used to do, can
-            // drop a different set of indices from each array whenever
-            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
-            // different positions -- desyncing their lengths and crashing
-            // testRangeOperationsBox with an out-of-index error. Filter as
-            // pairs instead so both arrays always drop the same indices.
-            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
-            content = keptPairs.map { $0.0 }
-            locationInExcel = keptPairs.map { $0.1 }
+            // 0..<locationInExcel.count { content[i] }). Filter as pairs off a
+            // single shared index list so content, locationInExcel, and
+            // cellStyleId/cellFormulaXml (which testRangeOperationsBox needs to
+            // carry each cell's original style/formula through the rebuild)
+            // always drop exactly the same indices instead of silently
+            // desyncing (see the matching fix in service.swift's
+            // testRangeOperationsBox/ExcelCell).
+            //
+            // Key off locationInExcel alone, not content -- only cells actually
+            // being removed by this operation get their location cleared to ""
+            // above; content=="" is also true for a cell this operation never
+            // touched but that legitimately has no value (merge-region padding,
+            // an individually bordered blank cell, a shared-formula follower
+            // whose cached <v> is empty). Requiring content != "" here silently
+            // dropped every such cell in the whole sheet on every range
+            // operation -- confirmed: a 3-row merge's padding rows and a
+            // shared-formula row vanished entirely after a column delete that
+            // never touched them.
+            let keptIndices = content.indices.filter { locationInExcel[$0] != "" }
+            content = keptIndices.map { content[$0] }
+            locationInExcel = keptIndices.map { locationInExcel[$0] }
+            cellStyleId = keptIndices.map { $0 < cellStyleId.count ? cellStyleId[$0] : "" }
+            cellFormulaXml = keptIndices.map { $0 < cellFormulaXml.count ? cellFormulaXml[$0] : "" }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml, deletedRowRange: (min: minRow, count: numberOfRowsToDelete) )
             
             if rlt == nil{
                 print("Something went wrong")
                 return
             }
             
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            
             f_calculated.removeAll()
             f_content.removeAll()
             content.removeAll()
             location.removeAll()
             f_location_alphabet.removeAll()
-            
+
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-            
+
             print("go to file view")
             tempRangeSelected = []
-            
-            
+
+
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
+                // collectionViewCellSizeChanged=1 + clearing cswLocation/customSizedWidth
+                // used to happen synchronously above, before this async hop -- that left
+                // a window where the *ordinary* end-of-runloop UIKit layout pass (not
+                // anything this code calls explicitly -- confirmed via
+                // Thread.callStackSymbols: UICollectionView.layoutSubviews ->
+                // CustomCollectionViewLayout.prepare()) could run first, while
+                // cswLocation/diff_start_index were already cleared but not yet
+                // repopulated. That pass saw collectionViewCellSizeChanged==1, did the
+                // full rebuild with empty width/merge data, and consumed the flag --
+                // so loadExcelSheet's own completion below (which runs after the
+                // correct data is back) found the flag already spent and took the
+                // cheap headers-only path, permanently locking in wrong cell widths
+                // until something else (e.g. a sheet-tab tap) set the flag again.
+                // Setting it here instead, immediately before loadExcelSheet, leaves no
+                // such window.
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+
                 //                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
@@ -3566,51 +3697,77 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             // content/locationInExcel must stay index-aligned --
             // testRangeOperationsBox zips them by index (for i in
-            // 0..<locationInExcel.count { content[i] }). Filtering each
-            // independently by its own emptiness, as this used to do, can
-            // drop a different set of indices from each array whenever
-            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
-            // different positions -- desyncing their lengths and crashing
-            // testRangeOperationsBox with an out-of-index error. Filter as
-            // pairs instead so both arrays always drop the same indices.
-            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
-            content = keptPairs.map { $0.0 }
-            locationInExcel = keptPairs.map { $0.1 }
+            // 0..<locationInExcel.count { content[i] }). Filter as pairs off a
+            // single shared index list so content, locationInExcel, and
+            // cellStyleId/cellFormulaXml (which testRangeOperationsBox needs to
+            // carry each cell's original style/formula through the rebuild)
+            // always drop exactly the same indices instead of silently
+            // desyncing (see the matching fix in service.swift's
+            // testRangeOperationsBox/ExcelCell).
+            //
+            // Key off locationInExcel alone, not content -- only cells actually
+            // being removed by this operation get their location cleared to ""
+            // above; content=="" is also true for a cell this operation never
+            // touched but that legitimately has no value (merge-region padding,
+            // an individually bordered blank cell, a shared-formula follower
+            // whose cached <v> is empty). Requiring content != "" here silently
+            // dropped every such cell in the whole sheet on every range
+            // operation -- confirmed: a 3-row merge's padding rows and a
+            // shared-formula row vanished entirely after a column delete that
+            // never touched them.
+            let keptIndices = content.indices.filter { locationInExcel[$0] != "" }
+            content = keptIndices.map { content[$0] }
+            locationInExcel = keptIndices.map { locationInExcel[$0] }
+            cellStyleId = keptIndices.map { $0 < cellStyleId.count ? cellStyleId[$0] : "" }
+            cellFormulaXml = keptIndices.map { $0 < cellFormulaXml.count ? cellFormulaXml[$0] : "" }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml )
             
             if rlt == nil{
                 print("Something went wrong")
                 return
             }
             
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            
             f_calculated.removeAll()
             f_content.removeAll()
             content.removeAll()
             location.removeAll()
             f_location_alphabet.removeAll()
-            
+
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-            
+
             print("go to file view")
             tempRangeSelected = []
-            
-            
+
+
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
+                // collectionViewCellSizeChanged=1 + clearing cswLocation/customSizedWidth
+                // used to happen synchronously above, before this async hop -- that left
+                // a window where the *ordinary* end-of-runloop UIKit layout pass (not
+                // anything this code calls explicitly -- confirmed via
+                // Thread.callStackSymbols: UICollectionView.layoutSubviews ->
+                // CustomCollectionViewLayout.prepare()) could run first, while
+                // cswLocation/diff_start_index were already cleared but not yet
+                // repopulated. That pass saw collectionViewCellSizeChanged==1, did the
+                // full rebuild with empty width/merge data, and consumed the flag --
+                // so loadExcelSheet's own completion below (which runs after the
+                // correct data is back) found the flag already spent and took the
+                // cheap headers-only path, permanently locking in wrong cell widths
+                // until something else (e.g. a sheet-tab tap) set the flag again.
+                // Setting it here instead, immediately before loadExcelSheet, leaves no
+                // such window.
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+
                 //                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
@@ -3673,51 +3830,76 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             
             // content/locationInExcel must stay index-aligned --
             // testRangeOperationsBox zips them by index (for i in
-            // 0..<locationInExcel.count { content[i] }). Filtering each
-            // independently by its own emptiness, as this used to do, can
-            // drop a different set of indices from each array whenever
-            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
-            // different positions -- desyncing their lengths and crashing
-            // testRangeOperationsBox with an out-of-index error. Filter as
-            // pairs instead so both arrays always drop the same indices.
-            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
-            content = keptPairs.map { $0.0 }
-            locationInExcel = keptPairs.map { $0.1 }
+            // 0..<locationInExcel.count { content[i] }). Filter as pairs off a
+            // single shared index list so content, locationInExcel, and
+            // cellStyleId/cellFormulaXml (which testRangeOperationsBox needs to
+            // carry each cell's original style/formula through the rebuild)
+            // always drop exactly the same indices instead of silently
+            // desyncing (see the matching fix in service.swift's
+            // testRangeOperationsBox/ExcelCell).
+            //
+            // Key off locationInExcel alone, not content -- only cells actually
+            // being removed by this operation get their location cleared to ""
+            // above; content=="" is also true for a cell this operation never
+            // touched but that legitimately has no value (merge-region padding,
+            // an individually bordered blank cell, a shared-formula follower
+            // whose cached <v> is empty). Requiring content != "" here silently
+            // dropped every such cell in the whole sheet on every range
+            // operation -- confirmed: a 3-row merge's padding rows and a
+            // shared-formula row vanished entirely after a column delete that
+            // never touched them.
+            let keptIndices = content.indices.filter { locationInExcel[$0] != "" }
+            content = keptIndices.map { content[$0] }
+            locationInExcel = keptIndices.map { locationInExcel[$0] }
+            cellStyleId = keptIndices.map { $0 < cellStyleId.count ? cellStyleId[$0] : "" }
+            cellFormulaXml = keptIndices.map { $0 < cellFormulaXml.count ? cellFormulaXml[$0] : "" }
             print("newcontent(col,row)",content)
             print("newExcellocation(col,row)",locationInExcel)
-            
-            
+
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml, deletedColumnRange: (min: minCol, count: numberOfColsToDelete) )
             
             if rlt == nil{
                 print("Something went wrong")
                 return
             }
             
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            
             f_calculated.removeAll()
             f_content.removeAll()
             content.removeAll()
             location.removeAll()
             f_location_alphabet.removeAll()
-            
+
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-            
+
             print("go to file view")
             tempRangeSelected = []
-            
-            
+
+
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
+                // collectionViewCellSizeChanged=1 + clearing cswLocation/customSizedWidth
+                // used to happen synchronously above, before this async hop -- that left
+                // a window where the *ordinary* end-of-runloop UIKit layout pass (not
+                // anything this code calls explicitly -- confirmed via
+                // Thread.callStackSymbols: UICollectionView.layoutSubviews ->
+                // CustomCollectionViewLayout.prepare()) could run first, while
+                // cswLocation/diff_start_index were already cleared but not yet
+                // repopulated. That pass saw collectionViewCellSizeChanged==1, did the
+                // full rebuild with empty width/merge data, and consumed the flag --
+                // so loadExcelSheet's own completion below (which runs after the
+                // correct data is back) found the flag already spent and took the
+                // cheap headers-only path, permanently locking in wrong cell widths
+                // until something else (e.g. a sheet-tab tap) set the flag again.
+                // Setting it here instead, immediately before loadExcelSheet, leaves no
+                // such window.
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+
                 //                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
@@ -3733,7 +3915,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 
             }
         }
-        backRS2()
+        backRS2(reload: false)
     }
     
     @objc func clearSelectedCellContent(){
@@ -3791,48 +3973,74 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
             // content/locationInExcel must stay index-aligned --
             // testRangeOperationsBox zips them by index (for i in
-            // 0..<locationInExcel.count { content[i] }). Filtering each
-            // independently by its own emptiness, as this used to do, can
-            // drop a different set of indices from each array whenever
-            // content[i]=="" while locationInExcel[i]!="" (or vice versa) at
-            // different positions -- desyncing their lengths and crashing
-            // testRangeOperationsBox with an out-of-index error. Filter as
-            // pairs instead so both arrays always drop the same indices.
-            let keptPairs = zip(content, locationInExcel).filter { $0.0 != "" && $0.1 != "" }
-            content = keptPairs.map { $0.0 }
-            locationInExcel = keptPairs.map { $0.1 }
+            // 0..<locationInExcel.count { content[i] }). Filter as pairs off a
+            // single shared index list so content, locationInExcel, and
+            // cellStyleId/cellFormulaXml (which testRangeOperationsBox needs to
+            // carry each cell's original style/formula through the rebuild)
+            // always drop exactly the same indices instead of silently
+            // desyncing (see the matching fix in service.swift's
+            // testRangeOperationsBox/ExcelCell).
+            //
+            // Key off locationInExcel alone, not content -- only cells actually
+            // being removed by this operation get their location cleared to ""
+            // above; content=="" is also true for a cell this operation never
+            // touched but that legitimately has no value (merge-region padding,
+            // an individually bordered blank cell, a shared-formula follower
+            // whose cached <v> is empty). Requiring content != "" here silently
+            // dropped every such cell in the whole sheet on every range
+            // operation -- confirmed: a 3-row merge's padding rows and a
+            // shared-formula row vanished entirely after a column delete that
+            // never touched them.
+            let keptIndices = content.indices.filter { locationInExcel[$0] != "" }
+            content = keptIndices.map { content[$0] }
+            locationInExcel = keptIndices.map { locationInExcel[$0] }
+            cellStyleId = keptIndices.map { $0 < cellStyleId.count ? cellStyleId[$0] : "" }
+            cellFormulaXml = keptIndices.map { $0 < cellFormulaXml.count ? cellFormulaXml[$0] : "" }
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml )
             
             if rlt == nil{
                 print("Something went wrong")
                 return
             }
             
-            //sheet cell get touched
-            appd.collectionViewCellSizeChanged = 1
-            appd.cswLocation.removeAll()
-            appd.customSizedWidth.removeAll()
-            appd.cshLocation.removeAll()
-            appd.customSizedHeight.removeAll()
-            
-            
             f_calculated.removeAll()
             f_content.removeAll()
             content.removeAll()
             location.removeAll()
             f_location_alphabet.removeAll()
-            
+
             //print("sheet changed",indexPath.item)
             stringboxText = ""
-            
+
             print("go to file view")
             tempRangeSelected = []
-            
-            
+
+
             // Present the target view controller after LoadingFileController's view has appeared
             DispatchQueue.main.async {
+                // collectionViewCellSizeChanged=1 + clearing cswLocation/customSizedWidth
+                // used to happen synchronously above, before this async hop -- that left
+                // a window where the *ordinary* end-of-runloop UIKit layout pass (not
+                // anything this code calls explicitly -- confirmed via
+                // Thread.callStackSymbols: UICollectionView.layoutSubviews ->
+                // CustomCollectionViewLayout.prepare()) could run first, while
+                // cswLocation/diff_start_index were already cleared but not yet
+                // repopulated. That pass saw collectionViewCellSizeChanged==1, did the
+                // full rebuild with empty width/merge data, and consumed the flag --
+                // so loadExcelSheet's own completion below (which runs after the
+                // correct data is back) found the flag already spent and took the
+                // cheap headers-only path, permanently locking in wrong cell widths
+                // until something else (e.g. a sheet-tab tap) set the flag again.
+                // Setting it here instead, immediately before loadExcelSheet, leaves no
+                // such window.
+                appd.collectionViewCellSizeChanged = 1
+                appd.cswLocation.removeAll()
+                appd.customSizedWidth.removeAll()
+                appd.cshLocation.removeAll()
+                appd.customSizedHeight.removeAll()
+
                 //                self.present(targetViewController, animated: true, completion: nil)
                 self.loadExcelSheet(idx: appd.wsSheetIndex){
                     // Assuming `collectionView` is your UICollectionView instance
@@ -3910,6 +4118,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
                     if let existingIdx = locationIndex[destLocStr] {
                         self.content[existingIdx] = item.value
+                        // The pasted value supersedes whatever formula was
+                        // here before -- see the matching fix in
+                        // reapplyPendingXlsxChanges for why a stale
+                        // preserved fragment can't be left in place.
+                        if existingIdx < self.cellFormulaXml.count {
+                            self.cellFormulaXml[existingIdx] = ""
+                        }
                     } else {
                         locationIndex[destLocStr] = self.location.count
                         self.location.append(destLocStr)
@@ -3923,36 +4138,40 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 }
 
                 let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-                let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel )
+                let rlt = serviceInstance.testRangeOperationsBox(fp: appd.imported_xlsx_file_path,content: self.content, locationInExcel:self.locationInExcel, styleIds: self.cellStyleId, formulaXmls: self.cellFormulaXml )
                 
                 if rlt == nil{
                     print("Something went wrong")
                     return
                 }
                 
-                //sheet cell get touched
-                appd.collectionViewCellSizeChanged = 1
-                appd.cswLocation.removeAll()
-                appd.customSizedWidth.removeAll()
-                appd.cshLocation.removeAll()
-                appd.customSizedHeight.removeAll()
-                
-                
                 self.f_calculated.removeAll()
                 self.f_content.removeAll()
                 self.content.removeAll()
                 self.location.removeAll()
                 self.f_location_alphabet.removeAll()
-                
+
                 //print("sheet changed",indexPath.item)
                 self.stringboxText = ""
-                
+
                 print("go to file view")
                 self.tempRangeSelected = []
-                
-                
+
+
                 // Present the target view controller after LoadingFileController's view has appeared
                 DispatchQueue.main.async {
+                    // See matching comment on the row/col insert-delete operations --
+                    // setting collectionViewCellSizeChanged=1 and clearing
+                    // cswLocation/customSizedWidth here, right before loadExcelSheet,
+                    // rather than synchronously above, avoids the ordinary UIKit
+                    // layout pass consuming the flag early with not-yet-repopulated
+                    // width/merge data.
+                    appd.collectionViewCellSizeChanged = 1
+                    appd.cswLocation.removeAll()
+                    appd.customSizedWidth.removeAll()
+                    appd.cshLocation.removeAll()
+                    appd.customSizedHeight.removeAll()
+
                     //                self.present(targetViewController, animated: true, completion: nil)
                     self.loadExcelSheet(idx: appd.wsSheetIndex){
                         // Assuming `collectionView` is your UICollectionView instance
@@ -3973,7 +4192,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             })
             self.present(alert, animated: true)
         }
-        backRS2()
+        backRS2(reload: false)
     }
     
     @objc func fillDateInSelectedCellContent(direction:Int ) {
@@ -4570,9 +4789,25 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // populated it -- guard against a shorter/absent array from an older save.
         let hasStyleId = cellStyleId.count == content.count
         var filterStyleId = [String]()
+        // Same reasoning as cellStyleId above -- guard a shorter/absent array.
+        let hasFormulaXml = cellFormulaXml.count == content.count
+        var filterFormulaXml = [String]()
         for i in 0..<content.count {
             let check = content[i].replacingOccurrences(of: " ", with: "")
-            if check.count != 0{
+            // A blank-content cell still needs to survive here if it carries a
+            // style (merge-region padding, an individually bordered blank cell)
+            // or a preserved formula fragment (a shared-formula follower whose
+            // cached <v> is empty) -- content alone isn't "this cell is really
+            // empty". Keying only on content dropped every such cell out of
+            // content/location/cellStyleId on every single load (initSheetData
+            // calls this right after readExcel2/isExcelSheetData populate them),
+            // undoing ExcelHelper.readExcel2's rescue before a row/col operation
+            // ever got a chance to run -- confirmed via diagnostic trace: B9
+            // (style-only) and B43 (shared-formula follower, empty cached value)
+            // were correctly loaded, then gone by the very next step.
+            let hasStyle = hasStyleId && !cellStyleId[i].isEmpty
+            let hasFormula = hasFormulaXml && !cellFormulaXml[i].isEmpty
+            if check.count != 0 || hasStyle || hasFormula {
                 filterContent.append(content[i])
                 filterLocation.append(location[i])
 
@@ -4585,6 +4820,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 if hasStyleId {
                     filterStyleId.append(cellStyleId[i])
                 }
+                if hasFormulaXml {
+                    filterFormulaXml.append(cellFormulaXml[i])
+                }
             }
 
         }
@@ -4596,6 +4834,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         bgcolor = filterBgColor
         if hasStyleId {
             cellStyleId = filterStyleId
+        }
+        if hasFormulaXml {
+            cellFormulaXml = filterFormulaXml
         }
     }
     @objc func saveAsLocalJson(filename:String) {
@@ -5641,6 +5882,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             textsize = sheet1Json.fontsize
             bgcolor = sheet1Json.bgcolor
             tcolor = sheet1Json.fontcolor
+            // Wasn't populated here before -- a range operation immediately
+            // after a fresh app launch (before any other load path had a
+            // chance to set these) would silently lose style/formula
+            // preservation for every cell. readJsonFIle now reads both
+            // fields (see the matching addition there).
+            cellStyleId = sheet1Json.styleId
+            cellFormulaXml = sheet1Json.formulaXml
             COLUMNSIZE = sheet1Json.columnsize
             ROWSIZE = sheet1Json.rowsize
             appd.customSizedWidth = sheet1Json.customcellWidth
@@ -7873,6 +8121,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                 bgcolor = sheet1Json.bgcolor
                 tcolor = sheet1Json.fontcolor
                 cellStyleId = sheet1Json.styleId
+                cellFormulaXml = sheet1Json.formulaXml
                 COLUMNSIZE = sheet1Json.columnsize
                 ROWSIZE = sheet1Json.rowsize
                 appd.customSizedWidth = sheet1Json.customcellWidth
@@ -8179,8 +8428,6 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
 
     func proceedToEmail() {
-        isMail = true
-
         // flushPendingXlsxChangesIfNeeded/writeXlsxEmail/csvexport below can
         // take real time on a large file -- showLoading()/hideLoading() give
         // the user feedback (doesn't make the export itself faster); the
@@ -8209,49 +8456,62 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
             self.csvexport(result: result)
 
+            let today: Date = Date()
+            let dateFormatter: DateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
+            let date = dateFormatter.string(from: today)
+
+            var fileName = date + "_XLSV_"
+            if appd.excelfilename != "" {
+                fileName = fileName + appd.excelfilename
+                fileName = fileName.removingPercentEncoding ?? fileName
+            }
+            if !fileName.hasSuffix(".xlsx") {
+                fileName += ".xlsx"
+            }
+
+            // Was previously handed to MFMailComposeViewController as an in-memory
+            // attachment -- that needed a configured Mail account and left the
+            // saved copy wherever Mail happened to put it, both of which the daily
+            // test/compare loop on this feature kept tripping over. A
+            // UIDocumentPickerViewController(forExporting:) lets the user save
+            // straight into any Files location (On My iPad, iCloud Drive, a
+            // specific folder) with no Mail account needed, so copy both the xlsx
+            // (its writeXlsxEmail-produced name won't match what the user typed
+            // in the export alert) and the csv snapshot into the temp directory
+            // under their final names first.
+            var exportURLs: [URL] = []
+            let tempDir = FileManager.default.temporaryDirectory
+
+            if self.isExcel, let sourceURL = url {
+                let renamedURL = tempDir.appendingPathComponent(fileName)
+                try? FileManager.default.removeItem(at: renamedURL)
+                if (try? FileManager.default.copyItem(at: sourceURL, to: renamedURL)) != nil {
+                    exportURLs.append(renamedURL)
+                }
+            }
+
+            if let csvData = self.data {
+                let csvURL = tempDir.appendingPathComponent(date + ".csv")
+                try? csvData.write(to: csvURL)
+                exportURLs.append(csvURL)
+            }
+
             self.hideLoading()
 
-            if MFMailComposeViewController.canSendMail() {
-                let today: Date = Date()
-                let dateFormatter: DateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM-dd-yyyy HH-mm-ss"
-                var date = dateFormatter.string(from: today)
-
-                let mail = MFMailComposeViewController()
-                mail.mailComposeDelegate = self
-
-                mail.setSubject("from ios")
-
-                //creating backup file name
-
-                var fileName = date + "_XLSV_"
-                let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
-                if appd.excelfilename != ""{
-                    fileName = fileName + appd.excelfilename
-                    fileName = fileName.removingPercentEncoding!
-                    if !fileName.hasSuffix(".xlsx"){
-                        fileName += ".xlsx"
-                    }
-                }
-
-
-                //print("ViewController" ,filePath)
-                if self.isExcel, let url2 = url, let fileData = NSData(contentsOfFile: url2.path) {
-                    mail.addAttachmentData(fileData as Data, mimeType: " application/vnd.openxmlformats-officedocument.spreadsheet", fileName: fileName)
-                }else{
-                    print("noContent")
-                }
-
-                //csv
-                mail.addAttachmentData(self.data!, mimeType: "text/csv", fileName: date + ".csv")
-
-                self.present(mail, animated: true, completion: nil)
-
-                self.isMail = false
-            } else {
-                // show failure alert
+            guard !exportURLs.isEmpty else {
+                self.showResultAlert(title: "Export Failed", message: "Something went wrong while preparing the file.")
+                return
             }
+
+            let picker = UIDocumentPickerViewController(forExporting: exportURLs)
+            picker.delegate = self
+            self.present(picker, animated: true, completion: nil)
         }
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        showResultAlert(title: "Export Complete", message: "Your file has been saved.")
     }
 
 
@@ -8503,11 +8763,15 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     
     @IBAction func elsxExportAction(_ sender: Any) {
-        readAllJsonFiles()
-        createxlsxSheet()
-        sleep(4)
+        // Used to call readAllJsonFiles() + createxlsxSheet() + a blocking
+        // sleep(4) before exporting -- createxlsxSheet() is actually
+        // excelAddSheet() under a stale name (silently adding a blank sheet
+        // to the workbook on every export), and the sleep was just guessing
+        // at how long that reload would take instead of waiting for it.
+        // writeXlsxEmail/flushPendingXlsxChangesIfNeeded (see proceedToEmail)
+        // already read the current on-disk state directly, so none of that
+        // was actually needed to produce a correct export.
         excelEmail()
-        
     }
     
     func readAllJsonFiles(){
