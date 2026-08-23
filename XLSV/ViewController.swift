@@ -3597,7 +3597,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml, insertedRowRange: (min: minRow, count: numberOfRowsToInsert) )
             
             if rlt == nil{
                 print("Something went wrong")
@@ -3861,7 +3861,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             
             let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "",imp_formula:[String]())
-            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml )
+            let rlt = serviceInstance.testRangeOperationsBox(fp: local_xlsx_file_path,content: content, locationInExcel:locationInExcel, styleIds: cellStyleId, formulaXmls: cellFormulaXml, insertedColumnRange: (min: minCol, count: numberOfColsToInsert) )
             
             if rlt == nil{
                 print("Something went wrong")

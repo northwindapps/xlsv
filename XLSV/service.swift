@@ -2136,6 +2136,62 @@ class Service {
         xmlString.replaceSubrange(fullMergeCellsRange, with: newBlock)
     }
 
+    // Symmetric counterpart to patchMergeCellsForDelete, for a contiguous row/
+    // column insertion -- same >= boundary convention columnInsertOperation/
+    // rowInsertOperation already use for content/locationInExcel (a cell at or
+    // after `min` shifts by `count`, one before it doesn't). Applying that
+    // independently to a merge's two corners is enough to get all three cases
+    // right with no special-casing: a merge entirely before the insertion
+    // point is untouched, one entirely at/after it shifts as a whole (its
+    // width unchanged), and one the insertion point falls inside widens by
+    // `count` (its low corner stays put, only its high corner shifts) --
+    // matching Excel's own behavior when a column/row is inserted into the
+    // middle of a merged region. Unlike delete, no merge is ever dropped or
+    // shrunk to a single cell by an insert.
+    private func patchMergeCellsForInsert(in xmlString: inout String, isColumn: Bool, min: Int, count: Int) {
+        guard let mergeCellsOpenRange = xmlString.range(of: "<mergeCells"),
+              let mergeCellsCloseRange = xmlString.range(of: "</mergeCells>", range: mergeCellsOpenRange.upperBound..<xmlString.endIndex)
+        else { return }
+
+        let fullMergeCellsRange = mergeCellsOpenRange.lowerBound..<mergeCellsCloseRange.upperBound
+        let mergeCellsBlock = String(xmlString[fullMergeCellsRange])
+
+        func shifted(_ n: Int) -> Int {
+            return n >= min ? n + count : n
+        }
+
+        var newEntries: [String] = []
+        if let regex = try? NSRegularExpression(pattern: "<mergeCell ref=\"([A-Z]+)(\\d+):([A-Z]+)(\\d+)\"\\s*/>") {
+            let nsRange = NSRange(mergeCellsBlock.startIndex..<mergeCellsBlock.endIndex, in: mergeCellsBlock)
+            regex.enumerateMatches(in: mergeCellsBlock, range: nsRange) { match, _, _ in
+                guard let match = match,
+                      let colARange = Range(match.range(at: 1), in: mergeCellsBlock),
+                      let rowARange = Range(match.range(at: 2), in: mergeCellsBlock),
+                      let colBRange = Range(match.range(at: 3), in: mergeCellsBlock),
+                      let rowBRange = Range(match.range(at: 4), in: mergeCellsBlock),
+                      let rowA = Int(mergeCellsBlock[rowARange]),
+                      let rowB = Int(mergeCellsBlock[rowBRange])
+                else { return }
+
+                let colA = excelColumnNumber(from: String(mergeCellsBlock[colARange]))
+                let colB = excelColumnNumber(from: String(mergeCellsBlock[colBRange]))
+                let minC = Swift.min(colA, colB), maxC = Swift.max(colA, colB)
+                let minR = Swift.min(rowA, rowB), maxR = Swift.max(rowA, rowB)
+
+                let newMinC = isColumn ? shifted(minC) : minC
+                let newMaxC = isColumn ? shifted(maxC) : maxC
+                let newMinR = isColumn ? minR : shifted(minR)
+                let newMaxR = isColumn ? maxR : shifted(maxR)
+
+                let newRef = "\(GetExcelColumnName(columnNumber: newMinC))\(newMinR):\(GetExcelColumnName(columnNumber: newMaxC))\(newMaxR)"
+                newEntries.append("<mergeCell ref=\"\(newRef)\"/>")
+            }
+        }
+
+        let newBlock = newEntries.isEmpty ? "" : "<mergeCells count=\"\(newEntries.count)\">" + newEntries.joined() + "</mergeCells>"
+        xmlString.replaceSubrange(fullMergeCellsRange, with: newBlock)
+    }
+
     // styleIds, when non-empty, must be index-aligned with content/locationInExcel
     // (same convention as content[i]/locationInExcel[i] referring to the same
     // logical cell) -- callers get this for free by filtering cellStyleId
@@ -2144,14 +2200,16 @@ class Service {
     // back to the previous behavior: no s= attribute, i.e. default styling).
     //
     // deletedColumnRange/deletedRowRange (min, count), set by exactly one of
-    // columnDeleteOperation/rowDeleteOperation and left nil by every other
-    // caller (insert, clear values, copy/paste -- none of those change which
-    // columns/rows exist), adjust <mergeCells> to match the same shift this
-    // function already applies to content/locationInExcel. Previously
-    // <mergeCells> was left completely untouched by any range operation, so a
-    // merge spanning the deleted column/row kept referencing stale cell
-    // positions after the delete -- exactly the failure mode row/col
-    // operations were originally shelved over.
+    // columnDeleteOperation/rowDeleteOperation, and insertedColumnRange/
+    // insertedRowRange, set by exactly one of columnInsertOperation/
+    // rowInsertOperation (all four left nil by every other caller -- clear
+    // values, copy/paste -- since none of those change which columns/rows
+    // exist), adjust <mergeCells> to match the same shift this function
+    // already applies to content/locationInExcel. Previously <mergeCells> was
+    // left completely untouched by any range operation, so a merge spanning
+    // the deleted/inserted column or row kept referencing stale cell
+    // positions afterward -- exactly the failure mode row/col operations were
+    // originally shelved over.
     // formulaXmls, when non-empty, must be index-aligned with content/
     // locationInExcel the same way styleIds is. A non-empty entry is a raw
     // <f>...</f> (or self-closing <f .../>) fragment captured verbatim at
@@ -2162,7 +2220,7 @@ class Service {
     // real formula purely from XML structure) survives a range operation
     // instead of being permanently flattened into whatever value happened
     // to be cached at that moment.
-    func testRangeOperationsBox(fp: String = "", url: URL? = nil, calculated:String = "",content:[String] = [],locationInExcel:[String] = [], styleIds: [String] = [], formulaXmls: [String] = [], deletedColumnRange: (min: Int, count: Int)? = nil, deletedRowRange: (min: Int, count: Int)? = nil) -> Bool? {
+    func testRangeOperationsBox(fp: String = "", url: URL? = nil, calculated:String = "",content:[String] = [],locationInExcel:[String] = [], styleIds: [String] = [], formulaXmls: [String] = [], deletedColumnRange: (min: Int, count: Int)? = nil, deletedRowRange: (min: Int, count: Int)? = nil, insertedColumnRange: (min: Int, count: Int)? = nil, insertedRowRange: (min: Int, count: Int)? = nil) -> Bool? {
         var isError = false
         do {
             // Get the sandbox directory for documents
@@ -2405,6 +2463,12 @@ class Service {
                     }
                     if let rowRange = deletedRowRange {
                         patchMergeCellsForDelete(in: &updatedString, isColumn: false, min: rowRange.min, count: rowRange.count)
+                    }
+                    if let colRange = insertedColumnRange {
+                        patchMergeCellsForInsert(in: &updatedString, isColumn: true, min: colRange.min, count: colRange.count)
+                    }
+                    if let rowRange = insertedRowRange {
+                        patchMergeCellsForInsert(in: &updatedString, isColumn: false, min: rowRange.min, count: rowRange.count)
                     }
                     do {
                         try updatedString.write(to: worksheetXMLURL, atomically: true, encoding: .utf8)
