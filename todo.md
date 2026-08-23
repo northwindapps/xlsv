@@ -61,3 +61,76 @@ feature's launch scope; it's a lower-stakes follow-up.
 
 See `feedback_xlsx_structural_validity_over_formula_correctness` in Claude's memory for
 the full reasoning.
+
+## Local on-device LLM (Gemma) command interface -- draft plan
+
+Status: idea stage, not started. Target device assumption: iPhone SE 4 (A18 chip, 8GB
+RAM) -- the low end of what Apple treats as "on-device AI capable" (8GB is Apple
+Intelligence's own minimum), so plan for this as the floor, not a device with headroom
+to spare.
+
+**Model/hardware feasibility (researched 2026-08-23):**
+- Gemma 4 E2B (smallest current variant) needs ~1.5GB RAM at 4-bit quantization, has
+  native JSON-formatted function-calling output, and a 128K context window. A CoreML-LLM
+  iPhone sample reported ~11 tok/s at ~250MB RAM; MLX-based inference should be
+  comparable or better. E2B is the realistic fit for an 8GB device that also has to run
+  XLSV and iOS itself in that same budget -- E4B (the next size up) is a stretch goal for
+  higher-RAM devices, not the v1 baseline.
+- E2B is sized for general chat/multimodal use; this app's job is much narrower -- a
+  fixed handful of tool schemas, not open-ended conversation -- so it's worth treating
+  E2B as the *ceiling*, not the target, and trying smaller/older Gemma tiers (e.g. Gemma
+  3 1B, or a smaller fine-tune scoped to just this tool schema) first during the
+  feasibility spike below. Downgrade freely if a smaller model still calls the right tool
+  reliably -- less RAM/battery pressure on an 8GB device that also has to run XLSV and
+  iOS, and the confirm-before-execute step (see Safety/UX) is there specifically so an
+  occasional wrong tool call from a smaller model is caught before it touches the file,
+  not a correctness risk. Only step up in size if accuracy on this narrow task actually
+  requires it.
+- MLX Swift (Apple's framework, best on-iPhone performance) requires **iOS 17+**. XLSV's
+  current deployment target is iOS 15.6 -- gate this feature behind
+  `if #available(iOS 17, *)` rather than raising the app-wide minimum, so it's simply
+  absent on older devices/OS without regressing support for existing users.
+- Don't bundle the model weights in the IPA (blows up App Store binary size and cellular
+  download limits) -- download-on-first-use into Documents/Caches, with a settings
+  toggle to delete it and reclaim space.
+
+**Architecture -- reuse today's tested range-operation surface, never give the model raw
+XML access:**
+- This session hardened and validated the row/col insert/delete path end-to-end
+  (`testRangeOperationsBox` in service.swift; `rowInsertOperation`/`rowDeleteOperation`/
+  `columnInsertOperation`/`columnDeleteOperation` in ViewController.swift/
+  FileFillViewController.swift; `patchMergeCellsForInsert`/`Delete`; the new
+  `patchDimension`) plus the typed autofill engine. Expose these as a small fixed set of
+  named tools (`insert_rows(at, count)`, `delete_rows(at, count)`, `insert_columns`,
+  `delete_columns`, `fill_range(range, values_or_formula)`, `set_cell(ref, value)`) that
+  Gemma calls via its function-calling output.
+- The model only ever emits a tool call -- never XML, never touches the xlsx write path
+  directly. This app validates the call (range bounds, sheet exists, etc.) and routes it
+  into the exact same code paths already proven today, so the "never trigger Excel's
+  repair dialog" structural-validity bar holds regardless of what the model produces. A
+  tool call that fails validation is rejected before reaching any write path.
+
+**Safety/UX:** given the user's stated preference for keyboard-driven flows over gestures
+(see Claude's memory `feedback_prefer_typed_syntax_over_drag`), the entry point is a
+text/command bar: a typed instruction goes to Gemma, comes back as one or more tool
+calls, and -- since these are the same structurally destructive ops tested today (they
+can shift/drop a lot of data if misapplied) -- the app shows a plain-language preview
+("Insert 2 rows at row 6", "Delete columns I-K") for the user to confirm before actually
+executing, rather than auto-running silently.
+
+**Phased build-out:**
+1. Feasibility spike: run a quantized Gemma 4 E2B via MLX Swift in a throwaway test
+   target; measure load time, tokens/sec, and peak memory on an actual iPhone SE 4 (or
+   nearest available A18/8GB device) -- no XLSV integration yet.
+2. Model delivery: download-on-first-use + cache, per above.
+3. Tool surface: fixed JSON schema for the handful of range-operation tools; a thin
+   dispatcher that validates a tool call and calls into the existing Swift functions.
+4. Command bar UI + confirm-before-execute preview.
+5. Test pass reusing this session's methodology -- before/after xlsx diff +
+   `tools/xlsx_corruption_check.py` per tool -- but driven by model-generated tool calls
+   instead of manual UI taps, to catch both app bugs and model tool-calling mistakes.
+
+**Explicitly out of scope for v1:** free-form cell content generation/analysis (e.g.
+"summarize this sheet") -- a different, lower-stakes read-only capability that could
+follow later. v1 is scoped to the structural range operations already tested and trusted
+today.
