@@ -170,6 +170,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     let speechInputHelper = SpeechInputHelper()
     var Hintview:Hint!
 
+    // Double-tap on a data cell opens a small panel to patch that cell's
+    // column width / row height (see handleDoubleTapToOpenCellSizePatch).
+    // Mirrors the same feature in ViewController.swift.
+    var cellSizePatchSlider: CellSizePatchSlider?
+
     // Row filter (see Datafilter.swift/.xib -- dialog opened by tapping a
     // column header). columnFilters is keyed by column index (indexPath.item);
     // a column's comparisons are ANDed together (e.g. ">=10,<=20" makes a
@@ -1462,6 +1467,17 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         }
         if customview2 != nil{
             customview2.removeFromSuperview()
+        }
+        // Selecting a different cell invalidates whatever column/row the
+        // size-patch panel was targeting (panel.targetColumn/targetRow are
+        // set once when it opens and never updated live), so leaving it
+        // open here let its sliders silently keep patching the *previous*
+        // cell's column/row after tapping away. Dismiss it the same way
+        // Hintview/customview2 already are above; a fresh double-tap
+        // reopens it for whichever cell the user meant.
+        if cellSizePatchSlider != nil {
+            cellSizePatchSlider?.removeFromSuperview()
+            cellSizePatchSlider = nil
         }
         if collectionView === myCollectionView{
             //reset change history
@@ -2875,9 +2891,9 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         checkAndUpdateLaunchDateAlsoTakeDailyBackup()
         
         #if !targetEnvironment(macCatalyst)
-//        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-//        doubleTapGesture.numberOfTapsRequired = 2
-//        myCollectionView.addGestureRecognizer(doubleTapGesture)
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTapToOpenCellSizePatch(_:)))
+        doubleTapGesture.numberOfTapsRequired = 2
+        myCollectionView.addGestureRecognizer(doubleTapGesture)
         #endif
 
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderTouchDown(_:)), for: .touchDown)
@@ -2962,20 +2978,112 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
     
     
-    //Filename Change
-    //
-    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: myCollectionView)
-        
-        if let indexPath = myCollectionView.indexPathForItem(at: location) {
-            print("Double-tapped cell at \(indexPath)")
-            // Perform your double-tap action here
+    // Double-tap on a data cell opens a small panel to patch just that
+    // cell's column width / row height. Header cells (row-number column,
+    // column-letter row) are skipped -- customSizedWidth/customSizedHeight
+    // are keyed by real column/row index, and column 0 / row 0 are the
+    // fixed INDEX_WIDTH/INDEX_HEIGHT headers, not resizable data. Mirrors
+    // ViewController.swift's handleDoubleTapToOpenCellSizePatch.
+    @objc func handleDoubleTapToOpenCellSizePatch(_ gesture: UITapGestureRecognizer) {
+        let locationCG = gesture.location(in: myCollectionView)
+        guard let indexPath = myCollectionView.indexPathForItem(at: locationCG),
+              indexPath.section != 0, indexPath.item != 0
+        else { return }
+
+        cellSizePatchSlider?.removeFromSuperview()
+        let column = indexPath.item
+        let row = realRow(forDisplaySection: indexPath.section)
+
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let layout = myCollectionView.collectionViewLayout as? CustomCollectionViewLayout
+        let defaultWidth = Double(layout?.CELL_WIDTH ?? 70.0)
+        let defaultHeight = Double(layout?.CELL_HEIGHT ?? 30.0)
+        let currentWidth = appd.cswLocation.firstIndex(of: column).map { Double(appd.customSizedWidth[$0]) } ?? defaultWidth
+        let currentHeight = appd.cshLocation.firstIndex(of: row).map { Double(appd.customSizedHeight[$0]) } ?? defaultHeight
+
+        let panelSize = CGSize(width: 260, height: 180)
+        let panel = CellSizePatchSlider(frame: CGRect(x: (view.bounds.width - panelSize.width) / 2,
+                                                        y: (view.bounds.height - panelSize.height) / 2,
+                                                        width: panelSize.width, height: panelSize.height))
+        panel.targetColumn = column
+        panel.targetRow = row
+
+        // See ViewController.swift's matching setup for why these are
+        // overridden -- the xib's label frames were sized for the short
+        // static "width"/"height" captions, not this longer value text.
+        let labelFont = UIFont.systemFont(ofSize: 11)
+        panel.widthLabel.font = labelFont
+        panel.widthLabel.frame.size.width = 90
+        panel.heightLabel.font = labelFont
+        panel.heightLabel.frame.size.width = 90
+
+        panel.widthSlider.minimumValue = 20
+        panel.widthSlider.maximumValue = 300
+        panel.widthSlider.value = Float(currentWidth)
+        panel.widthLabel.text = "Width: \(Int(currentWidth))"
+
+        panel.heightSlider.minimumValue = 15
+        panel.heightSlider.maximumValue = 150
+        panel.heightSlider.value = Float(currentHeight)
+        panel.heightLabel.text = "Height: \(Int(currentHeight))"
+
+        panel.widthSlider.addTarget(self, action: #selector(cellSizePatchWidthChanged(_:)), for: .valueChanged)
+        panel.heightSlider.addTarget(self, action: #selector(cellSizePatchHeightChanged(_:)), for: .valueChanged)
+        panel.closebutton.addTarget(self, action: #selector(cellSizePatchClose(_:)), for: .touchUpInside)
+
+        view.addSubview(panel)
+        view.bringSubview(toFront: panel)
+        cellSizePatchSlider = panel
+    }
+
+    @objc func cellSizePatchWidthChanged(_ sender: UISlider) {
+        guard let column = cellSizePatchSlider?.targetColumn else { return }
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let newWidth = Double(sender.value)
+        if let idx = appd.cswLocation.firstIndex(of: column) {
+            appd.customSizedWidth[idx] = newWidth
+        } else {
+            appd.cswLocation.append(column)
+            appd.customSizedWidth.append(newWidth)
         }
-        
-        selection_bool = true
+        cellSizePatchSlider?.widthLabel.text = "Width: \(Int(newWidth))"
+
+        appd.collectionViewCellSizeChanged = 1
+        myCollectionView.collectionViewLayout.invalidateLayout()
         myCollectionView.reloadData()
     }
-    
+
+    @objc func cellSizePatchHeightChanged(_ sender: UISlider) {
+        guard let row = cellSizePatchSlider?.targetRow else { return }
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let newHeight = Double(sender.value)
+        if let idx = appd.cshLocation.firstIndex(of: row) {
+            appd.customSizedHeight[idx] = newHeight
+        } else {
+            appd.cshLocation.append(row)
+            appd.customSizedHeight.append(newHeight)
+        }
+        cellSizePatchSlider?.heightLabel.text = "Height: \(Int(newHeight))"
+
+        appd.collectionViewCellSizeChanged = 1
+        myCollectionView.collectionViewLayout.invalidateLayout()
+        myCollectionView.reloadData()
+    }
+
+    // Persists the same way the existing row/col-delete paths already do
+    // (see minusAction) so a patched size survives an app relaunch.
+    @objc func cellSizePatchClose(_ sender: UIButton) {
+        let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+        let defaults = UserDefaults.standard
+        defaults.set(appd.customSizedWidth, forKey: "NEW_CELL_WIDTH")
+        defaults.set(appd.cswLocation, forKey: "NEW_CELL_WIDTH_LOCATION")
+        defaults.set(appd.customSizedHeight, forKey: "NEW_CELL_HEIGHT")
+        defaults.set(appd.cshLocation, forKey: "NEW_CELL_HEIGHT_LOCATION")
+
+        cellSizePatchSlider?.removeFromSuperview()
+        cellSizePatchSlider = nil
+    }
+
     func extractExcelCellReferences(from expression: String) -> [String] {
         // Define a regular expression for Excel cell references
         let regexPattern = "[A-Za-z]+\\d+"
