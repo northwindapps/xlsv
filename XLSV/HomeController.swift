@@ -121,7 +121,20 @@ class HomeController: UIViewController {
         let settingsButton = makeSettingsButton()
         settingsButton.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [spreadsheetButton, formFillButton, playgroundButton])
+        var stackButtons: [UIButton] = [spreadsheetButton, formFillButton, playgroundButton]
+
+        // Only shown when LegacyFileCheckViewController's migration (run before this
+        // screen ever appears) actually found something -- everyone else sees the
+        // normal 3-button Home unchanged. Without this, the one-time "Files Recovered"
+        // alert told the user their data was under "Recovered Files" with no actual way
+        // to reach that screen from here -- confirmed missing 2026-08-24.
+        if LegacyMigration.hasRecoveredFiles() {
+            let recoveredFilesButton = makeButton(title: "Recovered Files", subtitle: "Sheets recovered from an earlier version of this app")
+            recoveredFilesButton.addTarget(self, action: #selector(openRecoveredFiles), for: .touchUpInside)
+            stackButtons.append(recoveredFilesButton)
+        }
+
+        let stack = UIStackView(arrangedSubviews: stackButtons)
         stack.axis = .vertical
         stack.spacing = 16
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -187,6 +200,36 @@ class HomeController: UIViewController {
         ])
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        presentMigrationNoticeIfNeeded()
+    }
+
+    // TEMPORARY -- this entire method exists only for the one final release shipped under
+    // com.yumiya.xlsv2 before this app moves to the com.yumiya.blueframe App Store listing
+    // (~13k existing installs there vs ~280 here -- see Claude's memory
+    // `project_xlsv_repo_family_and_v205_migration` for the full reasoning). Remove this
+    // method and its call in viewDidAppear once that release has shipped and this bundle ID
+    // is no longer being updated.
+    //
+    // HomeController persists for the life of the process (mode screens are presented on top
+    // of it, not replacing it), so this fires once per launch -- not once per return to Home.
+    private func presentMigrationNoticeIfNeeded() {
+        let alert = UIAlertController(
+            title: "Important Notice",
+            message: """
+            XLSV is moving to a new App Store listing. This app will not receive further updates.
+
+            To keep using XLSV, please search the App Store for “XLSV” and install the new listing.
+
+            This is a separate app and will not have your existing files. Before switching, open a file, tap MENU, and use Export (Files or Email) to save a copy you can bring over.
+            """,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
     @objc private func openSpreadsheet() {
         showLoading()
         // The spinner has to actually get a runloop turn to paint before the
@@ -222,6 +265,13 @@ class HomeController: UIViewController {
                 self.hideLoading()
             }
         }
+    }
+
+    @objc private func openRecoveredFiles() {
+        let listViewController = RecoveredFilesViewController()
+        let nav = UINavigationController(rootViewController: listViewController)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
 
     @objc private func openSettings() {

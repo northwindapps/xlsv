@@ -284,7 +284,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         
         
-        let initialViewController = storyboard.instantiateViewController(withIdentifier: "Home")
+        // Checks for and safely saves any files left over from the 1.3.6-era format before the
+        // user ever reaches Home -- see LegacyFileCheckViewController.swift. Built in code (no
+        // storyboard identifier to instantiate), so it's constructed directly.
+        let initialViewController: UIViewController = LegacyFileCheckViewController()
         
         
         

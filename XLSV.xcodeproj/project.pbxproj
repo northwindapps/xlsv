@@ -23,6 +23,9 @@
 		2BB3DD16300C8E2700040AA8 /* FileFillViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */; };
 		2BB3DD18300CFFB300040AA8 /* HomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB3DD17300CFFB100040AA8 /* HomeController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
+		5C192DAEBCD0E7891092B866 /* LegacyMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */; };
+		79EC491B37F5A13946B5A3AD /* RecoveredFilesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */; };
+		5D3DF1818E1B3B5EE8472AC9 /* LegacyFileCheckViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */; };
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
@@ -118,6 +121,9 @@
 		2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileFillViewController.swift; sourceTree = "<group>"; };
 		2BB3DD17300CFFB100040AA8 /* HomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeController.swift; sourceTree = "<group>"; };
 		2BB809742F72DF74009666B6 /* BackupTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTableViewController.swift; sourceTree = "<group>"; };
+		3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyMigration.swift; sourceTree = "<group>"; };
+		F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveredFilesViewController.swift; sourceTree = "<group>"; };
+		0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyFileCheckViewController.swift; sourceTree = "<group>"; };
 		2BBF55252F8B991E008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard2.xib; sourceTree = "<group>"; };
 		2BBF55282F8B991E008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Customviewboard2.xcstrings; sourceTree = "<group>"; };
 		2BBF55292F8B9C18008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/RangeSelectionOpsView.xib; sourceTree = "<group>"; };
@@ -368,6 +374,9 @@
 				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
 				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
 				2BB809742F72DF74009666B6 /* BackupTableViewController.swift */,
+				3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */,
+				F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */,
+				0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */,
 				6AC83230246658C2006FA917 /* ReadWriteJSON.swift */,
 				6AD456152AF4F8B20049198C /* CalculationService.swift */,
 				6AC832282465CBC2006FA917 /* FileCollectionViewCell.swift */,
@@ -640,6 +649,9 @@
 				8DB0D36E1E5023C80075E103 /* speechView.swift in Sources */,
 				6AD456162AF4F8B20049198C /* CalculationService.swift in Sources */,
 				2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */,
+				5C192DAEBCD0E7891092B866 /* LegacyMigration.swift in Sources */,
+				79EC491B37F5A13946B5A3AD /* RecoveredFilesViewController.swift in Sources */,
+				5D3DF1818E1B3B5EE8472AC9 /* LegacyFileCheckViewController.swift in Sources */,
 				6A7377882BA5D1D40041EFA9 /* LoadingViewController.swift in Sources */,
 				6AB0A80F245B14D3007703C0 /* SheetReadFile.swift in Sources */,
 				8DF796AE1E4E799500BE7D38 /* NilController.swift in Sources */,
@@ -977,7 +989,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.5.1;
+				CURRENT_PROJECT_VERSION = 3.5.4;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -998,7 +1010,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.1;
+				MARKETING_VERSION = 3.5.4;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1033,7 +1045,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.5.1;
+				CURRENT_PROJECT_VERSION = 3.5.4;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1050,7 +1062,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.1;
+				MARKETING_VERSION = 3.5.4;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
