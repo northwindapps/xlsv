@@ -100,12 +100,12 @@
 	<string>Used to convert your speech into cell input</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.yumiya.xlsv2</key>
+		<key>iCloud.com.yumiya.blueframe</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>
 			<key>NSUbiquitousContainerName</key>
-			<string>iCloud.com.yumiya.xlsv2</string>
+			<string>iCloud.com.yumiya.blueframe</string>
 			<key>NSUbiquitousContainerSupportedFolderLevels</key>
 			<string>Any</string>
 		</dict>

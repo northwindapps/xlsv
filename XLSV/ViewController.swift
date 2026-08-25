@@ -2973,10 +2973,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // storyboard instantiates this view via init(coder:), never
         // init(adSize:)) -- standard 320x50 banner, fits within the
         // storyboard's constraint-driven ~61pt container.
-//        bannerview.adSize = AdSizeBanner
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-//        bannerview.rootViewController = self
-//        bannerview.load(Request())
+        bannerview.adSize = AdSizeBanner
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+        bannerview.rootViewController = self
+        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -8139,10 +8139,17 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if let keyboardFrame: NSValue = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
+            // Previously gated behind `if self.KEYBOARDLOCATION < 1.0`, so this only ever
+            // fired once per process -- the very first keyboard height seen (predictive-text
+            // QuickType bar visible or not, keyboard type, orientation, etc.) stuck for the
+            // rest of the session. opendatainputview() positions the formula/input bar as
+            // `SCREENSIZE - KEYBOARDLOCATION - 60`, i.e. directly off this value, so once the
+            // real keyboard height diverged from that first-seen one, the bar floated at a
+            // stale position -- confirmed via screenshot, the bar sitting mid-grid instead of
+            // just above the actual keyboard. Always updating keeps it tracking the real,
+            // current keyboard height on every show.
             UIView.animate(withDuration: 0.9) {
-                if self.KEYBOARDLOCATION < 1.0{
-                    self.KEYBOARDLOCATION = keyboardHeight
-                }
+                self.KEYBOARDLOCATION = keyboardHeight
             }
         }
     }

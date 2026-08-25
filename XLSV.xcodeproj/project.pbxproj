@@ -23,9 +23,6 @@
 		2BB3DD16300C8E2700040AA8 /* FileFillViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */; };
 		2BB3DD18300CFFB300040AA8 /* HomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB3DD17300CFFB100040AA8 /* HomeController.swift */; };
 		2BB809752F72DF74009666B6 /* BackupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB809742F72DF74009666B6 /* BackupTableViewController.swift */; };
-		5C192DAEBCD0E7891092B866 /* LegacyMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */; };
-		79EC491B37F5A13946B5A3AD /* RecoveredFilesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */; };
-		5D3DF1818E1B3B5EE8472AC9 /* LegacyFileCheckViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */; };
 		2BBF55272F8B991E008EB6FB /* Customviewboard2.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF55262F8B991E008EB6FB /* Customviewboard2.xib */; };
 		2BBF552B2F8B9C18008EB6FB /* RangeSelectionOpsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2BBF552A2F8B9C18008EB6FB /* RangeSelectionOpsView.xib */; };
 		2BDD7F9B2F6BB2FA00134898 /* HandwritingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDD7F9A2F6BB2F300134898 /* HandwritingViewController.swift */; };
@@ -35,6 +32,8 @@
 		3C40887121D6321D005D0E6D /* colorclass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C40887021D6321D005D0E6D /* colorclass.swift */; };
 		3C6F503920E3D151001EC20D /* TableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6F503820E3D151001EC20D /* TableViewCell.swift */; };
 		3CD1E3B62142985F0023BC43 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */; };
+		5C192DAEBCD0E7891092B866 /* LegacyMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */; };
+		5D3DF1818E1B3B5EE8472AC9 /* LegacyFileCheckViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */; };
 		6A1F5E052542D705002796C0 /* contenttype.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A1F5E042542D704002796C0 /* contenttype.swift */; };
 		6A1F5E0D2542D728002796C0 /* sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A1F5E072542D727002796C0 /* sheet.swift */; };
 		6A1F5E0E2542D728002796C0 /* adapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A1F5E082542D727002796C0 /* adapter.swift */; };
@@ -73,6 +72,7 @@
 		6ACE5BB42B9C646B00CBA907 /* XLSVTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ACE5BB32B9C646B00CBA907 /* XLSVTests.swift */; };
 		6AD456162AF4F8B20049198C /* CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD456152AF4F8B20049198C /* CalculationService.swift */; };
 		6AD9361223E59D2E00479881 /* mergedCellStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9361123E59D2E00479881 /* mergedCellStyle.swift */; };
+		79EC491B37F5A13946B5A3AD /* RecoveredFilesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */; };
 		7F7BE06BF6EABB72BF5C6090 /* SpeechInputHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */; };
 		8971BBF5FAA40EF90F14ED03 /* CellStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C076B50B1FF440F7B42B318 /* CellStore.swift */; };
 		8D3014511F0A74720026E961 /* Datainputview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3014501F0A74720026E961 /* Datainputview.swift */; };
@@ -102,6 +102,7 @@
 
 /* Begin PBXFileReference section */
 		08B7EF2A70DF7C858A22C13F /* SpeechInputHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInputHelper.swift; sourceTree = "<group>"; };
+		0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyFileCheckViewController.swift; sourceTree = "<group>"; };
 		1036C35379645F1FE25DDFFE /* Pods-MultiDirectionCollectionView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.release.xcconfig"; sourceTree = "<group>"; };
 		1C076B50B1FF440F7B42B318 /* CellStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CellStore.swift; sourceTree = "<group>"; };
 		2B0FEECF2F782629005BF38E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
@@ -121,9 +122,6 @@
 		2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileFillViewController.swift; sourceTree = "<group>"; };
 		2BB3DD17300CFFB100040AA8 /* HomeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeController.swift; sourceTree = "<group>"; };
 		2BB809742F72DF74009666B6 /* BackupTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTableViewController.swift; sourceTree = "<group>"; };
-		3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyMigration.swift; sourceTree = "<group>"; };
-		F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveredFilesViewController.swift; sourceTree = "<group>"; };
-		0C586970C0B65A43B22438D0 /* LegacyFileCheckViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyFileCheckViewController.swift; sourceTree = "<group>"; };
 		2BBF55252F8B991E008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Customviewboard2.xib; sourceTree = "<group>"; };
 		2BBF55282F8B991E008EB6FB /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Customviewboard2.xcstrings; sourceTree = "<group>"; };
 		2BBF55292F8B9C18008EB6FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/RangeSelectionOpsView.xib; sourceTree = "<group>"; };
@@ -144,6 +142,7 @@
 		3C40887021D6321D005D0E6D /* colorclass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = colorclass.swift; sourceTree = "<group>"; };
 		3C6F503820E3D151001EC20D /* TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableViewCell.swift; sourceTree = "<group>"; };
 		3CD1E3B52142985F0023BC43 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		3CD2A369E784A73F9B46F6EF /* LegacyMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyMigration.swift; sourceTree = "<group>"; };
 		43D033E5AA00307D9793FAA2 /* Pods-XLSV.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XLSV.release.xcconfig"; path = "Target Support Files/Pods-XLSV/Pods-XLSV.release.xcconfig"; sourceTree = "<group>"; };
 		5946AB48E368AF4458CDF7F2 /* Pods-MultiDirectionCollectionViewTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionViewTests.release.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionViewTests/Pods-MultiDirectionCollectionViewTests.release.xcconfig"; sourceTree = "<group>"; };
 		5AAC6005D389121F9508E58F /* Pods-XLSV.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XLSV.debug.xcconfig"; path = "Target Support Files/Pods-XLSV/Pods-XLSV.debug.xcconfig"; sourceTree = "<group>"; };
@@ -222,6 +221,7 @@
 		BB5F65B16AF8F8F0FE7B1104 /* Pods_MultiDirectionCollectionView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MultiDirectionCollectionView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_XLSV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3156E3FD5FC5086E4F2AEBA /* Pods-MultiDirectionCollectionView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.debug.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.debug.xcconfig"; sourceTree = "<group>"; };
+		F810661D2EBD599071364769 /* RecoveredFilesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveredFilesViewController.swift; sourceTree = "<group>"; };
 		FB5D95361ABE5E6B00E7C8CD /* XLSV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLSV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -989,7 +989,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.5.4;
+				CURRENT_PROJECT_VERSION = 3.0.0;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1010,7 +1010,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.4;
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1021,7 +1021,7 @@
 					"-framework",
 					"\"ZIPFoundation\"",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yumiya.xlsv2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yumiya.blueframe;
 				PRODUCT_NAME = XLSV;
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1045,7 +1045,7 @@
 				CODE_SIGN_ENTITLEMENTS = XLSV/XLSV.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.5.4;
+				CURRENT_PROJECT_VERSION = 3.0.0;
 				DEVELOPMENT_TEAM = 637JS3JU7M;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1062,7 +1062,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.4;
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"$(inherited)",
@@ -1073,7 +1073,7 @@
 					"-framework",
 					"\"ZIPFoundation\"",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yumiya.xlsv2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yumiya.blueframe;
 				PRODUCT_NAME = XLSV;
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";

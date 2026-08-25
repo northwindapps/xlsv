@@ -240,6 +240,40 @@ that reproduces the sheet's layout when opened in Excel/Numbers. Now builds a pr
 above), places each value at its actual row/column position (blank for unused cells),
 and joins rows as real CSV lines with comma/quote/newline-aware escaping.
 
+## Bundle ID swap sequence: one final com.yumiya.xlsv2 release, then blueframe (2026-08-25)
+
+Status: both steps complete. Currently on `com.yumiya.blueframe`, version 3.1.0 --
+**ready to archive/submit as the actual blueframe release once you're ready.**
+
+Given the same-display-name confusion risk discussed the same day (searching "XLSV"
+could surface two listings, and existing xlsv2 users searching later would find an
+unfamiliar "GET" listing with none of their data), the swap was staged in two steps
+instead of one direct cutover:
+
+1. **One farewell release under `com.yumiya.xlsv2`, version bumped to 3.5.4** (past the
+   3.5.3 already live -- the checked-out project file still said 3.5.1, drifted from
+   what was actually last submitted). Added a one-time "Important Notice" alert on
+   `HomeController`, shown once per launch, telling existing users this app won't be
+   updated further and to search for the new listing -- with an explicit warning that
+   the new app is separate and won't have their files, plus instructions to export
+   first (MENU -> Export, Files or Email) before switching. No direct App Store link
+   was included -- blueframe's listing status was ambiguous ("removed from account" vs.
+   a "2.0.5 Ready for Distribution" row shown in the same screenshot) and a dead link in
+   a real user-facing notice would've been worse than no link.
+2. **Swapped forward to `com.yumiya.blueframe` once told the 3.5.4 release had passed
+   review** (2026-08-25): bundle ID + iCloud container (`iCloud.com.yumiya.blueframe`)
+   restored, the temporary notice alert removed entirely (it was explicitly marked
+   TEMPORARY in its own comment, scoped to that one xlsv2 release only), version bumped
+   to **3.1.0** -- chosen to land above the `3.0.0 "Prepare for Submission"` slot already
+   showing on the blueframe App Store Connect record, not related to xlsv2's own 3.5.x
+   numbering (separate app record, separate version lineage). Build-verified.
+
+Release notes for the 3.5.4 farewell build were also written in English + ja/zh-Hans/de/
+da/fr, natural-translated (not literal), covering the actual accumulated UI changes
+(header cell background, cursor-cell selection handle, cell resize view, the notice
+itself) -- not persisted to a file, only given directly in chat for pasting into App
+Store Connect's per-locale fields.
+
 **Also found and fixed the same day: no way to actually reach "Recovered Files" at all.**
 The one-time "Files Recovered" alert (built as part of the port above) correctly told the
 user their data was saved under "Recovered Files" -- but nothing in the app's UI actually

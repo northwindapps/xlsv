@@ -200,36 +200,6 @@ class HomeController: UIViewController {
         ])
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        presentMigrationNoticeIfNeeded()
-    }
-
-    // TEMPORARY -- this entire method exists only for the one final release shipped under
-    // com.yumiya.xlsv2 before this app moves to the com.yumiya.blueframe App Store listing
-    // (~13k existing installs there vs ~280 here -- see Claude's memory
-    // `project_xlsv_repo_family_and_v205_migration` for the full reasoning). Remove this
-    // method and its call in viewDidAppear once that release has shipped and this bundle ID
-    // is no longer being updated.
-    //
-    // HomeController persists for the life of the process (mode screens are presented on top
-    // of it, not replacing it), so this fires once per launch -- not once per return to Home.
-    private func presentMigrationNoticeIfNeeded() {
-        let alert = UIAlertController(
-            title: "Important Notice",
-            message: """
-            XLSV is moving to a new App Store listing. This app will not receive further updates.
-
-            To keep using XLSV, please search the App Store for “XLSV” and install the new listing.
-
-            This is a separate app and will not have your existing files. Before switching, open a file, tap MENU, and use Export (Files or Email) to save a copy you can bring over.
-            """,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
-    }
-
     @objc private func openSpreadsheet() {
         showLoading()
         // The spinner has to actually get a runloop turn to paint before the

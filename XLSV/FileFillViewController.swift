@@ -985,9 +985,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
                         cell.label2?.text = String(realSectionRow)
                         rowinNumber.append("r" + String(realSectionRow))
                     }
-
-                    cell.label2?.backgroundColor = UIColor(red: 255/255, green: 253/255, blue: 208/255, alpha: 1.0)
+                    
+                    cell.label2?.backgroundColor = UIColor(red: 204/255, green: 255/255, blue: 204/255, alpha: 1.0)
                     cell.label2?.textAlignment = .center
+                    cell.label2?.verticalAlignment = .center
                     //UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 1.0)
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
@@ -1015,10 +1016,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
                     cell.label2?.layer.borderColor = UIColor.white.cgColor
                     cell.label2?.layer.borderWidth = 0.7
-                    cell.label2?.backgroundColor = UIColor(red: 255/255, green: 253/255, blue: 208/255, alpha: 1.0)
+                    cell.label2?.backgroundColor = UIColor(red: 204/255, green: 255/255, blue: 204/255, alpha: 1.0)
                     cell.label2?.textAlignment = .center
+                    cell.label2?.verticalAlignment = .center
                     cell.label2?.textColor = UIColor.black
-                    cell.label2?.textAlignment = .center
                     cell.label2?.adjustsFontSizeToFitWidth = true
                     cell.label2?.minimumScaleFactor = 0.4
                     cell.label2?.numberOfLines = 1
@@ -2904,10 +2905,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         // storyboard instantiates this view via init(coder:), never
         // init(adSize:)) -- standard 320x50 banner, fits within the
         // storyboard's constraint-driven container.
-//        bannerview.adSize = AdSizeBanner
-//        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
-//        bannerview.rootViewController = self
-//        bannerview.load(Request())
+        bannerview.adSize = AdSizeBanner
+        bannerview.adUnitID = "ca-app-pub-5284441033171047/5452654189"
+        bannerview.rootViewController = self
+        bannerview.load(Request())
         
         Thread.sleep(forTimeInterval: 0.5)
         let pointA = CGPoint.init(x: 600, y: 600)
@@ -8010,10 +8011,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         if let keyboardFrame: NSValue = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
+            // Previously gated behind `if self.KEYBOARDLOCATION < 1.0`, so this only ever
+            // fired once per process -- see ViewController.swift's matching fix for the full
+            // reasoning (confirmed via screenshot: the formula/input bar floating at a stale
+            // position mid-grid instead of just above the actual keyboard, once the real
+            // keyboard height diverged from whatever was first seen).
             UIView.animate(withDuration: 0.9) {
-                if self.KEYBOARDLOCATION < 1.0{
-                    self.KEYBOARDLOCATION = keyboardHeight
-                }
+                self.KEYBOARDLOCATION = keyboardHeight
             }
         }
     }
