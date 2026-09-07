@@ -173,6 +173,10 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     var customview2 :Customview2!
     var Fview :formatview!
+    // Programmatic button that opens the format panel (Fview), added next to
+    // cellSizeSlicer -- the storyboard has no entry point for it. See
+    // installFormatPanelButton() / openFormatView().
+    var formatPanelButton: UIButton?
     var datainputview :Datainputview!
     let speechInputHelper = SpeechInputHelper()
     var Hintview:Hint!
@@ -463,6 +467,21 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return FileFillViewController.namedCellColors[name] ?? defaultColor
     }
 
+    // "#RRGGBB" per format-panel colour name -- recorded into pendingStyleChanges /
+    // handed to StyleTableEditor (styles.xml only speaks explicit rgb). In step
+    // with namedCellColors above.
+    static let namedCellColorHex: [String: String] = [
+        "green": "#006600", "water": "#00FFFF", "yellow": "#FFFF00", "orange": "#FF6600",
+        "lightGray": "#AAAAAA", "magenta": "#FF00FF", "blue": "#3399FF", "red": "#FF0000",
+        "brown": "#663D00", "purple": "#280064", "gray": "#808080", "white": "#FFFFFF",
+        "black": "#000000"
+    ]
+
+    func cellColorHex(_ name: String) -> String? {
+        if name.hasPrefix("#") { return name }
+        return FileFillViewController.namedCellColorHex[name]
+    }
+
     // Maps an xlsx <left/right/top/bottom style="..."> name to a screen border
     // width. Scaled down further from Excel's own relative weights (hair < thin
     // < medium < thick) since this app runs on phone/tablet screens, where
@@ -664,6 +683,11 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // it's only cleared in resetAllContent()'s full-wipe flow and after a
     // successful flush.
     let pendingXlsxChanges = PendingXlsxChangeSet()
+
+    // Deferred-write tracking for in-app cell styling (text/fill color, font size --
+    // see PendingStyleChangeSet.swift + StyleTableEditor.swift). Resolved through
+    // StyleTableEditor at flush time; cleared alongside pendingXlsxChanges.
+    let pendingStyleChanges = PendingStyleChangeSet()
 
     private func invalidateLocationIndexCache() {
         locationIndexCacheCount = -1
@@ -1909,12 +1933,13 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // since none of those re-serialize from memory themselves.
     @discardableResult
     func flushPendingXlsxChangesIfNeeded() -> Bool {
-        guard pendingXlsxChanges.isDirty else { return true }
+        guard pendingXlsxChanges.isDirty || pendingStyleChanges.isDirty else { return true }
         let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
         let serviceInstance = Service(imp_sheetNumber: 0, imp_stringContents: [String](), imp_locations: [String](), imp_idx: [Int](), imp_fileName: "", imp_formula: [String]())
-        let ok = serviceInstance.flushPendingEditsToXlsx(fp: appd.imported_xlsx_file_path, edits: pendingXlsxChanges.edits)
+        let ok = serviceInstance.flushPendingEditsToXlsx(fp: appd.imported_xlsx_file_path, edits: pendingXlsxChanges.edits, styleChanges: pendingStyleChanges.edits)
         if ok {
             pendingXlsxChanges.clear()
+            pendingStyleChanges.clear()
             updateUnsavedDataReminderVisibility()
         }
         return ok
@@ -2488,6 +2513,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.tcolor.removeAll()
             self.textsize.removeAll()
             self.pendingXlsxChanges.clear()
+            self.pendingStyleChanges.clear()
             self.updateUnsavedDataReminderVisibility()
             self.columnFilters.removeAll()
             self.filteredOutRows.removeAll()
@@ -2627,6 +2653,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             self.tcolor.removeAll()
             self.textsize.removeAll()
             self.pendingXlsxChanges.clear()
+            self.pendingStyleChanges.clear()
             self.updateUnsavedDataReminderVisibility()
             self.columnFilters.removeAll()
             self.filteredOutRows.removeAll()
@@ -2950,6 +2977,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderChanged(_:)), for: .valueChanged)
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderReleased(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         configureCellSizeSlider()
+        installFormatPanelButton()
 
         let isJapanese = (NSLocale.preferredLanguages.first ?? "en").hasPrefix("ja")
         unsavedDataReiminderBUtton.setTitle(isJapanese ? "未保存" : "Unsaved", for: .normal)
@@ -2962,7 +2990,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     // pending xlsx edits not yet flushed to disk (see PendingXlsxChangeSet.swift).
     // Call this at every point pendingXlsxChanges is mutated (record or clear).
     func updateUnsavedDataReminderVisibility() {
-        unsavedDataReiminderBUtton.isHidden = !pendingXlsxChanges.isDirty
+        unsavedDataReiminderBUtton.isHidden = !pendingXlsxChanges.isDirty && !pendingStyleChanges.isDirty
     }
 
     @objc func unsavedDataReminderTapped() {
@@ -2993,7 +3021,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             }
         }
 
-        guard pendingXlsxChanges.isDirty else {
+        guard pendingXlsxChanges.isDirty || pendingStyleChanges.isDirty else {
             proceedWithDailyBackup()
             return
         }
@@ -4736,6 +4764,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         isExcel = !appd.imported_xlsx_file_path.isEmpty
         isCSV = !isExcel
         pendingXlsxChanges.clear()
+        pendingStyleChanges.clear()
         updateUnsavedDataReminderVisibility()
         columnFilters.removeAll()
         filteredOutRows.removeAll()
@@ -4907,45 +4936,27 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     }
     
     @objc func sliderValueChanged(_ sender:Any){
-        let rounded = Int(floor(Fview.sizeslider.value))
-        Fview.sizelabel.text = String(rounded)
-        
+        guard let panel = Fview else { return }
+        let rounded = Int(floor(panel.sizeslider.value))
+        panel.sizelabel.text = String(rounded)
+
         let IP :String = cursor
-        
-        
-        switch UIDevice.current.userInterfaceIdiom {
-        case .pad:
-            if location.index(of: IP) == nil{
-                content.append("")
-                location.append(IP)
-                textsize.append(String(selectingSize))
-                bgcolor.append(selectingBgColor)
-                tcolor.append(selectingColor)
-            }
-            break
-            
-        default:
-            if location.index(of: IP) == nil{
-                content.append("")
-                location.append(IP)
-                textsize.append(String(selectingSize))
-                bgcolor.append(selectingBgColor)
-                tcolor.append(selectingColor)
-            }
-            break
-        }
-        
-        
-        
-        let i = location.index(of: IP)
-        textsize[i!] = String(rounded)
+        let i = ensureRenderSlot(cursorKey: IP, excelRef: isExcel ? getIndexlabelForExcel() : IP)
+        textsize[i] = String(rounded)
         selectingSize = rounded
-        
+
+        // xlsx: record the font-size change for the styles.xml rewrite on save.
+        if isExcel {
+            let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            pendingStyleChanges.record(sheetIndex: appd.wsSheetIndex, cellId: getIndexlabelForExcel(), fontSize: Double(rounded))
+            updateUnsavedDataReminderVisibility()
+        }
+
         myCollectionView.reloadData()
-        
+
         saveuserF()
         saveuserD()
-        
+
     }
     
     private func configureCellSizeSlider() {
@@ -5088,18 +5099,85 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
     
     @objc func formatbackaction(_ sender:UIButton)
     {
-        
-        
-        
-        //
-        
-        //if selectedSheet >= localFileNames.startIndex && selectedSheet < localFileNames.endIndex {
+        // CSV persists styling into its JSON sidecar; xlsx records into
+        // pendingStyleChanges and flushes on Save/Export.
+        if isCSV {
             saveAsLocalJson(filename: "csv_sheet1")
-        //}
-        
-        Fview.removeFromSuperview()
+        }
+        updateUnsavedDataReminderVisibility()
+        Fview?.removeFromSuperview()
     }
-    
+
+    // Adds the format-panel entry-point button next to the cell-size slider --
+    // the storyboard never had one, so Fview (formatview) was unreachable.
+    private func installFormatPanelButton() {
+        guard formatPanelButton == nil, let bar = cellSizeSlicer.superview else { return }
+        let button = UIButton(type: .system)
+        button.setTitle("🎨", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17)
+        button.accessibilityLabel = "Cell format"
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(openFormatView), for: .touchUpInside)
+        bar.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.leadingAnchor.constraint(equalTo: cellSizeSlicer.trailingAnchor, constant: 8),
+            button.centerYAnchor.constraint(equalTo: cellSizeSlicer.centerYAnchor),
+            button.widthAnchor.constraint(equalToConstant: 34),
+            button.heightAnchor.constraint(equalToConstant: 30)
+        ])
+        bar.bringSubview(toFront: button)
+        formatPanelButton = button
+    }
+
+    @objc func openFormatView() {
+        guard !cursor.isEmpty else {
+            let ja = (NSLocale.preferredLanguages.first ?? "en").hasPrefix("ja")
+            let a = UIAlertController(title: nil,
+                                      message: ja ? "先にセルを選択してください。" : "Select a cell first.",
+                                      preferredStyle: .alert)
+            a.addAction(UIAlertAction(title: "OK", style: .default))
+            present(a, animated: true)
+            return
+        }
+
+        Fview?.removeFromSuperview()
+
+        let panelWidth: CGFloat = 300
+        let panelHeight: CGFloat = 150
+        let origin = CGPoint(x: max(8, (view.bounds.width - panelWidth) / 2), y: 90)
+        let panel = formatview(frame: CGRect(origin: origin, size: CGSize(width: panelWidth, height: panelHeight)))
+        panel.layer.borderWidth = 1
+        panel.layer.borderColor = UIColor(white: 0.8, alpha: 1).cgColor
+        panel.layer.cornerRadius = 8
+        panel.clipsToBounds = true
+
+        panel.formatBackButton.addTarget(self, action: #selector(formatbackaction(_:)), for: .touchUpInside)
+        panel.sizeslider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+
+        let colorButtons: [(UIButton?, Selector)] = [
+            (panel.color1, #selector(c1(_:))), (panel.color2, #selector(c2(_:))),
+            (panel.color5, #selector(c5(_:))), (panel.color6, #selector(c6(_:))),
+            (panel.color7, #selector(c7(_:))), (panel.color8, #selector(c8(_:))),
+            (panel.color9, #selector(c9(_:))), (panel.color10, #selector(c10(_:))),
+            (panel.color11, #selector(c11(_:))), (panel.color12, #selector(c12(_:))),
+            (panel.color13, #selector(c13(_:))), (panel.color14, #selector(c14(_:))),
+            (panel.color15, #selector(c15(_:)))
+        ]
+        for (btn, sel) in colorButtons {
+            btn?.addTarget(self, action: sel, for: .touchUpInside)
+        }
+
+        if let i = location.index(of: cursor), i < textsize.count,
+           let current = Double(textsize[i]), current > 0 {
+            panel.sizeslider.value = Float(min(max(current, Double(panel.sizeslider.minimumValue)),
+                                               Double(panel.sizeslider.maximumValue)))
+            panel.sizelabel.text = String(Int(current))
+        }
+
+        Fview = panel
+        view.addSubview(panel)
+    }
+
     @objc func c1(_ sender:UIButton)
     {
         if Fview.fontsegment.selectedSegmentIndex == 0{
@@ -7806,59 +7884,59 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
         return fstring
     }
     
+    // Ensures the cursor cell has a render slot so a style change previews live.
+    // For xlsx it grows every array index-aligned with `location` (matching the
+    // deferred-write reload path) so cellStyleId / cellFormulaXml / locationInExcel
+    // never desync. Returns the slot index.
+    @discardableResult
+    func ensureRenderSlot(cursorKey: String, excelRef: String) -> Int {
+        if let i = location.index(of: cursorKey) { return i }
+        if isExcel {
+            content.append("")
+            location.append(cursorKey)
+            locationInExcel.append(excelRef)
+            cellStyleId.append("")
+            cellFormulaXml.append("")
+            textsize.append("10")
+            bgcolor.append("white")
+            tcolor.append("black")
+        } else {
+            content.append("")
+            location.append(cursorKey)
+            textsize.append(String(selectingSize))
+            bgcolor.append(selectingBgColor)
+            tcolor.append(selectingColor)
+        }
+        return location.count - 1
+    }
+
     func fonteditmode(){
-        
-        //let IP = IndexPath(row: currentindex.section, section: currentindex.section)
+
         let IP :String = cursor
-        
-        if location.index(of: IP) != nil{
-            
-        }else{
-            
-            switch UIDevice.current.userInterfaceIdiom {
-            case .pad:
-                content.append("")
-                location.append(IP)
-                textsize.append(String(selectingSize))
-                bgcolor.append(selectingBgColor)
-                tcolor.append(selectingColor)
-                break
-                
-            default:
-                content.append("")
-                location.append(IP)
-                textsize.append(String(selectingSize))
-                bgcolor.append(selectingBgColor)
-                tcolor.append(selectingColor)
-                break
+        let isBg = FONTEDIT.hasPrefix("bg=")
+        guard isBg || FONTEDIT.hasPrefix("color=") else { return }
+        let value = FONTEDIT
+            .replacingOccurrences(of: isBg ? "bg=" : "color=", with: "")
+            .replacingOccurrences(of: " ", with: "")
+
+        let i = ensureRenderSlot(cursorKey: IP, excelRef: isExcel ? getIndexlabelForExcel() : IP)
+        if isBg { bgcolor[i] = value } else { tcolor[i] = value }
+
+        // xlsx: record the colour change so it persists into styles.xml on save.
+        if isExcel {
+            let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let ref = getIndexlabelForExcel()
+            if let hex = cellColorHex(value) {
+                if isBg {
+                    pendingStyleChanges.record(sheetIndex: appd.wsSheetIndex, cellId: ref, fillColorHex: hex)
+                } else {
+                    pendingStyleChanges.record(sheetIndex: appd.wsSheetIndex, cellId: ref, textColorHex: hex)
+                }
             }
-            
+            updateUnsavedDataReminderVisibility()
         }
-        
-        let i = location.index(of: IP)
-        
-        if FONTEDIT.hasPrefix("bg="){
-            
-            let value = FONTEDIT.replacingOccurrences(of: "bg=", with: "").replacingOccurrences(of: " ", with: "")
-            //            bgcolor.append(value.replacingOccurrences(of: " ", with: ""))
-            
-            bgcolor[i!] = value
-            //print("bg",bgcolor[i!])
-            
-            
-        }else if FONTEDIT.hasPrefix("color="){
-            
-            
-            let value2 = FONTEDIT.replacingOccurrences(of: "color=", with: "").replacingOccurrences(of: " ", with: "")
-            //            tcolor.append(value2.replacingOccurrences(of: " ", with: ""))
-            tcolor[i!] = value2
-            //print("font",tcolor[i!])
-        }
-        
-        
+
         myCollectionView.reloadData()
-        
-        
     }
     
     

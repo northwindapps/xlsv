@@ -88,6 +88,8 @@
 		8DF476F01E6C2B020006D940 /* formatviewboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8DF476F21E6C2B020006D940 /* formatviewboard.xib */; };
 		8DF796AE1E4E799500BE7D38 /* NilController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF796AD1E4E799500BE7D38 /* NilController.swift */; };
 		D7171088DEDDB576E261E29F /* PendingXlsxChangeSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */; };
+		B11CE5701A2B3C4D5E6F7081 /* StyleTableEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE5701A2B3C4D5E6F7080 /* StyleTableEditor.swift */; };
+		B22DF6812B3C4D5E6F708193 /* PendingStyleChangeSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22DF6812B3C4D5E6F708192 /* PendingStyleChangeSet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -218,6 +220,8 @@
 		8DF476FC1E6C2C7B0006D940 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/formatviewboard.strings"; sourceTree = "<group>"; };
 		8DF796AD1E4E799500BE7D38 /* NilController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NilController.swift; sourceTree = "<group>"; };
 		A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingXlsxChangeSet.swift; sourceTree = "<group>"; };
+		A11CE5701A2B3C4D5E6F7080 /* StyleTableEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleTableEditor.swift; sourceTree = "<group>"; };
+		A22DF6812B3C4D5E6F708192 /* PendingStyleChangeSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingStyleChangeSet.swift; sourceTree = "<group>"; };
 		BB5F65B16AF8F8F0FE7B1104 /* Pods_MultiDirectionCollectionView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MultiDirectionCollectionView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3A60D7E0A6F9F1EE0DE62F1 /* Pods_XLSV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_XLSV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3156E3FD5FC5086E4F2AEBA /* Pods-MultiDirectionCollectionView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiDirectionCollectionView.debug.xcconfig"; path = "Target Support Files/Pods-MultiDirectionCollectionView/Pods-MultiDirectionCollectionView.debug.xcconfig"; sourceTree = "<group>"; };
@@ -370,6 +374,8 @@
 				6AB0A81A245B320B007703C0 /* ViewController.swift */,
 				2BB3DD17300CFFB100040AA8 /* HomeController.swift */,
 				A9242191E789C6A0167404AD /* PendingXlsxChangeSet.swift */,
+				A11CE5701A2B3C4D5E6F7080 /* StyleTableEditor.swift */,
+				A22DF6812B3C4D5E6F708192 /* PendingStyleChangeSet.swift */,
 				2BB3DD15300C8E2700040AA8 /* FileFillViewController.swift */,
 				2BEE077E2F8F92CF0074F7D1 /* PlaygroundViewController_ajustingAxiesScales.swift */,
 				2B6704132F9100B500CBBBB3 /* PlaygroundViewController.swift */,
@@ -695,6 +701,8 @@
 				2B98BD61303ABBF200D94E6C /* CellSizePatchSlider.swift in Sources */,
 				2BB3DD18300CFFB300040AA8 /* HomeController.swift in Sources */,
 				D7171088DEDDB576E261E29F /* PendingXlsxChangeSet.swift in Sources */,
+				B11CE5701A2B3C4D5E6F7081 /* StyleTableEditor.swift in Sources */,
+				B22DF6812B3C4D5E6F708193 /* PendingStyleChangeSet.swift in Sources */,
 				6AB0A813245B14E5007703C0 /* Unzipping.swift in Sources */,
 				6A1F5E192542D734002796C0 /* theme.swift in Sources */,
 				6A9743C12BB428F3005D341C /* ExcelHelper.swift in Sources */,

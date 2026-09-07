@@ -1,5 +1,46 @@
 # TODO
 
+## Potential: targeted 2-cell reload on cursor selection instead of full reloadData()
+
+Status: idea, not started (raised 2026-09-08). Not a bug -- current behaviour is by design.
+
+`didSelectItemAt` ([ViewController.swift](XLSV/ViewController.swift#L1632), + the
+FileFillViewController equivalent) calls `myCollectionView.reloadData()` on every
+data-cell tap to move the red cursor border + drag-handle diamond. This does NOT trigger
+a full layout rebuild -- `CustomCollectionViewLayout.prepare()` takes its cheap
+`!dataSourceDidUpdate` fast path ([CustomCollectionViewLayout.swift:298](XLSV/CustomCollectionViewLayout.swift#L298))
+-- but it does re-run `cellForItemAt` for every visible cell (~300-400 on a full screen),
+each doing location lookups + style/border/attributed-string setup. That's the visible
+flicker on selection.
+
+Only 2 cells actually change appearance on a normal tap: the old cursor cell (loses
+border + handle) and the new one (gains them). `cellForItemAt` already clears the border
+on every cell and re-adds only when `cursor == key`, so a 2-cell reload is visually
+correct:
+```swift
+let oldPath = currentindex
+// ... set currentindex = indexPath; cursor = ...
+var paths = [indexPath]
+if let oldPath = oldPath, oldPath != indexPath { paths.append(oldPath) }
+UIView.performWithoutAnimation { myCollectionView.reloadItems(at: paths) }
+```
+
+Needs handling:
+1. Row-filter mode -- a cell key is `"col,realRow"`; converting back to an IndexPath
+   needs the inverse of `realRow(forDisplaySection:)` (via `appd.visibleRows`).
+2. Range selection -- when `changeaffected` is non-empty (drag-selected range), >2 cells
+   lose their border; reload those too, or fall back to `reloadData()` in that case.
+3. Drag-handle diamond z-index -- it overhangs the cell's bottom-right corner. With
+   `reloadData()` the draw order is deterministic; with partial `reloadItems` the
+   selected cell must carry a raised `zIndex` in the layout's `cellAttrsDictionary` or a
+   neighbour clips it. Needs an on-device check.
+4. Consistency -- arrow-key nav (`imoveUp/Down/Left/Right`), tap-to-move, and paste also
+   `reloadData()` after moving the cursor. Optimising only `didSelectItemAt` leaves those;
+   doing all is the same helper applied ~6 sites x 2 controllers.
+
+Estimate: ~1h + device check for item 3. Decide scope (tap-select only vs. all
+cursor-move paths) when picked up.
+
 ## Form Fill mode: add xlsx column-width/row-height write/read persistence
 
 Status: not started. `ViewController.swift` already has this working end-to-end;
@@ -303,3 +344,154 @@ was real but independent, and wouldn't on its own have caused a fully empty scre
 feature and its `todo.md` entry are now dead code from a superseded plan (that repo isn't
 what's shipping under `com.yumiya.blueframe`) -- left in place there rather than deleted,
 but not being developed further.
+
+## In-app cell styling (text color / fill color / font size) -- working plan
+
+Status: **v1 done & verified on device 2026-09-07; FileFillViewController port + blank-cell
+preview done 2026-09-08.** Text color / fill color / font size, single cell, in BOTH
+ViewController and Form Fill (FileFillViewController). StyleTableEditor + PendingStyleChangeSet
++ flush wiring + 🎨 format-panel button. Unit tests pass, build clean. Round-trip verified
+on device (ViewController): live preview, save+reopen preserves, Numbers/Excel open with
+**no repair dialog**. Form-Fill port not yet device-tested.
+
+What landed:
+- `StyleTableEditor.swift` -- parses styles.xml, find-or-create over fonts/fills/cellXfs,
+  appends-only, bumps `count=`, explicit `rgb="FFRRGGBB"`, literal-anchor splice. 3 XCTests
+  in XLSVTests.swift (append / dedup-on-reparse / no-op) -- pass with
+  `IPHONEOS_DEPLOYMENT_TARGET=15.6` override (the XLSVTests target's own deployment target
+  is a stale 12.0 and needs that flag to build at all -- pre-existing, not this work).
+- `PendingStyleChangeSet.swift` -- deferred per-cell {textColor?, fillColor?, fontSize?}
+  deltas, merge-on-repeat. ViewController owns one (`pendingStyleChanges`), cleared
+  everywhere `pendingXlsxChanges` is, flushed in `flushPendingXlsxChangesIfNeeded`.
+- `service.swift`: `flushPendingEditsToXlsx(... styleChanges:)` -- after testExtractStyle's
+  styles.xml write, runs StyleTableEditor to resolve each delta -> new xf index, rewrites
+  styles.xml, then applies `s=` per cell. `applyCellSplice` gained `styleIdxOverride:` (for
+  cells with a content edit too) and `styleOnly:` (patch just the opening-tag `s=`, or
+  insert `<c r s/>`).
+- ViewController: `installFormatPanelButton()` adds a 🎨 button right of `cellSizeSlicer`
+  (the storyboard never had an entry point for `formatview`/`Fview`); `openFormatView()`
+  builds the panel from `formatviewboard.xib`, wires the 13 colour buttons (c1..c15) +
+  size slider + back. `fonteditmode()` / `sliderValueChanged()` now record into
+  `pendingStyleChanges` for xlsx (named colour -> hex via new `namedCellColorHex`) while
+  keeping the CSV JSON-sidecar path. Both were also made xlsx-safe: they no longer grow
+  `location` for xlsx (would desync cellStyleId/cellFormulaXml/cellBold... -- see
+  `project_pendingxlsx_deferred_write_gap`); a cursor cell with no render slot still
+  records the pending change, just no in-grid preview until the next reload.
+
+Next:
+1. ~~Real round-trip~~ **done 2026-09-07** -- save/reopen/Numbers/Excel all clean on device.
+2. ~~Blank never-written cell preview gap~~ **done 2026-09-08** -- new `ensureRenderSlot()`
+   (both controllers) grows every array index-aligned with `location` for xlsx
+   (content/locationInExcel/cellStyleId/cellFormulaXml/textsize/bgcolor/tcolor); the
+   cellBold-family lag safely (cellForItemAt bounds-checks `i < cellBold.count`) until the
+   next resolveCellStyles(). `fonteditmode()`/`sliderValueChanged()` now route through it.
+3. ~~FileFillViewController port~~ **done 2026-09-08** -- `pendingStyleChanges` + `styleChanges:`
+   through its `flushPendingXlsxChangesIfNeeded`, 🎨 button, xlsx-safe fonteditmode/slider,
+   cleared at all 4 pendingXlsxChanges.clear() sites + daily-backup guard. Not device-tested yet.
+4. Follow-on attributes, additive on the same StyleTableEditor machinery: bold/italic/
+   underline (more font props), then borders / alignment / number formats.
+
+--- original plan below ---
+
+Originally deferred 2026-08-25 ("it is a big
+work, deal with future"); now scoped down to a shippable v1. Surfaced while investigating
+a reported color-rendering gap vs v205/blueframe -- that investigation was dropped (color
+*display* confirmed working, no bug). The real idea: let a user pick/change a cell's text
+color, fill color, and font size *from within the app*, persisted back into the saved
+xlsx.
+
+### Current state (everything style-related is read-only)
+
+- `Service.testExtractStyle(url:)` ([service.swift](XLSV/service.swift), ~L95) parses
+  `xl/styles.xml` into flat parallel arrays on `appd`: `fontSizes`/`fontColors`/
+  `fontBolds`/`fontItalics`/`fontUnderlines`/`fontStrikes` (indexed by fontId),
+  `fillColors` (by fillId), `xfFontIds`/`xfFillIds`/`xfHorizontalAligns`/`xfVerticalAligns`/
+  `xfWrapTexts` (by xf index), `cellXfs` (borderId by xf index), `numFmtIds`.
+- `resolveCellStyles()` (ViewController ~L595, mirrored in FileFillViewController) maps
+  each cell's `cellStyleId` -> per-cell render arrays `textsize[i]`, `tcolor[i]`,
+  `bgcolor[i]`, `cellBold[i]`, ...
+- `buildCellElement` / `applyCellSplice` ([service.swift](XLSV/service.swift) ~L698/771)
+  on write only *carry forward* a cell's existing style index (looked up via
+  `appd.excelStyleLocationAlphabet` -> `excelStyleIdx`) as `s="N"`. Nothing ever creates
+  a new `<font>`/`<fill>`/`<xf>` or changes a cell's `s=`.
+- `flushPendingEditsToXlsx` ([service.swift](XLSV/service.swift) ~L2957) calls
+  `testExtractStyle(url:)`, which *does* rewrite `styles.xml` -- but only to append 3
+  fixed numFmt `<xf>` rows (General/Date/Time) via naive
+  `replacingOccurrences(of: "</cellXfs>")`. This is the only existing precedent for
+  mutating styles.xml on save.
+- `PendingXlsxChangeSet` is deliberately content-only (comment: "no style/border fields").
+- Legacy `formatview` (`Fview`) UI -- color swatches + size slider, wired in
+  FileFillViewController / PlaygroundViewController -- writes only the JSON/CSV model's
+  `tcolor`/`bgcolor` *named-color* arrays to local JSON. Does not touch xlsx styles.xml.
+
+The gap is exactly the deferral note's point: everything reads existing style entries,
+nothing creates one, no cell's style index is ever changed.
+
+### Plan -- 5 pieces, do 1-4 then ship v1
+
+**1. Editable in-memory style model + find-or-create resolver (the real new infra).**
+New type (e.g. `StyleTableEditor`, new file) holding `fonts` / `fills` / `cellXfs` as
+mutable structs, seeded from what `testExtractStyle` already parsed. Core method:
+`resolveStyleIndex(baseXf: Int, fontColor: String?, fontSize: String?, bgColor: String?) -> Int`
+- start from `baseXf` (cell's current `s=`, or 0);
+- font attr changed -> build target font (current font attrs + overrides), search `fonts`
+  for exact match -> reuse id, else append -> new id;
+- same for fill (patternFill / solid / fgColor);
+- search `cellXfs` for an xf with same `(numFmtId, fontId, fillId, borderId, alignment)`
+  -> reuse, else append with `applyFont="1"` / `applyFill="1"`;
+- return the xf index.
+Serialize back to styles.xml per `feedback_xlsx_xml_edit_pattern` in Claude's memory:
+literal-anchor splice before `</fonts>` / `</fills>` / `</cellXfs>`, always write explicit
+`rgb="FFRRGGBB"` (never theme refs), and **bump the `count=` attributes** on
+`<fonts>`/`<fills>`/`<cellXfs>` (stale count = guaranteed repair-dialog trigger).
+Everything else in styles.xml (borders, cellStyleXfs, dxfs, numFmts, tableStyles) stays
+byte-untouched. Appends only -- existing indices must never shift (so
+`testExtractStyle`'s own re-append of its 3 numFmt xfs on next load stays consistent).
+
+**2. `PendingStyleChangeSet` -- defer to save (like Form Fill, not eager).**
+Keyed `(sheetIndex, cellId)` -> `{fontColor?, fontSize?, bgColor?}`. Style edits are rare
+and each save-time styles.xml rewrite is heavy -> batch, do not go eager per-edit even
+though ViewController's content path is eager. At flush, before content splices:
+1. run every style delta through the resolver -> `[cellId: finalXfIndex]`, mutating the
+   style tables and serializing styles.xml **once**;
+2. cells that also have a content edit -> pass final xf index as explicit override into
+   `buildCellElement`;
+3. style-only cells -> new `patchCellStyleAttribute(in:&xml, ref:, styleIdx:)` that
+   rewrites just the `s="..."` inside the existing `<c r="X" ...>` open tag (adds it if
+   absent), leaving `<v>` / `<f>` alone.
+
+**3. Live in-memory sync + re-render (no save needed to see it).**
+After a style edit: append the same new font/fill/xf to the `appd.*` read arrays, update/
+insert the cell in `excelStyleLocationAlphabet` / `excelStyleIdx`, then re-run
+`resolveCellStyles()` (or poke `tcolor[i]` / `textsize[i]` / `bgcolor[i]` directly) and
+reload that item.
+
+**4. UI -- ViewController first, single selected cell.**
+Panel for the current cursor cell: ~12 preset text-color swatches, ~12 fill swatches,
+font-size stepper/slider, Apply. Rebuild `formatview` or a fresh panel -- either way it
+writes into `PendingStyleChangeSet`, not the JSON model. `UIColorPickerViewController`
+(target 15.6, fine) is optional; presets are enough for v1.
+
+**5. Validation.**
+`tools/xlsx_corruption_check.py` after every save + real round-trip in Excel and Numbers.
+Hard bar per `feedback_xlsx_structural_validity_over_formula_correctness` in memory: no
+repair dialog, ever. Check specifically: count attributes match child counts, every `s=`
+a cell references exists, all colors valid 8-digit ARGB.
+
+### v1 scope
+
+ViewController only; single selected cell; **text color + fill color + font size** only.
+
+**Defer:** bold/italic/underline toggles (trivial follow-on -- same font find-or-create,
+more attrs), borders, alignment, number formats, range application, FileFillViewController
+port. All additive once steps 1-2 exist.
+
+### Edge cases
+
+- Cell with `s="0"` / no `s=` -> resolve against xf 0's font/fill.
+- Content edit + style edit on one cell before save -> style resolves first, content
+  splice uses the resolved index.
+- Theme-color fonts/fills are read as resolved hex (lossy); writing always-explicit rgb
+  is the accepted tradeoff.
+- `buildCellElement` writes `s="N"` only when `styleIdx > 0` -- fine, new xfs append at
+  index > 0.

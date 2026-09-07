@@ -768,7 +768,16 @@ class Service {
     // one splice implementation instead of the batch path re-deriving it.
     // Returns false if the splice couldn't be applied (caller falls back to
     // its own backup string, same as this used to do inline per-case).
-    private func applyCellSplice(to xmlString: inout String, index: String, content: String, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = []) -> Bool {
+    // `styleIdxOverride` -- when non-nil, the cell is written with this style index
+    // (the `s=` attribute) instead of the one it already carries. Used by the
+    // in-app format panel's save path (see flushPendingEditsToXlsx / StyleTableEditor):
+    // the new xf has just been appended to styles.xml, and this is the cell it
+    // applies to.
+    // `styleOnly` -- the caller only wants to change `s=`, not the cell's value.
+    // When the cell already exists its `<v>`/`<f>` are left completely untouched and
+    // only the opening-tag `s=` attribute is patched; when it doesn't exist yet a
+    // bare `<c r="X" s="N"/>` placeholder is inserted.
+    private func applyCellSplice(to xmlString: inout String, index: String, content: String, sharedStringIndex: Int? = nil, calculated: [String] = [], calculatedLocation: [String] = [], styleIdxOverride: Int? = nil, styleOnly: Bool = false) -> Bool {
         let appd : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
         // Preserve the cell's original style index across the rewrite -- same
@@ -777,8 +786,35 @@ class Service {
         if let slocatinIdx = appd.excelStyleLocationAlphabet.firstIndex(of: index) {
             styleIdx = appd.excelStyleIdx[slocatinIdx]
         }
+        if let styleIdxOverride = styleIdxOverride {
+            styleIdx = styleIdxOverride
+        }
 
-        let newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
+        // Style-only: patch just the `s=` on the existing cell's opening tag,
+        // leaving its value/formula bytes alone. Falls through to the insert path
+        // below (Case 2/3) with a bare placeholder if the cell doesn't exist yet.
+        if styleOnly, let cellRange = originalElementRange(tag: "c", attributeValue: index, in: xmlString) {
+            let original = String(xmlString[cellRange])
+            guard let gt = original.firstIndex(of: ">") else { return false }
+            var opening = String(original[original.startIndex...gt])
+            let rest = String(original[original.index(after: gt)...])
+            let styleValue = max(styleIdx, 0)
+            if let sRange = opening.range(of: "\\s+s=\"[0-9]+\"", options: .regularExpression) {
+                opening.replaceSubrange(sRange, with: styleValue > 0 ? " s=\"\(styleValue)\"" : "")
+            } else if styleValue > 0, let rRange = opening.range(of: "r=\"\(index)\"") {
+                opening.replaceSubrange(rRange, with: "r=\"\(index)\" s=\"\(styleValue)\"")
+            }
+            xmlString.replaceSubrange(cellRange, with: opening + rest)
+            return true
+        }
+
+        let newElement: String
+        if styleOnly {
+            let styleValue = max(styleIdx, 0)
+            newElement = styleValue > 0 ? "<c r=\"\(index)\" s=\"\(styleValue)\"/>" : "<c r=\"\(index)\"/>"
+        } else {
+            newElement = buildCellElement(ref: index, styleIdx: styleIdx, content: content, calculated: calculated, calculatedLocation: calculatedLocation, sharedStringIndex: sharedStringIndex)
+        }
         let rowNumber = index.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
 
         // Case 1: the cell already exists (self-closing <c r="X"/> or open <c r="X">...</c>)
@@ -2922,8 +2958,8 @@ class Service {
     // switch), reusing this same unzip/patch/rezip pass rather than paying
     // for a second one. All three default empty/nil so every other caller
     // (and the Form-Fill batch flush, which never passes them) is unaffected.
-    func flushPendingEditsToXlsx(fp: String, edits: [PendingXlsxEditKey: PendingXlsxEdit], columnWidths: [(col: Int, width: Double)] = [], rowHeights: [(row: Int, height: Double)] = [], sizeSheetIndex: Int? = nil) -> Bool {
-        guard !edits.isEmpty || !columnWidths.isEmpty || !rowHeights.isEmpty else { return true }
+    func flushPendingEditsToXlsx(fp: String, edits: [PendingXlsxEditKey: PendingXlsxEdit], columnWidths: [(col: Int, width: Double)] = [], rowHeights: [(row: Int, height: Double)] = [], sizeSheetIndex: Int? = nil, styleChanges: [PendingStyleEditKey: PendingStyleEdit] = [:]) -> Bool {
+        guard !edits.isEmpty || !columnWidths.isEmpty || !rowHeights.isEmpty || !styleChanges.isEmpty else { return true }
         let __flushStart = CFAbsoluteTimeGetCurrent()
         defer {
             perfLog(String(format: "PERF flushPendingEditsToXlsx.total: %.3fs cells=%d", CFAbsoluteTimeGetCurrent() - __flushStart, edits.count))
@@ -2956,6 +2992,39 @@ class Service {
             let styleXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("styles.xml")
             if let modifiedStylesStr = testExtractStyle(url: styleXMLURL) {
                 try modifiedStylesStr.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+            }
+
+            // In-app format-panel edits: resolve each cell's desired text color /
+            // fill color / font size into an xf index, appending <font>/<fill>/<xf>
+            // entries to styles.xml as needed (see StyleTableEditor). Runs after
+            // testExtractStyle's own write so it works on the same bytes that get
+            // re-read on the next load. Produces styleOverridesBySheet -- the new
+            // `s=` each affected cell should carry, applied in the per-sheet loop.
+            var styleOverridesBySheet: [Int: [String: Int]] = [:]
+            if !styleChanges.isEmpty,
+               let stylesStr = try? String(contentsOf: styleXMLURL),
+               let editor = StyleTableEditor(stylesXML: stylesStr) {
+                let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                for (key, delta) in styleChanges {
+                    var baseXf = 0
+                    if let locIdx = appd.excelStyleLocationAlphabet.firstIndex(of: key.cellId) {
+                        baseXf = appd.excelStyleIdx[locIdx]
+                    }
+                    let newXf = editor.styleIndex(baseXf: baseXf,
+                                                  textColorHex: delta.textColorHex,
+                                                  bgColorHex: delta.fillColorHex,
+                                                  fontSize: delta.fontSize)
+                    styleOverridesBySheet[key.sheetIndex, default: [:]][key.cellId] = newXf
+                }
+                if editor.didChange {
+                    let rewritten = editor.serializedXML()
+                    if XMLValidator().validateXML(xmlString: rewritten) {
+                        try rewritten.write(to: styleXMLURL, atomically: true, encoding: .utf8)
+                    } else {
+                        print("flushPendingEditsToXlsx: StyleTableEditor output failed validation, dropping style changes")
+                        styleOverridesBySheet.removeAll()
+                    }
+                }
             }
 
             let sharedStringsXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("sharedStrings.xml")
@@ -2993,9 +3062,12 @@ class Service {
             if hasSizeChanges, let sizeSheetIndex = sizeSheetIndex {
                 sheetIndices.insert(sizeSheetIndex)
             }
+            sheetIndices.formUnion(styleOverridesBySheet.keys)
 
             for sheetIndex in sheetIndices {
                 let sheetEdits = editsBySheet[sheetIndex] ?? []
+                let sheetStyleOverrides = styleOverridesBySheet[sheetIndex] ?? [:]
+                let contentEditedCellIds = Set(sheetEdits.map { $0.key.cellId })
                 let worksheetXMLURL = subdirectoryURL.appendingPathComponent("xl").appendingPathComponent("worksheets").appendingPathComponent("sheet\(sheetIndex).xml")
                 guard var xmlString = try? String(contentsOf: worksheetXMLURL) else { continue }
 
@@ -3013,7 +3085,13 @@ class Service {
                         }
                     }
 
-                    _ = applyCellSplice(to: &xmlString, index: key.cellId, content: edit.content, sharedStringIndex: sharedStringIndex, calculated: [edit.calculatedValue], calculatedLocation: [key.cellId])
+                    _ = applyCellSplice(to: &xmlString, index: key.cellId, content: edit.content, sharedStringIndex: sharedStringIndex, calculated: [edit.calculatedValue], calculatedLocation: [key.cellId], styleIdxOverride: sheetStyleOverrides[key.cellId])
+                }
+
+                // Cells whose only change is style (no content edit) -- patch just
+                // the `s=` attribute, leaving any existing value/formula alone.
+                for (cellId, xf) in sheetStyleOverrides where !contentEditedCellIds.contains(cellId) {
+                    _ = applyCellSplice(to: &xmlString, index: cellId, content: "", styleIdxOverride: xf, styleOnly: true)
                 }
 
                 if hasSizeChanges && sheetIndex == sizeSheetIndex {
