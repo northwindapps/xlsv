@@ -347,12 +347,24 @@ but not being developed further.
 
 ## In-app cell styling (text color / fill color / font size) -- working plan
 
-Status: **v1 done & verified on device 2026-09-07; FileFillViewController port + blank-cell
-preview done 2026-09-08.** Text color / fill color / font size, single cell, in BOTH
-ViewController and Form Fill (FileFillViewController). StyleTableEditor + PendingStyleChangeSet
-+ flush wiring + 🎨 format-panel button. Unit tests pass, build clean. Round-trip verified
-on device (ViewController): live preview, save+reopen preserves, Numbers/Excel open with
-**no repair dialog**. Form-Fill port not yet device-tested.
+Status: **text/fill colour + font size + Normal/Bold/Italic all done & device-verified
+(colour/size 2026-09-07, bold/italic + Form Fill port + blank-cell preview 2026-09-08) --
+no file corruption / repair dialog.** Single cell, both ViewController and Form Fill.
+StyleTableEditor + PendingStyleChangeSet + flush wiring + 🎨 format-panel button. 5
+StyleTableEditor XCTests pass, build clean. Colour/size round-trip verified on device
+(ViewController): live preview, save+reopen preserves, Numbers/Excel open with **no repair
+dialog**.
+
+Bold/Italic (2026-09-08): the panel's new `normalBoldItalicselector` segmented control
+(Normal/Bold/Italic -- mutually exclusive, can't do both at once) -> `boldItalicChanged()`
+in both controllers -> `PendingStyleEdit.bold/italic` -> `StyleTableEditor.styleIndex(bold:italic:)`
+(already modelled in FontSpec; reuses an existing matching `<font>`, e.g. Excel's stock
+bold font, else appends). `testExtractStyle` already parses `<b>`/`<i>` so it reads back on
+reopen. Live preview via `cellBold[i]`/`cellItalic[i]`. CSV: preview only, not persisted
+to the JSON sidecar.
+
+Font-family picker (`fonttypeselector` UIPickerView, added to the xib but NOT wired) --
+see separate todo below.
 
 What landed:
 - `StyleTableEditor.swift` -- parses styles.xml, find-or-create over fonts/fills/cellXfs,
@@ -388,8 +400,20 @@ Next:
 3. ~~FileFillViewController port~~ **done 2026-09-08** -- `pendingStyleChanges` + `styleChanges:`
    through its `flushPendingXlsxChangesIfNeeded`, 🎨 button, xlsx-safe fonteditmode/slider,
    cleared at all 4 pendingXlsxChanges.clear() sites + daily-backup guard. Not device-tested yet.
-4. Follow-on attributes, additive on the same StyleTableEditor machinery: bold/italic/
-   underline (more font props), then borders / alignment / number formats.
+4. ~~Bold/Italic~~ **done 2026-09-08** (not device-tested). Underline is the same pattern
+   (`FontSpec.strike`/`underline` already exist; `testExtractStyle` already parses `<u>`/
+   `<strike>`) if wanted -- no dedicated control on the panel yet.
+5. **Font-family picker** (`formatview.fonttypeselector`, a UIPickerView already in the
+   xib). Blocked on rendering: `cellFont(size:bold:italic:)` always returns a *system*
+   font -- no per-cell family rendering, and `testExtractStyle` doesn't parse `<font><name>`.
+   To make it usable: (a) parse `<name>` into a new `appd.fontNames` table + resolve onto
+   a per-cell `cellFontName` array in `resolveCellStyles()`; (b) `cellFont()` takes a name
+   and does `UIFont(name:size:)` with a system fallback; (c) pick the picker's list
+   (bundled iOS families, or a fixed Excel-ish set: Calibri/Arial/Times New Roman/
+   Helvetica/Courier New...); (d) `PendingStyleEdit.fontName` + `StyleTableEditor.styleIndex(fontName:)`
+   -- the write side is trivial, `FontSpec.name` is already there. Until then the picker
+   is inert.
+6. Borders / alignment / number formats -- additive on the same StyleTableEditor machinery.
 
 --- original plan below ---
 

@@ -5142,9 +5142,12 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
         Fview?.removeFromSuperview()
 
+        // Matches formatviewboard.xib's design size -- setup() forces the nib
+        // content to this frame, so a smaller value squashes the picker/segments.
         let panelWidth: CGFloat = 300
-        let panelHeight: CGFloat = 150
-        let origin = CGPoint(x: max(8, (view.bounds.width - panelWidth) / 2), y: 90)
+        let panelHeight: CGFloat = 365
+        let origin = CGPoint(x: max(8, (view.bounds.width - panelWidth) / 2),
+                             y: max(8, min(90, view.bounds.height - panelHeight - 8)))
         let panel = formatview(frame: CGRect(origin: origin, size: CGSize(width: panelWidth, height: panelHeight)))
         panel.layer.borderWidth = 1
         panel.layer.borderColor = UIColor(white: 0.8, alpha: 1).cgColor
@@ -5153,6 +5156,7 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
 
         panel.formatBackButton.addTarget(self, action: #selector(formatbackaction(_:)), for: .touchUpInside)
         panel.sizeslider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+        panel.normalBoldItalicselector?.addTarget(self, action: #selector(boldItalicChanged(_:)), for: .valueChanged)
 
         let colorButtons: [(UIButton?, Selector)] = [
             (panel.color1, #selector(c1(_:))), (panel.color2, #selector(c2(_:))),
@@ -5167,15 +5171,46 @@ class FileFillViewController: UIViewController, UICollectionViewDataSource, UICo
             btn?.addTarget(self, action: sel, for: .touchUpInside)
         }
 
-        if let i = location.index(of: cursor), i < textsize.count,
-           let current = Double(textsize[i]), current > 0 {
-            panel.sizeslider.value = Float(min(max(current, Double(panel.sizeslider.minimumValue)),
-                                               Double(panel.sizeslider.maximumValue)))
-            panel.sizelabel.text = String(Int(current))
+        if let i = location.index(of: cursor) {
+            if i < textsize.count, let current = Double(textsize[i]), current > 0 {
+                panel.sizeslider.value = Float(min(max(current, Double(panel.sizeslider.minimumValue)),
+                                                   Double(panel.sizeslider.maximumValue)))
+                panel.sizelabel.text = String(Int(current))
+            }
+            if i < cellBold.count, cellBold[i] == "1" {
+                panel.normalBoldItalicselector?.selectedSegmentIndex = 1
+            } else if i < cellItalic.count, cellItalic[i] == "1" {
+                panel.normalBoldItalicselector?.selectedSegmentIndex = 2
+            } else {
+                panel.normalBoldItalicselector?.selectedSegmentIndex = 0
+            }
         }
 
         Fview = panel
         view.addSubview(panel)
+    }
+
+    // Normal / Bold / Italic segmented control -- see ViewController's copy.
+    @objc func boldItalicChanged(_ sender: UISegmentedControl) {
+        let IP = cursor
+        guard !IP.isEmpty else { return }
+        let bold = sender.selectedSegmentIndex == 1
+        let italic = sender.selectedSegmentIndex == 2
+
+        let i = ensureRenderSlot(cursorKey: IP, excelRef: isExcel ? getIndexlabelForExcel() : IP)
+        while cellBold.count <= i { cellBold.append("0") }
+        while cellItalic.count <= i { cellItalic.append("0") }
+        cellBold[i] = bold ? "1" : "0"
+        cellItalic[i] = italic ? "1" : "0"
+
+        if isExcel {
+            let appd: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            pendingStyleChanges.record(sheetIndex: appd.wsSheetIndex, cellId: getIndexlabelForExcel(),
+                                       bold: bold, italic: italic)
+            updateUnsavedDataReminderVisibility()
+        }
+
+        myCollectionView.reloadData()
     }
 
     @objc func c1(_ sender:UIButton)

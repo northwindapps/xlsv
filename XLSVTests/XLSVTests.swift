@@ -60,6 +60,28 @@ final class XLSVTests: XCTestCase {
         XCTAssertGreaterThan(idx, 0)
     }
 
+    func testStyleEditorBoldReusesExistingBoldFont() throws {
+        // sampleStylesXML already has a bold font at fontId 1 (used by xf 1).
+        let editor = try XCTUnwrap(StyleTableEditor(stylesXML: sampleStylesXML))
+        let idx = editor.styleIndex(baseXf: 0, textColorHex: nil, bgColorHex: nil, fontSize: nil,
+                                    bold: true, italic: nil)
+        XCTAssertFalse(editor.didChange, "bold-ing the default font should reuse the existing bold font (id 1)")
+        // xf 1 is (numFmtId 0, fontId 1, fillId 0, borderId 0) -> matches
+        XCTAssertEqual(idx, 1)
+    }
+
+    func testStyleEditorItalicAppendsFont() throws {
+        let editor = try XCTUnwrap(StyleTableEditor(stylesXML: sampleStylesXML))
+        let idx = editor.styleIndex(baseXf: 0, textColorHex: nil, bgColorHex: nil, fontSize: nil,
+                                    bold: nil, italic: true)
+        XCTAssertTrue(editor.didChange)
+        XCTAssertEqual(idx, 2)
+        let out = editor.serializedXML()
+        XCTAssertTrue(out.contains("<i/>"))
+        XCTAssertTrue(out.contains("<fonts count=\"3\">"))
+        XCTAssertTrue(XMLValidator().validateXML(xmlString: out))
+    }
+
     func testStyleEditorNoOpWhenNothingChanges() throws {
         let editor = try XCTUnwrap(StyleTableEditor(stylesXML: sampleStylesXML))
         let idx = editor.styleIndex(baseXf: 1, textColorHex: nil, bgColorHex: nil, fontSize: nil)

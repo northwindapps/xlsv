@@ -175,14 +175,16 @@ final class StyleTableEditor {
 
     /// Returns an xf index that renders `baseXf`'s appearance with the given
     /// overrides applied. `textColorHex`/`bgColorHex` are "#RRGGBB" (or nil = keep);
-    /// `fontSize` is a point size (or nil = keep). Creates <font>/<fill>/<xf>
-    /// entries as needed. Returns `baseXf` unchanged if nothing actually differs.
-    func styleIndex(baseXf: Int, textColorHex: String?, bgColorHex: String?, fontSize: Double?) -> Int {
+    /// `fontSize` is a point size (or nil = keep); `bold`/`italic` are nil = keep.
+    /// Creates <font>/<fill>/<xf> entries as needed. Returns `baseXf` unchanged if
+    /// nothing actually differs.
+    func styleIndex(baseXf: Int, textColorHex: String?, bgColorHex: String?, fontSize: Double?,
+                    bold: Bool? = nil, italic: Bool? = nil) -> Int {
         let safeBase = (baseXf >= 0 && baseXf < xfs.count) ? baseXf : 0
         let base = xfs[safeBase]
 
         var targetFontId = base.fontId
-        if textColorHex != nil || fontSize != nil {
+        if textColorHex != nil || fontSize != nil || bold != nil || italic != nil {
             var font = (base.fontId >= 0 && base.fontId < fonts.count) ? fonts[base.fontId] : (fonts.first ?? FontSpec())
             if let hex = textColorHex, let argb = StyleTableEditor.argb(fromHex: hex) {
                 font.colorRgb = argb
@@ -192,6 +194,8 @@ final class StyleTableEditor {
             if let size = fontSize {
                 font.size = size
             }
+            if let bold = bold { font.bold = bold }
+            if let italic = italic { font.italic = italic }
             targetFontId = findOrAppendFont(font)
         }
 

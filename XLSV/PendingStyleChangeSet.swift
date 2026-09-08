@@ -25,8 +25,12 @@ struct PendingStyleEdit {
     var textColorHex: String?   // "#RRGGBB", nil = leave text color as-is
     var fillColorHex: String?   // "#RRGGBB", nil = leave fill as-is
     var fontSize: Double?       // points, nil = leave size as-is
+    var bold: Bool?             // nil = leave as-is
+    var italic: Bool?           // nil = leave as-is
 
-    var isEmpty: Bool { textColorHex == nil && fillColorHex == nil && fontSize == nil }
+    var isEmpty: Bool {
+        textColorHex == nil && fillColorHex == nil && fontSize == nil && bold == nil && italic == nil
+    }
 }
 
 final class PendingStyleChangeSet {
@@ -35,12 +39,15 @@ final class PendingStyleChangeSet {
     var isDirty: Bool { !edits.isEmpty }
 
     func record(sheetIndex: Int, cellId: String,
-                textColorHex: String? = nil, fillColorHex: String? = nil, fontSize: Double? = nil) {
+                textColorHex: String? = nil, fillColorHex: String? = nil, fontSize: Double? = nil,
+                bold: Bool? = nil, italic: Bool? = nil) {
         let key = PendingStyleEditKey(sheetIndex: sheetIndex, cellId: cellId)
         var edit = edits[key] ?? PendingStyleEdit()
         if let textColorHex = textColorHex { edit.textColorHex = textColorHex }
         if let fillColorHex = fillColorHex { edit.fillColorHex = fillColorHex }
         if let fontSize = fontSize { edit.fontSize = fontSize }
+        if let bold = bold { edit.bold = bold }
+        if let italic = italic { edit.italic = italic }
         guard !edit.isEmpty else { return }
         edits[key] = edit
     }

@@ -30,7 +30,9 @@ class formatview: UIView {
     @IBOutlet weak var sizeslider: UISlider!
     @IBOutlet weak var sizelabel: UILabel!
     
+    @IBOutlet weak var fonttypeselector: UIPickerView!
     
+    @IBOutlet weak var normalBoldItalicselector: UISegmentedControl!
     
     /*
      // Only override drawRect: if you perform custom drawing.

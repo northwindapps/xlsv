@@ -3013,7 +3013,9 @@ class Service {
                     let newXf = editor.styleIndex(baseXf: baseXf,
                                                   textColorHex: delta.textColorHex,
                                                   bgColorHex: delta.fillColorHex,
-                                                  fontSize: delta.fontSize)
+                                                  fontSize: delta.fontSize,
+                                                  bold: delta.bold,
+                                                  italic: delta.italic)
                     styleOverridesBySheet[key.sheetIndex, default: [:]][key.cellId] = newXf
                 }
                 if editor.didChange {
