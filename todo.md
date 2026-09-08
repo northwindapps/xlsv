@@ -355,13 +355,14 @@ StyleTableEditor XCTests pass, build clean. Colour/size round-trip verified on d
 (ViewController): live preview, save+reopen preserves, Numbers/Excel open with **no repair
 dialog**.
 
-Bold/Italic (2026-09-08): the panel's new `normalBoldItalicselector` segmented control
-(Normal/Bold/Italic -- mutually exclusive, can't do both at once) -> `boldItalicChanged()`
-in both controllers -> `PendingStyleEdit.bold/italic` -> `StyleTableEditor.styleIndex(bold:italic:)`
-(already modelled in FontSpec; reuses an existing matching `<font>`, e.g. Excel's stock
-bold font, else appends). `testExtractStyle` already parses `<b>`/`<i>` so it reads back on
-reopen. Live preview via `cellBold[i]`/`cellItalic[i]`. CSV: preview only, not persisted
-to the JSON sidecar.
+Bold/Italic (2026-09-08, device-verified -- no file corruption): the panel's new
+`normalBoldItalicselector` segmented control (Normal/Bold/Italic -- mutually exclusive,
+can't do both at once) -> `boldItalicChanged()` in both controllers ->
+`PendingStyleEdit.bold/italic` -> `StyleTableEditor.styleIndex(bold:italic:)` (already
+modelled in FontSpec; reuses an existing matching `<font>`, e.g. Excel's stock bold font,
+else appends). `testExtractStyle` already parses `<b>`/`<i>` so it reads back on reopen.
+Live preview via `cellBold[i]`/`cellItalic[i]`. CSV: preview only, not persisted to the
+JSON sidecar.
 
 Font-family picker (`fonttypeselector` UIPickerView, added to the xib but NOT wired) --
 see separate todo below.
