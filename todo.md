@@ -404,17 +404,50 @@ Next:
 4. ~~Bold/Italic~~ **done 2026-09-08** (not device-tested). Underline is the same pattern
    (`FontSpec.strike`/`underline` already exist; `testExtractStyle` already parses `<u>`/
    `<strike>`) if wanted -- no dedicated control on the panel yet.
-5. **Font-family picker** (`formatview.fonttypeselector`, a UIPickerView already in the
-   xib). Blocked on rendering: `cellFont(size:bold:italic:)` always returns a *system*
-   font -- no per-cell family rendering, and `testExtractStyle` doesn't parse `<font><name>`.
-   To make it usable: (a) parse `<name>` into a new `appd.fontNames` table + resolve onto
-   a per-cell `cellFontName` array in `resolveCellStyles()`; (b) `cellFont()` takes a name
-   and does `UIFont(name:size:)` with a system fallback; (c) pick the picker's list
-   (bundled iOS families, or a fixed Excel-ish set: Calibri/Arial/Times New Roman/
-   Helvetica/Courier New...); (d) `PendingStyleEdit.fontName` + `StyleTableEditor.styleIndex(fontName:)`
-   -- the write side is trivial, `FontSpec.name` is already there. Until then the picker
-   is inert.
+5. **Font-family picker -- needs research, see dedicated section below.**
 6. Borders / alignment / number formats -- additive on the same StyleTableEditor machinery.
+
+### Font-family picker -- research + plan (not started, 2026-09-08)
+
+`formatview.fonttypeselector` (a `UIPickerView`) is already in the xib but **has no
+dataSource/delegate wired**, so it renders blank. Deferred because it needs research +
+renderer/read-path plumbing, not just UI.
+
+**The core issue: xlsx font names and iOS font names only partially overlap.**
+- `<font><name val="Calibri"/></font>` is just a string -- *writing* any name is trivial
+  (`StyleTableEditor.FontSpec.name` already exists), and Excel/Numbers always render the
+  written name correctly. File fidelity is never the problem.
+- The problem is *in-app preview*: `UIFont(name: "Calibri", size:)` returns **nil** on iOS,
+  and Calibri is what nearly every Excel-authored file uses.
+
+| | on iOS *and* Excel | Excel-only (nil on iOS) |
+|---|---|---|
+| Latin | Arial, Times New Roman, Courier New, Georgia, Verdana, Trebuchet MS | Calibri, Cambria, Aptos (Excel defaults), Segoe UI, Tahoma |
+| Japanese | YuGothic / YuMincho (iOS bundles both), Hiragino Sans | MS PGothic, MS Gothic, Meiryo |
+
+**Research to do before building:**
+- Confirm the exact `UIFont(name:)` strings that actually resolve on this app's min iOS
+  (15.6) -- e.g. "TimesNewRomanPSMT", "CourierNewPSMT", "YuGo-Medium" vs friendly names;
+  `UIFont.familyNames` / `UIFont.fontNames(forFamilyName:)` on-device.
+- Decide the curated list: fonts present on BOTH platforms + "Default". Probably ~8:
+  Default, Arial, Times New Roman, Courier New, Georgia, Verdana, Trebuchet MS, YuGothic.
+  Decide whether to also offer Calibri/Meiryo with a documented iOS fallback (preview
+  won't match) or omit them.
+- Check how bold/italic compose with a *named* (non-system) font -- the code already has a
+  comment about `.traitItalic` / CJK italic-fallback breakage; `UIFontDescriptor
+  .withSymbolicTraits` on a named face may silently drop the trait for faces with no
+  italic/bold design. Needs testing per font in the curated list.
+
+**Implementation once researched (~1-2h plumbing):**
+- (a) `testExtractStyle`: parse `<font><name val>` into a new `appd.fontNames` array
+  (indexed by fontId, exactly like `fontSizes`/`fontColors`).
+- (b) `resolveCellStyles()` (both controllers): map to a new per-cell `cellFontName` array.
+- (c) `cellFont(size:bold:italic:)` -> add `name:`; `UIFont(name:size:)` with system
+  fallback, then re-apply bold/italic via font descriptor.
+- (d) picker dataSource/delegate (on `formatview` or the controller) serving the curated list.
+- (e) `PendingStyleEdit.fontName` + `StyleTableEditor.styleIndex(fontName:)` -- ~4 lines,
+  `FontSpec.name` is already wired through.
+- `ensureRenderSlot` would need to also seed `cellFontName` for the blank-cell preview path.
 
 --- original plan below ---
 
