@@ -1,5 +1,51 @@
 # TODO
 
+## Cloud LLM Q&A ("Ask AI about this sheet") -- MVP scaffolded 2026-09-09 (branch feat_llm)
+
+Status: builds, not device-tested, not wired into App Store privacy label yet.
+Distinct from the on-device Gemma *command* plan below -- this is cloud OpenAI,
+read-only question answering, no file mutation.
+
+**Files (all new, flat in `XLSV/`):**
+- `AIKeychain.swift` -- Security.framework wrapper, stores the OpenAI key only
+  (service `com.xlsv.openai`). No pod added.
+- `AIConfig.swift` -- UserDefaults: `model` (default `gpt-4o-mini`),
+  `consentGranted`, `maxCellsPerRequest` (default 4000). Endpoint constant lives
+  here -- the one value a hosted proxy would change.
+- `SheetContextBuilder.swift` -- `SheetSnapshot` (plain values, like CellStore's
+  convenience init) -> TSV with A/B/C header + 1-based row numbers. Formula cells
+  rendered as computed value. Drops empty rows/trailing empty cols. Honours a
+  cell budget and reports truncation.
+- `OpenAIClient.swift` -- completion-handler `URLSession` (NOT async/await:
+  deployment target is iOS 12, Swift 4.0 lang mode). Chat Completions,
+  JSONSerialization, no streaming.
+- `AISpreadsheetBridge.swift` -- `AISpreadsheetContextProviding` protocol both
+  VCs conform to (all requirements are existing stored props). Default impls
+  build the current-sheet snapshot from live arrays and the workbook snapshot
+  (active sheet live + other sheets from their `sheetN.xml` JSON sidecars via
+  `ReadWriteJSON.readJsonFile`). `presentAIChat()` here.
+- `AIChatViewController.swift` -- programmatic UI (no xib on purpose). Scope
+  segmented control (Selection / Sheet / Workbook), transcript UITextView,
+  input row, first-use consent alert, API-key entry alert.
+
+**Wiring:** `installAIPanelButton()` in both VCs right after
+`installFormatPanelButton()`, adds a 🤖 button to the right of 🎨.
+
+**Not done / next:**
+- Device test with a real key; verify keyboard-avoidance constraint math.
+- App Store privacy nutrition label: cell content -> third party (OpenAI).
+- Move key entry into SettingsViewController (currently only reachable via the
+  chat panel's "API key" bar button).
+- Formula results for non-active workbook sheets are blank (sidecar
+  `readJsonFile` doesn't load `formulaResult`) -- acceptable for MVP.
+- Large-sheet scaling beyond the truncation cap: tool-calling (get_range /
+  sheet_summary) so the model pulls only what it needs. See the Gemma plan's
+  tool-schema thinking.
+- Streaming (SSE) for responsiveness.
+- Consider a hosted proxy instead of BYOK (rate-limit, meter cost, no key in
+  the client) -- `AIConfig.chatCompletionsURL` + dropping the Authorization
+  header is the only client change.
+
 ## Potential: targeted 2-cell reload on cursor selection instead of full reloadData()
 
 Status: idea, not started (raised 2026-09-08). Not a bug -- current behaviour is by design.

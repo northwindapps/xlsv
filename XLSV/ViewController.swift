@@ -331,6 +331,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // to the right of cellSizeSlicer -- there was no entry point for the panel in
     // the storyboard. See installFormatPanelButton() / openFormatView().
     var formatPanelButton: UIButton?
+    var aiPanelButton: UIButton?
     var datainputview :Datainputview!
     // Dedicated panel for voice dictation -- created once on first use,
     // then just shown/hidden together with datainputview afterward (see
@@ -3054,6 +3055,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         cellSizeSlicer.addTarget(self, action: #selector(cellSizeSliderReleased(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         configureCellSizeSlider()
         installFormatPanelButton()
+        installAIPanelButton()
 
         let isJapanese = (NSLocale.preferredLanguages.first ?? "en").hasPrefix("ja")
         unsavedDataReminder.setTitle(isJapanese ? "未保存" : "Unsaved", for: .normal)
@@ -5293,6 +5295,29 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         bar.bringSubview(toFront: button)
         formatPanelButton = button
     }
+
+    // "Ask AI about this sheet" entry point, immediately right of the 🎨 button.
+    private func installAIPanelButton() {
+        guard aiPanelButton == nil, let bar = cellSizeSlicer.superview else { return }
+        let button = UIButton(type: .system)
+        button.setTitle("🤖", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17)
+        button.accessibilityLabel = "Ask AI"
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(openAIChat), for: .touchUpInside)
+        bar.addSubview(button)
+        let leftAnchor = formatPanelButton?.trailingAnchor ?? cellSizeSlicer.trailingAnchor
+        NSLayoutConstraint.activate([
+            button.leadingAnchor.constraint(equalTo: leftAnchor, constant: 8),
+            button.centerYAnchor.constraint(equalTo: cellSizeSlicer.centerYAnchor),
+            button.widthAnchor.constraint(equalToConstant: 34),
+            button.heightAnchor.constraint(equalToConstant: 30)
+        ])
+        bar.bringSubview(toFront: button)
+        aiPanelButton = button
+    }
+
+    @objc func openAIChat() { presentAIChat() }
 
     @objc func openFormatView() {
         // A cell must be selected -- everything the panel does targets the cursor cell.
